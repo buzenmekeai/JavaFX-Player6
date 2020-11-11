@@ -24,4 +24,12 @@ var game = new Phaser.Game(config);
 
 var cursors;
 var platforms, jewels, skulls;
-var 
+var player;
+var score = 0, scoreText;
+
+//***************** PHASER.SCENE BUILT-IN FUNCTIONS ************//
+
+function preload(){
+    console.log(this);
+    this.load.image("background", "../assets/background.png");
+    this.load.image
