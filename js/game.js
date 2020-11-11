@@ -45,4 +45,13 @@ function create(){
     createPlatforms.call(this);
     createPlayer.call(this);
     createAnimations.call(this);
-    createJewels.call
+    createJewels.call(this);
+    createSkulls.call(this);
+    
+    scoreText = this.add.text(10,10, 'Score: 0', {fontSize: '32px', fill: '#000'});
+    
+    createOverlapAndCollide.call(this);
+}
+
+function update(){
+    checkPlayerMovement();
