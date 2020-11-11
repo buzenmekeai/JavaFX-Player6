@@ -32,4 +32,7 @@ var score = 0, scoreText;
 function preload(){
     console.log(this);
     this.load.image("background", "../assets/background.png");
-    this.load.image
+    this.load.image("platform", "../assets/platform.png");
+    this.load.spritesheet("player", "../assets/player.png", {frameWidth: 24, frameHeight: 24});
+    this.load.image("jewel", "../assets/jewel.png");
+    this.load.image("skull", "../assets/skul
