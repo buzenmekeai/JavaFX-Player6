@@ -82,4 +82,13 @@ function createPlayer(){
 function createAnimations(){
     this.anims.create({
         key: "walk",
-        frames: this.anims.generateFrameNumbers("player", {start: 4, end: 10})
+        frames: this.anims.generateFrameNumbers("player", {start: 4, end: 10}),
+        repeat: -1,
+        frameRate: 15
+    });
+    
+    this.anims.create({
+        key: "idle",
+        frames: this.anims.generateFrameNumbers("player", {frames:[1,4]}),
+        repeat: -1,
+        frameR
