@@ -55,3 +55,10 @@ function create(){
 
 function update(){
     checkPlayerMovement();
+}
+
+//***************** NON PHASER.SCENE FUNCTIONS ************//
+//*************** CREATE FUNCTIONS*************************//
+
+function createBackground(){
+    var background = this.add.image(config.width/2, con
