@@ -113,4 +113,11 @@ function createSkulls(){
 }
 
 function createSkull(){
-    var skull = skulls.create(Math.random()*con
+    var skull = skulls.create(Math.random()*config.width, 16, "skull");
+    skull.setCollideWorldBounds(true);
+    skull.setBounce(1);
+    skull.setVelocityX(Math.random()*200);
+}
+
+function createOverlapAndCollide(){
+    this.physics.add.collider(player, 
