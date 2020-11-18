@@ -91,4 +91,15 @@ function createAnimations(){
         key: "idle",
         frames: this.anims.generateFrameNumbers("player", {frames:[1,4]}),
         repeat: -1,
-        frameR
+        frameRate: 3
+    });
+}
+
+function createJewels(){
+    jewels = this.physics.add.group({
+        key: "jewel",
+        setXY: {x: 16, y: 16, stepX: 50},
+        repeat: 8
+    });
+    
+    jewels.children.itera
