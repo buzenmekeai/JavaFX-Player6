@@ -69,4 +69,10 @@ function createPlatforms(){
     platforms = this.physics.add.staticGroup();
     platforms.create(300, 300, "platform");    
     
-    var floor = platfor
+    var floor = platforms.create(config.width/2, config.height-16, "platform");
+    console.log(floor);
+    floor.setScale(2.8, 2).refreshBody();
+}
+
+function createPlayer(){
+    player = this.physics.add.sprite(100, 100, "pl
