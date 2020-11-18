@@ -120,4 +120,8 @@ function createSkull(){
 }
 
 function createOverlapAndCollide(){
-    this.physics.add.collider(player, 
+    this.physics.add.collider(player, platforms);
+    this.physics.add.collider(jewels, platforms);
+    this.physics.add.overlap(player, jewels, pickUpJewel);
+    this.physics.add.collider(skulls, platforms);
+    this.physics.add.overlap(player, skulls, killPlayer, null
