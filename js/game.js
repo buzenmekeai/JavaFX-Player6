@@ -75,4 +75,11 @@ function createPlatforms(){
 }
 
 function createPlayer(){
-    player = this.physics.add.sprite(100, 100, "pl
+    player = this.physics.add.sprite(100, 100, "player", 1);
+    player.setCollideWorldBounds(true);
+}
+
+function createAnimations(){
+    this.anims.create({
+        key: "walk",
+        frames: this.anims.generateFrameNumbers("player", {start: 4, end: 10})
