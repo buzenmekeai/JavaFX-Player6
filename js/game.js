@@ -61,4 +61,12 @@ function update(){
 //*************** CREATE FUNCTIONS*************************//
 
 function createBackground(){
-    var background = this.add.image(config.width/2, con
+    var background = this.add.image(config.width/2, config.height/2, "background");    
+    background.setScale(2.2, 2.5);
+}
+
+function createPlatforms(){
+    platforms = this.physics.add.staticGroup();
+    platforms.create(300, 300, "platform");    
+    
+    var floor = platfor
