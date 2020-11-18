@@ -102,4 +102,15 @@ function createJewels(){
         repeat: 8
     });
     
-    jewels.children.itera
+    jewels.children.iterate(function(jewel){
+        jewel.setBounce(Math.random());
+    });
+}
+
+function createSkulls(){
+    skulls = this.physics.add.group();
+    createSkull();
+}
+
+function createSkull(){
+    var skull = skulls.create(Math.random()*con
