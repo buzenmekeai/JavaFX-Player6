@@ -124,4 +124,14 @@ function createOverlapAndCollide(){
     this.physics.add.collider(jewels, platforms);
     this.physics.add.overlap(player, jewels, pickUpJewel);
     this.physics.add.collider(skulls, platforms);
-    this.physics.add.overlap(player, skulls, killPlayer, null
+    this.physics.add.overlap(player, skulls, killPlayer, null, this);
+}
+
+//*************** GAMEPLAY FUNCTIONS *************//
+
+function pickUpJewel(player, jewel){
+    score++;
+    scoreText.setText("Score: " + score);
+    jewel.disableBody(true, true);
+    
+    if(jewels.count
