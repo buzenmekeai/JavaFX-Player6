@@ -134,4 +134,13 @@ function pickUpJewel(player, jewel){
     scoreText.setText("Score: " + score);
     jewel.disableBody(true, true);
     
-    if(jewels.count
+    if(jewels.countActive() === 0){
+        jewels.children.iterate(function(jewel){
+            jewel.enableBody(true, jewel.x, 16, true, true);
+            jewel.setBounce(Math.random());
+        }); 
+        
+        createSkull();
+    }
+}
+
