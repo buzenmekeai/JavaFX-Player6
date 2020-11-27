@@ -144,3 +144,12 @@ function pickUpJewel(player, jewel){
     }
 }
 
+function killPlayer(){
+    this.physics.pause();
+    player.setTint("#000000");
+}
+
+function checkPlayerMovement(){
+    if(cursors.right.isDown){
+        player.body.setVelocityX(100);
+        player.anims.
