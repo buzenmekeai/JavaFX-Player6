@@ -159,4 +159,11 @@ function checkPlayerMovement(){
         player.anims.play("walk", true);
         player.flipX = true;
     } else {
-        player.body.setVelocityX
+        player.body.setVelocityX(0);
+        player.anims.play("idle", true);
+    }
+    
+    if(cursors.space.isDown && player.body.touching.down){
+        player.body.setVelocityY(-400);
+    }
+}
