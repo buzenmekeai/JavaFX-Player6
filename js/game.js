@@ -152,4 +152,11 @@ function killPlayer(){
 function checkPlayerMovement(){
     if(cursors.right.isDown){
         player.body.setVelocityX(100);
-        player.anims.
+        player.anims.play("walk", true);
+        player.flipX = false;
+    } else if(cursors.left.isDown){
+        player.body.setVelocityX(-100);
+        player.anims.play("walk", true);
+        player.flipX = true;
+    } else {
+        player.body.setVelocityX
