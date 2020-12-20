@@ -271,3 +271,241 @@ function Class (definition)
         {
             base.apply(this, arguments);
         };
+    }
+    else
+    {
+        initialize = function () {};
+    }
+
+    if (definition.Extends)
+    {
+        initialize.prototype = Object.create(definition.Extends.prototype);
+        initialize.prototype.constructor = initialize;
+
+        //  For getOwnPropertyDescriptor to work, we need to act directly on the Extends (or Mixin)
+
+        Extends = definition.Extends;
+
+        delete definition.Extends;
+    }
+    else
+    {
+        initialize.prototype.constructor = initialize;
+    }
+
+    //  Grab the mixins, if they are specified...
+    var mixins = null;
+
+    if (definition.Mixins)
+    {
+        mixins = definition.Mixins;
+        delete definition.Mixins;
+    }
+
+    //  First, mixin if we can.
+    mixin(initialize, mixins);
+
+    //  Now we grab the actual definition which defines the overrides.
+    extend(initialize, definition, true, Extends);
+
+    return initialize;
+}
+
+Class.extend = extend;
+Class.mixin = mixin;
+Class.ignoreFinals = false;
+
+module.exports = Class;
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * A NOOP (No Operation) callback function.
+ *
+ * Used internally by Phaser when it's more expensive to determine if a callback exists
+ * than it is to just invoke an empty function.
+ *
+ * @function Phaser.Utils.NOOP
+ * @since 3.0.0
+ */
+var NOOP = function ()
+{
+    //  NOOP
+};
+
+module.exports = NOOP;
+
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Finds the key within the top level of the {@link source} object, or returns {@link defaultValue}
+ *
+ * @function Phaser.Utils.Objects.GetFastValue
+ * @since 3.0.0
+ *
+ * @param {object} source - The object to search
+ * @param {string} key - The key for the property on source. Must exist at the top level of the source object (no periods)
+ * @param {*} [defaultValue] - The default value to use if the key does not exist.
+ *
+ * @return {*} The value if found; otherwise, defaultValue (null if none provided)
+ */
+var GetFastValue = function (source, key, defaultValue)
+{
+    var t = typeof(source);
+
+    if (!source || t === 'number' || t === 'string')
+    {
+        return defaultValue;
+    }
+    else if (source.hasOwnProperty(key) && source[key] !== undefined)
+    {
+        return source[key];
+    }
+    else
+    {
+        return defaultValue;
+    }
+};
+
+module.exports = GetFastValue;
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  Adapted from [gl-matrix](https://github.com/toji/gl-matrix) by toji
+//  and [vecmath](https://github.com/mattdesl/vecmath) by mattdesl
+
+var Class = __webpack_require__(0);
+
+/**
+ * @typedef {object} Vector2Like
+ *
+ * @property {number} x - The x component.
+ * @property {number} y - The y component.
+ */
+
+/**
+ * @classdesc
+ * A representation of a vector in 2D space.
+ *
+ * A two-component vector.
+ *
+ * @class Vector2
+ * @memberof Phaser.Math
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {number|Vector2Like} [x] - The x component, or an object with `x` and `y` properties.
+ * @param {number} [y] - The y component.
+ */
+var Vector2 = new Class({
+
+    initialize:
+
+    function Vector2 (x, y)
+    {
+        /**
+         * The x component of this Vector.
+         *
+         * @name Phaser.Math.Vector2#x
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.x = 0;
+
+        /**
+         * The y component of this Vector.
+         *
+         * @name Phaser.Math.Vector2#y
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.y = 0;
+
+        if (typeof x === 'object')
+        {
+            this.x = x.x || 0;
+            this.y = x.y || 0;
+        }
+        else
+        {
+            if (y === undefined) { y = x; }
+
+            this.x = x || 0;
+            this.y = y || 0;
+        }
+    },
+
+    /**
+     * Make a clone of this Vector2.
+     *
+     * @method Phaser.Math.Vector2#clone
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Vector2} A clone of this Vector2.
+     */
+    clone: function ()
+    {
+        return new Vector2(this.x, this.y);
+    },
+
+    /**
+     * Copy the components of a given Vector into this Vector.
+     *
+     * @method Phaser.Math.Vector2#copy
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector2} src - The Vector to copy the components from.
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    copy: function (src)
+    {
+        this.x = src.x || 0;
+        this.y = src.y || 0;
+
+        return this;
+    },
+
+    /**
+     * Set the component values of this Vector from a given Vector2Like object.
+     *
+     * @method Phaser.Math.Vector2#setFromObject
+     * @since 3.0.0
+     *
+     * @param {Vector2Like} obj - The object containing the component values to set for this Vector.
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    setFromObject: function (obj)
+    {
+        this.x = obj.x || 0;
+        this.y = obj.y || 0;
