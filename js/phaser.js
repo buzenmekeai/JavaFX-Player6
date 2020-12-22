@@ -749,3 +749,228 @@ var Vector2 = new Class({
     /**
      * Calculate the distance between this Vector and the given Vector, squared.
      *
+     * @method Phaser.Math.Vector2#distanceSq
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector2} src - The Vector to calculate the distance to.
+     *
+     * @return {number} The distance from this Vector to the given Vector, squared.
+     */
+    distanceSq: function (src)
+    {
+        var dx = src.x - this.x;
+        var dy = src.y - this.y;
+
+        return dx * dx + dy * dy;
+    },
+
+    /**
+     * Calculate the length (or magnitude) of this Vector.
+     *
+     * @method Phaser.Math.Vector2#length
+     * @since 3.0.0
+     *
+     * @return {number} The length of this Vector.
+     */
+    length: function ()
+    {
+        var x = this.x;
+        var y = this.y;
+
+        return Math.sqrt(x * x + y * y);
+    },
+
+    /**
+     * Calculate the length of this Vector squared.
+     *
+     * @method Phaser.Math.Vector2#lengthSq
+     * @since 3.0.0
+     *
+     * @return {number} The length of this Vector, squared.
+     */
+    lengthSq: function ()
+    {
+        var x = this.x;
+        var y = this.y;
+
+        return x * x + y * y;
+    },
+
+    /**
+     * Normalize this Vector.
+     *
+     * Makes the vector a unit length vector (magnitude of 1) in the same direction.
+     *
+     * @method Phaser.Math.Vector2#normalize
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    normalize: function ()
+    {
+        var x = this.x;
+        var y = this.y;
+        var len = x * x + y * y;
+
+        if (len > 0)
+        {
+            len = 1 / Math.sqrt(len);
+
+            this.x = x * len;
+            this.y = y * len;
+        }
+
+        return this;
+    },
+
+    /**
+     * Right-hand normalize (make unit length) this Vector.
+     *
+     * @method Phaser.Math.Vector2#normalizeRightHand
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    normalizeRightHand: function ()
+    {
+        var x = this.x;
+
+        this.x = this.y * -1;
+        this.y = x;
+
+        return this;
+    },
+
+    /**
+     * Calculate the dot product of this Vector and the given Vector.
+     *
+     * @method Phaser.Math.Vector2#dot
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector2} src - The Vector2 to dot product with this Vector2.
+     *
+     * @return {number} The dot product of this Vector and the given Vector.
+     */
+    dot: function (src)
+    {
+        return this.x * src.x + this.y * src.y;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Math.Vector2#cross
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector2} src - [description]
+     *
+     * @return {number} [description]
+     */
+    cross: function (src)
+    {
+        return this.x * src.y - this.y * src.x;
+    },
+
+    /**
+     * Linearly interpolate between this Vector and the given Vector.
+     *
+     * Interpolates this Vector towards the given Vector.
+     *
+     * @method Phaser.Math.Vector2#lerp
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector2} src - The Vector2 to interpolate towards.
+     * @param {number} [t=0] - The interpolation percentage, between 0 and 1.
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    lerp: function (src, t)
+    {
+        if (t === undefined) { t = 0; }
+
+        var ax = this.x;
+        var ay = this.y;
+
+        this.x = ax + t * (src.x - ax);
+        this.y = ay + t * (src.y - ay);
+
+        return this;
+    },
+
+    /**
+     * Transform this Vector with the given Matrix.
+     *
+     * @method Phaser.Math.Vector2#transformMat3
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Matrix3} mat - The Matrix3 to transform this Vector2 with.
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    transformMat3: function (mat)
+    {
+        var x = this.x;
+        var y = this.y;
+        var m = mat.val;
+
+        this.x = m[0] * x + m[3] * y + m[6];
+        this.y = m[1] * x + m[4] * y + m[7];
+
+        return this;
+    },
+
+    /**
+     * Transform this Vector with the given Matrix.
+     *
+     * @method Phaser.Math.Vector2#transformMat4
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Matrix4} mat - The Matrix4 to transform this Vector2 with.
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    transformMat4: function (mat)
+    {
+        var x = this.x;
+        var y = this.y;
+        var m = mat.val;
+
+        this.x = m[0] * x + m[4] * y + m[12];
+        this.y = m[1] * x + m[5] * y + m[13];
+
+        return this;
+    },
+
+    /**
+     * Make this Vector the zero vector (0, 0).
+     *
+     * @method Phaser.Math.Vector2#reset
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    reset: function ()
+    {
+        this.x = 0;
+        this.y = 0;
+
+        return this;
+    }
+
+});
+
+/**
+ * A static zero Vector2 for use by reference.
+ *
+ * @constant
+ * @name Phaser.Math.Vector2.ZERO
+ * @type {Vector2}
+ * @since 3.1.0
+ */
+Vector2.ZERO = new Vector2();
+
+module.exports = Vector2;
+
+
+/***/ }),
+/* 4 */
