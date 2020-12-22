@@ -509,3 +509,243 @@ var Vector2 = new Class({
     {
         this.x = obj.x || 0;
         this.y = obj.y || 0;
+
+        return this;
+    },
+
+    /**
+     * Set the `x` and `y` components of the this Vector to the given `x` and `y` values.
+     *
+     * @method Phaser.Math.Vector2#set
+     * @since 3.0.0
+     *
+     * @param {number} x - The x value to set for this Vector.
+     * @param {number} [y=x] - The y value to set for this Vector.
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    set: function (x, y)
+    {
+        if (y === undefined) { y = x; }
+
+        this.x = x;
+        this.y = y;
+
+        return this;
+    },
+
+    /**
+     * This method is an alias for `Vector2.set`.
+     *
+     * @method Phaser.Math.Vector2#setTo
+     * @since 3.4.0
+     *
+     * @param {number} x - The x value to set for this Vector.
+     * @param {number} [y=x] - The y value to set for this Vector.
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    setTo: function (x, y)
+    {
+        return this.set(x, y);
+    },
+
+    /**
+     * Sets the `x` and `y` values of this object from a given polar coordinate.
+     *
+     * @method Phaser.Math.Vector2#setToPolar
+     * @since 3.0.0
+     *
+     * @param {number} azimuth - The angular coordinate, in radians.
+     * @param {number} [radius=1] - The radial coordinate (length).
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    setToPolar: function (azimuth, radius)
+    {
+        if (radius == null) { radius = 1; }
+
+        this.x = Math.cos(azimuth) * radius;
+        this.y = Math.sin(azimuth) * radius;
+
+        return this;
+    },
+
+    /**
+     * Check whether this Vector is equal to a given Vector.
+     *
+     * Performs a strict equality check against each Vector's components.
+     *
+     * @method Phaser.Math.Vector2#equals
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector2} v - The vector to compare with this Vector.
+     *
+     * @return {boolean} Whether the given Vector is equal to this Vector.
+     */
+    equals: function (v)
+    {
+        return ((this.x === v.x) && (this.y === v.y));
+    },
+
+    /**
+     * Calculate the angle between this Vector and the positive x-axis, in radians.
+     *
+     * @method Phaser.Math.Vector2#angle
+     * @since 3.0.0
+     *
+     * @return {number} The angle between this Vector, and the positive x-axis, given in radians.
+     */
+    angle: function ()
+    {
+        // computes the angle in radians with respect to the positive x-axis
+
+        var angle = Math.atan2(this.y, this.x);
+
+        if (angle < 0)
+        {
+            angle += 2 * Math.PI;
+        }
+
+        return angle;
+    },
+
+    /**
+     * Add a given Vector to this Vector. Addition is component-wise.
+     *
+     * @method Phaser.Math.Vector2#add
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector2} src - The Vector to add to this Vector.
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    add: function (src)
+    {
+        this.x += src.x;
+        this.y += src.y;
+
+        return this;
+    },
+
+    /**
+     * Subtract the given Vector from this Vector. Subtraction is component-wise.
+     *
+     * @method Phaser.Math.Vector2#subtract
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector2} src - The Vector to subtract from this Vector.
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    subtract: function (src)
+    {
+        this.x -= src.x;
+        this.y -= src.y;
+
+        return this;
+    },
+
+    /**
+     * Perform a component-wise multiplication between this Vector and the given Vector.
+     *
+     * Multiplies this Vector by the given Vector.
+     *
+     * @method Phaser.Math.Vector2#multiply
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector2} src - The Vector to multiply this Vector by.
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    multiply: function (src)
+    {
+        this.x *= src.x;
+        this.y *= src.y;
+
+        return this;
+    },
+
+    /**
+     * Scale this Vector by the given value.
+     *
+     * @method Phaser.Math.Vector2#scale
+     * @since 3.0.0
+     *
+     * @param {number} value - The value to scale this Vector by.
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    scale: function (value)
+    {
+        if (isFinite(value))
+        {
+            this.x *= value;
+            this.y *= value;
+        }
+        else
+        {
+            this.x = 0;
+            this.y = 0;
+        }
+
+        return this;
+    },
+
+    /**
+     * Perform a component-wise division between this Vector and the given Vector.
+     *
+     * Divides this Vector by the given Vector.
+     *
+     * @method Phaser.Math.Vector2#divide
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector2} src - The Vector to divide this Vector by.
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    divide: function (src)
+    {
+        this.x /= src.x;
+        this.y /= src.y;
+
+        return this;
+    },
+
+    /**
+     * Negate the `x` and `y` components of this Vector.
+     *
+     * @method Phaser.Math.Vector2#negate
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Vector2} This Vector2.
+     */
+    negate: function ()
+    {
+        this.x = -this.x;
+        this.y = -this.y;
+
+        return this;
+    },
+
+    /**
+     * Calculate the distance between this Vector and the given Vector.
+     *
+     * @method Phaser.Math.Vector2#distance
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector2} src - The Vector to calculate the distance to.
+     *
+     * @return {number} The distance from this Vector to the given Vector.
+     */
+    distance: function (src)
+    {
+        var dx = src.x - this.x;
+        var dy = src.y - this.y;
+
+        return Math.sqrt(dx * dx + dy * dy);
+    },
+
+    /**
+     * Calculate the distance between this Vector and the given Vector, squared.
+     *
