@@ -1205,3 +1205,220 @@ var GameObjectFactory = new Class({
         this.shutdown();
 
         this.scene.sys.events.off('start', this.start, this);
+
+        this.scene = null;
+        this.systems = null;
+
+        this.displayList = null;
+        this.updateList = null;
+    }
+
+});
+
+//  Static method called directly by the Game Object factory functions
+
+GameObjectFactory.register = function (factoryType, factoryFunction)
+{
+    if (!GameObjectFactory.prototype.hasOwnProperty(factoryType))
+    {
+        GameObjectFactory.prototype[factoryType] = factoryFunction;
+    }
+};
+
+PluginCache.register('GameObjectFactory', GameObjectFactory, 'add');
+
+module.exports = GameObjectFactory;
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+
+/**
+ * @classdesc
+ * Defines a Point in 2D space, with an x and y component.
+ *
+ * @class Point
+ * @memberof Phaser.Geom
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {number} [x=0] - The x coordinate of this Point.
+ * @param {number} [y=x] - The y coordinate of this Point.
+ */
+var Point = new Class({
+
+    initialize:
+
+    function Point (x, y)
+    {
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = x; }
+
+        /**
+         * The x coordinate of this Point.
+         *
+         * @name Phaser.Geom.Point#x
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.x = x;
+
+        /**
+         * The y coordinate of this Point.
+         *
+         * @name Phaser.Geom.Point#y
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.y = y;
+    },
+
+    /**
+     * Set the x and y coordinates of the point to the given values.
+     *
+     * @method Phaser.Geom.Point#setTo
+     * @since 3.0.0
+     *
+     * @param {number} [x=0] - The x coordinate of this Point.
+     * @param {number} [y=x] - The y coordinate of this Point.
+     *
+     * @return {Phaser.Geom.Point} This Point object.
+     */
+    setTo: function (x, y)
+    {
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = x; }
+
+        this.x = x;
+        this.y = y;
+
+        return this;
+    }
+
+});
+
+module.exports = Point;
+
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var types = {};
+
+var FileTypesManager = {
+
+    /**
+     * Static method called when a LoaderPlugin is created.
+     * 
+     * Loops through the local types object and injects all of them as
+     * properties into the LoaderPlugin instance.
+     *
+     * @method Phaser.Loader.FileTypesManager.register
+     * @since 3.0.0
+     * 
+     * @param {Phaser.Loader.LoaderPlugin} loader - The LoaderPlugin to install the types into.
+     */
+    install: function (loader)
+    {
+        for (var key in types)
+        {
+            loader[key] = types[key];
+        }
+    },
+
+    /**
+     * Static method called directly by the File Types.
+     * 
+     * The key is a reference to the function used to load the files via the Loader, i.e. `image`.
+     *
+     * @method Phaser.Loader.FileTypesManager.register
+     * @since 3.0.0
+     * 
+     * @param {string} key - The key that will be used as the method name in the LoaderPlugin.
+     * @param {function} factoryFunction - The function that will be called when LoaderPlugin.key is invoked.
+     */
+    register: function (key, factoryFunction)
+    {
+        types[key] = factoryFunction;
+    },
+
+    /**
+     * Removed all associated file types.
+     *
+     * @method Phaser.Loader.FileTypesManager.destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        types = {};
+    }
+
+};
+
+module.exports = FileTypesManager;
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * This is a slightly modified version of jQuery.isPlainObject.
+ * A plain object is an object whose internal class property is [object Object].
+ *
+ * @function Phaser.Utils.Objects.IsPlainObject
+ * @since 3.0.0
+ *
+ * @param {object} obj - The object to inspect.
+ *
+ * @return {boolean} `true` if the object is plain, otherwise `false`.
+ */
+var IsPlainObject = function (obj)
+{
+    // Not plain objects:
+    // - Any object or value whose internal [[Class]] property is not "[object Object]"
+    // - DOM nodes
+    // - window
+    if (typeof(obj) !== 'object' || obj.nodeType || obj === obj.window)
+    {
+        return false;
+    }
+
+    // Support: Firefox <20
+    // The try/catch suppresses exceptions thrown when attempting to access
+    // the "constructor" property of certain host objects, ie. |window.location|
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=814622
+    try
+    {
+        if (obj.constructor && !({}).hasOwnProperty.call(obj.constructor.prototype, 'isPrototypeOf'))
+        {
+            return false;
+        }
+    }
+    catch (e)
+    {
+        return false;
