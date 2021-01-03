@@ -2485,3 +2485,238 @@ var GetAdvancedValue = function (source, key, defaultValue)
         }
     }
     else if (typeof value === 'function')
+    {
+        return value(key);
+    }
+
+    return value;
+};
+
+module.exports = GetAdvancedValue;
+
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var PluginCache = __webpack_require__(15);
+
+/**
+ * @classdesc
+ * The Game Object Creator is a Scene plugin that allows you to quickly create many common
+ * types of Game Objects and return them. Unlike the Game Object Factory, they are not automatically
+ * added to the Scene.
+ *
+ * Game Objects directly register themselves with the Creator and inject their own creation
+ * methods into the class.
+ *
+ * @class GameObjectCreator
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Game Object Factory belongs.
+ */
+var GameObjectCreator = new Class({
+
+    initialize:
+
+    function GameObjectCreator (scene)
+    {
+        /**
+         * The Scene to which this Game Object Creator belongs.
+         *
+         * @name Phaser.GameObjects.GameObjectCreator#scene
+         * @type {Phaser.Scene}
+         * @protected
+         * @since 3.0.0
+         */
+        this.scene = scene;
+
+        /**
+         * A reference to the Scene.Systems.
+         *
+         * @name Phaser.GameObjects.GameObjectCreator#systems
+         * @type {Phaser.Scenes.Systems}
+         * @protected
+         * @since 3.0.0
+         */
+        this.systems = scene.sys;
+
+        /**
+         * A reference to the Scene Display List.
+         *
+         * @name Phaser.GameObjects.GameObjectCreator#displayList
+         * @type {Phaser.GameObjects.DisplayList}
+         * @protected
+         * @since 3.0.0
+         */
+        this.displayList;
+
+        /**
+         * A reference to the Scene Update List.
+         *
+         * @name Phaser.GameObjects.GameObjectCreator#updateList;
+         * @type {Phaser.GameObjects.UpdateList}
+         * @protected
+         * @since 3.0.0
+         */
+        this.updateList;
+
+        scene.sys.events.once('boot', this.boot, this);
+        scene.sys.events.on('start', this.start, this);
+    },
+
+    /**
+     * This method is called automatically, only once, when the Scene is first created.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.GameObjects.GameObjectCreator#boot
+     * @private
+     * @since 3.5.1
+     */
+    boot: function ()
+    {
+        this.displayList = this.systems.displayList;
+        this.updateList = this.systems.updateList;
+
+        this.systems.events.once('destroy', this.destroy, this);
+    },
+
+    /**
+     * This method is called automatically by the Scene when it is starting up.
+     * It is responsible for creating local systems, properties and listening for Scene events.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.GameObjects.GameObjectCreator#start
+     * @private
+     * @since 3.5.0
+     */
+    start: function ()
+    {
+        this.systems.events.once('shutdown', this.shutdown, this);
+    },
+
+    /**
+     * The Scene that owns this plugin is shutting down.
+     * We need to kill and reset all internal properties as well as stop listening to Scene events.
+     *
+     * @method Phaser.GameObjects.GameObjectCreator#shutdown
+     * @private
+     * @since 3.0.0
+     */
+    shutdown: function ()
+    {
+        this.systems.events.off('shutdown', this.shutdown, this);
+    },
+
+    /**
+     * The Scene that owns this plugin is being destroyed.
+     * We need to shutdown and then kill off all external references.
+     *
+     * @method Phaser.GameObjects.GameObjectCreator#destroy
+     * @private
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.shutdown();
+
+        this.scene.sys.events.off('start', this.start, this);
+
+        this.scene = null;
+        this.systems = null;
+        this.displayList = null;
+        this.updateList = null;
+    }
+
+});
+
+//  Static method called directly by the Game Object creator functions
+
+GameObjectCreator.register = function (factoryType, factoryFunction)
+{
+    if (!GameObjectCreator.prototype.hasOwnProperty(factoryType))
+    {
+        GameObjectCreator.prototype[factoryType] = factoryFunction;
+    }
+};
+
+PluginCache.register('GameObjectCreator', GameObjectCreator, 'make');
+
+module.exports = GameObjectCreator;
+
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.GameObjects.Components
+ */
+
+module.exports = {
+
+    Alpha: __webpack_require__(401),
+    Animation: __webpack_require__(427),
+    BlendMode: __webpack_require__(400),
+    ComputedSize: __webpack_require__(1045),
+    Crop: __webpack_require__(1044),
+    Depth: __webpack_require__(399),
+    Flip: __webpack_require__(1043),
+    GetBounds: __webpack_require__(1042),
+    Mask: __webpack_require__(395),
+    Origin: __webpack_require__(1041),
+    Pipeline: __webpack_require__(186),
+    ScaleMode: __webpack_require__(1040),
+    ScrollFactor: __webpack_require__(392),
+    Size: __webpack_require__(1039),
+    Texture: __webpack_require__(1038),
+    TextureCrop: __webpack_require__(1037),
+    Tint: __webpack_require__(1036),
+    ToJSON: __webpack_require__(391),
+    Transform: __webpack_require__(390),
+    TransformMatrix: __webpack_require__(38),
+    Visible: __webpack_require__(389)
+
+};
+
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  Contains the plugins that Phaser uses globally and locally.
+//  These are the source objects, not instantiated.
+var corePlugins = {};
+
+//  Contains the plugins that the dev has loaded into their game
+//  These are the source objects, not instantiated.
+var customPlugins = {};
+
+/**
+ * @typedef {object} CorePluginContainer
+ *
+ * @property {string} key - The unique name of this plugin in the core plugin cache.
+ * @property {function} plugin - The plugin to be stored. Should be the source object, not instantiated.
+ * @property {string} [mapping] - If this plugin is to be injected into the Scene Systems, this is the property key map used.
+ * @property {boolean} [custom=false] - Core Scene plugin or a Custom Scene plugin?
