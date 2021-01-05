@@ -3137,3 +3137,196 @@ var FILE_CONST = {
      * @since 3.0.0
      */
     LOADER_SHUTDOWN: 4,
+
+    /**
+     * The Loader has been destroyed.
+     * 
+     * @name Phaser.Loader.LOADER_DESTROYED
+     * @type {integer}
+     * @since 3.0.0
+     */
+    LOADER_DESTROYED: 5,
+
+    /**
+     * File is in the load queue but not yet started
+     * 
+     * @name Phaser.Loader.FILE_PENDING
+     * @type {integer}
+     * @since 3.0.0
+     */
+    FILE_PENDING: 10,
+
+    /**
+     * File has been started to load by the loader (onLoad called)
+     * 
+     * @name Phaser.Loader.FILE_LOADING
+     * @type {integer}
+     * @since 3.0.0
+     */
+    FILE_LOADING: 11,
+
+    /**
+     * File has loaded successfully, awaiting processing    
+     * 
+     * @name Phaser.Loader.FILE_LOADED
+     * @type {integer}
+     * @since 3.0.0
+     */
+    FILE_LOADED: 12,
+
+    /**
+     * File failed to load
+     * 
+     * @name Phaser.Loader.FILE_FAILED
+     * @type {integer}
+     * @since 3.0.0
+     */
+    FILE_FAILED: 13,
+
+    /**
+     * File is being processed (onProcess callback)
+     * 
+     * @name Phaser.Loader.FILE_PROCESSING
+     * @type {integer}
+     * @since 3.0.0
+     */
+    FILE_PROCESSING: 14,
+
+    /**
+     * The File has errored somehow during processing.
+     * 
+     * @name Phaser.Loader.FILE_ERRORED
+     * @type {integer}
+     * @since 3.0.0
+     */
+    FILE_ERRORED: 16,
+
+    /**
+     * File has finished processing.
+     * 
+     * @name Phaser.Loader.FILE_COMPLETE
+     * @type {integer}
+     * @since 3.0.0
+     */
+    FILE_COMPLETE: 17,
+
+    /**
+     * File has been destroyed
+     * 
+     * @name Phaser.Loader.FILE_DESTROYED
+     * @type {integer}
+     * @since 3.0.0
+     */
+    FILE_DESTROYED: 18,
+
+    /**
+     * File was populated from local data and doesn't need an HTTP request
+     * 
+     * @name Phaser.Loader.FILE_POPULATED
+     * @type {integer}
+     * @since 3.0.0
+     */
+    FILE_POPULATED: 19
+
+};
+
+module.exports = FILE_CONST;
+
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var ComponentsToJSON = __webpack_require__(391);
+var DataManager = __webpack_require__(123);
+var EventEmitter = __webpack_require__(11);
+
+/**
+ * @classdesc
+ * The base class that all Game Objects extend.
+ * You don't create GameObjects directly and they cannot be added to the display list.
+ * Instead, use them as the base for your own custom classes.
+ *
+ * @class GameObject
+ * @memberof Phaser.GameObjects
+ * @extends Phaser.Events.EventEmitter
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Game Object belongs.
+ * @param {string} type - A textual representation of the type of Game Object, i.e. `sprite`.
+ */
+var GameObject = new Class({
+
+    Extends: EventEmitter,
+
+    initialize:
+
+    function GameObject (scene, type)
+    {
+        EventEmitter.call(this);
+
+        /**
+         * The Scene to which this Game Object belongs.
+         * Game Objects can only belong to one Scene.
+         *
+         * @name Phaser.GameObjects.GameObject#scene
+         * @type {Phaser.Scene}
+         * @protected
+         * @since 3.0.0
+         */
+        this.scene = scene;
+
+        /**
+         * A textual representation of this Game Object, i.e. `sprite`.
+         * Used internally by Phaser but is available for your own custom classes to populate.
+         *
+         * @name Phaser.GameObjects.GameObject#type
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.type = type;
+
+        /**
+         * The parent Container of this Game Object, if it has one.
+         *
+         * @name Phaser.GameObjects.GameObject#parentContainer
+         * @type {Phaser.GameObjects.Container}
+         * @since 3.4.0
+         */
+        this.parentContainer = null;
+
+        /**
+         * The name of this Game Object.
+         * Empty by default and never populated by Phaser, this is left for developers to use.
+         *
+         * @name Phaser.GameObjects.GameObject#name
+         * @type {string}
+         * @default ''
+         * @since 3.0.0
+         */
+        this.name = '';
+
+        /**
+         * The active state of this Game Object.
+         * A Game Object with an active state of `true` is processed by the Scenes UpdateList, if added to it.
+         * An active object is one which is having its logic and internal systems updated.
+         *
+         * @name Phaser.GameObjects.GameObject#active
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.active = true;
+
+        /**
+         * The Tab Index of the Game Object.
+         * Reserved for future use by plugins and the Input Manager.
+         *
