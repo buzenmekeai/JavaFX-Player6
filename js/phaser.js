@@ -3784,3 +3784,229 @@ var GameObject = new Class({
         }
 
         if (this.input)
+        {
+            sys.input.clear(this);
+            this.input = undefined;
+        }
+
+        if (this.data)
+        {
+            this.data.destroy();
+
+            this.data = undefined;
+        }
+
+        if (this.body)
+        {
+            this.body.destroy();
+            this.body = undefined;
+        }
+
+        //  Tell the Scene to re-sort the children
+        if (!fromScene)
+        {
+            sys.queueDepthSort();
+        }
+
+        this.active = false;
+        this.visible = false;
+
+        this.scene = undefined;
+
+        this.parentContainer = undefined;
+
+        this.removeAllListeners();
+    }
+
+});
+
+/**
+ * The bitmask that `GameObject.renderFlags` is compared against to determine if the Game Object will render or not.
+ *
+ * @constant {integer} RENDER_MASK
+ * @memberof Phaser.GameObjects.GameObject
+ * @default
+ */
+GameObject.RENDER_MASK = 15;
+
+module.exports = GameObject;
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var IsPlainObject = __webpack_require__(8);
+
+// @param {boolean} deep - Perform a deep copy?
+// @param {object} target - The target object to copy to.
+// @return {object} The extended object.
+
+/**
+ * This is a slightly modified version of http://api.jquery.com/jQuery.extend/
+ *
+ * @function Phaser.Utils.Objects.Extend
+ * @since 3.0.0
+ *
+ * @return {object} [description]
+ */
+var Extend = function ()
+{
+    var options, name, src, copy, copyIsArray, clone,
+        target = arguments[0] || {},
+        i = 1,
+        length = arguments.length,
+        deep = false;
+
+    // Handle a deep copy situation
+    if (typeof target === 'boolean')
+    {
+        deep = target;
+        target = arguments[1] || {};
+
+        // skip the boolean and the target
+        i = 2;
+    }
+
+    // extend Phaser if only one argument is passed
+    if (length === i)
+    {
+        target = this;
+        --i;
+    }
+
+    for (; i < length; i++)
+    {
+        // Only deal with non-null/undefined values
+        if ((options = arguments[i]) != null)
+        {
+            // Extend the base object
+            for (name in options)
+            {
+                src = target[name];
+                copy = options[name];
+
+                // Prevent never-ending loop
+                if (target === copy)
+                {
+                    continue;
+                }
+
+                // Recurse if we're merging plain objects or arrays
+                if (deep && copy && (IsPlainObject(copy) || (copyIsArray = Array.isArray(copy))))
+                {
+                    if (copyIsArray)
+                    {
+                        copyIsArray = false;
+                        clone = src && Array.isArray(src) ? src : [];
+                    }
+                    else
+                    {
+                        clone = src && IsPlainObject(src) ? src : {};
+                    }
+
+                    // Never move original objects, clone them
+                    target[name] = Extend(deep, clone, copy);
+
+                // Don't bring in undefined values
+                }
+                else if (copy !== undefined)
+                {
+                    target[name] = copy;
+                }
+            }
+        }
+    }
+
+    // Return the modified object
+    return target;
+};
+
+module.exports = Extend;
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var CONST = __webpack_require__(18);
+var GetFastValue = __webpack_require__(2);
+var GetURL = __webpack_require__(141);
+var MergeXHRSettings = __webpack_require__(140);
+var XHRLoader = __webpack_require__(254);
+var XHRSettings = __webpack_require__(105);
+
+/**
+ * @typedef {object} FileConfig
+ *
+ * @property {string} type - The file type string (image, json, etc) for sorting within the Loader.
+ * @property {string} key - Unique cache key (unique within its file type)
+ * @property {string} [url] - The URL of the file, not including baseURL.
+ * @property {string} [path] - The path of the file, not including the baseURL.
+ * @property {string} [extension] - The default extension this file uses.
+ * @property {XMLHttpRequestResponseType} [responseType] - The responseType to be used by the XHR request.
+ * @property {(XHRSettingsObject|false)} [xhrSettings=false] - Custom XHR Settings specific to this file and merged with the Loader defaults.
+ * @property {any} [config] - A config object that can be used by file types to store transitional data.
+ */
+
+/**
+ * @classdesc
+ * The base File class used by all File Types that the Loader can support.
+ * You shouldn't create an instance of a File directly, but should extend it with your own class, setting a custom type and processing methods.
+ *
+ * @class File
+ * @memberof Phaser.Loader
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Loader.LoaderPlugin} loader - The Loader that is going to load this File.
+ * @param {FileConfig} fileConfig - The file configuration object, as created by the file type.
+ */
+var File = new Class({
+
+    initialize:
+
+    function File (loader, fileConfig)
+    {
+        /**
+         * A reference to the Loader that is going to load this file.
+         *
+         * @name Phaser.Loader.File#loader
+         * @type {Phaser.Loader.LoaderPlugin}
+         * @since 3.0.0
+         */
+        this.loader = loader;
+
+        /**
+         * A reference to the Cache, or Texture Manager, that is going to store this file if it loads.
+         *
+         * @name Phaser.Loader.File#cache
+         * @type {(Phaser.Cache.BaseCache|Phaser.Textures.TextureManager)}
+         * @since 3.7.0
+         */
+        this.cache = GetFastValue(fileConfig, 'cache', false);
+
+        /**
+         * The file type string (image, json, etc) for sorting within the Loader.
+         *
+         * @name Phaser.Loader.File#type
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.type = GetFastValue(fileConfig, 'type', false);
+
+        /**
+         * Unique cache key (unique within its file type)
