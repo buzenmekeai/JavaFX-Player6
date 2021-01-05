@@ -3559,3 +3559,228 @@ var GameObject = new Class({
      * @return {*} The value belonging to the given key, or an array of values, the order of which will match the input array.
      */
     getData: function (key)
+    {
+        if (!this.data)
+        {
+            this.data = new DataManager(this);
+        }
+
+        return this.data.get(key);
+    },
+
+    /**
+     * Pass this Game Object to the Input Manager to enable it for Input.
+     *
+     * Input works by using hit areas, these are nearly always geometric shapes, such as rectangles or circles, that act as the hit area
+     * for the Game Object. However, you can provide your own hit area shape and callback, should you wish to handle some more advanced
+     * input detection.
+     *
+     * If no arguments are provided it will try and create a rectangle hit area based on the texture frame the Game Object is using. If
+     * this isn't a texture-bound object, such as a Graphics or BitmapText object, this will fail, and you'll need to provide a specific
+     * shape for it to use.
+     *
+     * You can also provide an Input Configuration Object as the only argument to this method.
+     *
+     * @method Phaser.GameObjects.GameObject#setInteractive
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Input.InputConfiguration|any)} [shape] - Either an input configuration object, or a geometric shape that defines the hit area for the Game Object. If not specified a Rectangle will be used.
+     * @param {HitAreaCallback} [callback] - A callback to be invoked when the Game Object is interacted with. If you provide a shape you must also provide a callback.
+     * @param {boolean} [dropZone=false] - Should this Game Object be treated as a drop zone target?
+     *
+     * @return {this} This GameObject.
+     */
+    setInteractive: function (shape, callback, dropZone)
+    {
+        this.scene.sys.input.enable(this, shape, callback, dropZone);
+
+        return this;
+    },
+
+    /**
+     * If this Game Object has previously been enabled for input, this will disable it.
+     *
+     * An object that is disabled for input stops processing or being considered for
+     * input events, but can be turned back on again at any time by simply calling
+     * `setInteractive()` with no arguments provided.
+     *
+     * If want to completely remove interaction from this Game Object then use `removeInteractive` instead.
+     *
+     * @method Phaser.GameObjects.GameObject#disableInteractive
+     * @since 3.7.0
+     *
+     * @return {this} This GameObject.
+     */
+    disableInteractive: function ()
+    {
+        if (this.input)
+        {
+            this.input.enabled = false;
+        }
+
+        return this;
+    },
+
+    /**
+     * If this Game Object has previously been enabled for input, this will queue it
+     * for removal, causing it to no longer be interactive. The removal happens on
+     * the next game step, it is not immediate.
+     *
+     * The Interactive Object that was assigned to this Game Object will be destroyed,
+     * removed from the Input Manager and cleared from this Game Object.
+     *
+     * If you wish to re-enable this Game Object at a later date you will need to
+     * re-create its InteractiveObject by calling `setInteractive` again.
+     *
+     * If you wish to only temporarily stop an object from receiving input then use
+     * `disableInteractive` instead, as that toggles the interactive state, where-as
+     * this erases it completely.
+     * 
+     * If you wish to resize a hit area, don't remove and then set it as being
+     * interactive. Instead, access the hitarea object directly and resize the shape
+     * being used. I.e.: `sprite.input.hitArea.setSize(width, height)` (assuming the
+     * shape is a Rectangle, which it is by default.)
+     *
+     * @method Phaser.GameObjects.GameObject#removeInteractive
+     * @since 3.7.0
+     *
+     * @return {this} This GameObject.
+     */
+    removeInteractive: function ()
+    {
+        this.scene.sys.input.clear(this);
+
+        this.input = undefined;
+
+        return this;
+    },
+
+    /**
+     * To be overridden by custom GameObjects. Allows base objects to be used in a Pool.
+     *
+     * @method Phaser.GameObjects.GameObject#update
+     * @since 3.0.0
+     *
+     * @param {...*} [args] - args
+     */
+    update: function ()
+    {
+    },
+
+    /**
+     * Returns a JSON representation of the Game Object.
+     *
+     * @method Phaser.GameObjects.GameObject#toJSON
+     * @since 3.0.0
+     *
+     * @return {JSONGameObject} A JSON representation of the Game Object.
+     */
+    toJSON: function ()
+    {
+        return ComponentsToJSON(this);
+    },
+
+    /**
+     * Compares the renderMask with the renderFlags to see if this Game Object will render or not.
+     * Also checks the Game Object against the given Cameras exclusion list.
+     *
+     * @method Phaser.GameObjects.GameObject#willRender
+     * @since 3.0.0
+     *
+     * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera to check against this Game Object.
+     *
+     * @return {boolean} True if the Game Object should be rendered, otherwise false.
+     */
+    willRender: function (camera)
+    {
+        return !(GameObject.RENDER_MASK !== this.renderFlags || (this.cameraFilter > 0 && (this.cameraFilter & camera.id)));
+    },
+
+    /**
+     * Returns an array containing the display list index of either this Game Object, or if it has one,
+     * its parent Container. It then iterates up through all of the parent containers until it hits the
+     * root of the display list (which is index 0 in the returned array).
+     *
+     * Used internally by the InputPlugin but also useful if you wish to find out the display depth of
+     * this Game Object and all of its ancestors.
+     *
+     * @method Phaser.GameObjects.GameObject#getIndexList
+     * @since 3.4.0
+     *
+     * @return {integer[]} An array of display list position indexes.
+     */
+    getIndexList: function ()
+    {
+        // eslint-disable-next-line consistent-this
+        var child = this;
+        var parent = this.parentContainer;
+
+        var indexes = [];
+
+        while (parent)
+        {
+            // indexes.unshift([parent.getIndex(child), parent.name]);
+            indexes.unshift(parent.getIndex(child));
+
+            child = parent;
+
+            if (!parent.parentContainer)
+            {
+                break;
+            }
+            else
+            {
+                parent = parent.parentContainer;
+            }
+        }
+
+        // indexes.unshift([this.scene.sys.displayList.getIndex(child), 'root']);
+        indexes.unshift(this.scene.sys.displayList.getIndex(child));
+
+        return indexes;
+    },
+
+    /**
+     * Destroys this Game Object removing it from the Display List and Update List and
+     * severing all ties to parent resources.
+     *
+     * Also removes itself from the Input Manager and Physics Manager if previously enabled.
+     *
+     * Use this to remove a Game Object from your game if you don't ever plan to use it again.
+     * As long as no reference to it exists within your own code it should become free for
+     * garbage collection by the browser.
+     *
+     * If you just want to temporarily disable an object then look at using the
+     * Game Object Pool instead of destroying it, as destroyed objects cannot be resurrected.
+     *
+     * @method Phaser.GameObjects.GameObject#destroy
+     * @since 3.0.0
+     * 
+     * @param {boolean} [fromScene=false] - Is this Game Object being destroyed as the result of a Scene shutdown?
+     */
+    destroy: function (fromScene)
+    {
+        if (fromScene === undefined) { fromScene = false; }
+
+        //  This Game Object has already been destroyed
+        if (!this.scene || this.ignoreDestroy)
+        {
+            return;
+        }
+
+        if (this.preDestroy)
+        {
+            this.preDestroy.call(this);
+        }
+
+        this.emit('destroy', this);
+
+        var sys = this.scene.sys;
+
+        if (!fromScene)
+        {
+            sys.displayList.remove(this);
+            sys.updateList.remove(this);
+        }
+
+        if (this.input)
