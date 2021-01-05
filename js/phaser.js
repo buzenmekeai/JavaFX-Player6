@@ -3330,3 +3330,232 @@ var GameObject = new Class({
          * The Tab Index of the Game Object.
          * Reserved for future use by plugins and the Input Manager.
          *
+         * @name Phaser.GameObjects.GameObject#tabIndex
+         * @type {integer}
+         * @default -1
+         * @since 3.0.0
+         */
+        this.tabIndex = -1;
+
+        /**
+         * A Data Manager.
+         * It allows you to store, query and get key/value paired information specific to this Game Object.
+         * `null` by default. Automatically created if you use `getData` or `setData` or `setDataEnabled`.
+         *
+         * @name Phaser.GameObjects.GameObject#data
+         * @type {Phaser.Data.DataManager}
+         * @default null
+         * @since 3.0.0
+         */
+        this.data = null;
+
+        /**
+         * The flags that are compared against `RENDER_MASK` to determine if this Game Object will render or not.
+         * The bits are 0001 | 0010 | 0100 | 1000 set by the components Visible, Alpha, Transform and Texture respectively.
+         * If those components are not used by your custom class then you can use this bitmask as you wish.
+         *
+         * @name Phaser.GameObjects.GameObject#renderFlags
+         * @type {integer}
+         * @default 15
+         * @since 3.0.0
+         */
+        this.renderFlags = 15;
+
+        /**
+         * A bitmask that controls if this Game Object is drawn by a Camera or not.
+         * Not usually set directly, instead call `Camera.ignore`, however you can
+         * set this property directly using the Camera.id property:
+         *
+         * @example
+         * this.cameraFilter |= camera.id
+         *
+         * @name Phaser.GameObjects.GameObject#cameraFilter
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.cameraFilter = 0;
+
+        /**
+         * If this Game Object is enabled for input then this property will contain an InteractiveObject instance.
+         * Not usually set directly. Instead call `GameObject.setInteractive()`.
+         *
+         * @name Phaser.GameObjects.GameObject#input
+         * @type {?Phaser.Input.InteractiveObject}
+         * @default null
+         * @since 3.0.0
+         */
+        this.input = null;
+
+        /**
+         * If this Game Object is enabled for physics then this property will contain a reference to a Physics Body.
+         *
+         * @name Phaser.GameObjects.GameObject#body
+         * @type {?(object|Phaser.Physics.Arcade.Body|Phaser.Physics.Impact.Body)}
+         * @default null
+         * @since 3.0.0
+         */
+        this.body = null;
+
+        /**
+         * This Game Object will ignore all calls made to its destroy method if this flag is set to `true`.
+         * This includes calls that may come from a Group, Container or the Scene itself.
+         * While it allows you to persist a Game Object across Scenes, please understand you are entirely
+         * responsible for managing references to and from this Game Object.
+         *
+         * @name Phaser.GameObjects.GameObject#ignoreDestroy
+         * @type {boolean}
+         * @default false
+         * @since 3.5.0
+         */
+        this.ignoreDestroy = false;
+
+        //  Tell the Scene to re-sort the children
+        scene.sys.queueDepthSort();
+    },
+
+    /**
+     * Sets the `active` property of this Game Object and returns this Game Object for further chaining.
+     * A Game Object with its `active` property set to `true` will be updated by the Scenes UpdateList.
+     *
+     * @method Phaser.GameObjects.GameObject#setActive
+     * @since 3.0.0
+     *
+     * @param {boolean} value - True if this Game Object should be set as active, false if not.
+     *
+     * @return {this} This GameObject.
+     */
+    setActive: function (value)
+    {
+        this.active = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the `name` property of this Game Object and returns this Game Object for further chaining.
+     * The `name` property is not populated by Phaser and is presented for your own use.
+     *
+     * @method Phaser.GameObjects.GameObject#setName
+     * @since 3.0.0
+     *
+     * @param {string} value - The name to be given to this Game Object.
+     *
+     * @return {this} This GameObject.
+     */
+    setName: function (value)
+    {
+        this.name = value;
+
+        return this;
+    },
+
+    /**
+     * Adds a Data Manager component to this Game Object.
+     *
+     * @method Phaser.GameObjects.GameObject#setDataEnabled
+     * @since 3.0.0
+     * @see Phaser.Data.DataManager
+     *
+     * @return {this} This GameObject.
+     */
+    setDataEnabled: function ()
+    {
+        if (!this.data)
+        {
+            this.data = new DataManager(this);
+        }
+
+        return this;
+    },
+
+    /**
+     * Allows you to store a key value pair within this Game Objects Data Manager.
+     *
+     * If the Game Object has not been enabled for data (via `setDataEnabled`) then it will be enabled
+     * before setting the value.
+     *
+     * If the key doesn't already exist in the Data Manager then it is created.
+     *
+     * ```javascript
+     * sprite.setData('name', 'Red Gem Stone');
+     * ```
+     *
+     * You can also pass in an object of key value pairs as the first argument:
+     *
+     * ```javascript
+     * sprite.setData({ name: 'Red Gem Stone', level: 2, owner: 'Link', gold: 50 });
+     * ```
+     *
+     * To get a value back again you can call `getData`:
+     *
+     * ```javascript
+     * sprite.getData('gold');
+     * ```
+     *
+     * Or you can access the value directly via the `values` property, where it works like any other variable:
+     *
+     * ```javascript
+     * sprite.data.values.gold += 50;
+     * ```
+     *
+     * When the value is first set, a `setdata` event is emitted from this Game Object.
+     *
+     * If the key already exists, a `changedata` event is emitted instead, along an event named after the key.
+     * For example, if you updated an existing key called `PlayerLives` then it would emit the event `changedata_PlayerLives`.
+     * These events will be emitted regardless if you use this method to set the value, or the direct `values` setter.
+     *
+     * Please note that the data keys are case-sensitive and must be valid JavaScript Object property strings.
+     * This means the keys `gold` and `Gold` are treated as two unique values within the Data Manager.
+     *
+     * @method Phaser.GameObjects.GameObject#setData
+     * @since 3.0.0
+     *
+     * @param {(string|object)} key - The key to set the value for. Or an object or key value pairs. If an object the `data` argument is ignored.
+     * @param {*} data - The value to set for the given key. If an object is provided as the key this argument is ignored.
+     *
+     * @return {this} This GameObject.
+     */
+    setData: function (key, value)
+    {
+        if (!this.data)
+        {
+            this.data = new DataManager(this);
+        }
+
+        this.data.set(key, value);
+
+        return this;
+    },
+
+    /**
+     * Retrieves the value for the given key in this Game Objects Data Manager, or undefined if it doesn't exist.
+     *
+     * You can also access values via the `values` object. For example, if you had a key called `gold` you can do either:
+     *
+     * ```javascript
+     * sprite.getData('gold');
+     * ```
+     *
+     * Or access the value directly:
+     *
+     * ```javascript
+     * sprite.data.values.gold;
+     * ```
+     *
+     * You can also pass in an array of keys, in which case an array of values will be returned:
+     *
+     * ```javascript
+     * sprite.getData([ 'gold', 'armor', 'health' ]);
+     * ```
+     *
+     * This approach is useful for destructuring arrays in ES6.
+     *
+     * @method Phaser.GameObjects.GameObject#getData
+     * @since 3.0.0
+     *
+     * @param {(string|string[])} key - The key of the value to retrieve, or an array of keys.
+     *
+     * @return {*} The value belonging to the given key, or an array of values, the order of which will match the input array.
+     */
+    getData: function (key)
