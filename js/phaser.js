@@ -4010,3 +4010,233 @@ var File = new Class({
 
         /**
          * Unique cache key (unique within its file type)
+         *
+         * @name Phaser.Loader.File#key
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.key = GetFastValue(fileConfig, 'key', false);
+
+        var loadKey = this.key;
+
+        if (loader.prefix && loader.prefix !== '')
+        {
+            this.key = loader.prefix + loadKey;
+        }
+
+        if (!this.type || !this.key)
+        {
+            throw new Error('Error calling \'Loader.' + this.type + '\' invalid key provided.');
+        }
+
+        /**
+         * The URL of the file, not including baseURL.
+         * Automatically has Loader.path prepended to it.
+         *
+         * @name Phaser.Loader.File#url
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.url = GetFastValue(fileConfig, 'url');
+
+        if (this.url === undefined)
+        {
+            this.url = loader.path + loadKey + '.' + GetFastValue(fileConfig, 'extension', '');
+        }
+        else if (typeof(this.url) !== 'function')
+        {
+            this.url = loader.path + this.url;
+        }
+
+        /**
+         * The final URL this file will load from, including baseURL and path.
+         * Set automatically when the Loader calls 'load' on this file.
+         *
+         * @name Phaser.Loader.File#src
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.src = '';
+
+        /**
+         * The merged XHRSettings for this file.
+         *
+         * @name Phaser.Loader.File#xhrSettings
+         * @type {XHRSettingsObject}
+         * @since 3.0.0
+         */
+        this.xhrSettings = XHRSettings(GetFastValue(fileConfig, 'responseType', undefined));
+
+        if (GetFastValue(fileConfig, 'xhrSettings', false))
+        {
+            this.xhrSettings = MergeXHRSettings(this.xhrSettings, GetFastValue(fileConfig, 'xhrSettings', {}));
+        }
+
+        /**
+         * The XMLHttpRequest instance (as created by XHR Loader) that is loading this File.
+         *
+         * @name Phaser.Loader.File#xhrLoader
+         * @type {?XMLHttpRequest}
+         * @since 3.0.0
+         */
+        this.xhrLoader = null;
+
+        /**
+         * The current state of the file. One of the FILE_CONST values.
+         *
+         * @name Phaser.Loader.File#state
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.state = (typeof(this.url) === 'function') ? CONST.FILE_POPULATED : CONST.FILE_PENDING;
+
+        /**
+         * The total size of this file.
+         * Set by onProgress and only if loading via XHR.
+         *
+         * @name Phaser.Loader.File#bytesTotal
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.bytesTotal = 0;
+
+        /**
+         * Updated as the file loads.
+         * Only set if loading via XHR.
+         *
+         * @name Phaser.Loader.File#bytesLoaded
+         * @type {number}
+         * @default -1
+         * @since 3.0.0
+         */
+        this.bytesLoaded = -1;
+
+        /**
+         * A percentage value between 0 and 1 indicating how much of this file has loaded.
+         * Only set if loading via XHR.
+         *
+         * @name Phaser.Loader.File#percentComplete
+         * @type {number}
+         * @default -1
+         * @since 3.0.0
+         */
+        this.percentComplete = -1;
+
+        /**
+         * For CORs based loading.
+         * If this is undefined then the File will check BaseLoader.crossOrigin and use that (if set)
+         *
+         * @name Phaser.Loader.File#crossOrigin
+         * @type {(string|undefined)}
+         * @since 3.0.0
+         */
+        this.crossOrigin = undefined;
+
+        /**
+         * The processed file data, stored here after the file has loaded.
+         *
+         * @name Phaser.Loader.File#data
+         * @type {*}
+         * @since 3.0.0
+         */
+        this.data = undefined;
+
+        /**
+         * A config object that can be used by file types to store transitional data.
+         *
+         * @name Phaser.Loader.File#config
+         * @type {*}
+         * @since 3.0.0
+         */
+        this.config = GetFastValue(fileConfig, 'config', {});
+
+        /**
+         * If this is a multipart file, i.e. an atlas and its json together, then this is a reference
+         * to the parent MultiFile. Set and used internally by the Loader or specific file types.
+         *
+         * @name Phaser.Loader.File#multiFile
+         * @type {?Phaser.Loader.MultiFile}
+         * @since 3.7.0
+         */
+        this.multiFile;
+
+        /**
+         * Does this file have an associated linked file? Such as an image and a normal map.
+         * Atlases and Bitmap Fonts use the multiFile, because those files need loading together but aren't
+         * actually bound by data, where-as a linkFile is.
+         *
+         * @name Phaser.Loader.File#linkFile
+         * @type {?Phaser.Loader.File}
+         * @since 3.7.0
+         */
+        this.linkFile;
+    },
+
+    /**
+     * Links this File with another, so they depend upon each other for loading and processing.
+     *
+     * @method Phaser.Loader.File#setLink
+     * @since 3.7.0
+     *
+     * @param {Phaser.Loader.File} fileB - The file to link to this one.
+     */
+    setLink: function (fileB)
+    {
+        this.linkFile = fileB;
+
+        fileB.linkFile = this;
+    },
+
+    /**
+     * Resets the XHRLoader instance this file is using.
+     *
+     * @method Phaser.Loader.File#resetXHR
+     * @since 3.0.0
+     */
+    resetXHR: function ()
+    {
+        if (this.xhrLoader)
+        {
+            this.xhrLoader.onload = undefined;
+            this.xhrLoader.onerror = undefined;
+            this.xhrLoader.onprogress = undefined;
+        }
+    },
+
+    /**
+     * Called by the Loader, starts the actual file downloading.
+     * During the load the methods onLoad, onError and onProgress are called, based on the XHR events.
+     * You shouldn't normally call this method directly, it's meant to be invoked by the Loader.
+     *
+     * @method Phaser.Loader.File#load
+     * @since 3.0.0
+     */
+    load: function ()
+    {
+        if (this.state === CONST.FILE_POPULATED)
+        {
+            //  Can happen for example in a JSONFile if they've provided a JSON object instead of a URL
+            this.loader.nextFile(this, true);
+        }
+        else
+        {
+            this.src = GetURL(this, this.loader.baseURL);
+
+            if (this.src.indexOf('data:') === 0)
+            {
+                console.warn('Local data URIs are not supported: ' + this.key);
+            }
+            else
+            {
+                //  The creation of this XHRLoader starts the load process going.
+                //  It will automatically call the following, based on the load outcome:
+                //  
+                // xhr.onload = this.onLoad
+                // xhr.onerror = this.onError
+                // xhr.onprogress = this.onProgress
+
+                this.xhrLoader = XHRLoader(this, this.loader.xhr);
+            }
+        }
+    },
