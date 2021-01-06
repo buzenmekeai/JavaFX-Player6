@@ -4447,3 +4447,233 @@ var File = new Class({
      * @since 3.7.0
      */
     pendingDestroy: function (data)
+    {
+        if (data === undefined) { data = this.data; }
+
+        var key = this.key;
+        var type = this.type;
+
+        this.loader.emit('filecomplete', key, type, data);
+        this.loader.emit('filecomplete-' + type + '-' + key, key, type, data);
+
+        this.loader.flagForRemoval(this);
+    },
+
+    /**
+     * Destroy this File and any references it holds.
+     *
+     * @method Phaser.Loader.File#destroy
+     * @since 3.7.0
+     */
+    destroy: function ()
+    {
+        this.loader = null;
+        this.cache = null;
+        this.xhrSettings = null;
+        this.multiFile = null;
+        this.linkFile = null;
+        this.data = null;
+    }
+
+});
+
+/**
+ * Static method for creating object URL using URL API and setting it as image 'src' attribute.
+ * If URL API is not supported (usually on old browsers) it falls back to creating Base64 encoded url using FileReader.
+ *
+ * @method Phaser.Loader.File.createObjectURL
+ * @static
+ * @param {HTMLImageElement} image - Image object which 'src' attribute should be set to object URL.
+ * @param {Blob} blob - A Blob object to create an object URL for.
+ * @param {string} defaultType - Default mime type used if blob type is not available.
+ */
+File.createObjectURL = function (image, blob, defaultType)
+{
+    if (typeof URL === 'function')
+    {
+        image.src = URL.createObjectURL(blob);
+    }
+    else
+    {
+        var reader = new FileReader();
+
+        reader.onload = function ()
+        {
+            image.removeAttribute('crossOrigin');
+            image.src = 'data:' + (blob.type || defaultType) + ';base64,' + reader.result.split(',')[1];
+        };
+
+        reader.onerror = image.onerror;
+
+        reader.readAsDataURL(blob);
+    }
+};
+
+/**
+ * Static method for releasing an existing object URL which was previously created
+ * by calling {@link File#createObjectURL} method.
+ *
+ * @method Phaser.Loader.File.revokeObjectURL
+ * @static
+ * @param {HTMLImageElement} image - Image object which 'src' attribute should be revoked.
+ */
+File.revokeObjectURL = function (image)
+{
+    if (typeof URL === 'function')
+    {
+        URL.revokeObjectURL(image.src);
+    }
+};
+
+module.exports = File;
+
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Takes a reference to the Canvas Renderer, a Canvas Rendering Context, a Game Object, a Camera and a parent matrix
+ * and then performs the following steps:
+ * 
+ * 1) Checks the alpha of the source combined with the Camera alpha. If 0 or less it aborts.
+ * 2) Takes the Camera and Game Object matrix and multiplies them, combined with the parent matrix if given.
+ * 3) Sets the blend mode of the context to be that used by the Game Object.
+ * 4) Sets the alpha value of the context to be that used by the Game Object combined with the Camera.
+ * 5) Saves the context state.
+ * 6) Sets the final matrix values into the context via setTransform.
+ * 
+ * This function is only meant to be used internally. Most of the Canvas Renderer classes use it.
+ *
+ * @function Phaser.Renderer.Canvas.SetTransform
+ * @since 3.12.0
+ *
+ * @param {Phaser.Renderer.Canvas.CanvasRenderer} renderer - A reference to the current active Canvas renderer.
+ * @param {CanvasRenderingContext2D} ctx - The canvas context to set the transform on.
+ * @param {Phaser.GameObjects.GameObject} src - The Game Object being rendered. Can be any type that extends the base class.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} [parentMatrix] - A parent transform matrix to apply to the Game Object before rendering.
+ * 
+ * @return {boolean} `true` if the Game Object context was set, otherwise `false`.
+ */
+var SetTransform = function (renderer, ctx, src, camera, parentMatrix)
+{
+    var alpha = camera.alpha * src.alpha;
+
+    if (alpha <= 0)
+    {
+        //  Nothing to see, so don't waste time calculating stuff
+        return false;
+    }
+
+    var camMatrix = renderer._tempMatrix1.copyFromArray(camera.matrix.matrix);
+    var gameObjectMatrix = renderer._tempMatrix2.applyITRS(src.x, src.y, src.rotation, src.scaleX, src.scaleY);
+    var calcMatrix = renderer._tempMatrix3;
+
+    if (parentMatrix)
+    {
+        //  Multiply the camera by the parent matrix
+        camMatrix.multiplyWithOffset(parentMatrix, -camera.scrollX * src.scrollFactorX, -camera.scrollY * src.scrollFactorY);
+
+        //  Undo the camera scroll
+        gameObjectMatrix.e = src.x;
+        gameObjectMatrix.f = src.y;
+
+        //  Multiply by the Sprite matrix, store result in calcMatrix
+        camMatrix.multiply(gameObjectMatrix, calcMatrix);
+    }
+    else
+    {
+        gameObjectMatrix.e -= camera.scrollX * src.scrollFactorX;
+        gameObjectMatrix.f -= camera.scrollY * src.scrollFactorY;
+
+        //  Multiply by the Sprite matrix, store result in calcMatrix
+        camMatrix.multiply(gameObjectMatrix, calcMatrix);
+    }
+
+    //  Blend Mode
+    ctx.globalCompositeOperation = renderer.blendModes[src.blendMode];
+
+    //  Alpha
+    ctx.globalAlpha = alpha;
+
+    ctx.save();
+
+    calcMatrix.setToContext(ctx);
+
+    return true;
+};
+
+module.exports = SetTransform;
+
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Force a value within the boundaries by clamping it to the range `min`, `max`.
+ *
+ * @function Phaser.Math.Clamp
+ * @since 3.0.0
+ *
+ * @param {number} value - The value to be clamped.
+ * @param {number} min - The minimum bounds.
+ * @param {number} max - The maximum bounds.
+ *
+ * @return {number} The clamped value.
+ */
+var Clamp = function (value, min, max)
+{
+    return Math.max(min, Math.min(max, value));
+};
+
+module.exports = Clamp;
+
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CONST = __webpack_require__(26);
+var Smoothing = __webpack_require__(120);
+
+// The pool into which the canvas elements are placed.
+var pool = [];
+
+//  Automatically apply smoothing(false) to created Canvas elements
+var _disableContextSmoothing = false;
+
+/**
+ * The CanvasPool is a global static object, that allows Phaser to recycle and pool 2D Context Canvas DOM elements.
+ * It does not pool WebGL Contexts, because once the context options are set they cannot be modified again, 
+ * which is useless for some of the Phaser pipelines / renderer.
+ *
+ * This singleton is instantiated as soon as Phaser loads, before a Phaser.Game instance has even been created.
+ * Which means all instances of Phaser Games on the same page can share the one single pool.
+ *
+ * @namespace Phaser.Display.Canvas.CanvasPool
+ * @since 3.0.0
+ */
+var CanvasPool = function ()
+{
+    /**
+     * Creates a new Canvas DOM element, or pulls one from the pool if free.
