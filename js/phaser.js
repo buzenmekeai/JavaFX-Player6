@@ -4240,3 +4240,210 @@ var File = new Class({
             }
         }
     },
+
+    /**
+     * Called when the file finishes loading, is sent a DOM ProgressEvent.
+     *
+     * @method Phaser.Loader.File#onLoad
+     * @since 3.0.0
+     *
+     * @param {XMLHttpRequest} xhr - The XMLHttpRequest that caused this onload event.
+     * @param {ProgressEvent} event - The DOM ProgressEvent that resulted from this load.
+     */
+    onLoad: function (xhr, event)
+    {
+        var success = !(event.target && event.target.status !== 200);
+
+        //  Handle HTTP status codes of 4xx and 5xx as errors, even if xhr.onerror was not called.
+        if (xhr.readyState === 4 && xhr.status >= 400 && xhr.status <= 599)
+        {
+            success = false;
+        }
+
+        this.resetXHR();
+
+        this.loader.nextFile(this, success);
+    },
+
+    /**
+     * Called if the file errors while loading, is sent a DOM ProgressEvent.
+     *
+     * @method Phaser.Loader.File#onError
+     * @since 3.0.0
+     *
+     * @param {ProgressEvent} event - The DOM ProgressEvent that resulted from this error.
+     */
+    onError: function ()
+    {
+        this.resetXHR();
+
+        this.loader.nextFile(this, false);
+    },
+
+    /**
+     * Called during the file load progress. Is sent a DOM ProgressEvent.
+     *
+     * @method Phaser.Loader.File#onProgress
+     * @since 3.0.0
+     *
+     * @param {ProgressEvent} event - The DOM ProgressEvent.
+     */
+    onProgress: function (event)
+    {
+        if (event.lengthComputable)
+        {
+            this.bytesLoaded = event.loaded;
+            this.bytesTotal = event.total;
+
+            this.percentComplete = Math.min((this.bytesLoaded / this.bytesTotal), 1);
+
+            this.loader.emit('fileprogress', this, this.percentComplete);
+        }
+    },
+
+    /**
+     * Usually overridden by the FileTypes and is called by Loader.nextFile.
+     * This method controls what extra work this File does with its loaded data, for example a JSON file will parse itself during this stage.
+     *
+     * @method Phaser.Loader.File#onProcess
+     * @since 3.0.0
+     */
+    onProcess: function ()
+    {
+        this.state = CONST.FILE_PROCESSING;
+
+        this.onProcessComplete();
+    },
+
+    /**
+     * Called when the File has completed processing.
+     * Checks on the state of its multifile, if set.
+     *
+     * @method Phaser.Loader.File#onProcessComplete
+     * @since 3.7.0
+     */
+    onProcessComplete: function ()
+    {
+        this.state = CONST.FILE_COMPLETE;
+
+        if (this.multiFile)
+        {
+            this.multiFile.onFileComplete(this);
+        }
+
+        this.loader.fileProcessComplete(this);
+    },
+
+    /**
+     * Called when the File has completed processing but it generated an error.
+     * Checks on the state of its multifile, if set.
+     *
+     * @method Phaser.Loader.File#onProcessError
+     * @since 3.7.0
+     */
+    onProcessError: function ()
+    {
+        this.state = CONST.FILE_ERRORED;
+
+        if (this.multiFile)
+        {
+            this.multiFile.onFileFailed(this);
+        }
+
+        this.loader.fileProcessComplete(this);
+    },
+
+    /**
+     * Checks if a key matching the one used by this file exists in the target Cache or not.
+     * This is called automatically by the LoaderPlugin to decide if the file can be safely
+     * loaded or will conflict.
+     *
+     * @method Phaser.Loader.File#hasCacheConflict
+     * @since 3.7.0
+     *
+     * @return {boolean} `true` if adding this file will cause a conflict, otherwise `false`.
+     */
+    hasCacheConflict: function ()
+    {
+        return (this.cache && this.cache.exists(this.key));
+    },
+
+    /**
+     * Adds this file to its target cache upon successful loading and processing.
+     * This method is often overridden by specific file types.
+     *
+     * @method Phaser.Loader.File#addToCache
+     * @since 3.7.0
+     */
+    addToCache: function ()
+    {
+        if (this.cache)
+        {
+            this.cache.add(this.key, this.data);
+        }
+
+        this.pendingDestroy();
+    },
+
+    /**
+     * You can listen for this event from the LoaderPlugin. It is dispatched _every time_
+     * a file loads and is sent 3 arguments, which allow you to identify the file:
+     *
+     * ```javascript
+     * this.load.on('filecomplete', function (key, type, data) {
+     *     // Your handler code
+     * });
+     * ```
+     * 
+     * @event Phaser.Loader.File#fileCompleteEvent
+     * @param {string} key - The key of the file that just loaded and finished processing.
+     * @param {string} type - The type of the file that just loaded and finished processing.
+     * @param {any} data - The data of the file.
+     */
+
+    /**
+     * You can listen for this event from the LoaderPlugin. It is dispatched only once per
+     * file and you have to use a special listener handle to pick it up.
+     * 
+     * The string of the event is based on the file type and the key you gave it, split up
+     * using hyphens.
+     * 
+     * For example, if you have loaded an image with a key of `monster`, you can listen for it
+     * using the following:
+     *
+     * ```javascript
+     * this.load.on('filecomplete-image-monster', function (key, type, data) {
+     *     // Your handler code
+     * });
+     * ```
+     *
+     * Or, if you have loaded a texture atlas with a key of `Level1`:
+     * 
+     * ```javascript
+     * this.load.on('filecomplete-atlas-Level1', function (key, type, data) {
+     *     // Your handler code
+     * });
+     * ```
+     * 
+     * Or, if you have loaded a sprite sheet with a key of `Explosion` and a prefix of `GAMEOVER`:
+     * 
+     * ```javascript
+     * this.load.on('filecomplete-spritesheet-GAMEOVERExplosion', function (key, type, data) {
+     *     // Your handler code
+     * });
+     * ```
+     * 
+     * @event Phaser.Loader.File#singleFileCompleteEvent
+     * @param {any} data - The data of the file.
+     */
+
+    /**
+     * Called once the file has been added to its cache and is now ready for deletion from the Loader.
+     * It will emit a `filecomplete` event from the LoaderPlugin.
+     *
+     * @method Phaser.Loader.File#pendingDestroy
+     * @fires Phaser.Loader.File#fileCompleteEvent
+     * @fires Phaser.Loader.File#singleFileCompleteEvent
+     * @since 3.7.0
+     */
+    pendingDestroy: function (data)
