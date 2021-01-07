@@ -4896,3 +4896,238 @@ var CanvasPool = function ()
         free: free,
         pool: pool,
         remove: remove,
+        total: total
+    };
+};
+
+//  If we export the called function here, it'll only be invoked once (not every time it's required).
+module.exports = CanvasPool();
+
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Takes an array of Game Objects, or any objects that have a public property as defined in `key`,
+ * and then sets it to the given value.
+ *
+ * The optional `step` property is applied incrementally, multiplied by each item in the array.
+ *
+ * To use this with a Group: `PropertyValueSet(group.getChildren(), key, value, step)`
+ *
+ * @function Phaser.Actions.PropertyValueSet
+ * @since 3.3.0
+ *
+ * @generic {Phaser.GameObjects.GameObject[]} G - [items,$return]
+ *
+ * @param {(array|Phaser.GameObjects.GameObject[])} items - The array of items to be updated by this action.
+ * @param {string} key - The property to be updated.
+ * @param {number} value - The amount to set the property to.
+ * @param {number} [step=0] - This is added to the `value` amount, multiplied by the iteration counter.
+ * @param {integer} [index=0] - An optional offset to start searching from within the items array.
+ * @param {integer} [direction=1] - The direction to iterate through the array. 1 is from beginning to end, -1 from end to beginning.
+ *
+ * @return {(array|Phaser.GameObjects.GameObject[])} The array of objects that were passed to this Action.
+ */
+var PropertyValueSet = function (items, key, value, step, index, direction)
+{
+    if (step === undefined) { step = 0; }
+    if (index === undefined) { index = 0; }
+    if (direction === undefined) { direction = 1; }
+
+    var i;
+    var t = 0;
+    var end = items.length;
+
+    if (direction === 1)
+    {
+        //  Start to End
+        for (i = index; i < end; i++)
+        {
+            items[i][key] = value + (t * step);
+            t++;
+        }
+    }
+    else
+    {
+        //  End to Start
+        for (i = index; i >= 0; i--)
+        {
+            items[i][key] = value + (t * step);
+            t++;
+        }
+    }
+
+    return items;
+};
+
+module.exports = PropertyValueSet;
+
+
+/***/ }),
+/* 26 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Global consts.
+ * 
+ * @ignore
+ */
+
+var CONST = {
+
+    /**
+     * Phaser Release Version
+     * 
+     * @name Phaser.VERSION
+     * @readonly
+     * @type {string}
+     * @since 3.0.0
+     */
+    VERSION: '3.15.1',
+
+    BlendModes: __webpack_require__(66),
+
+    ScaleModes: __webpack_require__(94),
+
+    /**
+     * AUTO Detect Renderer.
+     * 
+     * @name Phaser.AUTO
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    AUTO: 0,
+
+    /**
+     * Canvas Renderer.
+     * 
+     * @name Phaser.CANVAS
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    CANVAS: 1,
+
+    /**
+     * WebGL Renderer.
+     * 
+     * @name Phaser.WEBGL
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    WEBGL: 2,
+
+    /**
+     * Headless Renderer.
+     * 
+     * @name Phaser.HEADLESS
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    HEADLESS: 3,
+
+    /**
+     * In Phaser the value -1 means 'forever' in lots of cases, this const allows you to use it instead
+     * to help you remember what the value is doing in your code.
+     * 
+     * @name Phaser.FOREVER
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    FOREVER: -1,
+
+    /**
+     * Direction constant.
+     * 
+     * @name Phaser.NONE
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    NONE: 4,
+
+    /**
+     * Direction constant.
+     * 
+     * @name Phaser.UP
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    UP: 5,
+
+    /**
+     * Direction constant.
+     * 
+     * @name Phaser.DOWN
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    DOWN: 6,
+
+    /**
+     * Direction constant.
+     * 
+     * @name Phaser.LEFT
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    LEFT: 7,
+
+    /**
+     * Direction constant.
+     * 
+     * @name Phaser.RIGHT
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    RIGHT: 8
+
+};
+
+module.exports = CONST;
+
+
+/***/ }),
+/* 27 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(14);
+var GameObject = __webpack_require__(19);
+var Line = __webpack_require__(54);
+
+/**
+ * @classdesc
+ * The Shape Game Object is a base class for the various different shapes, such as the Arc, Star or Polygon.
+ * You cannot add a Shape directly to your Scene, it is meant as a base for your own custom Shape classes.
+ *
+ * @class Shape
+ * @extends Phaser.GameObjects.GameObject
