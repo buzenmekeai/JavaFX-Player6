@@ -5333,3 +5333,206 @@ var Shape = new Class({
 
         return this;
     },
+
+    /**
+     * Sets the stroke color and alpha for this Shape.
+     * 
+     * If you wish for the Shape to not be stroked then call this method with no arguments, or just set `isStroked` to `false`.
+     * 
+     * Note that some Shapes do not support being stroked, such as the Iso Box shape.
+     * 
+     * This call can be chained.
+     *
+     * @method Phaser.GameObjects.Shape#setStrokeStyle
+     * @since 3.13.0
+     * 
+     * @param {number} [color] - The color used to stroke this shape. If not provided the Shape will not be stroked.
+     * @param {number} [alpha=1] - The alpha value used when stroking this shape, if a stroke color is given.
+     *
+     * @return {this} This Game Object instance.
+     */
+    setStrokeStyle: function (lineWidth, color, alpha)
+    {
+        if (alpha === undefined) { alpha = 1; }
+
+        if (lineWidth === undefined)
+        {
+            this.isStroked = false;
+        }
+        else
+        {
+            this.lineWidth = lineWidth;
+            this.strokeColor = color;
+            this.strokeAlpha = alpha;
+            this.isStroked = true;
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets if this Shape path is closed during rendering when stroked.
+     * Note that some Shapes are always closed when stroked (such as Ellipse shapes)
+     * 
+     * This call can be chained.
+     *
+     * @method Phaser.GameObjects.Shape#setClosePath
+     * @since 3.13.0
+     * 
+     * @param {boolean} value - Set to `true` if the Shape should be closed when stroked, otherwise `false`.
+     *
+     * @return {this} This Game Object instance.
+     */
+    setClosePath: function (value)
+    {
+        this.closePath = value;
+
+        return this;
+    },
+
+    /**
+     * Internal destroy handler, called as part of the destroy process.
+     *
+     * @method Phaser.GameObjects.Shape#preDestroy
+     * @protected
+     * @since 3.13.0
+     */
+    preDestroy: function ()
+    {
+        this.geom = null;
+        this._tempLine = null;
+        this.pathData = [];
+        this.pathIndexes = [];
+    }
+
+});
+
+module.exports = Shape;
+
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var BlendModes = __webpack_require__(66);
+var GetAdvancedValue = __webpack_require__(12);
+var ScaleModes = __webpack_require__(94);
+
+/**
+ * @typedef {object} GameObjectConfig
+ *
+ * @property {number} [x=0] - The x position of the Game Object.
+ * @property {number} [y=0] - The y position of the Game Object.
+ * @property {number} [depth=0] - The depth of the GameObject.
+ * @property {boolean} [flipX=false] - The horizontally flipped state of the Game Object.
+ * @property {boolean} [flipY=false] - The vertically flipped state of the Game Object.
+ * @property {?(number|object)} [scale=null] - The scale of the GameObject.
+ * @property {?(number|object)} [scrollFactor=null] - The scroll factor of the GameObject.
+ * @property {number} [rotation=0] - The rotation angle of the Game Object, in radians.
+ * @property {?number} [angle=null] - The rotation angle of the Game Object, in degrees.
+ * @property {number} [alpha=1] - The alpha (opacity) of the Game Object.
+ * @property {?(number|object)} [origin=null] - The origin of the Game Object.
+ * @property {number} [scaleMode=ScaleModes.DEFAULT] - The scale mode of the GameObject.
+ * @property {number} [blendMode=BlendModes.DEFAULT] - The blend mode of the GameObject.
+ * @property {boolean} [visible=true] - The visible state of the Game Object.
+ * @property {boolean} [add=true] - Add the GameObject to the scene.
+ */
+
+/**
+ * Builds a Game Object using the provided configuration object.
+ *
+ * @function Phaser.GameObjects.BuildGameObject
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - A reference to the Scene.
+ * @param {Phaser.GameObjects.GameObject} gameObject - The initial GameObject.
+ * @param {GameObjectConfig} config - The config to build the GameObject with.
+ *
+ * @return {Phaser.GameObjects.GameObject} The built Game Object.
+ */
+var BuildGameObject = function (scene, gameObject, config)
+{
+    //  Position
+
+    gameObject.x = GetAdvancedValue(config, 'x', 0);
+    gameObject.y = GetAdvancedValue(config, 'y', 0);
+    gameObject.depth = GetAdvancedValue(config, 'depth', 0);
+
+    //  Flip
+
+    gameObject.flipX = GetAdvancedValue(config, 'flipX', false);
+    gameObject.flipY = GetAdvancedValue(config, 'flipY', false);
+
+    //  Scale
+    //  Either: { scale: 2 } or { scale: { x: 2, y: 2 }}
+
+    var scale = GetAdvancedValue(config, 'scale', null);
+
+    if (typeof scale === 'number')
+    {
+        gameObject.setScale(scale);
+    }
+    else if (scale !== null)
+    {
+        gameObject.scaleX = GetAdvancedValue(scale, 'x', 1);
+        gameObject.scaleY = GetAdvancedValue(scale, 'y', 1);
+    }
+
+    //  ScrollFactor
+    //  Either: { scrollFactor: 2 } or { scrollFactor: { x: 2, y: 2 }}
+
+    var scrollFactor = GetAdvancedValue(config, 'scrollFactor', null);
+
+    if (typeof scrollFactor === 'number')
+    {
+        gameObject.setScrollFactor(scrollFactor);
+    }
+    else if (scrollFactor !== null)
+    {
+        gameObject.scrollFactorX = GetAdvancedValue(scrollFactor, 'x', 1);
+        gameObject.scrollFactorY = GetAdvancedValue(scrollFactor, 'y', 1);
+    }
+
+    //  Rotation
+
+    gameObject.rotation = GetAdvancedValue(config, 'rotation', 0);
+
+    var angle = GetAdvancedValue(config, 'angle', null);
+
+    if (angle !== null)
+    {
+        gameObject.angle = angle;
+    }
+
+    //  Alpha
+
+    gameObject.alpha = GetAdvancedValue(config, 'alpha', 1);
+
+    //  Origin
+    //  Either: { origin: 0.5 } or { origin: { x: 0.5, y: 0.5 }}
+
+    var origin = GetAdvancedValue(config, 'origin', null);
+
+    if (typeof origin === 'number')
+    {
+        gameObject.setOrigin(origin);
+    }
+    else if (origin !== null)
+    {
+        var ox = GetAdvancedValue(origin, 'x', 0.5);
+        var oy = GetAdvancedValue(origin, 'y', 0.5);
+
+        gameObject.setOrigin(ox, oy);
+    }
+
+    //  ScaleMode
+
+    gameObject.scaleMode = GetAdvancedValue(config, 'scaleMode', ScaleModes.DEFAULT);
+
+    //  BlendMode
