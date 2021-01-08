@@ -5741,3 +5741,253 @@ var PropertyValueInc = function (items, key, value, step, index, direction)
         {
             items[i][key] += value + (t * step);
             t++;
+        }
+    }
+
+    return items;
+};
+
+module.exports = PropertyValueInc;
+
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {/**
+* The `Matter.Common` module contains utility functions that are common to all modules.
+*
+* @class Common
+*/
+
+var Common = {};
+
+module.exports = Common;
+
+(function() {
+
+    Common._nextId = 0;
+    Common._seed = 0;
+    Common._nowStartTime = +(new Date());
+
+    /**
+     * Extends the object in the first argument using the object in the second argument.
+     * @method extend
+     * @param {} obj
+     * @param {boolean} deep
+     * @return {} obj extended
+     */
+    Common.extend = function(obj, deep) {
+        var argsStart,
+            args,
+            deepClone;
+
+        if (typeof deep === 'boolean') {
+            argsStart = 2;
+            deepClone = deep;
+        } else {
+            argsStart = 1;
+            deepClone = true;
+        }
+
+        for (var i = argsStart; i < arguments.length; i++) {
+            var source = arguments[i];
+
+            if (source) {
+                for (var prop in source) {
+                    if (deepClone && source[prop] && source[prop].constructor === Object) {
+                        if (!obj[prop] || obj[prop].constructor === Object) {
+                            obj[prop] = obj[prop] || {};
+                            Common.extend(obj[prop], deepClone, source[prop]);
+                        } else {
+                            obj[prop] = source[prop];
+                        }
+                    } else {
+                        obj[prop] = source[prop];
+                    }
+                }
+            }
+        }
+        
+        return obj;
+    };
+
+    /**
+     * Creates a new clone of the object, if deep is true references will also be cloned.
+     * @method clone
+     * @param {} obj
+     * @param {bool} deep
+     * @return {} obj cloned
+     */
+    Common.clone = function(obj, deep) {
+        return Common.extend({}, deep, obj);
+    };
+
+    /**
+     * Returns the list of keys for the given object.
+     * @method keys
+     * @param {} obj
+     * @return {string[]} keys
+     */
+    Common.keys = function(obj) {
+        if (Object.keys)
+            return Object.keys(obj);
+
+        // avoid hasOwnProperty for performance
+        var keys = [];
+        for (var key in obj)
+            keys.push(key);
+        return keys;
+    };
+
+    /**
+     * Returns the list of values for the given object.
+     * @method values
+     * @param {} obj
+     * @return {array} Array of the objects property values
+     */
+    Common.values = function(obj) {
+        var values = [];
+        
+        if (Object.keys) {
+            var keys = Object.keys(obj);
+            for (var i = 0; i < keys.length; i++) {
+                values.push(obj[keys[i]]);
+            }
+            return values;
+        }
+        
+        // avoid hasOwnProperty for performance
+        for (var key in obj)
+            values.push(obj[key]);
+        return values;
+    };
+
+    /**
+     * Gets a value from `base` relative to the `path` string.
+     * @method get
+     * @param {} obj The base object
+     * @param {string} path The path relative to `base`, e.g. 'Foo.Bar.baz'
+     * @param {number} [begin] Path slice begin
+     * @param {number} [end] Path slice end
+     * @return {} The object at the given path
+     */
+    Common.get = function(obj, path, begin, end) {
+        path = path.split('.').slice(begin, end);
+
+        for (var i = 0; i < path.length; i += 1) {
+            obj = obj[path[i]];
+        }
+
+        return obj;
+    };
+
+    /**
+     * Sets a value on `base` relative to the given `path` string.
+     * @method set
+     * @param {} obj The base object
+     * @param {string} path The path relative to `base`, e.g. 'Foo.Bar.baz'
+     * @param {} val The value to set
+     * @param {number} [begin] Path slice begin
+     * @param {number} [end] Path slice end
+     * @return {} Pass through `val` for chaining
+     */
+    Common.set = function(obj, path, val, begin, end) {
+        var parts = path.split('.').slice(begin, end);
+        Common.get(obj, path, 0, -1)[parts[parts.length - 1]] = val;
+        return val;
+    };
+
+    /**
+     * Shuffles the given array in-place.
+     * The function uses a seeded random generator.
+     * @method shuffle
+     * @param {array} array
+     * @return {array} array shuffled randomly
+     */
+    Common.shuffle = function(array) {
+        for (var i = array.length - 1; i > 0; i--) {
+            var j = Math.floor(Common.random() * (i + 1));
+            var temp = array[i];
+            array[i] = array[j];
+            array[j] = temp;
+        }
+        return array;
+    };
+
+    /**
+     * Randomly chooses a value from a list with equal probability.
+     * The function uses a seeded random generator.
+     * @method choose
+     * @param {array} choices
+     * @return {object} A random choice object from the array
+     */
+    Common.choose = function(choices) {
+        return choices[Math.floor(Common.random() * choices.length)];
+    };
+
+    /**
+     * Returns true if the object is a HTMLElement, otherwise false.
+     * @method isElement
+     * @param {object} obj
+     * @return {boolean} True if the object is a HTMLElement, otherwise false
+     */
+    Common.isElement = function(obj) {
+        if (typeof HTMLElement !== 'undefined') {
+            return obj instanceof HTMLElement;
+        }
+
+        return !!(obj && obj.nodeType && obj.nodeName);
+    };
+
+    /**
+     * Returns true if the object is an array.
+     * @method isArray
+     * @param {object} obj
+     * @return {boolean} True if the object is an array, otherwise false
+     */
+    Common.isArray = function(obj) {
+        return Object.prototype.toString.call(obj) === '[object Array]';
+    };
+
+    /**
+     * Returns true if the object is a function.
+     * @method isFunction
+     * @param {object} obj
+     * @return {boolean} True if the object is a function, otherwise false
+     */
+    Common.isFunction = function(obj) {
+        return typeof obj === "function";
+    };
+
+    /**
+     * Returns true if the object is a plain object.
+     * @method isPlainObject
+     * @param {object} obj
+     * @return {boolean} True if the object is a plain object, otherwise false
+     */
+    Common.isPlainObject = function(obj) {
+        return typeof obj === 'object' && obj.constructor === Object;
+    };
+
+    /**
+     * Returns true if the object is a string.
+     * @method isString
+     * @param {object} obj
+     * @return {boolean} True if the object is a string, otherwise false
+     */
+    Common.isString = function(obj) {
+        return toString.call(obj) === '[object String]';
+    };
+    
+    /**
+     * Returns the given value clamped between a minimum and maximum value.
+     * @method clamp
+     * @param {number} value
+     * @param {number} min
+     * @param {number} max
+     * @return {number} The value clamped between min and max inclusive
+     */
+    Common.clamp = function(value, min, max) {
+        if (value < min)
+            return min;
