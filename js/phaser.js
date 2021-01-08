@@ -5536,3 +5536,208 @@ var BuildGameObject = function (scene, gameObject, config)
     gameObject.scaleMode = GetAdvancedValue(config, 'scaleMode', ScaleModes.DEFAULT);
 
     //  BlendMode
+
+    gameObject.blendMode = GetAdvancedValue(config, 'blendMode', BlendModes.NORMAL);
+
+    //  Visible
+
+    gameObject.visible = GetAdvancedValue(config, 'visible', true);
+
+    //  Add to Scene
+
+    var add = GetAdvancedValue(config, 'add', true);
+
+    if (add)
+    {
+        scene.sys.displayList.add(gameObject);
+    }
+
+    if (gameObject.preUpdate)
+    {
+        scene.sys.updateList.add(gameObject);
+    }
+
+    return gameObject;
+};
+
+module.exports = BuildGameObject;
+
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Tilemaps.Formats
+ */
+
+module.exports = {
+
+    /**
+     * CSV Map Type
+     * 
+     * @name Phaser.Tilemaps.Formats.CSV
+     * @type {number}
+     * @since 3.0.0
+     */
+    CSV: 0,
+
+    /**
+     * Tiled JSON Map Type
+     * 
+     * @name Phaser.Tilemaps.Formats.TILED_JSON
+     * @type {number}
+     * @since 3.0.0
+     */
+    TILED_JSON: 1,
+
+    /**
+     * 2D Array Map Type
+     * 
+     * @name Phaser.Tilemaps.Formats.ARRAY_2D
+     * @type {number}
+     * @since 3.0.0
+     */
+    ARRAY_2D: 2,
+
+    /**
+     * Weltmeister (Impact.js) Map Type
+     * 
+     * @name Phaser.Tilemaps.Formats.WELTMEISTER
+     * @type {number}
+     * @since 3.0.0
+     */
+    WELTMEISTER: 3
+
+};
+
+
+/***/ }),
+/* 30 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Sets the fillStyle on the target context based on the given Shape.
+ *
+ * @method Phaser.GameObjects.Shape#FillStyleCanvas
+ * @since 3.13.0
+ * @private
+ *
+ * @param {CanvasRenderingContext2D} ctx - The context to set the fill style on.
+ * @param {Phaser.GameObjects.Shape} src - The Game Object to set the fill style from.
+ */
+var FillStyleCanvas = function (ctx, src, altColor)
+{
+    var fillColor = (altColor) ? altColor : src.fillColor;
+    var fillAlpha = src.fillAlpha;
+
+    var red = ((fillColor & 0xFF0000) >>> 16);
+    var green = ((fillColor & 0xFF00) >>> 8);
+    var blue = (fillColor & 0xFF);
+
+    ctx.fillStyle = 'rgba(' + red + ',' + green + ',' + blue + ',' + fillAlpha + ')';
+};
+
+module.exports = FillStyleCanvas;
+
+
+/***/ }),
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CONST = __webpack_require__(16);
+
+/**
+ * Convert the given angle from degrees, to the equivalent angle in radians.
+ *
+ * @function Phaser.Math.DegToRad
+ * @since 3.0.0
+ *
+ * @param {integer} degrees - The angle (in degrees) to convert to radians.
+ *
+ * @return {number} The given angle converted to radians.
+ */
+var DegToRad = function (degrees)
+{
+    return degrees * CONST.DEG_TO_RAD;
+};
+
+module.exports = DegToRad;
+
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Takes an array of Game Objects, or any objects that have a public property as defined in `key`,
+ * and then adds the given value to it.
+ *
+ * The optional `step` property is applied incrementally, multiplied by each item in the array.
+ *
+ * To use this with a Group: `PropertyValueInc(group.getChildren(), key, value, step)`
+ *
+ * @function Phaser.Actions.PropertyValueInc
+ * @since 3.3.0
+ *
+ * @generic {Phaser.GameObjects.GameObject[]} G - [items,$return]
+ *
+ * @param {(array|Phaser.GameObjects.GameObject[])} items - The array of items to be updated by this action.
+ * @param {string} key - The property to be updated.
+ * @param {number} value - The amount to be added to the property.
+ * @param {number} [step=0] - This is added to the `value` amount, multiplied by the iteration counter.
+ * @param {integer} [index=0] - An optional offset to start searching from within the items array.
+ * @param {integer} [direction=1] - The direction to iterate through the array. 1 is from beginning to end, -1 from end to beginning.
+ *
+ * @return {(array|Phaser.GameObjects.GameObject[])} The array of objects that were passed to this Action.
+ */
+var PropertyValueInc = function (items, key, value, step, index, direction)
+{
+    if (step === undefined) { step = 0; }
+    if (index === undefined) { index = 0; }
+    if (direction === undefined) { direction = 1; }
+
+    var i;
+    var t = 0;
+    var end = items.length;
+
+    if (direction === 1)
+    {
+        //  Start to End
+        for (i = index; i < end; i++)
+        {
+            items[i][key] += value + (t * step);
+            t++;
+        }
+    }
+    else
+    {
+        //  End to Start
+        for (i = index; i >= 0; i--)
+        {
+            items[i][key] += value + (t * step);
+            t++;
