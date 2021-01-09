@@ -6215,3 +6215,231 @@ module.exports = Common;
      * The arguments applied when calling the new function will also be applied to every function passed.
      * The value of `this` refers to the last value returned in the chain that was not `undefined`.
      * Therefore if a passed function does not return a value, the previously returned value is maintained.
+     * After all passed functions have been called the new function returns the last returned value (if any).
+     * If any of the passed functions are a chain, then the chain will be flattened.
+     * @method chain
+     * @param ...funcs {function} The functions to chain.
+     * @return {function} A new function that calls the passed functions in order.
+     */
+    Common.chain = function() {
+        var funcs = [];
+
+        for (var i = 0; i < arguments.length; i += 1) {
+            var func = arguments[i];
+
+            if (func._chained) {
+                // flatten already chained functions
+                funcs.push.apply(funcs, func._chained);
+            } else {
+                funcs.push(func);
+            }
+        }
+
+        var chain = function() {
+            // https://github.com/GoogleChrome/devtools-docs/issues/53#issuecomment-51941358
+            var lastResult,
+                args = new Array(arguments.length);
+
+            for (var i = 0, l = arguments.length; i < l; i++) {
+                args[i] = arguments[i];
+            }
+
+            for (i = 0; i < funcs.length; i += 1) {
+                var result = funcs[i].apply(lastResult, args);
+
+                if (typeof result !== 'undefined') {
+                    lastResult = result;
+                }
+            }
+
+            return lastResult;
+        };
+
+        chain._chained = funcs;
+
+        return chain;
+    };
+
+    /**
+     * Chains a function to excute before the original function on the given `path` relative to `base`.
+     * See also docs for `Common.chain`.
+     * @method chainPathBefore
+     * @param {} base The base object
+     * @param {string} path The path relative to `base`
+     * @param {function} func The function to chain before the original
+     * @return {function} The chained function that replaced the original
+     */
+    Common.chainPathBefore = function(base, path, func) {
+        return Common.set(base, path, Common.chain(
+            func,
+            Common.get(base, path)
+        ));
+    };
+
+    /**
+     * Chains a function to excute after the original function on the given `path` relative to `base`.
+     * See also docs for `Common.chain`.
+     * @method chainPathAfter
+     * @param {} base The base object
+     * @param {string} path The path relative to `base`
+     * @param {function} func The function to chain after the original
+     * @return {function} The chained function that replaced the original
+     */
+    Common.chainPathAfter = function(base, path, func) {
+        return Common.set(base, path, Common.chain(
+            Common.get(base, path),
+            func
+        ));
+    };
+
+    /**
+     * Used to require external libraries outside of the bundle.
+     * It first looks for the `globalName` on the environment's global namespace.
+     * If the global is not found, it will fall back to using the standard `require` using the `moduleName`.
+     * @private
+     * @method _requireGlobal
+     * @param {string} globalName The global module name
+     * @param {string} moduleName The fallback CommonJS module name
+     * @return {} The loaded module
+     */
+    Common._requireGlobal = function(globalName, moduleName) {
+        var obj = (typeof window !== 'undefined' ? window[globalName] : typeof global !== 'undefined' ? global[globalName] : null);
+
+        //  Breaks webpack :(
+        // return obj || require(moduleName);
+
+        return obj;
+    };
+})();
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(200)))
+
+/***/ }),
+/* 34 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetTileAt = __webpack_require__(102);
+var GetTilesWithin = __webpack_require__(17);
+
+/**
+ * Calculates interesting faces within the rectangular area specified (in tile coordinates) of the
+ * layer. Interesting faces are used internally for optimizing collisions against tiles. This method
+ * is mostly used internally.
+ *
+ * @function Phaser.Tilemaps.Components.CalculateFacesWithin
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} tileX - The left most tile index (in tile coordinates) to use as the origin of the area.
+ * @param {integer} tileY - The top most tile index (in tile coordinates) to use as the origin of the area.
+ * @param {integer} width - How many tiles wide from the `tileX` index the area will be.
+ * @param {integer} height - How many tiles tall from the `tileY` index the area will be.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var CalculateFacesWithin = function (tileX, tileY, width, height, layer)
+{
+    var above = null;
+    var below = null;
+    var left = null;
+    var right = null;
+
+    var tiles = GetTilesWithin(tileX, tileY, width, height, null, layer);
+
+    for (var i = 0; i < tiles.length; i++)
+    {
+        var tile = tiles[i];
+
+        if (tile)
+        {
+            if (tile.collides)
+            {
+                above = GetTileAt(tile.x, tile.y - 1, true, layer);
+                below = GetTileAt(tile.x, tile.y + 1, true, layer);
+                left = GetTileAt(tile.x - 1, tile.y, true, layer);
+                right = GetTileAt(tile.x + 1, tile.y, true, layer);
+
+                tile.faceTop = (above && above.collides) ? false : true;
+                tile.faceBottom = (below && below.collides) ? false : true;
+                tile.faceLeft = (left && left.collides) ? false : true;
+                tile.faceRight = (right && right.collides) ? false : true;
+            }
+            else
+            {
+                tile.resetFaces();
+            }
+        }
+    }
+};
+
+module.exports = CalculateFacesWithin;
+
+
+/***/ }),
+/* 35 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Arcade Physics consts.
+ *
+ * @ignore
+ */
+
+var CONST = {
+
+    /**
+     * Dynamic Body.
+     *
+     * @name Phaser.Physics.Arcade.DYNAMIC_BODY
+     * @readonly
+     * @type {number}
+     * @since 3.0.0
+     *
+     * @see Phaser.Physics.Arcade.Body#physicsType
+     * @see Phaser.Physics.Arcade.Group#physicsType
+     */
+    DYNAMIC_BODY: 0,
+
+    /**
+     * Static Body.
+     *
+     * @name Phaser.Physics.Arcade.STATIC_BODY
+     * @readonly
+     * @type {number}
+     * @since 3.0.0
+     *
+     * @see Phaser.Physics.Arcade.Body#physicsType
+     * @see Phaser.Physics.Arcade.StaticBody#physicsType
+     */
+    STATIC_BODY: 1,
+
+    /**
+     * [description]
+     *
+     * @name Phaser.Physics.Arcade.GROUP
+     * @readonly
+     * @type {number}
+     * @since 3.0.0
+     */
+    GROUP: 2,
+
+    /**
+     * [description]
+     *
+     * @name Phaser.Physics.Arcade.TILEMAPLAYER
+     * @readonly
+     * @type {number}
+     * @since 3.0.0
+     */
+    TILEMAPLAYER: 3,
