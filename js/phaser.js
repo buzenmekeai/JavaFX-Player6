@@ -6443,3 +6443,235 @@ var CONST = {
      * @since 3.0.0
      */
     TILEMAPLAYER: 3,
+
+    /**
+     * Facing no direction (initial value).
+     *
+     * @name Phaser.Physics.Arcade.FACING_NONE
+     * @readonly
+     * @type {number}
+     * @since 3.0.0
+     *
+     * @see Phaser.Physics.Arcade.Body#facing
+     */
+    FACING_NONE: 10,
+
+    /**
+     * Facing up.
+     *
+     * @name Phaser.Physics.Arcade.FACING_UP
+     * @readonly
+     * @type {number}
+     * @since 3.0.0
+     *
+     * @see Phaser.Physics.Arcade.Body#facing
+     */
+    FACING_UP: 11,
+
+    /**
+     * Facing down.
+     *
+     * @name Phaser.Physics.Arcade.FACING_DOWN
+     * @readonly
+     * @type {number}
+     * @since 3.0.0
+     *
+     * @see Phaser.Physics.Arcade.Body#facing
+     */
+    FACING_DOWN: 12,
+
+    /**
+     * Facing left.
+     *
+     * @name Phaser.Physics.Arcade.FACING_LEFT
+     * @readonly
+     * @type {number}
+     * @since 3.0.0
+     *
+     * @see Phaser.Physics.Arcade.Body#facing
+     */
+    FACING_LEFT: 13,
+
+    /**
+     * Facing right.
+     *
+     * @name Phaser.Physics.Arcade.FACING_RIGHT
+     * @readonly
+     * @type {number}
+     * @since 3.0.0
+     *
+     * @see Phaser.Physics.Arcade.Body#facing
+     */
+    FACING_RIGHT: 14
+
+};
+
+module.exports = CONST;
+
+
+/***/ }),
+/* 36 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Sets the strokeStyle and lineWidth on the target context based on the given Shape.
+ *
+ * @method Phaser.GameObjects.Shape#LineStyleCanvas
+ * @since 3.13.0
+ * @private
+ *
+ * @param {CanvasRenderingContext2D} ctx - The context to set the stroke style on.
+ * @param {Phaser.GameObjects.Shape} src - The Game Object to set the stroke style from.
+ */
+var LineStyleCanvas = function (ctx, src)
+{
+    var strokeColor = src.strokeColor;
+    var strokeAlpha = src.strokeAlpha;
+
+    var red = ((strokeColor & 0xFF0000) >>> 16);
+    var green = ((strokeColor & 0xFF00) >>> 8);
+    var blue = (strokeColor & 0xFF);
+
+    ctx.strokeStyle = 'rgba(' + red + ',' + green + ',' + blue + ',' + strokeAlpha + ')';
+    ctx.lineWidth = src.lineWidth;
+};
+
+module.exports = LineStyleCanvas;
+
+
+/***/ }),
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var GetColor = __webpack_require__(177);
+var GetColor32 = __webpack_require__(376);
+var HSVToRGB = __webpack_require__(176);
+var RGBToHSV = __webpack_require__(375);
+
+/**
+ * @classdesc
+ * The Color class holds a single color value and allows for easy modification and reading of it.
+ *
+ * @class Color
+ * @memberof Phaser.Display
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {integer} [red=0] - The red color value. A number between 0 and 255.
+ * @param {integer} [green=0] - The green color value. A number between 0 and 255.
+ * @param {integer} [blue=0] - The blue color value. A number between 0 and 255.
+ * @param {integer} [alpha=255] - The alpha value. A number between 0 and 255.
+ */
+var Color = new Class({
+
+    initialize:
+
+    function Color (red, green, blue, alpha)
+    {
+        if (red === undefined) { red = 0; }
+        if (green === undefined) { green = 0; }
+        if (blue === undefined) { blue = 0; }
+        if (alpha === undefined) { alpha = 255; }
+
+        /**
+         * The internal red color value.
+         *
+         * @name Phaser.Display.Color#r
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.0.0
+         */
+        this.r = 0;
+
+        /**
+         * The internal green color value.
+         *
+         * @name Phaser.Display.Color#g
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.0.0
+         */
+        this.g = 0;
+
+        /**
+         * The internal blue color value.
+         *
+         * @name Phaser.Display.Color#b
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.0.0
+         */
+        this.b = 0;
+
+        /**
+         * The internal alpha color value.
+         *
+         * @name Phaser.Display.Color#a
+         * @type {number}
+         * @private
+         * @default 255
+         * @since 3.0.0
+         */
+        this.a = 255;
+
+        /**
+         * The hue color value. A number between 0 and 1.
+         * This is the base color.
+         *
+         * @name Phaser.Display.Color#_h
+         * @type {number}
+         * @default 0
+         * @private
+         * @since 3.13.0
+         */
+        this._h = 0;
+
+        /**
+         * The saturation color value. A number between 0 and 1.
+         * This controls how much of the hue will be in the final color, where 1 is fully saturated and 0 will give you white.
+         *
+         * @name Phaser.Display.Color#_s
+         * @type {number}
+         * @default 0
+         * @private
+         * @since 3.13.0
+         */
+        this._s = 0;
+
+        /**
+         * The lightness color value. A number between 0 and 1.
+         * This controls how dark the color is. Where 1 is as bright as possible and 0 is black.
+         *
+         * @name Phaser.Display.Color#_v
+         * @type {number}
+         * @default 0
+         * @private
+         * @since 3.13.0
+         */
+        this._v = 0;
+
+        /**
+         * Is this color update locked?
+         *
+         * @name Phaser.Display.Color#_locked
+         * @type {boolean}
+         * @private
+         * @since 3.13.0
+         */
+        this._locked = false;
