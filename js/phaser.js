@@ -6675,3 +6675,230 @@ var Color = new Class({
          * @since 3.13.0
          */
         this._locked = false;
+
+        /**
+         * An array containing the calculated color values for WebGL use.
+         *
+         * @name Phaser.Display.Color#gl
+         * @type {number[]}
+         * @since 3.0.0
+         */
+        this.gl = [ 0, 0, 0, 1 ];
+
+        /**
+         * Pre-calculated internal color value.
+         *
+         * @name Phaser.Display.Color#_color
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.0.0
+         */
+        this._color = 0;
+
+        /**
+         * Pre-calculated internal color32 value.
+         *
+         * @name Phaser.Display.Color#_color32
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.0.0
+         */
+        this._color32 = 0;
+
+        /**
+         * Pre-calculated internal color rgb string value.
+         *
+         * @name Phaser.Display.Color#_rgba
+         * @type {string}
+         * @private
+         * @default ''
+         * @since 3.0.0
+         */
+        this._rgba = '';
+
+        this.setTo(red, green, blue, alpha);
+    },
+
+    /**
+     * Sets this color to be transparent. Sets all values to zero.
+     *
+     * @method Phaser.Display.Color#transparent
+     * @since 3.0.0
+     *
+     * @return {Phaser.Display.Color} This Color object.
+     */
+    transparent: function ()
+    {
+        this._locked = true;
+
+        this.red = 0;
+        this.green = 0;
+        this.blue = 0;
+        this.alpha = 0;
+
+        this._locked = false;
+
+        return this.update(true);
+    },
+
+    /**
+     * Sets the color of this Color component.
+     *
+     * @method Phaser.Display.Color#setTo
+     * @since 3.0.0
+     *
+     * @param {integer} red - The red color value. A number between 0 and 255.
+     * @param {integer} green - The green color value. A number between 0 and 255.
+     * @param {integer} blue - The blue color value. A number between 0 and 255.
+     * @param {integer} [alpha=255] - The alpha value. A number between 0 and 255.
+     * @param {boolean} [updateHSV=true] - Update the HSV values after setting the RGB values?
+     *
+     * @return {Phaser.Display.Color} This Color object.
+     */
+    setTo: function (red, green, blue, alpha, updateHSV)
+    {
+        if (alpha === undefined) { alpha = 255; }
+        if (updateHSV === undefined) { updateHSV = true; }
+
+        this._locked = true;
+
+        this.red = red;
+        this.green = green;
+        this.blue = blue;
+        this.alpha = alpha;
+
+        this._locked = false;
+
+        return this.update(updateHSV);
+    },
+
+    /**
+     * Sets the red, green, blue and alpha GL values of this Color component.
+     *
+     * @method Phaser.Display.Color#setGLTo
+     * @since 3.0.0
+     *
+     * @param {number} red - The red color value. A number between 0 and 1.
+     * @param {number} green - The green color value. A number between 0 and 1.
+     * @param {number} blue - The blue color value. A number between 0 and 1.
+     * @param {number} [alpha=1] - The alpha value. A number between 0 and 1.
+     *
+     * @return {Phaser.Display.Color} This Color object.
+     */
+    setGLTo: function (red, green, blue, alpha)
+    {
+        if (alpha === undefined) { alpha = 1; }
+
+        this._locked = true;
+
+        this.redGL = red;
+        this.greenGL = green;
+        this.blueGL = blue;
+        this.alphaGL = alpha;
+
+        this._locked = false;
+
+        return this.update(true);
+    },
+
+    /**
+     * Sets the color based on the color object given.
+     *
+     * @method Phaser.Display.Color#setFromRGB
+     * @since 3.0.0
+     *
+     * @param {InputColorObject} color - An object containing `r`, `g`, `b` and optionally `a` values in the range 0 to 255.
+     *
+     * @return {Phaser.Display.Color} This Color object.
+     */
+    setFromRGB: function (color)
+    {
+        this._locked = true;
+
+        this.red = color.r;
+        this.green = color.g;
+        this.blue = color.b;
+
+        if (color.hasOwnProperty('a'))
+        {
+            this.alpha = color.a;
+        }
+
+        this._locked = false;
+
+        return this.update(true);
+    },
+
+    /**
+     * Sets the color based on the hue, saturation and lightness values given.
+     *
+     * @method Phaser.Display.Color#setFromHSV
+     * @since 3.13.0
+     *
+     * @param {number} h - The hue, in the range 0 - 1. This is the base color.
+     * @param {number} s - The saturation, in the range 0 - 1. This controls how much of the hue will be in the final color, where 1 is fully saturated and 0 will give you white.
+     * @param {number} v - The value, in the range 0 - 1. This controls how dark the color is. Where 1 is as bright as possible and 0 is black.
+     *
+     * @return {Phaser.Display.Color} This Color object.
+     */
+    setFromHSV: function (h, s, v)
+    {
+        return HSVToRGB(h, s, v, this);
+    },
+
+    /**
+     * Updates the internal cache values.
+     *
+     * @method Phaser.Display.Color#update
+     * @private
+     * @since 3.0.0
+     *
+     * @return {Phaser.Display.Color} This Color object.
+     */
+    update: function (updateHSV)
+    {
+        if (updateHSV === undefined) { updateHSV = false; }
+
+        if (this._locked)
+        {
+            return this;
+        }
+
+        var r = this.r;
+        var g = this.g;
+        var b = this.b;
+        var a = this.a;
+
+        this._color = GetColor(r, g, b);
+        this._color32 = GetColor32(r, g, b, a);
+        this._rgba = 'rgba(' + r + ',' + g + ',' + b + ',' + (a / 255) + ')';
+
+        if (updateHSV)
+        {
+            RGBToHSV(r, g, b, this);
+        }
+
+        return this;
+    },
+
+    /**
+     * Updates the internal hsv cache values.
+     *
+     * @method Phaser.Display.Color#updateHSV
+     * @private
+     * @since 3.13.0
+     *
+     * @return {Phaser.Display.Color} This Color object.
+     */
+    updateHSV: function ()
+    {
+        var r = this.r;
+        var g = this.g;
+        var b = this.b;
+
+        RGBToHSV(r, g, b, this);
+
+        return this;
+    },
