@@ -6902,3 +6902,223 @@ var Color = new Class({
 
         return this;
     },
+
+    /**
+     * Returns a new Color component using the values from this one.
+     *
+     * @method Phaser.Display.Color#clone
+     * @since 3.0.0
+     *
+     * @return {Phaser.Display.Color} A new Color object.
+     */
+    clone: function ()
+    {
+        return new Color(this.r, this.g, this.b, this.a);
+    },
+
+    /**
+     * Sets this Color object to be grayscaled based on the shade value given.
+     *
+     * @method Phaser.Display.Color#gray
+     * @since 3.13.0
+     * 
+     * @param {integer} shade - A value between 0 and 255.
+     *
+     * @return {Phaser.Display.Color} This Color object.
+     */
+    gray: function (shade)
+    {
+        return this.setTo(shade, shade, shade);
+    },
+
+    /**
+     * Sets this Color object to be a random color between the `min` and `max` values given.
+     *
+     * @method Phaser.Display.Color#random
+     * @since 3.13.0
+     * 
+     * @param {integer} [min=0] - The minimum random color value. Between 0 and 255.
+     * @param {integer} [max=255] - The maximum random color value. Between 0 and 255.
+     *
+     * @return {Phaser.Display.Color} This Color object.
+     */
+    random: function (min, max)
+    {
+        if (min === undefined) { min = 0; }
+        if (max === undefined) { max = 255; }
+
+        var r = Math.floor(min + Math.random() * (max - min));
+        var g = Math.floor(min + Math.random() * (max - min));
+        var b = Math.floor(min + Math.random() * (max - min));
+
+        return this.setTo(r, g, b);
+    },
+
+    /**
+     * Sets this Color object to be a random grayscale color between the `min` and `max` values given.
+     *
+     * @method Phaser.Display.Color#randomGray
+     * @since 3.13.0
+     * 
+     * @param {integer} [min=0] - The minimum random color value. Between 0 and 255.
+     * @param {integer} [max=255] - The maximum random color value. Between 0 and 255.
+     *
+     * @return {Phaser.Display.Color} This Color object.
+     */
+    randomGray: function (min, max)
+    {
+        if (min === undefined) { min = 0; }
+        if (max === undefined) { max = 255; }
+
+        var s = Math.floor(min + Math.random() * (max - min));
+
+        return this.setTo(s, s, s);
+    },
+
+    /**
+     * Increase the saturation of this Color by the percentage amount given.
+     * The saturation is the amount of the base color in the hue.
+     *
+     * @method Phaser.Display.Color#saturate
+     * @since 3.13.0
+     * 
+     * @param {integer} amount - The percentage amount to change this color by. A value between 0 and 100.
+     *
+     * @return {Phaser.Display.Color} This Color object.
+     */
+    saturate: function (amount)
+    {
+        this.s += amount / 100;
+
+        return this;
+    },
+
+    /**
+     * Decrease the saturation of this Color by the percentage amount given.
+     * The saturation is the amount of the base color in the hue.
+     *
+     * @method Phaser.Display.Color#desaturate
+     * @since 3.13.0
+     * 
+     * @param {integer} amount - The percentage amount to change this color by. A value between 0 and 100.
+     *
+     * @return {Phaser.Display.Color} This Color object.
+     */
+    desaturate: function (amount)
+    {
+        this.s -= amount / 100;
+
+        return this;
+    },
+
+    /**
+     * Increase the lightness of this Color by the percentage amount given.
+     *
+     * @method Phaser.Display.Color#lighten
+     * @since 3.13.0
+     * 
+     * @param {integer} amount - The percentage amount to change this color by. A value between 0 and 100.
+     *
+     * @return {Phaser.Display.Color} This Color object.
+     */
+    lighten: function (amount)
+    {
+        this.v += amount / 100;
+
+        return this;
+    },
+
+    /**
+     * Decrease the lightness of this Color by the percentage amount given.
+     *
+     * @method Phaser.Display.Color#darken
+     * @since 3.13.0
+     * 
+     * @param {integer} amount - The percentage amount to change this color by. A value between 0 and 100.
+     *
+     * @return {Phaser.Display.Color} This Color object.
+     */
+    darken: function (amount)
+    {
+        this.v -= amount / 100;
+
+        return this;
+    },
+
+    /**
+     * Brighten this Color by the percentage amount given.
+     *
+     * @method Phaser.Display.Color#brighten
+     * @since 3.13.0
+     * 
+     * @param {integer} amount - The percentage amount to change this color by. A value between 0 and 100.
+     *
+     * @return {Phaser.Display.Color} This Color object.
+     */
+    brighten: function (amount)
+    {
+        var r = this.r;
+        var g = this.g;
+        var b = this.b;
+
+        r = Math.max(0, Math.min(255, r - Math.round(255 * - (amount / 100))));
+        g = Math.max(0, Math.min(255, g - Math.round(255 * - (amount / 100))));
+        b = Math.max(0, Math.min(255, b - Math.round(255 * - (amount / 100))));
+
+        return this.setTo(r, g, b);
+    },
+
+    /**
+     * The color of this Color component, not including the alpha channel.
+     *
+     * @name Phaser.Display.Color#color
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    color: {
+
+        get: function ()
+        {
+            return this._color;
+        }
+
+    },
+
+    /**
+     * The color of this Color component, including the alpha channel.
+     *
+     * @name Phaser.Display.Color#color32
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    color32: {
+
+        get: function ()
+        {
+            return this._color32;
+        }
+
+    },
+
+    /**
+     * The color of this Color component as a string which can be used in CSS color values.
+     *
+     * @name Phaser.Display.Color#rgba
+     * @type {string}
+     * @readonly
+     * @since 3.0.0
+     */
+    rgba: {
+
+        get: function ()
+        {
+            return this._rgba;
+        }
+
+    },
+
+    /**
+     * The red color value, normalized to the range 0 to 1.
+     *
