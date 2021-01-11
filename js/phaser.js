@@ -7529,3 +7529,211 @@ var TransformMatrix = new Class({
      * @since 3.4.0
      */
     c: {
+
+        get: function ()
+        {
+            return this.matrix[2];
+        },
+
+        set: function (value)
+        {
+            this.matrix[2] = value;
+        }
+
+    },
+
+    /**
+     * The Scale Y value.
+     *
+     * @name Phaser.GameObjects.Components.TransformMatrix#d
+     * @type {number}
+     * @since 3.4.0
+     */
+    d: {
+
+        get: function ()
+        {
+            return this.matrix[3];
+        },
+
+        set: function (value)
+        {
+            this.matrix[3] = value;
+        }
+
+    },
+
+    /**
+     * The Translate X value.
+     *
+     * @name Phaser.GameObjects.Components.TransformMatrix#e
+     * @type {number}
+     * @since 3.11.0
+     */
+    e: {
+
+        get: function ()
+        {
+            return this.matrix[4];
+        },
+
+        set: function (value)
+        {
+            this.matrix[4] = value;
+        }
+
+    },
+
+    /**
+     * The Translate Y value.
+     *
+     * @name Phaser.GameObjects.Components.TransformMatrix#f
+     * @type {number}
+     * @since 3.11.0
+     */
+    f: {
+
+        get: function ()
+        {
+            return this.matrix[5];
+        },
+
+        set: function (value)
+        {
+            this.matrix[5] = value;
+        }
+
+    },
+
+    /**
+     * The Translate X value.
+     *
+     * @name Phaser.GameObjects.Components.TransformMatrix#tx
+     * @type {number}
+     * @since 3.4.0
+     */
+    tx: {
+
+        get: function ()
+        {
+            return this.matrix[4];
+        },
+
+        set: function (value)
+        {
+            this.matrix[4] = value;
+        }
+
+    },
+
+    /**
+     * The Translate Y value.
+     *
+     * @name Phaser.GameObjects.Components.TransformMatrix#ty
+     * @type {number}
+     * @since 3.4.0
+     */
+    ty: {
+
+        get: function ()
+        {
+            return this.matrix[5];
+        },
+
+        set: function (value)
+        {
+            this.matrix[5] = value;
+        }
+
+    },
+
+    /**
+     * The rotation of the Matrix.
+     *
+     * @name Phaser.GameObjects.Components.TransformMatrix#rotation
+     * @type {number}
+     * @readonly
+     * @since 3.4.0
+     */
+    rotation: {
+
+        get: function ()
+        {
+            return Math.acos(this.a / this.scaleX) * (Math.atan(-this.c / this.a) < 0 ? -1 : 1);
+        }
+
+    },
+
+    /**
+     * The horizontal scale of the Matrix.
+     *
+     * @name Phaser.GameObjects.Components.TransformMatrix#scaleX
+     * @type {number}
+     * @readonly
+     * @since 3.4.0
+     */
+    scaleX: {
+
+        get: function ()
+        {
+            return Math.sqrt((this.a * this.a) + (this.c * this.c));
+        }
+
+    },
+
+    /**
+     * The vertical scale of the Matrix.
+     *
+     * @name Phaser.GameObjects.Components.TransformMatrix#scaleY
+     * @type {number}
+     * @readonly
+     * @since 3.4.0
+     */
+    scaleY: {
+
+        get: function ()
+        {
+            return Math.sqrt((this.b * this.b) + (this.d * this.d));
+        }
+
+    },
+
+    /**
+     * Reset the Matrix to an identity matrix.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#loadIdentity
+     * @since 3.0.0
+     *
+     * @return {this} This TransformMatrix.
+     */
+    loadIdentity: function ()
+    {
+        var matrix = this.matrix;
+
+        matrix[0] = 1;
+        matrix[1] = 0;
+        matrix[2] = 0;
+        matrix[3] = 1;
+        matrix[4] = 0;
+        matrix[5] = 0;
+
+        return this;
+    },
+
+    /**
+     * Translate the Matrix.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#translate
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal translation value.
+     * @param {number} y - The vertical translation value.
+     *
+     * @return {this} This TransformMatrix.
+     */
+    translate: function (x, y)
+    {
+        var matrix = this.matrix;
+
+        matrix[4] = matrix[0] * x + matrix[2] * y + matrix[4];
+        matrix[5] = matrix[1] * x + matrix[3] * y + matrix[5];
