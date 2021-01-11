@@ -7326,3 +7326,206 @@ var Color = new Class({
         }
 
     },
+
+    /**
+     * The hue color value. A number between 0 and 1.
+     * This is the base color.
+     *
+     * @name Phaser.Display.Color#h
+     * @type {number}
+     * @since 3.13.0
+     */
+    h: {
+
+        get: function ()
+        {
+            return this._h;
+        },
+
+        set: function (value)
+        {
+            this._h = value;
+
+            HSVToRGB(value, this._s, this._v, this);
+        }
+
+    },
+
+    /**
+     * The saturation color value. A number between 0 and 1.
+     * This controls how much of the hue will be in the final color, where 1 is fully saturated and 0 will give you white.
+     *
+     * @name Phaser.Display.Color#s
+     * @type {number}
+     * @since 3.13.0
+     */
+    s: {
+
+        get: function ()
+        {
+            return this._s;
+        },
+
+        set: function (value)
+        {
+            this._s = value;
+
+            HSVToRGB(this._h, value, this._v, this);
+        }
+
+    },
+
+    /**
+     * The lightness color value. A number between 0 and 1.
+     * This controls how dark the color is. Where 1 is as bright as possible and 0 is black.
+     *
+     * @name Phaser.Display.Color#v
+     * @type {number}
+     * @since 3.13.0
+     */
+    v: {
+
+        get: function ()
+        {
+            return this._v;
+        },
+
+        set: function (value)
+        {
+            this._v = value;
+
+            HSVToRGB(this._h, this._s, value, this);
+        }
+
+    }
+
+});
+
+module.exports = Color;
+
+
+/***/ }),
+/* 38 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Vector2 = __webpack_require__(3);
+
+/**
+ * @classdesc
+ * A Matrix used for display transformations for rendering.
+ *
+ * It is represented like so:
+ *
+ * ```
+ * | a | c | tx |
+ * | b | d | ty |
+ * | 0 | 0 | 1  |
+ * ```
+ *
+ * @class TransformMatrix
+ * @memberof Phaser.GameObjects.Components
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {number} [a=1] - The Scale X value.
+ * @param {number} [b=0] - The Shear Y value.
+ * @param {number} [c=0] - The Shear X value.
+ * @param {number} [d=1] - The Scale Y value.
+ * @param {number} [tx=0] - The Translate X value.
+ * @param {number} [ty=0] - The Translate Y value.
+ */
+var TransformMatrix = new Class({
+
+    initialize:
+
+    function TransformMatrix (a, b, c, d, tx, ty)
+    {
+        if (a === undefined) { a = 1; }
+        if (b === undefined) { b = 0; }
+        if (c === undefined) { c = 0; }
+        if (d === undefined) { d = 1; }
+        if (tx === undefined) { tx = 0; }
+        if (ty === undefined) { ty = 0; }
+
+        /**
+         * The matrix values.
+         *
+         * @name Phaser.GameObjects.Components.TransformMatrix#matrix
+         * @type {Float32Array}
+         * @since 3.0.0
+         */
+        this.matrix = new Float32Array([ a, b, c, d, tx, ty, 0, 0, 1 ]);
+
+        /**
+         * The decomposed matrix.
+         *
+         * @name Phaser.GameObjects.Components.TransformMatrix#decomposedMatrix
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.decomposedMatrix = {
+            translateX: 0,
+            translateY: 0,
+            scaleX: 1,
+            scaleY: 1,
+            rotation: 0
+        };
+    },
+
+    /**
+     * The Scale X value.
+     *
+     * @name Phaser.GameObjects.Components.TransformMatrix#a
+     * @type {number}
+     * @since 3.4.0
+     */
+    a: {
+
+        get: function ()
+        {
+            return this.matrix[0];
+        },
+
+        set: function (value)
+        {
+            this.matrix[0] = value;
+        }
+
+    },
+
+    /**
+     * The Shear Y value.
+     *
+     * @name Phaser.GameObjects.Components.TransformMatrix#b
+     * @type {number}
+     * @since 3.4.0
+     */
+    b: {
+
+        get: function ()
+        {
+            return this.matrix[1];
+        },
+
+        set: function (value)
+        {
+            this.matrix[1] = value;
+        }
+
+    },
+
+    /**
+     * The Shear X value.
+     *
+     * @name Phaser.GameObjects.Components.TransformMatrix#c
+     * @type {number}
+     * @since 3.4.0
+     */
+    c: {
