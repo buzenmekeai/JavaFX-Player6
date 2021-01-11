@@ -7122,3 +7122,207 @@ var Color = new Class({
     /**
      * The red color value, normalized to the range 0 to 1.
      *
+     * @name Phaser.Display.Color#redGL
+     * @type {number}
+     * @since 3.0.0
+     */
+    redGL: {
+
+        get: function ()
+        {
+            return this.gl[0];
+        },
+
+        set: function (value)
+        {
+            this.gl[0] = Math.min(Math.abs(value), 1);
+
+            this.r = Math.floor(this.gl[0] * 255);
+
+            this.update(true);
+        }
+
+    },
+
+    /**
+     * The green color value, normalized to the range 0 to 1.
+     *
+     * @name Phaser.Display.Color#greenGL
+     * @type {number}
+     * @since 3.0.0
+     */
+    greenGL: {
+
+        get: function ()
+        {
+            return this.gl[1];
+        },
+
+        set: function (value)
+        {
+            this.gl[1] = Math.min(Math.abs(value), 1);
+
+            this.g = Math.floor(this.gl[1] * 255);
+
+            this.update(true);
+        }
+
+    },
+
+    /**
+     * The blue color value, normalized to the range 0 to 1.
+     *
+     * @name Phaser.Display.Color#blueGL
+     * @type {number}
+     * @since 3.0.0
+     */
+    blueGL: {
+
+        get: function ()
+        {
+            return this.gl[2];
+        },
+
+        set: function (value)
+        {
+            this.gl[2] = Math.min(Math.abs(value), 1);
+
+            this.b = Math.floor(this.gl[2] * 255);
+
+            this.update(true);
+        }
+
+    },
+
+    /**
+     * The alpha color value, normalized to the range 0 to 1.
+     *
+     * @name Phaser.Display.Color#alphaGL
+     * @type {number}
+     * @since 3.0.0
+     */
+    alphaGL: {
+
+        get: function ()
+        {
+            return this.gl[3];
+        },
+
+        set: function (value)
+        {
+            this.gl[3] = Math.min(Math.abs(value), 1);
+
+            this.a = Math.floor(this.gl[3] * 255);
+
+            this.update();
+        }
+
+    },
+
+    /**
+     * The red color value, normalized to the range 0 to 255.
+     *
+     * @name Phaser.Display.Color#red
+     * @type {number}
+     * @since 3.0.0
+     */
+    red: {
+
+        get: function ()
+        {
+            return this.r;
+        },
+
+        set: function (value)
+        {
+            value = Math.floor(Math.abs(value));
+
+            this.r = Math.min(value, 255);
+
+            this.gl[0] = value / 255;
+
+            this.update(true);
+        }
+
+    },
+
+    /**
+     * The green color value, normalized to the range 0 to 255.
+     *
+     * @name Phaser.Display.Color#green
+     * @type {number}
+     * @since 3.0.0
+     */
+    green: {
+
+        get: function ()
+        {
+            return this.g;
+        },
+
+        set: function (value)
+        {
+            value = Math.floor(Math.abs(value));
+
+            this.g = Math.min(value, 255);
+
+            this.gl[1] = value / 255;
+
+            this.update(true);
+        }
+
+    },
+
+    /**
+     * The blue color value, normalized to the range 0 to 255.
+     *
+     * @name Phaser.Display.Color#blue
+     * @type {number}
+     * @since 3.0.0
+     */
+    blue: {
+
+        get: function ()
+        {
+            return this.b;
+        },
+
+        set: function (value)
+        {
+            value = Math.floor(Math.abs(value));
+
+            this.b = Math.min(value, 255);
+
+            this.gl[2] = value / 255;
+
+            this.update(true);
+        }
+
+    },
+
+    /**
+     * The alpha color value, normalized to the range 0 to 255.
+     *
+     * @name Phaser.Display.Color#alpha
+     * @type {number}
+     * @since 3.0.0
+     */
+    alpha: {
+
+        get: function ()
+        {
+            return this.a;
+        },
+
+        set: function (value)
+        {
+            value = Math.floor(Math.abs(value));
+
+            this.a = Math.min(value, 255);
+
+            this.gl[3] = value / 255;
+
+            this.update();
+        }
+
+    },
