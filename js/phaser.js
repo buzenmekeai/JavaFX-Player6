@@ -7737,3 +7737,223 @@ var TransformMatrix = new Class({
 
         matrix[4] = matrix[0] * x + matrix[2] * y + matrix[4];
         matrix[5] = matrix[1] * x + matrix[3] * y + matrix[5];
+
+        return this;
+    },
+
+    /**
+     * Scale the Matrix.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#scale
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal scale value.
+     * @param {number} y - The vertical scale value.
+     *
+     * @return {this} This TransformMatrix.
+     */
+    scale: function (x, y)
+    {
+        var matrix = this.matrix;
+
+        matrix[0] *= x;
+        matrix[1] *= x;
+        matrix[2] *= y;
+        matrix[3] *= y;
+
+        return this;
+    },
+
+    /**
+     * Rotate the Matrix.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#rotate
+     * @since 3.0.0
+     *
+     * @param {number} angle - The angle of rotation in radians.
+     *
+     * @return {this} This TransformMatrix.
+     */
+    rotate: function (angle)
+    {
+        var sin = Math.sin(angle);
+        var cos = Math.cos(angle);
+
+        var matrix = this.matrix;
+
+        var a = matrix[0];
+        var b = matrix[1];
+        var c = matrix[2];
+        var d = matrix[3];
+
+        matrix[0] = a * cos + c * sin;
+        matrix[1] = b * cos + d * sin;
+        matrix[2] = a * -sin + c * cos;
+        matrix[3] = b * -sin + d * cos;
+
+        return this;
+    },
+
+    /**
+     * Multiply this Matrix by the given Matrix.
+     * 
+     * If an `out` Matrix is given then the results will be stored in it.
+     * If it is not given, this matrix will be updated in place instead.
+     * Use an `out` Matrix if you do not wish to mutate this matrix.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#multiply
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Components.TransformMatrix} rhs - The Matrix to multiply by.
+     * @param {Phaser.GameObjects.Components.TransformMatrix} [out] - An optional Matrix to store the results in.
+     *
+     * @return {Phaser.GameObjects.Components.TransformMatrix} Either this TransformMatrix, or the `out` Matrix, if given in the arguments.
+     */
+    multiply: function (rhs, out)
+    {
+        var matrix = this.matrix;
+        var source = rhs.matrix;
+
+        var localA = matrix[0];
+        var localB = matrix[1];
+        var localC = matrix[2];
+        var localD = matrix[3];
+        var localE = matrix[4];
+        var localF = matrix[5];
+
+        var sourceA = source[0];
+        var sourceB = source[1];
+        var sourceC = source[2];
+        var sourceD = source[3];
+        var sourceE = source[4];
+        var sourceF = source[5];
+
+        var destinationMatrix = (out === undefined) ? this : out;
+
+        destinationMatrix.a = (sourceA * localA) + (sourceB * localC);
+        destinationMatrix.b = (sourceA * localB) + (sourceB * localD);
+        destinationMatrix.c = (sourceC * localA) + (sourceD * localC);
+        destinationMatrix.d = (sourceC * localB) + (sourceD * localD);
+        destinationMatrix.e = (sourceE * localA) + (sourceF * localC) + localE;
+        destinationMatrix.f = (sourceE * localB) + (sourceF * localD) + localF;
+
+        return destinationMatrix;
+    },
+
+    /**
+     * Multiply this Matrix by the matrix given, including the offset.
+     * 
+     * The offsetX is added to the tx value: `offsetX * a + offsetY * c + tx`.
+     * The offsetY is added to the ty value: `offsetY * b + offsetY * d + ty`.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#multiplyWithOffset
+     * @since 3.11.0
+     *
+     * @param {Phaser.GameObjects.Components.TransformMatrix} src - The source Matrix to copy from.
+     * @param {number} offsetX - Horizontal offset to factor in to the multiplication.
+     * @param {number} offsetY - Vertical offset to factor in to the multiplication.
+     *
+     * @return {this} This TransformMatrix.
+     */
+    multiplyWithOffset: function (src, offsetX, offsetY)
+    {
+        var matrix = this.matrix;
+        var otherMatrix = src.matrix;
+
+        var a0 = matrix[0];
+        var b0 = matrix[1];
+        var c0 = matrix[2];
+        var d0 = matrix[3];
+        var tx0 = matrix[4];
+        var ty0 = matrix[5];
+
+        var pse = offsetX * a0 + offsetY * c0 + tx0;
+        var psf = offsetX * b0 + offsetY * d0 + ty0;
+
+        var a1 = otherMatrix[0];
+        var b1 = otherMatrix[1];
+        var c1 = otherMatrix[2];
+        var d1 = otherMatrix[3];
+        var tx1 = otherMatrix[4];
+        var ty1 = otherMatrix[5];
+
+        matrix[0] = a1 * a0 + b1 * c0;
+        matrix[1] = a1 * b0 + b1 * d0;
+        matrix[2] = c1 * a0 + d1 * c0;
+        matrix[3] = c1 * b0 + d1 * d0;
+        matrix[4] = tx1 * a0 + ty1 * c0 + pse;
+        matrix[5] = tx1 * b0 + ty1 * d0 + psf;
+
+        return this;
+    },
+
+    /**
+     * Transform the Matrix.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#transform
+     * @since 3.0.0
+     *
+     * @param {number} a - The Scale X value.
+     * @param {number} b - The Shear Y value.
+     * @param {number} c - The Shear X value.
+     * @param {number} d - The Scale Y value.
+     * @param {number} tx - The Translate X value.
+     * @param {number} ty - The Translate Y value.
+     *
+     * @return {this} This TransformMatrix.
+     */
+    transform: function (a, b, c, d, tx, ty)
+    {
+        var matrix = this.matrix;
+
+        var a0 = matrix[0];
+        var b0 = matrix[1];
+        var c0 = matrix[2];
+        var d0 = matrix[3];
+        var tx0 = matrix[4];
+        var ty0 = matrix[5];
+
+        matrix[0] = a * a0 + b * c0;
+        matrix[1] = a * b0 + b * d0;
+        matrix[2] = c * a0 + d * c0;
+        matrix[3] = c * b0 + d * d0;
+        matrix[4] = tx * a0 + ty * c0 + tx0;
+        matrix[5] = tx * b0 + ty * d0 + ty0;
+
+        return this;
+    },
+
+    /**
+     * Transform a point using this Matrix.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#transformPoint
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate of the point to transform.
+     * @param {number} y - The y coordinate of the point to transform.
+     * @param {(Phaser.Geom.Point|Phaser.Math.Vector2|object)} point - The Point object to store the transformed coordinates.
+     *
+     * @return {(Phaser.Geom.Point|Phaser.Math.Vector2|object)} The Point containing the transformed coordinates.
+     */
+    transformPoint: function (x, y, point)
+    {
+        if (point === undefined) { point = { x: 0, y: 0 }; }
+
+        var matrix = this.matrix;
+
+        var a = matrix[0];
+        var b = matrix[1];
+        var c = matrix[2];
+        var d = matrix[3];
+        var tx = matrix[4];
+        var ty = matrix[5];
+
+        point.x = x * a + y * c + tx;
+        point.y = x * b + y * d + ty;
+
+        return point;
+    },
+
+    /**
+     * Invert the Matrix.
+     *
