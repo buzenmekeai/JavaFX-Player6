@@ -7957,3 +7957,216 @@ var TransformMatrix = new Class({
     /**
      * Invert the Matrix.
      *
+     * @method Phaser.GameObjects.Components.TransformMatrix#invert
+     * @since 3.0.0
+     *
+     * @return {this} This TransformMatrix.
+     */
+    invert: function ()
+    {
+        var matrix = this.matrix;
+
+        var a = matrix[0];
+        var b = matrix[1];
+        var c = matrix[2];
+        var d = matrix[3];
+        var tx = matrix[4];
+        var ty = matrix[5];
+
+        var n = a * d - b * c;
+
+        matrix[0] = d / n;
+        matrix[1] = -b / n;
+        matrix[2] = -c / n;
+        matrix[3] = a / n;
+        matrix[4] = (c * ty - d * tx) / n;
+        matrix[5] = -(a * ty - b * tx) / n;
+
+        return this;
+    },
+
+    /**
+     * Set the values of this Matrix to copy those of the matrix given.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#copyFrom
+     * @since 3.11.0
+     *
+     * @param {Phaser.GameObjects.Components.TransformMatrix} src - The source Matrix to copy from.
+     *
+     * @return {this} This TransformMatrix.
+     */
+    copyFrom: function (src)
+    {
+        var matrix = this.matrix;
+
+        matrix[0] = src.a;
+        matrix[1] = src.b;
+        matrix[2] = src.c;
+        matrix[3] = src.d;
+        matrix[4] = src.e;
+        matrix[5] = src.f;
+
+        return this;
+    },
+
+    /**
+     * Set the values of this Matrix to copy those of the array given.
+     * Where array indexes 0, 1, 2, 3, 4 and 5 are mapped to a, b, c, d, e and f.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#copyFromArray
+     * @since 3.11.0
+     *
+     * @param {array} src - The array of values to set into this matrix.
+     *
+     * @return {this} This TransformMatrix.
+     */
+    copyFromArray: function (src)
+    {
+        var matrix = this.matrix;
+
+        matrix[0] = src[0];
+        matrix[1] = src[1];
+        matrix[2] = src[2];
+        matrix[3] = src[3];
+        matrix[4] = src[4];
+        matrix[5] = src[5];
+
+        return this;
+    },
+
+    /**
+     * Copy the values from this Matrix to the given Canvas Rendering Context.
+     * This will use the Context.transform method.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#copyToContext
+     * @since 3.12.0
+     *
+     * @param {CanvasRenderingContext2D} ctx - The Canvas Rendering Context to copy the matrix values to.
+     *
+     * @return {CanvasRenderingContext2D} The Canvas Rendering Context.
+     */
+    copyToContext: function (ctx)
+    {
+        var matrix = this.matrix;
+
+        ctx.transform(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
+
+        return ctx;
+    },
+
+    /**
+     * Copy the values from this Matrix to the given Canvas Rendering Context.
+     * This will use the Context.setTransform method.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#setToContext
+     * @since 3.12.0
+     *
+     * @param {CanvasRenderingContext2D} ctx - The Canvas Rendering Context to copy the matrix values to.
+     *
+     * @return {CanvasRenderingContext2D} The Canvas Rendering Context.
+     */
+    setToContext: function (ctx)
+    {
+        var matrix = this.matrix;
+
+        ctx.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
+
+        return ctx;
+    },
+
+    /**
+     * Copy the values in this Matrix to the array given.
+     * 
+     * Where array indexes 0, 1, 2, 3, 4 and 5 are mapped to a, b, c, d, e and f.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#copyToArray
+     * @since 3.12.0
+     *
+     * @param {array} [out] - The array to copy the matrix values in to.
+     *
+     * @return {array} An array where elements 0 to 5 contain the values from this matrix.
+     */
+    copyToArray: function (out)
+    {
+        var matrix = this.matrix;
+
+        if (out === undefined)
+        {
+            out = [ matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5] ];
+        }
+        else
+        {
+            out[0] = matrix[0];
+            out[1] = matrix[1];
+            out[2] = matrix[2];
+            out[3] = matrix[3];
+            out[4] = matrix[4];
+            out[5] = matrix[5];
+        }
+
+        return out;
+    },
+
+    /**
+     * Set the values of this Matrix.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#setTransform
+     * @since 3.0.0
+     *
+     * @param {number} a - The Scale X value.
+     * @param {number} b - The Shear Y value.
+     * @param {number} c - The Shear X value.
+     * @param {number} d - The Scale Y value.
+     * @param {number} tx - The Translate X value.
+     * @param {number} ty - The Translate Y value.
+     *
+     * @return {this} This TransformMatrix.
+     */
+    setTransform: function (a, b, c, d, tx, ty)
+    {
+        var matrix = this.matrix;
+
+        matrix[0] = a;
+        matrix[1] = b;
+        matrix[2] = c;
+        matrix[3] = d;
+        matrix[4] = tx;
+        matrix[5] = ty;
+
+        return this;
+    },
+
+    /**
+     * Decompose this Matrix into its translation, scale and rotation values.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#decomposeMatrix
+     * @since 3.0.0
+     *
+     * @return {object} The decomposed Matrix.
+     */
+    decomposeMatrix: function ()
+    {
+        var decomposedMatrix = this.decomposedMatrix;
+
+        var matrix = this.matrix;
+
+        //  a = scale X (1)
+        //  b = shear Y (0)
+        //  c = shear X (0)
+        //  d = scale Y (1)
+
+        var a = matrix[0];
+        var b = matrix[1];
+        var c = matrix[2];
+        var d = matrix[3];
+
+        var a2 = a * a;
+        var b2 = b * b;
+        var c2 = c * c;
+        var d2 = d * d;
+
+        var sx = Math.sqrt(a2 + c2);
+        var sy = Math.sqrt(b2 + d2);
+
+        decomposedMatrix.translateX = matrix[4];
+        decomposedMatrix.translateY = matrix[5];
