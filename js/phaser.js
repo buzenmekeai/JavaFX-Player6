@@ -8170,3 +8170,215 @@ var TransformMatrix = new Class({
 
         decomposedMatrix.translateX = matrix[4];
         decomposedMatrix.translateY = matrix[5];
+
+        decomposedMatrix.scaleX = sx;
+        decomposedMatrix.scaleY = sy;
+
+        decomposedMatrix.rotation = Math.acos(a / sx) * (Math.atan(-c / a) < 0 ? -1 : 1);
+
+        return decomposedMatrix;
+    },
+
+    /**
+     * Apply the identity, translate, rotate and scale operations on the Matrix.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#applyITRS
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal translation.
+     * @param {number} y - The vertical translation.
+     * @param {number} rotation - The angle of rotation in radians.
+     * @param {number} scaleX - The horizontal scale.
+     * @param {number} scaleY - The vertical scale.
+     *
+     * @return {this} This TransformMatrix.
+     */
+    applyITRS: function (x, y, rotation, scaleX, scaleY)
+    {
+        var matrix = this.matrix;
+
+        var radianSin = Math.sin(rotation);
+        var radianCos = Math.cos(rotation);
+
+        // Translate
+        matrix[4] = x;
+        matrix[5] = y;
+
+        // Rotate and Scale
+        matrix[0] = radianCos * scaleX;
+        matrix[1] = radianSin * scaleX;
+        matrix[2] = -radianSin * scaleY;
+        matrix[3] = radianCos * scaleY;
+
+        return this;
+    },
+
+    /**
+     * Takes the `x` and `y` values and returns a new position in the `output` vector that is the inverse of
+     * the current matrix with its transformation applied.
+     * 
+     * Can be used to translate points from world to local space.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#applyInverse
+     * @since 3.12.0
+     *
+     * @param {number} x - The x position to translate.
+     * @param {number} y - The y position to translate.
+     * @param {Phaser.Math.Vector2} [output] - A Vector2, or point-like object, to store the results in.
+     *
+     * @return {Phaser.Math.Vector2} The coordinates, inverse-transformed through this matrix.
+     */
+    applyInverse: function (x, y, output)
+    {
+        if (output === undefined) { output = new Vector2(); }
+
+        var matrix = this.matrix;
+
+        var a = matrix[0];
+        var b = matrix[1];
+        var c = matrix[2];
+        var d = matrix[3];
+        var tx = matrix[4];
+        var ty = matrix[5];
+
+        var id = 1 / ((a * d) + (c * -b));
+
+        output.x = (d * id * x) + (-c * id * y) + (((ty * c) - (tx * d)) * id);
+        output.y = (a * id * y) + (-b * id * x) + (((-ty * a) + (tx * b)) * id);
+
+        return output;
+    },
+
+    /**
+     * Returns the X component of this matrix multiplied by the given values.
+     * This is the same as `x * a + y * c + e`.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#getX
+     * @since 3.12.0
+     * 
+     * @param {number} x - The x value.
+     * @param {number} y - The y value.
+     *
+     * @return {number} The calculated x value.
+     */
+    getX: function (x, y)
+    {
+        return x * this.a + y * this.c + this.e;
+    },
+
+    /**
+     * Returns the Y component of this matrix multiplied by the given values.
+     * This is the same as `x * b + y * d + f`.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#getY
+     * @since 3.12.0
+     * 
+     * @param {number} x - The x value.
+     * @param {number} y - The y value.
+     *
+     * @return {number} The calculated y value.
+     */
+    getY: function (x, y)
+    {
+        return x * this.b + y * this.d + this.f;
+    },
+
+    /**
+     * Returns a string that can be used in a CSS Transform call as a `matrix` property.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#getCSSMatrix
+     * @since 3.12.0
+     *
+     * @return {string} A string containing the CSS Transform matrix values.
+     */
+    getCSSMatrix: function ()
+    {
+        var m = this.matrix;
+
+        return 'matrix(' + m[0] + ',' + m[1] + ',' + m[2] + ',' + m[3] + ',' + m[4] + ',' + m[5] + ')';
+    },
+
+    /**
+     * Destroys this Transform Matrix.
+     *
+     * @method Phaser.GameObjects.Components.TransformMatrix#destroy
+     * @since 3.4.0
+     */
+    destroy: function ()
+    {
+        this.matrix = null;
+        this.decomposedMatrix = null;
+    }
+
+});
+
+module.exports = TransformMatrix;
+
+
+/***/ }),
+/* 39 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Rectangle.Contains
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Rectangle} rect - [description]
+ * @param {number} x - [description]
+ * @param {number} y - [description]
+ *
+ * @return {boolean} [description]
+ */
+var Contains = function (rect, x, y)
+{
+    if (rect.width <= 0 || rect.height <= 0)
+    {
+        return false;
+    }
+
+    return (rect.x <= x && rect.x + rect.width >= x && rect.y <= y && rect.y + rect.height >= y);
+};
+
+module.exports = Contains;
+
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Check to see if the Circle contains the given x / y coordinates.
+ *
+ * @function Phaser.Geom.Circle.Contains
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Circle} circle - The Circle to check.
+ * @param {number} x - The x coordinate to check within the circle.
+ * @param {number} y - The y coordinate to check within the circle.
+ *
+ * @return {boolean} True if the coordinates are within the circle, otherwise false.
+ */
+var Contains = function (circle, x, y)
+{
+    //  Check if x/y are within the bounds first
+    if (circle.radius > 0 && x >= circle.left && x <= circle.right && y >= circle.top && y <= circle.bottom)
+    {
+        var dx = (circle.x - x) * (circle.x - x);
+        var dy = (circle.y - y) * (circle.y - y);
+
+        return (dx + dy) <= (circle.radius * circle.radius);
+    }
