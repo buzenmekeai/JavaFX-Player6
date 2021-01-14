@@ -8382,3 +8382,217 @@ var Contains = function (circle, x, y)
 
         return (dx + dy) <= (circle.radius * circle.radius);
     }
+    else
+    {
+        return false;
+    }
+};
+
+module.exports = Contains;
+
+
+/***/ }),
+/* 41 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Positions the Game Object so that the top of its bounds aligns with the given coordinate.
+ *
+ * @function Phaser.Display.Bounds.SetTop
+ * @since 3.0.0
+ *
+ * @generic {Phaser.GameObjects.GameObject} G - [gameObject,$return]
+ *
+ * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object that will be re-positioned.
+ * @param {number} value - The coordinate to position the Game Object bounds on.
+ *
+ * @return {Phaser.GameObjects.GameObject} The Game Object that was positioned.
+ */
+var SetTop = function (gameObject, value)
+{
+    gameObject.y = value + (gameObject.height * gameObject.originY);
+
+    return gameObject;
+};
+
+module.exports = SetTop;
+
+
+/***/ }),
+/* 42 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Returns the top coordinate from the bounds of the Game Object.
+ *
+ * @function Phaser.Display.Bounds.GetTop
+ * @since 3.0.0
+ *
+ * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object to get the bounds value from.
+ *
+ * @return {number} The top coordinate of the bounds of the Game Object.
+ */
+var GetTop = function (gameObject)
+{
+    return gameObject.y - (gameObject.height * gameObject.originY);
+};
+
+module.exports = GetTop;
+
+
+/***/ }),
+/* 43 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Positions the Game Object so that the left of its bounds aligns with the given coordinate.
+ *
+ * @function Phaser.Display.Bounds.SetRight
+ * @since 3.0.0
+ *
+ * @generic {Phaser.GameObjects.GameObject} G - [gameObject,$return]
+ *
+ * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object that will be re-positioned.
+ * @param {number} value - The coordinate to position the Game Object bounds on.
+ *
+ * @return {Phaser.GameObjects.GameObject} The Game Object that was positioned.
+ */
+var SetRight = function (gameObject, value)
+{
+    gameObject.x = (value - gameObject.width) + (gameObject.width * gameObject.originX);
+
+    return gameObject;
+};
+
+module.exports = SetRight;
+
+
+/***/ }),
+/* 44 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Returns the right coordinate from the bounds of the Game Object.
+ *
+ * @function Phaser.Display.Bounds.GetRight
+ * @since 3.0.0
+ *
+ * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object to get the bounds value from.
+ *
+ * @return {number} The right coordinate of the bounds of the Game Object.
+ */
+var GetRight = function (gameObject)
+{
+    return (gameObject.x + gameObject.width) - (gameObject.width * gameObject.originX);
+};
+
+module.exports = GetRight;
+
+
+/***/ }),
+/* 45 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Positions the Game Object so that the left of its bounds aligns with the given coordinate.
+ *
+ * @function Phaser.Display.Bounds.SetLeft
+ * @since 3.0.0
+ *
+ * @generic {Phaser.GameObjects.GameObject} G - [gameObject,$return]
+ *
+ * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object that will be re-positioned.
+ * @param {number} value - The coordinate to position the Game Object bounds on.
+ *
+ * @return {Phaser.GameObjects.GameObject} The Game Object that was positioned.
+ */
+var SetLeft = function (gameObject, value)
+{
+    gameObject.x = value + (gameObject.width * gameObject.originX);
+
+    return gameObject;
+};
+
+module.exports = SetLeft;
+
+
+/***/ }),
+/* 46 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Returns the left coordinate from the bounds of the Game Object.
+ *
+ * @function Phaser.Display.Bounds.GetLeft
+ * @since 3.0.0
+ *
+ * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object to get the bounds value from.
+ *
+ * @return {number} The left coordinate of the bounds of the Game Object.
+ */
+var GetLeft = function (gameObject)
+{
+    return gameObject.x - (gameObject.width * gameObject.originX);
+};
+
+module.exports = GetLeft;
+
+
+/***/ }),
+/* 47 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Positions the Game Object so that the bottom of its bounds aligns with the given coordinate.
+ *
+ * @function Phaser.Display.Bounds.SetBottom
+ * @since 3.0.0
+ *
+ * @generic {Phaser.GameObjects.GameObject} G - [gameObject,$return]
+ *
+ * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object that will be re-positioned.
+ * @param {number} value - The coordinate to position the Game Object bounds on.
+ *
+ * @return {Phaser.GameObjects.GameObject} The Game Object that was positioned.
