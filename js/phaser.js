@@ -8596,3 +8596,204 @@ module.exports = GetLeft;
  * @param {number} value - The coordinate to position the Game Object bounds on.
  *
  * @return {Phaser.GameObjects.GameObject} The Game Object that was positioned.
+ */
+var SetBottom = function (gameObject, value)
+{
+    gameObject.y = (value - gameObject.height) + (gameObject.height * gameObject.originY);
+
+    return gameObject;
+};
+
+module.exports = SetBottom;
+
+
+/***/ }),
+/* 48 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Returns the bottom coordinate from the bounds of the Game Object.
+ *
+ * @function Phaser.Display.Bounds.GetBottom
+ * @since 3.0.0
+ *
+ * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object to get the bounds value from.
+ *
+ * @return {number} The bottom coordinate of the bounds of the Game Object.
+ */
+var GetBottom = function (gameObject)
+{
+    return (gameObject.y + gameObject.height) - (gameObject.height * gameObject.originY);
+};
+
+module.exports = GetBottom;
+
+
+/***/ }),
+/* 49 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Converts from world Y coordinates (pixels) to tile Y coordinates (tile units), factoring in the
+ * layer's position, scale and scroll.
+ *
+ * @function Phaser.Tilemaps.Components.WorldToTileY
+ * @private
+ * @since 3.0.0
+ *
+ * @param {number} worldY - The y coordinate to be converted, in pixels, not tiles.
+ * @param {boolean} [snapToFloor=true] - Whether or not to round the tile coordinate down to the nearest integer.
+ * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ * 
+ * @return {number} The Y location in tile units.
+ */
+var WorldToTileY = function (worldY, snapToFloor, camera, layer)
+{
+    if (snapToFloor === undefined) { snapToFloor = true; }
+
+    var tileHeight = layer.baseTileHeight;
+    var tilemapLayer = layer.tilemapLayer;
+
+    if (tilemapLayer)
+    {
+        if (camera === undefined) { camera = tilemapLayer.scene.cameras.main; }
+
+        // Find the world position relative to the static or dynamic layer's top left origin,
+        // factoring in the camera's vertical scroll
+        worldY = worldY - (tilemapLayer.y + camera.scrollY * (1 - tilemapLayer.scrollFactorY));
+
+        tileHeight *= tilemapLayer.scaleY;
+    }
+
+    return snapToFloor
+        ? Math.floor(worldY / tileHeight)
+        : worldY / tileHeight;
+};
+
+module.exports = WorldToTileY;
+
+
+/***/ }),
+/* 50 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Converts from world X coordinates (pixels) to tile X coordinates (tile units), factoring in the
+ * layer's position, scale and scroll.
+ *
+ * @function Phaser.Tilemaps.Components.WorldToTileX
+ * @private
+ * @since 3.0.0
+ *
+ * @param {number} worldX - The x coordinate to be converted, in pixels, not tiles.
+ * @param {boolean} [snapToFloor=true] - Whether or not to round the tile coordinate down to the nearest integer.
+ * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ * 
+ * @return {number} The X location in tile units.
+ */
+var WorldToTileX = function (worldX, snapToFloor, camera, layer)
+{
+    if (snapToFloor === undefined) { snapToFloor = true; }
+
+    var tileWidth = layer.baseTileWidth;
+    var tilemapLayer = layer.tilemapLayer;
+
+    if (tilemapLayer)
+    {
+        if (camera === undefined) { camera = tilemapLayer.scene.cameras.main; }
+
+        // Find the world position relative to the static or dynamic layer's top left origin,
+        // factoring in the camera's horizontal scroll
+        worldX = worldX - (tilemapLayer.x + camera.scrollX * (1 - tilemapLayer.scrollFactorX));
+
+        tileWidth *= tilemapLayer.scaleX;
+    }
+
+    return snapToFloor
+        ? Math.floor(worldX / tileWidth)
+        : worldX / tileWidth;
+};
+
+module.exports = WorldToTileX;
+
+
+/***/ }),
+/* 51 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var CONST = __webpack_require__(18);
+var File = __webpack_require__(21);
+var FileTypesManager = __webpack_require__(7);
+var GetFastValue = __webpack_require__(2);
+var GetValue = __webpack_require__(4);
+var IsPlainObject = __webpack_require__(8);
+
+/**
+ * @typedef {object} Phaser.Loader.FileTypes.JSONFileConfig
+ *
+ * @property {string} key - The key of the file. Must be unique within both the Loader and the JSON Cache.
+ * @property {string|any} [url] - The absolute or relative URL to load the file from. Or can be a ready formed JSON object, in which case it will be directly added to the Cache.
+ * @property {string} [extension='json'] - The default file extension to use if no url is provided.
+ * @property {string} [dataKey] - If specified instead of the whole JSON file being parsed and added to the Cache, only the section corresponding to this property key will be added. If the property you want to extract is nested, use periods to divide it.
+ * @property {XHRSettingsObject} [xhrSettings] - Extra XHR Settings specifically for this file.
+ */
+
+/**
+ * @classdesc
+ * A single JSON File suitable for loading by the Loader.
+ *
+ * These are created when you use the Phaser.Loader.LoaderPlugin#json method and are not typically created directly.
+ * 
+ * For documentation about what all the arguments and configuration options mean please see Phaser.Loader.LoaderPlugin#json.
+ *
+ * @class JSONFile
+ * @extends Phaser.Loader.File
+ * @memberof Phaser.Loader.FileTypes
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Loader.LoaderPlugin} loader - A reference to the Loader that is responsible for this file.
+ * @param {(string|Phaser.Loader.FileTypes.JSONFileConfig)} key - The key to use for this file, or a file configuration object.
+ * @param {string} [url] - The absolute or relative URL to load this file from. If undefined or `null` it will be set to `<key>.json`, i.e. if `key` was "alien" then the URL will be "alien.json".
+ * @param {XHRSettingsObject} [xhrSettings] - Extra XHR Settings specifically for this file.
+ * @param {string} [dataKey] - When the JSON file loads only this property will be stored in the Cache.
+ */
+var JSONFile = new Class({
+
+    Extends: File,
+
+    initialize:
+
+    //  url can either be a string, in which case it is treated like a proper url, or an object, in which case it is treated as a ready-made JS Object
+    //  dataKey allows you to pluck a specific object out of the JSON and put just that into the cache, rather than the whole thing
+
+    function JSONFile (loader, key, url, xhrSettings, dataKey)
+    {
+        var extension = 'json';
