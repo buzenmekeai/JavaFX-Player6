@@ -9234,3 +9234,251 @@ var Line = new Class({
      * Returns a Vector2 object that corresponds to the end of this Line.
      *
      * @method Phaser.Geom.Line#getPointB
+     * @since 3.0.0
+     *
+     * @generic {Phaser.Math.Vector2} O - [vec2,$return]
+     *
+     * @param {Phaser.Math.Vector2} [vec2] - A Vector2 object to set the results in. If `undefined` a new Vector2 will be created.
+     *
+     * @return {Phaser.Math.Vector2} A Vector2 object that corresponds to the end of this Line.
+     */
+    getPointB: function (vec2)
+    {
+        if (vec2 === undefined) { vec2 = new Vector2(); }
+
+        vec2.set(this.x2, this.y2);
+
+        return vec2;
+    },
+
+    /**
+     * The left position of the Line.
+     *
+     * @name Phaser.Geom.Line#left
+     * @type {number}
+     * @since 3.0.0
+     */
+    left: {
+
+        get: function ()
+        {
+            return Math.min(this.x1, this.x2);
+        },
+
+        set: function (value)
+        {
+            if (this.x1 <= this.x2)
+            {
+                this.x1 = value;
+            }
+            else
+            {
+                this.x2 = value;
+            }
+        }
+
+    },
+
+    /**
+     * The right position of the Line.
+     *
+     * @name Phaser.Geom.Line#right
+     * @type {number}
+     * @since 3.0.0
+     */
+    right: {
+
+        get: function ()
+        {
+            return Math.max(this.x1, this.x2);
+        },
+
+        set: function (value)
+        {
+            if (this.x1 > this.x2)
+            {
+                this.x1 = value;
+            }
+            else
+            {
+                this.x2 = value;
+            }
+        }
+
+    },
+
+    /**
+     * The top position of the Line.
+     *
+     * @name Phaser.Geom.Line#top
+     * @type {number}
+     * @since 3.0.0
+     */
+    top: {
+
+        get: function ()
+        {
+            return Math.min(this.y1, this.y2);
+        },
+
+        set: function (value)
+        {
+            if (this.y1 <= this.y2)
+            {
+                this.y1 = value;
+            }
+            else
+            {
+                this.y2 = value;
+            }
+        }
+
+    },
+
+    /**
+     * The bottom position of the Line.
+     *
+     * @name Phaser.Geom.Line#bottom
+     * @type {number}
+     * @since 3.0.0
+     */
+    bottom: {
+
+        get: function ()
+        {
+            return Math.max(this.y1, this.y2);
+        },
+
+        set: function (value)
+        {
+            if (this.y1 > this.y2)
+            {
+                this.y1 = value;
+            }
+            else
+            {
+                this.y2 = value;
+            }
+        }
+
+    }
+
+});
+
+module.exports = Line;
+
+
+/***/ }),
+/* 55 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(14);
+var Rectangle = __webpack_require__(265);
+
+/**
+ * @classdesc
+ * A Tile is a representation of a single tile within the Tilemap. This is a lightweight data
+ * representation, so its position information is stored without factoring in scroll, layer
+ * scale or layer position.
+ *
+ * @class Tile
+ * @memberof Phaser.Tilemaps
+ * @constructor
+ * @since 3.0.0
+ *
+ * @extends Phaser.GameObjects.Components.Alpha
+ * @extends Phaser.GameObjects.Components.Flip
+ * @extends Phaser.GameObjects.Components.Visible
+ *
+ * @param {Phaser.Tilemaps.LayerData} layer - The LayerData object in the Tilemap that this tile belongs to.
+ * @param {integer} index - The unique index of this tile within the map.
+ * @param {integer} x - The x coordinate of this tile in tile coordinates.
+ * @param {integer} y - The y coordinate of this tile in tile coordinates.
+ * @param {integer} width - Width of the tile in pixels.
+ * @param {integer} height - Height of the tile in pixels.
+ * @param {integer} baseWidth - The base width a tile in the map (in pixels). Tiled maps support
+ * multiple tileset sizes within one map, but they are still placed at intervals of the base
+ * tile width.
+ * @param {integer} baseHeight - The base height of the tile in pixels (in pixels). Tiled maps
+ * support multiple tileset sizes within one map, but they are still placed at intervals of the
+ * base tile height.
+ */
+var Tile = new Class({
+
+    Mixins: [
+        Components.Alpha,
+        Components.Flip,
+        Components.Visible
+    ],
+
+    initialize:
+
+    function Tile (layer, index, x, y, width, height, baseWidth, baseHeight)
+    {
+        /**
+         * The LayerData in the Tilemap data that this tile belongs to.
+         *
+         * @name Phaser.Tilemaps.Tile#layer
+         * @type {Phaser.Tilemaps.LayerData}
+         * @since 3.0.0
+         */
+        this.layer = layer;
+
+        /**
+         * The index of this tile within the map data corresponding to the tileset, or -1 if this
+         * represents a blank tile.
+         *
+         * @name Phaser.Tilemaps.Tile#index
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.index = index;
+
+        /**
+         * The x map coordinate of this tile in tile units.
+         *
+         * @name Phaser.Tilemaps.Tile#x
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.x = x;
+
+        /**
+         * The y map coordinate of this tile in tile units.
+         *
+         * @name Phaser.Tilemaps.Tile#y
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.y = y;
+
+        /**
+         * The width of the tile in pixels.
+         *
+         * @name Phaser.Tilemaps.Tile#width
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.width = width;
+
+        /**
+         * The height of the tile in pixels.
+         *
+         * @name Phaser.Tilemaps.Tile#height
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.height = height;
+
+        /**
+         * The map's base width of a tile in pixels. Tiled maps support multiple tileset sizes
+         * within one map, but they are still placed at intervals of the base tile size.
+         *
+         * @name Phaser.Tilemaps.Tile#baseWidth
