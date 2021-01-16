@@ -9482,3 +9482,242 @@ var Tile = new Class({
          * within one map, but they are still placed at intervals of the base tile size.
          *
          * @name Phaser.Tilemaps.Tile#baseWidth
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.baseWidth = (baseWidth !== undefined) ? baseWidth : width;
+
+        /**
+         * The map's base height of a tile in pixels. Tiled maps support multiple tileset sizes
+         * within one map, but they are still placed at intervals of the base tile size.
+         *
+         * @name Phaser.Tilemaps.Tile#baseHeight
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.baseHeight = (baseHeight !== undefined) ? baseHeight : height;
+
+        /**
+         * The x coordinate of the top left of this tile in pixels. This is relative to the top left
+         * of the layer this tile is being rendered within. This property does NOT factor in camera
+         * scroll, layer scale or layer position.
+         *
+         * @name Phaser.Tilemaps.Tile#pixelX
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.pixelX = 0;
+
+        /**
+         * The y coordinate of the top left of this tile in pixels. This is relative to the top left
+         * of the layer this tile is being rendered within. This property does NOT factor in camera
+         * scroll, layer scale or layer position.
+         *
+         * @name Phaser.Tilemaps.Tile#pixelY
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.pixelY = 0;
+
+        this.updatePixelXY();
+
+        /**
+         * Tile specific properties. These usually come from Tiled.
+         *
+         * @name Phaser.Tilemaps.Tile#properties
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.properties = {};
+
+        /**
+         * The rotation angle of this tile.
+         *
+         * @name Phaser.Tilemaps.Tile#rotation
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.rotation = 0;
+
+        /**
+         * Whether the tile should collide with any object on the left side.
+         *
+         * @name Phaser.Tilemaps.Tile#collideLeft
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.collideLeft = false;
+
+        /**
+         * Whether the tile should collide with any object on the right side.
+         *
+         * @name Phaser.Tilemaps.Tile#collideRight
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.collideRight = false;
+
+        /**
+         * Whether the tile should collide with any object on the top side.
+         *
+         * @name Phaser.Tilemaps.Tile#collideUp
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.collideUp = false;
+
+        /**
+         * Whether the tile should collide with any object on the bottom side.
+         *
+         * @name Phaser.Tilemaps.Tile#collideDown
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.collideDown = false;
+
+        /**
+         * Whether the tile's left edge is interesting for collisions.
+         *
+         * @name Phaser.Tilemaps.Tile#faceLeft
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.faceLeft = false;
+
+        /**
+         * Whether the tile's right edge is interesting for collisions.
+         *
+         * @name Phaser.Tilemaps.Tile#faceRight
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.faceRight = false;
+
+        /**
+         * Whether the tile's top edge is interesting for collisions.
+         *
+         * @name Phaser.Tilemaps.Tile#faceTop
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.faceTop = false;
+
+        /**
+         * Whether the tile's bottom edge is interesting for collisions.
+         *
+         * @name Phaser.Tilemaps.Tile#faceBottom
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.faceBottom = false;
+
+        /**
+         * Tile collision callback.
+         *
+         * @name Phaser.Tilemaps.Tile#collisionCallback
+         * @type {function}
+         * @since 3.0.0
+         */
+        this.collisionCallback = null;
+
+        /**
+         * The context in which the collision callback will be called.
+         *
+         * @name Phaser.Tilemaps.Tile#collisionCallbackContext
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.collisionCallbackContext = this;
+
+        /**
+         * The tint to apply to this tile. Note: tint is currently a single color value instead of
+         * the 4 corner tint component on other GameObjects.
+         *
+         * @name Phaser.Tilemaps.Tile#tint
+         * @type {number}
+         * @default
+         * @since 3.0.0
+         */
+        this.tint = 0xffffff;
+
+        /**
+         * An empty object where physics-engine specific information (e.g. bodies) may be stored.
+         *
+         * @name Phaser.Tilemaps.Tile#physics
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.physics = {};
+    },
+
+    /**
+     * Check if the given x and y world coordinates are within this Tile. This does not factor in
+     * camera scroll, layer scale or layer position.
+     *
+     * @method Phaser.Tilemaps.Tile#containsPoint
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate to test.
+     * @param {number} y - The y coordinate to test.
+     *
+     * @return {boolean} True if the coordinates are within this Tile, otherwise false.
+     */
+    containsPoint: function (x, y)
+    {
+        return !(x < this.pixelX || y < this.pixelY || x > this.right || y > this.bottom);
+    },
+
+    /**
+     * Copies the tile data & properties from the given tile to this tile. This copies everything
+     * except for position and interesting faces.
+     *
+     * @method Phaser.Tilemaps.Tile#copy
+     * @since 3.0.0
+     *
+     * @param {Phaser.Tilemaps.Tile} tile - The tile to copy from.
+     *
+     * @return {Phaser.Tilemaps.Tile} This Tile object.
+     */
+    copy: function (tile)
+    {
+        this.index = tile.index;
+        this.alpha = tile.alpha;
+        this.properties = tile.properties;
+        this.visible = tile.visible;
+        this.setFlip(tile.flipX, tile.flipY);
+        this.tint = tile.tint;
+        this.rotation = tile.rotation;
+        this.collideUp = tile.collideUp;
+        this.collideDown = tile.collideDown;
+        this.collideLeft = tile.collideLeft;
+        this.collideRight = tile.collideRight;
+        this.collisionCallback = tile.collisionCallback;
+        this.collisionCallbackContext = tile.collisionCallbackContext;
+
+        return this;
+    },
+
+    /**
+     * The collision group for this Tile, defined within the Tileset. This returns a reference to
+     * the collision group stored within the Tileset, so any modification of the returned object
+     * will impact all tiles that have the same index as this tile.
+     *
+     * @method Phaser.Tilemaps.Tile#getCollisionGroup
+     * @since 3.0.0
+     *
+     * @return {?object} tileset
+     */
+    getCollisionGroup: function ()
+    {
+        return this.tileset ? this.tileset.getTileCollisionGroup(this.index) : null;
+    },
+
+    /**
+     * The tile data for this Tile, defined within the Tileset. This typically contains Tiled
+     * collision data, tile animations and terrain information. This returns a reference to the tile
+     * data stored within the Tileset, so any modification of the returned object will impact all
+     * tiles that have the same index as this tile.
+     *
+     * @method Phaser.Tilemaps.Tile#getTileData
+     * @since 3.0.0
+     *
