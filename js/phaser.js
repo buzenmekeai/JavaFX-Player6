@@ -9942,3 +9942,228 @@ var Tile = new Class({
         this.faceRight = false;
 
         if (recalculateFaces)
+        {
+            var tilemapLayer = this.tilemapLayer;
+
+            if (tilemapLayer)
+            {
+                this.tilemapLayer.calculateFacesAt(this.x, this.y);
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Reset faces.
+     *
+     * @method Phaser.Tilemaps.Tile#resetFaces
+     * @since 3.0.0
+     *
+     * @return {Phaser.Tilemaps.Tile} This Tile object.
+     */
+    resetFaces: function ()
+    {
+        this.faceTop = false;
+        this.faceBottom = false;
+        this.faceLeft = false;
+        this.faceRight = false;
+
+        return this;
+    },
+
+    /**
+     * Sets the collision flags for each side of this tile and updates the interesting faces list.
+     *
+     * @method Phaser.Tilemaps.Tile#setCollision
+     * @since 3.0.0
+     *
+     * @param {boolean} left - Indicating collide with any object on the left.
+     * @param {boolean} [right] - Indicating collide with any object on the right.
+     * @param {boolean} [up] - Indicating collide with any object on the top.
+     * @param {boolean} [down] - Indicating collide with any object on the bottom.
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate interesting faces
+     * for this tile and its neighbors.
+     *
+     * @return {Phaser.Tilemaps.Tile} This Tile object.
+     */
+    setCollision: function (left, right, up, down, recalculateFaces)
+    {
+        if (right === undefined) { right = left; }
+        if (up === undefined) { up = left; }
+        if (down === undefined) { down = left; }
+        if (recalculateFaces === undefined) { recalculateFaces = true; }
+
+        this.collideLeft = left;
+        this.collideRight = right;
+        this.collideUp = up;
+        this.collideDown = down;
+
+        this.faceLeft = left;
+        this.faceRight = right;
+        this.faceTop = up;
+        this.faceBottom = down;
+
+        if (recalculateFaces)
+        {
+            var tilemapLayer = this.tilemapLayer;
+
+            if (tilemapLayer)
+            {
+                this.tilemapLayer.calculateFacesAt(this.x, this.y);
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Set a callback to be called when this tile is hit by an object. The callback must true for
+     * collision processing to take place.
+     *
+     * @method Phaser.Tilemaps.Tile#setCollisionCallback
+     * @since 3.0.0
+     *
+     * @param {function} callback - Callback function.
+     * @param {object} context - Callback will be called within this context.
+     *
+     * @return {Phaser.Tilemaps.Tile} This Tile object.
+     */
+    setCollisionCallback: function (callback, context)
+    {
+        if (callback === null)
+        {
+            this.collisionCallback = undefined;
+            this.collisionCallbackContext = undefined;
+        }
+        else
+        {
+            this.collisionCallback = callback;
+            this.collisionCallbackContext = context;
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets the size of the tile and updates its pixelX and pixelY.
+     *
+     * @method Phaser.Tilemaps.Tile#setSize
+     * @since 3.0.0
+     *
+     * @param {integer} tileWidth - The width of the tile in pixels.
+     * @param {integer} tileHeight - The height of the tile in pixels.
+     * @param {integer} baseWidth - The base width a tile in the map (in pixels).
+     * @param {integer} baseHeight - The base height of the tile in pixels (in pixels).
+     *
+     * @return {Phaser.Tilemaps.Tile} This Tile object.
+     */
+    setSize: function (tileWidth, tileHeight, baseWidth, baseHeight)
+    {
+        if (tileWidth !== undefined) { this.width = tileWidth; }
+        if (tileHeight !== undefined) { this.height = tileHeight; }
+        if (baseWidth !== undefined) { this.baseWidth = baseWidth; }
+        if (baseHeight !== undefined) { this.baseHeight = baseHeight; }
+
+        this.updatePixelXY();
+
+        return this;
+    },
+
+    /**
+     * Used internally. Updates the tile's world XY position based on the current tile size.
+     *
+     * @method Phaser.Tilemaps.Tile#updatePixelXY
+     * @since 3.0.0
+     *
+     * @return {Phaser.Tilemaps.Tile} This Tile object.
+     */
+    updatePixelXY: function ()
+    {
+        // Tiled places tiles on a grid of baseWidth x baseHeight. The origin for a tile is the
+        // bottom left, while the Phaser renderer assumes the origin is the top left. The y
+        // coordinate needs to be adjusted by the difference.
+        this.pixelX = this.x * this.baseWidth;
+        this.pixelY = this.y * this.baseHeight - (this.height - this.baseHeight);
+
+        return this;
+    },
+
+    /**
+     * True if this tile can collide on any of its faces or has a collision callback set.
+     *
+     * @name Phaser.Tilemaps.Tile#canCollide
+     * @type {boolean}
+     * @readonly
+     * @since 3.0.0
+     */
+    canCollide: {
+        get: function ()
+        {
+            return (this.collideLeft || this.collideRight || this.collideUp || this.collideDown || this.collisionCallback);
+        }
+    },
+
+    /**
+     * True if this tile can collide on any of its faces.
+     *
+     * @name Phaser.Tilemaps.Tile#collides
+     * @type {boolean}
+     * @readonly
+     * @since 3.0.0
+     */
+    collides: {
+        get: function ()
+        {
+            return (this.collideLeft || this.collideRight || this.collideUp || this.collideDown);
+        }
+    },
+
+    /**
+     * True if this tile has any interesting faces.
+     *
+     * @name Phaser.Tilemaps.Tile#hasInterestingFace
+     * @type {boolean}
+     * @readonly
+     * @since 3.0.0
+     */
+    hasInterestingFace: {
+        get: function ()
+        {
+            return (this.faceTop || this.faceBottom || this.faceLeft || this.faceRight);
+        }
+    },
+
+    /**
+     * The tileset that contains this Tile. This will only return null if accessed from a LayerData
+     * instance before the tile is placed within a StaticTilemapLayer or DynamicTilemapLayer.
+     *
+     * @name Phaser.Tilemaps.Tile#tileset
+     * @type {?Phaser.Tilemaps.Tileset}
+     * @readonly
+     * @since 3.0.0
+     */
+    tileset: {
+        get: function ()
+        {
+            var tilemapLayer = this.tilemapLayer;
+            return tilemapLayer ? tilemapLayer.tileset : null;
+        }
+    },
+
+    /**
+     * The tilemap layer that contains this Tile. This will only return null if accessed from a
+     * LayerData instance before the tile is placed within a StaticTilemapLayer or
+     * DynamicTilemapLayer.
+     *
+     * @name Phaser.Tilemaps.Tile#tilemapLayer
+     * @type {?Phaser.Tilemaps.StaticTilemapLayer|Phaser.Tilemaps.DynamicTilemapLayer}
+     * @readonly
+     * @since 3.0.0
+     */
+    tilemapLayer: {
+        get: function ()
+        {
+            return this.layer.tilemapLayer;
+        }
+    },
