@@ -9721,3 +9721,224 @@ var Tile = new Class({
      * @method Phaser.Tilemaps.Tile#getTileData
      * @since 3.0.0
      *
+     * @return {?object} tileset
+     */
+    getTileData: function ()
+    {
+        return this.tileset ? this.tileset.getTileData(this.index) : null;
+    },
+
+    /**
+     * Gets the world X position of the left side of the tile, factoring in the layers position,
+     * scale and scroll.
+     *
+     * @method Phaser.Tilemaps.Tile#getLeft
+     * @since 3.0.0
+     *
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera] - The Camera to use to perform the check.
+     *
+     * @return {number}
+     */
+    getLeft: function (camera)
+    {
+        var tilemapLayer = this.tilemapLayer;
+
+        return (tilemapLayer) ? tilemapLayer.tileToWorldX(this.x, camera) : this.x * this.baseWidth;
+    },
+
+    /**
+     * Gets the world X position of the right side of the tile, factoring in the layer's position,
+     * scale and scroll.
+     *
+     * @method Phaser.Tilemaps.Tile#getRight
+     * @since 3.0.0
+     *
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera] - The Camera to use to perform the check.
+     *
+     * @return {number}
+     */
+    getRight: function (camera)
+    {
+        var tilemapLayer = this.tilemapLayer;
+
+        return (tilemapLayer) ? this.getLeft(camera) + this.width * tilemapLayer.scaleX : this.getLeft(camera) + this.width;
+    },
+
+    /**
+     * Gets the world Y position of the top side of the tile, factoring in the layer's position,
+     * scale and scroll.
+     *
+     * @method Phaser.Tilemaps.Tile#getTop
+     * @since 3.0.0
+     *
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera] - The Camera to use to perform the check.
+     *
+     * @return {number}
+     */
+    getTop: function (camera)
+    {
+        var tilemapLayer = this.tilemapLayer;
+
+        // Tiled places tiles on a grid of baseWidth x baseHeight. The origin for a tile in grid
+        // units is the bottom left, so the y coordinate needs to be adjusted by the difference
+        // between the base size and this tile's size.
+        return tilemapLayer
+            ? tilemapLayer.tileToWorldY(this.y, camera) - (this.height - this.baseHeight) * tilemapLayer.scaleY
+            : this.y * this.baseHeight - (this.height - this.baseHeight);
+    },
+
+    /**
+     * Gets the world Y position of the bottom side of the tile, factoring in the layer's position,
+     * scale and scroll.
+
+     * @method Phaser.Tilemaps.Tile#getBottom
+     * @since 3.0.0
+     *
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera] - The Camera to use to perform the check.
+     *
+     * @return {number}
+     */
+    getBottom: function (camera)
+    {
+        var tilemapLayer = this.tilemapLayer;
+        return tilemapLayer
+            ? this.getTop(camera) + this.height * tilemapLayer.scaleY
+            : this.getTop(camera) + this.height;
+    },
+
+
+    /**
+     * Gets the world rectangle bounding box for the tile, factoring in the layers position,
+     * scale and scroll.
+     *
+     * @method Phaser.Tilemaps.Tile#getBounds
+     * @since 3.0.0
+     *
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera] - The Camera to use to perform the check.
+     * @param {object} [output] - [description]
+     *
+     * @return {(Phaser.Geom.Rectangle|object)}
+     */
+    getBounds: function (camera, output)
+    {
+        if (output === undefined) { output = new Rectangle(); }
+
+        output.x = this.getLeft();
+        output.y = this.getTop();
+        output.width = this.getRight() - output.x;
+        output.height = this.getBottom() - output.y;
+
+        return output;
+    },
+
+    /**
+     * Gets the world X position of the center of the tile, factoring in the layer's position,
+     * scale and scroll.
+     *
+     * @method Phaser.Tilemaps.Tile#getCenterX
+     * @since 3.0.0
+     *
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera] - The Camera to use to perform the check.
+     *
+     * @return {number}
+     */
+    getCenterX: function (camera)
+    {
+        return this.getLeft(camera) + this.width / 2;
+    },
+
+    /**
+     * Gets the world Y position of the center of the tile, factoring in the layer's position,
+     * scale and scroll.
+     *
+     * @method Phaser.Tilemaps.Tile#getCenterY
+     * @since 3.0.0
+     *
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera] - The Camera to use to perform the check.
+     *
+     * @return {number}
+     */
+    getCenterY: function (camera)
+    {
+        return this.getTop(camera) + this.height / 2;
+    },
+
+    /**
+     * Clean up memory.
+     *
+     * @method Phaser.Tilemaps.Tile#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.collisionCallback = undefined;
+        this.collisionCallbackContext = undefined;
+        this.properties = undefined;
+    },
+
+    /**
+     * Check for intersection with this tile. This does not factor in camera scroll, layer scale or
+     * layer position.
+     *
+     * @method Phaser.Tilemaps.Tile#intersects
+     * @since 3.0.0
+     *
+     * @param {number} x - The x axis in pixels.
+     * @param {number} y - The y axis in pixels.
+     * @param {number} right - The right point.
+     * @param {number} bottom - The bottom point.
+     *
+     * @return {boolean}
+     */
+    intersects: function (x, y, right, bottom)
+    {
+        return !(
+            right <= this.pixelX || bottom <= this.pixelY ||
+            x >= this.right || y >= this.bottom
+        );
+    },
+
+    /**
+     * Checks if the tile is interesting.
+     *
+     * @method Phaser.Tilemaps.Tile#isInteresting
+     * @since 3.0.0
+     *
+     * @param {boolean} collides - If true, will consider the tile interesting if it collides on any side.
+     * @param {boolean} faces - If true, will consider the tile interesting if it has an interesting face.
+     *
+     * @return {boolean} True if the Tile is interesting, otherwise false.
+     */
+    isInteresting: function (collides, faces)
+    {
+        if (collides && faces) { return (this.canCollide || this.hasInterestingFace); }
+        else if (collides) { return this.collides; }
+        else if (faces) { return this.hasInterestingFace; }
+        return false;
+    },
+
+    /**
+     * Reset collision status flags.
+     *
+     * @method Phaser.Tilemaps.Tile#resetCollision
+     * @since 3.0.0
+     *
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate interesting faces for this tile and its neighbors.
+     *
+     * @return {Phaser.Tilemaps.Tile} This Tile object.
+     */
+    resetCollision: function (recalculateFaces)
+    {
+        if (recalculateFaces === undefined) { recalculateFaces = true; }
+
+        this.collideLeft = false;
+        this.collideRight = false;
+        this.collideUp = false;
+        this.collideDown = false;
+
+        this.faceTop = false;
+        this.faceBottom = false;
+        this.faceLeft = false;
+        this.faceRight = false;
+
+        if (recalculateFaces)
