@@ -10606,3 +10606,234 @@ var ImageFile = new Class({
 
 /**
  * Adds an Image, or array of Images, to the current load queue.
+ *
+ * You can call this method from within your Scene's `preload`, along with any other files you wish to load:
+ * 
+ * ```javascript
+ * function preload ()
+ * {
+ *     this.load.image('logo', 'images/phaserLogo.png');
+ * }
+ * ```
+ *
+ * The file is **not** loaded right away. It is added to a queue ready to be loaded either when the loader starts,
+ * or if it's already running, when the next free load slot becomes available. This happens automatically if you
+ * are calling this from within the Scene's `preload` method, or a related callback. Because the file is queued
+ * it means you cannot use the file immediately after calling this method, but must wait for the file to complete.
+ * The typical flow for a Phaser Scene is that you load assets in the Scene's `preload` method and then when the
+ * Scene's `create` method is called you are guaranteed that all of those assets are ready for use and have been
+ * loaded.
+ * 
+ * Phaser can load all common image types: png, jpg, gif and any other format the browser can natively handle.
+ * If you try to load an animated gif only the first frame will be rendered. Browsers do not natively support playback
+ * of animated gifs to Canvas elements.
+ *
+ * The key must be a unique String. It is used to add the file to the global Texture Manager upon a successful load.
+ * The key should be unique both in terms of files being loaded and files already present in the Texture Manager.
+ * Loading a file using a key that is already taken will result in a warning. If you wish to replace an existing file
+ * then remove it from the Texture Manager first, before loading a new one.
+ *
+ * Instead of passing arguments you can pass a configuration object, such as:
+ * 
+ * ```javascript
+ * this.load.image({
+ *     key: 'logo',
+ *     url: 'images/AtariLogo.png'
+ * });
+ * ```
+ *
+ * See the documentation for `Phaser.Loader.FileTypes.ImageFileConfig` for more details.
+ *
+ * Once the file has finished loading you can use it as a texture for a Game Object by referencing its key:
+ * 
+ * ```javascript
+ * this.load.image('logo', 'images/AtariLogo.png');
+ * // and later in your game ...
+ * this.add.image(x, y, 'logo');
+ * ```
+ *
+ * If you have specified a prefix in the loader, via `Loader.setPrefix` then this value will be prepended to this files
+ * key. For example, if the prefix was `MENU.` and the key was `Background` the final key will be `MENU.Background` and
+ * this is what you would use to retrieve the image from the Texture Manager.
+ *
+ * The URL can be relative or absolute. If the URL is relative the `Loader.baseURL` and `Loader.path` values will be prepended to it.
+ *
+ * If the URL isn't specified the Loader will take the key and create a filename from that. For example if the key is "alien"
+ * and no URL is given then the Loader will set the URL to be "alien.png". It will always add `.png` as the extension, although
+ * this can be overridden if using an object instead of method arguments. If you do not desire this action then provide a URL.
+ *
+ * Phaser also supports the automatic loading of associated normal maps. If you have a normal map to go with this image,
+ * then you can specify it by providing an array as the `url` where the second element is the normal map:
+ * 
+ * ```javascript
+ * this.load.image('logo', [ 'images/AtariLogo.png', 'images/AtariLogo-n.png' ]);
+ * ```
+ *
+ * Or, if you are using a config object use the `normalMap` property:
+ * 
+ * ```javascript
+ * this.load.image({
+ *     key: 'logo',
+ *     url: 'images/AtariLogo.png',
+ *     normalMap: 'images/AtariLogo-n.png'
+ * });
+ * ```
+ *
+ * The normal map file is subject to the same conditions as the image file with regard to the path, baseURL, CORs and XHR Settings.
+ * Normal maps are a WebGL only feature.
+ *
+ * Note: The ability to load this type of file will only be available if the Image File type has been built into Phaser.
+ * It is available in the default build but can be excluded from custom builds.
+ *
+ * @method Phaser.Loader.LoaderPlugin#image
+ * @fires Phaser.Loader.LoaderPlugin#addFileEvent
+ * @since 3.0.0
+ *
+ * @param {(string|Phaser.Loader.FileTypes.ImageFileConfig|Phaser.Loader.FileTypes.ImageFileConfig[])} key - The key to use for this file, or a file configuration object, or array of them.
+ * @param {string|string[]} [url] - The absolute or relative URL to load this file from. If undefined or `null` it will be set to `<key>.png`, i.e. if `key` was "alien" then the URL will be "alien.png".
+ * @param {XHRSettingsObject} [xhrSettings] - An XHR Settings configuration object. Used in replacement of the Loaders default XHR Settings.
+ *
+ * @return {Phaser.Loader.LoaderPlugin} The Loader instance.
+ */
+FileTypesManager.register('image', function (key, url, xhrSettings)
+{
+    if (Array.isArray(key))
+    {
+        for (var i = 0; i < key.length; i++)
+        {
+            //  If it's an array it has to be an array of Objects, so we get everything out of the 'key' object
+            this.addFile(new ImageFile(this, key[i]));
+        }
+    }
+    else
+    {
+        this.addFile(new ImageFile(this, key, url, xhrSettings));
+    }
+
+    return this;
+});
+
+module.exports = ImageFile;
+
+
+/***/ }),
+/* 59 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Contains = __webpack_require__(69);
+var GetPoint = __webpack_require__(278);
+var GetPoints = __webpack_require__(277);
+var Line = __webpack_require__(54);
+var Random = __webpack_require__(184);
+
+/**
+ * @classdesc
+ * A triangle is a plane created by connecting three points.
+ * The first two arguments specify the first point, the middle two arguments
+ * specify the second point, and the last two arguments specify the third point.
+ *
+ * @class Triangle
+ * @memberof Phaser.Geom
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {number} [x1=0] - `x` coordinate of the first point.
+ * @param {number} [y1=0] - `y` coordinate of the first point.
+ * @param {number} [x2=0] - `x` coordinate of the second point.
+ * @param {number} [y2=0] - `y` coordinate of the second point.
+ * @param {number} [x3=0] - `x` coordinate of the third point.
+ * @param {number} [y3=0] - `y` coordinate of the third point.
+ */
+var Triangle = new Class({
+
+    initialize:
+
+    function Triangle (x1, y1, x2, y2, x3, y3)
+    {
+        if (x1 === undefined) { x1 = 0; }
+        if (y1 === undefined) { y1 = 0; }
+        if (x2 === undefined) { x2 = 0; }
+        if (y2 === undefined) { y2 = 0; }
+        if (x3 === undefined) { x3 = 0; }
+        if (y3 === undefined) { y3 = 0; }
+
+        /**
+         * `x` coordinate of the first point.
+         *
+         * @name Phaser.Geom.Triangle#x1
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.x1 = x1;
+
+        /**
+         * `y` coordinate of the first point.
+         *
+         * @name Phaser.Geom.Triangle#y1
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.y1 = y1;
+
+        /**
+         * `x` coordinate of the second point.
+         *
+         * @name Phaser.Geom.Triangle#x2
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.x2 = x2;
+
+        /**
+         * `y` coordinate of the second point.
+         *
+         * @name Phaser.Geom.Triangle#y2
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.y2 = y2;
+
+        /**
+         * `x` coordinate of the third point.
+         *
+         * @name Phaser.Geom.Triangle#x3
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.x3 = x3;
+
+        /**
+         * `y` coordinate of the third point.
+         *
+         * @name Phaser.Geom.Triangle#y3
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.y3 = y3;
+    },
+
+    /**
+     * Checks whether a given points lies within the triangle.
+     *
+     * @method Phaser.Geom.Triangle#contains
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate of the point to check.
+     * @param {number} y - The y coordinate of the point to check.
+     *
+     * @return {boolean} `true` if the coordinate pair is within the triangle, otherwise `false`.
+     */
+    contains: function (x, y)
