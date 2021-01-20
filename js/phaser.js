@@ -11064,3 +11064,206 @@ var Triangle = new Class({
             }
 
             this.x1 -= diff;
+            this.x2 -= diff;
+            this.x3 -= diff;
+        }
+
+    },
+
+    /**
+     * Top most Y coordinate of the triangle. Setting it moves the triangle on the Y axis accordingly.
+     *
+     * @name Phaser.Geom.Triangle#top
+     * @type {number}
+     * @since 3.0.0
+     */
+    top: {
+
+        get: function ()
+        {
+            return Math.min(this.y1, this.y2, this.y3);
+        },
+
+        set: function (value)
+        {
+            var diff = 0;
+
+            if (this.y1 <= this.y2 && this.y1 <= this.y3)
+            {
+                diff = this.y1 - value;
+            }
+            else if (this.y2 <= this.y1 && this.y2 <= this.y3)
+            {
+                diff = this.y2 - value;
+            }
+            else
+            {
+                diff = this.y3 - value;
+            }
+
+            this.y1 -= diff;
+            this.y2 -= diff;
+            this.y3 -= diff;
+        }
+
+    },
+
+    /**
+     * Bottom most Y coordinate of the triangle. Setting it moves the triangle on the Y axis accordingly.
+     *
+     * @name Phaser.Geom.Triangle#bottom
+     * @type {number}
+     * @since 3.0.0
+     */
+    bottom: {
+
+        get: function ()
+        {
+            return Math.max(this.y1, this.y2, this.y3);
+        },
+
+        set: function (value)
+        {
+            var diff = 0;
+
+            if (this.y1 >= this.y2 && this.y1 >= this.y3)
+            {
+                diff = this.y1 - value;
+            }
+            else if (this.y2 >= this.y1 && this.y2 >= this.y3)
+            {
+                diff = this.y2 - value;
+            }
+            else
+            {
+                diff = this.y3 - value;
+            }
+
+            this.y1 -= diff;
+            this.y2 -= diff;
+            this.y3 -= diff;
+        }
+
+    }
+
+});
+
+module.exports = Triangle;
+
+
+/***/ }),
+/* 60 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Utils = __webpack_require__(10);
+
+/**
+ * Renders a stroke outline around the given Shape.
+ *
+ * @method Phaser.GameObjects.Shape#StrokePathWebGL
+ * @since 3.13.0
+ * @private
+ *
+ * @param {Phaser.Renderer.WebGL.WebGLPipeline} pipeline - The WebGL Pipeline used to render this Shape.
+ * @param {Phaser.GameObjects.Shape} src - The Game Object shape being rendered in this call.
+ * @param {number} alpha - The base alpha value.
+ * @param {number} dx - The source displayOriginX.
+ * @param {number} dy - The source displayOriginY.
+ */
+var StrokePathWebGL = function (pipeline, src, alpha, dx, dy)
+{
+    var strokeTint = pipeline.strokeTint;
+    var strokeTintColor = Utils.getTintAppendFloatAlphaAndSwap(src.strokeColor, src.strokeAlpha * alpha);
+
+    strokeTint.TL = strokeTintColor;
+    strokeTint.TR = strokeTintColor;
+    strokeTint.BL = strokeTintColor;
+    strokeTint.BR = strokeTintColor;
+
+    var path = src.pathData;
+    var pathLength = path.length - 1;
+    var lineWidth = src.lineWidth;
+    var halfLineWidth = lineWidth / 2;
+
+    var px1 = path[0] - dx;
+    var py1 = path[1] - dy;
+
+    if (!src.closePath)
+    {
+        pathLength -= 2;
+    }
+
+    for (var i = 2; i < pathLength; i += 2)
+    {
+        var px2 = path[i] - dx;
+        var py2 = path[i + 1] - dy;
+
+        pipeline.setTexture2D();
+
+        pipeline.batchLine(
+            px1,
+            py1,
+            px2,
+            py2,
+            halfLineWidth,
+            halfLineWidth,
+            lineWidth,
+            i - 2,
+            (src.closePath) ? (i === pathLength - 1) : false
+        );
+
+        px1 = px2;
+        py1 = py2;
+    }
+};
+
+module.exports = StrokePathWebGL;
+
+
+/***/ }),
+/* 61 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(14);
+var GameObject = __webpack_require__(19);
+var SpriteRender = __webpack_require__(829);
+
+/**
+ * @classdesc
+ * A Sprite Game Object.
+ *
+ * A Sprite Game Object is used for the display of both static and animated images in your game.
+ * Sprites can have input events and physics bodies. They can also be tweened, tinted, scrolled
+ * and animated.
+ *
+ * The main difference between a Sprite and an Image Game Object is that you cannot animate Images.
+ * As such, Sprites take a fraction longer to process and have a larger API footprint due to the Animation
+ * Component. If you do not require animation then you can safely use Images to replace Sprites in all cases.
+ *
+ * @class Sprite
+ * @extends Phaser.GameObjects.GameObject
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @since 3.0.0
+ *
+ * @extends Phaser.GameObjects.Components.Alpha
+ * @extends Phaser.GameObjects.Components.BlendMode
+ * @extends Phaser.GameObjects.Components.Depth
+ * @extends Phaser.GameObjects.Components.Flip
+ * @extends Phaser.GameObjects.Components.GetBounds
+ * @extends Phaser.GameObjects.Components.Mask
+ * @extends Phaser.GameObjects.Components.Origin
+ * @extends Phaser.GameObjects.Components.Pipeline
