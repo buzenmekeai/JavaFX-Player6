@@ -12107,3 +12107,235 @@ function Node(i, x, y) {
 
     // z-order curve value
     this.z = null;
+
+    // previous and next nodes in z-order
+    this.prevZ = null;
+    this.nextZ = null;
+
+    // indicates whether this is a steiner point
+    this.steiner = false;
+}
+
+// return a percentage difference between the polygon area and its triangulation area;
+// used to verify correctness of triangulation
+earcut.deviation = function (data, holeIndices, dim, triangles) {
+    var hasHoles = holeIndices && holeIndices.length;
+    var outerLen = hasHoles ? holeIndices[0] * dim : data.length;
+
+    var polygonArea = Math.abs(signedArea(data, 0, outerLen, dim));
+    if (hasHoles) {
+        for (var i = 0, len = holeIndices.length; i < len; i++) {
+            var start = holeIndices[i] * dim;
+            var end = i < len - 1 ? holeIndices[i + 1] * dim : data.length;
+            polygonArea -= Math.abs(signedArea(data, start, end, dim));
+        }
+    }
+
+    var trianglesArea = 0;
+    for (i = 0; i < triangles.length; i += 3) {
+        var a = triangles[i] * dim;
+        var b = triangles[i + 1] * dim;
+        var c = triangles[i + 2] * dim;
+        trianglesArea += Math.abs(
+            (data[a] - data[c]) * (data[b + 1] - data[a + 1]) -
+            (data[a] - data[b]) * (data[c + 1] - data[a + 1]));
+    }
+
+    return polygonArea === 0 && trianglesArea === 0 ? 0 :
+        Math.abs((trianglesArea - polygonArea) / polygonArea);
+};
+
+function signedArea(data, start, end, dim) {
+    var sum = 0;
+    for (var i = start, j = end - dim; i < end; i += dim) {
+        sum += (data[j] - data[i]) * (data[i + 1] + data[j + 1]);
+        j = i;
+    }
+    return sum;
+}
+
+// turn a polygon in a multi-dimensional array form (e.g. as in GeoJSON) into a form Earcut accepts
+earcut.flatten = function (data) {
+    var dim = data[0][0].length,
+        result = {vertices: [], holes: [], dimensions: dim},
+        holeIndex = 0;
+
+    for (var i = 0; i < data.length; i++) {
+        for (var j = 0; j < data[i].length; j++) {
+            for (var d = 0; d < dim; d++) result.vertices.push(data[i][j][d]);
+        }
+        if (i > 0) {
+            holeIndex += data[i - 1].length;
+            result.holes.push(holeIndex);
+        }
+    }
+    return result;
+};
+
+/***/ }),
+/* 65 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculate the length of the given line.
+ *
+ * @function Phaser.Geom.Line.Length
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} line - The line to calculate the length of.
+ *
+ * @return {number} The length of the line.
+ */
+var Length = function (line)
+{
+    return Math.sqrt((line.x2 - line.x1) * (line.x2 - line.x1) + (line.y2 - line.y1) * (line.y2 - line.y1));
+};
+
+module.exports = Length;
+
+
+/***/ }),
+/* 66 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Phaser Blend Modes.
+ * 
+ * @name Phaser.BlendModes
+ * @enum {integer}
+ * @memberof Phaser
+ * @readonly
+ * @since 3.0.0
+ */
+
+module.exports = {
+
+    /**
+     * Skips the Blend Mode check in the renderer.
+     * 
+     * @name Phaser.BlendModes.SKIP_CHECK
+     */
+    SKIP_CHECK: -1,
+
+    /**
+     * Normal blend mode.
+     * 
+     * @name Phaser.BlendModes.NORMAL
+     */
+    NORMAL: 0,
+
+    /**
+     * Add blend mode.
+     * 
+     * @name Phaser.BlendModes.ADD
+     */
+    ADD: 1,
+
+    /**
+     * Multiply blend mode.
+     * 
+     * @name Phaser.BlendModes.MULTIPLY
+     */
+    MULTIPLY: 2,
+
+    /**
+     * Screen blend mode.
+     * 
+     * @name Phaser.BlendModes.SCREEN
+     */
+    SCREEN: 3,
+
+    /**
+     * Overlay blend mode.
+     * 
+     * @name Phaser.BlendModes.OVERLAY
+     */
+    OVERLAY: 4,
+
+    /**
+     * Darken blend mode.
+     * 
+     * @name Phaser.BlendModes.DARKEN
+     */
+    DARKEN: 5,
+
+    /**
+     * Lighten blend mode.
+     * 
+     * @name Phaser.BlendModes.LIGHTEN
+     */
+    LIGHTEN: 6,
+
+    /**
+     * Color Dodge blend mode.
+     * 
+     * @name Phaser.BlendModes.COLOR_DODGE
+     */
+    COLOR_DODGE: 7,
+
+    /**
+     * Color Burn blend mode.
+     * 
+     * @name Phaser.BlendModes.COLOR_BURN
+     */
+    COLOR_BURN: 8,
+
+    /**
+     * Hard Light blend mode.
+     * 
+     * @name Phaser.BlendModes.HARD_LIGHT
+     */
+    HARD_LIGHT: 9,
+
+    /**
+     * Soft Light blend mode.
+     * 
+     * @name Phaser.BlendModes.SOFT_LIGHT
+     */
+    SOFT_LIGHT: 10,
+
+    /**
+     * Difference blend mode.
+     * 
+     * @name Phaser.BlendModes.DIFFERENCE
+     */
+    DIFFERENCE: 11,
+
+    /**
+     * Exclusion blend mode.
+     * 
+     * @name Phaser.BlendModes.EXCLUSION
+     */
+    EXCLUSION: 12,
+
+    /**
+     * Hue blend mode.
+     * 
+     * @name Phaser.BlendModes.HUE
+     */
+    HUE: 13,
+
+    /**
+     * Saturation blend mode.
+     * 
+     * @name Phaser.BlendModes.SATURATION
+     */
+    SATURATION: 14,
+
+    /**
+     * Color blend mode.
+     * 
+     * @name Phaser.BlendModes.COLOR
+     */
