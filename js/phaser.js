@@ -12339,3 +12339,213 @@ module.exports = {
      * 
      * @name Phaser.BlendModes.COLOR
      */
+    COLOR: 15,
+
+    /**
+     * Luminosity blend mode.
+     * 
+     * @name Phaser.BlendModes.LUMINOSITY
+     */
+    LUMINOSITY: 16
+
+};
+
+
+/***/ }),
+/* 67 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+* The `Matter.Body` module contains methods for creating and manipulating body models.
+* A `Matter.Body` is a rigid body that can be simulated by a `Matter.Engine`.
+* Factories for commonly used body configurations (such as rectangles, circles and other polygons) can be found in the module `Matter.Bodies`.
+*
+* See the included usage [examples](https://github.com/liabru/matter-js/tree/master/examples).
+
+* @class Body
+*/
+
+var Body = {};
+
+module.exports = Body;
+
+var Vertices = __webpack_require__(76);
+var Vector = __webpack_require__(81);
+var Sleeping = __webpack_require__(222);
+var Common = __webpack_require__(33);
+var Bounds = __webpack_require__(80);
+var Axes = __webpack_require__(505);
+
+(function() {
+
+    Body._inertiaScale = 4;
+    Body._nextCollidingGroupId = 1;
+    Body._nextNonCollidingGroupId = -1;
+    Body._nextCategory = 0x0001;
+
+    /**
+     * Creates a new rigid body model. The options parameter is an object that specifies any properties you wish to override the defaults.
+     * All properties have default values, and many are pre-calculated automatically based on other properties.
+     * Vertices must be specified in clockwise order.
+     * See the properties section below for detailed information on what you can pass via the `options` object.
+     * @method create
+     * @param {} options
+     * @return {body} body
+     */
+    Body.create = function(options) {
+        var defaults = {
+            id: Common.nextId(),
+            type: 'body',
+            label: 'Body',
+            gameObject: null,
+            parts: [],
+            plugin: {},
+            angle: 0,
+            vertices: Vertices.fromPath('L 0 0 L 40 0 L 40 40 L 0 40'),
+            position: { x: 0, y: 0 },
+            force: { x: 0, y: 0 },
+            torque: 0,
+            positionImpulse: { x: 0, y: 0 },
+            previousPositionImpulse: { x: 0, y: 0 },
+            constraintImpulse: { x: 0, y: 0, angle: 0 },
+            totalContacts: 0,
+            speed: 0,
+            angularSpeed: 0,
+            velocity: { x: 0, y: 0 },
+            angularVelocity: 0,
+            isSensor: false,
+            isStatic: false,
+            isSleeping: false,
+            ignoreGravity: false,
+            ignorePointer: false,
+            motion: 0,
+            sleepThreshold: 60,
+            density: 0.001,
+            restitution: 0,
+            friction: 0.1,
+            frictionStatic: 0.5,
+            frictionAir: 0.01,
+            collisionFilter: {
+                category: 0x0001,
+                mask: 0xFFFFFFFF,
+                group: 0
+            },
+            slop: 0.05,
+            timeScale: 1,
+            render: {
+                visible: true,
+                opacity: 1,
+                sprite: {
+                    xScale: 1,
+                    yScale: 1,
+                    xOffset: 0,
+                    yOffset: 0
+                },
+                lineWidth: 0
+            },
+
+            events: null,
+            bounds: null,
+            chamfer: null,
+            circleRadius: 0,
+            positionPrev: null,
+            anglePrev: 0,
+            parent: null,
+
+            axes: null,
+            area: 0,
+            mass: 0,
+            inertia: 0,
+
+            _original: null
+        };
+
+        var body = Common.extend(defaults, options);
+
+        _initProperties(body, options);
+
+        return body;
+    };
+
+    /**
+     * Returns the next unique group index for which bodies will collide.
+     * If `isNonColliding` is `true`, returns the next unique group index for which bodies will _not_ collide.
+     * See `body.collisionFilter` for more information.
+     * @method nextGroup
+     * @param {bool} [isNonColliding=false]
+     * @return {Number} Unique group index
+     */
+    Body.nextGroup = function(isNonColliding) {
+        if (isNonColliding)
+            return Body._nextNonCollidingGroupId--;
+
+        return Body._nextCollidingGroupId++;
+    };
+
+    /**
+     * Returns the next unique category bitfield (starting after the initial default category `0x0001`).
+     * There are 32 available. See `body.collisionFilter` for more information.
+     * @method nextCategory
+     * @return {Number} Unique category bitfield
+     */
+    Body.nextCategory = function() {
+        Body._nextCategory = Body._nextCategory << 1;
+        return Body._nextCategory;
+    };
+
+    /**
+     * Initialises body properties.
+     * @method _initProperties
+     * @private
+     * @param {body} body
+     * @param {} [options]
+     */
+    var _initProperties = function(body, options) {
+        options = options || {};
+
+        // init required properties (order is important)
+        Body.set(body, {
+            bounds: body.bounds || Bounds.create(body.vertices),
+            positionPrev: body.positionPrev || Vector.clone(body.position),
+            anglePrev: body.anglePrev || body.angle,
+            vertices: body.vertices,
+            parts: body.parts || [body],
+            isStatic: body.isStatic,
+            isSleeping: body.isSleeping,
+            parent: body.parent || body
+        });
+
+        Vertices.rotate(body.vertices, body.angle, body.position);
+        Axes.rotate(body.axes, body.angle);
+        Bounds.update(body.bounds, body.vertices, body.velocity);
+
+        // allow options to override the automatically calculated properties
+        Body.set(body, {
+            axes: options.axes || body.axes,
+            area: options.area || body.area,
+            mass: options.mass || body.mass,
+            inertia: options.inertia || body.inertia
+        });
+
+        // render properties
+        var defaultFillStyle = (body.isStatic ? '#2e2b44' : Common.choose(['#006BA6', '#0496FF', '#FFBC42', '#D81159', '#8F2D56'])),
+            defaultStrokeStyle = '#000';
+        body.render.fillStyle = body.render.fillStyle || defaultFillStyle;
+        body.render.strokeStyle = body.render.strokeStyle || defaultStrokeStyle;
+        body.render.sprite.xOffset += -(body.bounds.min.x - body.position.x) / (body.bounds.max.x - body.bounds.min.x);
+        body.render.sprite.yOffset += -(body.bounds.min.y - body.position.y) / (body.bounds.max.y - body.bounds.min.y);
+    };
+
+    /**
+     * Given a property and a value (or map of), sets the property(s) on the body, using the appropriate setter functions if they exist.
+     * Prefer to use the actual setter functions in performance critical situations.
+     * @method set
+     * @param {body} body
+     * @param {} settings A property name (or map of properties and values) to set on the body.
+     * @param {} value The value to set if `settings` is a single property name.
+     */
+    Body.set = function(body, settings, value) {
+        var property;
+
+        if (typeof settings === 'string') {
+            property = settings;
