@@ -12962,3 +12962,219 @@ var Axes = __webpack_require__(505);
      * @param {number} deltaTime
      * @param {number} timeScale
      * @param {number} correction
+     */
+    Body.update = function(body, deltaTime, timeScale, correction) {
+        var deltaTimeSquared = Math.pow(deltaTime * timeScale * body.timeScale, 2);
+
+        // from the previous step
+        var frictionAir = 1 - body.frictionAir * timeScale * body.timeScale,
+            velocityPrevX = body.position.x - body.positionPrev.x,
+            velocityPrevY = body.position.y - body.positionPrev.y;
+
+        // update velocity with Verlet integration
+        body.velocity.x = (velocityPrevX * frictionAir * correction) + (body.force.x / body.mass) * deltaTimeSquared;
+        body.velocity.y = (velocityPrevY * frictionAir * correction) + (body.force.y / body.mass) * deltaTimeSquared;
+
+        body.positionPrev.x = body.position.x;
+        body.positionPrev.y = body.position.y;
+        body.position.x += body.velocity.x;
+        body.position.y += body.velocity.y;
+
+        // update angular velocity with Verlet integration
+        body.angularVelocity = ((body.angle - body.anglePrev) * frictionAir * correction) + (body.torque / body.inertia) * deltaTimeSquared;
+        body.anglePrev = body.angle;
+        body.angle += body.angularVelocity;
+
+        // track speed and acceleration
+        body.speed = Vector.magnitude(body.velocity);
+        body.angularSpeed = Math.abs(body.angularVelocity);
+
+        // transform the body geometry
+        for (var i = 0; i < body.parts.length; i++) {
+            var part = body.parts[i];
+
+            Vertices.translate(part.vertices, body.velocity);
+            
+            if (i > 0) {
+                part.position.x += body.velocity.x;
+                part.position.y += body.velocity.y;
+            }
+
+            if (body.angularVelocity !== 0) {
+                Vertices.rotate(part.vertices, body.angularVelocity, body.position);
+                Axes.rotate(part.axes, body.angularVelocity);
+                if (i > 0) {
+                    Vector.rotateAbout(part.position, body.angularVelocity, body.position, part.position);
+                }
+            }
+
+            Bounds.update(part.bounds, part.vertices, body.velocity);
+        }
+    };
+
+    /**
+     * Applies a force to a body from a given world-space position, including resulting torque.
+     * @method applyForce
+     * @param {body} body
+     * @param {vector} position
+     * @param {vector} force
+     */
+    Body.applyForce = function(body, position, force) {
+        body.force.x += force.x;
+        body.force.y += force.y;
+        var offset = { x: position.x - body.position.x, y: position.y - body.position.y };
+        body.torque += offset.x * force.y - offset.y * force.x;
+    };
+
+    /**
+     * Returns the sums of the properties of all compound parts of the parent body.
+     * @method _totalProperties
+     * @private
+     * @param {body} body
+     * @return {}
+     */
+    Body._totalProperties = function(body) {
+        // from equations at:
+        // https://ecourses.ou.edu/cgi-bin/ebook.cgi?doc=&topic=st&chap_sec=07.2&page=theory
+        // http://output.to/sideway/default.asp?qno=121100087
+
+        var properties = {
+            mass: 0,
+            area: 0,
+            inertia: 0,
+            centre: { x: 0, y: 0 }
+        };
+
+        // sum the properties of all compound parts of the parent body
+        for (var i = body.parts.length === 1 ? 0 : 1; i < body.parts.length; i++) {
+            var part = body.parts[i],
+                mass = part.mass !== Infinity ? part.mass : 1;
+
+            properties.mass += mass;
+            properties.area += part.area;
+            properties.inertia += part.inertia;
+            properties.centre = Vector.add(properties.centre, Vector.mult(part.position, mass));
+        }
+
+        properties.centre = Vector.div(properties.centre, properties.mass);
+
+        return properties;
+    };
+
+    /*
+    *
+    *  Events Documentation
+    *
+    */
+
+    /**
+    * Fired when a body starts sleeping (where `this` is the body).
+    *
+    * @event sleepStart
+    * @this {body} The body that has started sleeping
+    * @param {} event An event object
+    * @param {} event.source The source object of the event
+    * @param {} event.name The name of the event
+    */
+
+    /**
+    * Fired when a body ends sleeping (where `this` is the body).
+    *
+    * @event sleepEnd
+    * @this {body} The body that has ended sleeping
+    * @param {} event An event object
+    * @param {} event.source The source object of the event
+    * @param {} event.name The name of the event
+    */
+
+    /*
+    *
+    *  Properties Documentation
+    *
+    */
+
+    /**
+     * An integer `Number` uniquely identifying number generated in `Body.create` by `Common.nextId`.
+     *
+     * @property id
+     * @type number
+     */
+
+    /**
+     * A `String` denoting the type of object.
+     *
+     * @property type
+     * @type string
+     * @default "body"
+     * @readOnly
+     */
+
+    /**
+     * An arbitrary `String` name to help the user identify and manage bodies.
+     *
+     * @property label
+     * @type string
+     * @default "Body"
+     */
+
+    /**
+     * An array of bodies that make up this body. 
+     * The first body in the array must always be a self reference to the current body instance.
+     * All bodies in the `parts` array together form a single rigid compound body.
+     * Parts are allowed to overlap, have gaps or holes or even form concave bodies.
+     * Parts themselves should never be added to a `World`, only the parent body should be.
+     * Use `Body.setParts` when setting parts to ensure correct updates of all properties.
+     *
+     * @property parts
+     * @type body[]
+     */
+
+    /**
+     * An object reserved for storing plugin-specific properties.
+     *
+     * @property plugin
+     * @type {}
+     */
+
+    /**
+     * A self reference if the body is _not_ a part of another body.
+     * Otherwise this is a reference to the body that this is a part of.
+     * See `body.parts`.
+     *
+     * @property parent
+     * @type body
+     */
+
+    /**
+     * A `Number` specifying the angle of the body, in radians.
+     *
+     * @property angle
+     * @type number
+     * @default 0
+     */
+
+    /**
+     * An array of `Vector` objects that specify the convex hull of the rigid body.
+     * These should be provided about the origin `(0, 0)`. E.g.
+     *
+     *     [{ x: 0, y: 0 }, { x: 25, y: 50 }, { x: 50, y: 0 }]
+     *
+     * When passed via `Body.create`, the vertices are translated relative to `body.position` (i.e. world-space, and constantly updated by `Body.update` during simulation).
+     * The `Vector` objects are also augmented with additional properties required for efficient collision detection. 
+     *
+     * Other properties such as `inertia` and `bounds` are automatically calculated from the passed vertices (unless provided via `options`).
+     * Concave hulls are not currently supported. The module `Matter.Vertices` contains useful methods for working with vertices.
+     *
+     * @property vertices
+     * @type vector[]
+     */
+
+    /**
+     * A `Vector` that specifies the current world-space position of the body.
+     *
+     * @property position
+     * @type vector
+     * @default { x: 0, y: 0 }
+     */
+
+    /**
