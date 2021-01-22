@@ -13388,3 +13388,221 @@ var Axes = __webpack_require__(505);
      * Each body also defines a collision bitmask, given by `collisionFilter.mask` which specifies
      * the categories it collides with (the value is the bitwise AND value of all these categories).
      *
+     * Using the category/mask rules, two bodies `A` and `B` collide if each includes the other's
+     * category in its mask, i.e. `(categoryA & maskB) !== 0` and `(categoryB & maskA) !== 0`
+     * are both true.
+     *
+     * @property collisionFilter
+     * @type object
+     */
+
+    /**
+     * An Integer `Number`, that specifies the collision group this body belongs to.
+     * See `body.collisionFilter` for more information.
+     *
+     * @property collisionFilter.group
+     * @type object
+     * @default 0
+     */
+
+    /**
+     * A bit field that specifies the collision category this body belongs to.
+     * The category value should have only one bit set, for example `0x0001`.
+     * This means there are up to 32 unique collision categories available.
+     * See `body.collisionFilter` for more information.
+     *
+     * @property collisionFilter.category
+     * @type object
+     * @default 1
+     */
+
+    /**
+     * A bit mask that specifies the collision categories this body may collide with.
+     * See `body.collisionFilter` for more information.
+     *
+     * @property collisionFilter.mask
+     * @type object
+     * @default -1
+     */
+
+    /**
+     * A `Number` that specifies a tolerance on how far a body is allowed to 'sink' or rotate into other bodies.
+     * Avoid changing this value unless you understand the purpose of `slop` in physics engines.
+     * The default should generally suffice, although very large bodies may require larger values for stable stacking.
+     *
+     * @property slop
+     * @type number
+     * @default 0.05
+     */
+
+    /**
+     * A `Number` that allows per-body time scaling, e.g. a force-field where bodies inside are in slow-motion, while others are at full speed.
+     *
+     * @property timeScale
+     * @type number
+     * @default 1
+     */
+
+    /**
+     * An `Object` that defines the rendering properties to be consumed by the module `Matter.Render`.
+     *
+     * @property render
+     * @type object
+     */
+
+    /**
+     * A flag that indicates if the body should be rendered.
+     *
+     * @property render.visible
+     * @type boolean
+     * @default true
+     */
+
+    /**
+     * Sets the opacity to use when rendering.
+     *
+     * @property render.opacity
+     * @type number
+     * @default 1
+    */
+
+    /**
+     * An `Object` that defines the sprite properties to use when rendering, if any.
+     *
+     * @property render.sprite
+     * @type object
+     */
+
+    /**
+     * An `String` that defines the path to the image to use as the sprite texture, if any.
+     *
+     * @property render.sprite.texture
+     * @type string
+     */
+     
+    /**
+     * A `Number` that defines the scaling in the x-axis for the sprite, if any.
+     *
+     * @property render.sprite.xScale
+     * @type number
+     * @default 1
+     */
+
+    /**
+     * A `Number` that defines the scaling in the y-axis for the sprite, if any.
+     *
+     * @property render.sprite.yScale
+     * @type number
+     * @default 1
+     */
+
+     /**
+      * A `Number` that defines the offset in the x-axis for the sprite (normalised by texture width).
+      *
+      * @property render.sprite.xOffset
+      * @type number
+      * @default 0
+      */
+
+     /**
+      * A `Number` that defines the offset in the y-axis for the sprite (normalised by texture height).
+      *
+      * @property render.sprite.yOffset
+      * @type number
+      * @default 0
+      */
+
+    /**
+     * A `Number` that defines the line width to use when rendering the body outline (if a sprite is not defined).
+     * A value of `0` means no outline will be rendered.
+     *
+     * @property render.lineWidth
+     * @type number
+     * @default 0
+     */
+
+    /**
+     * A `String` that defines the fill style to use when rendering the body (if a sprite is not defined).
+     * It is the same as when using a canvas, so it accepts CSS style property values.
+     *
+     * @property render.fillStyle
+     * @type string
+     * @default a random colour
+     */
+
+    /**
+     * A `String` that defines the stroke style to use when rendering the body outline (if a sprite is not defined).
+     * It is the same as when using a canvas, so it accepts CSS style property values.
+     *
+     * @property render.strokeStyle
+     * @type string
+     * @default a random colour
+     */
+
+    /**
+     * An array of unique axis vectors (edge normals) used for collision detection.
+     * These are automatically calculated from the given convex hull (`vertices` array) in `Body.create`.
+     * They are constantly updated by `Body.update` during the simulation.
+     *
+     * @property axes
+     * @type vector[]
+     */
+     
+    /**
+     * A `Number` that _measures_ the area of the body's convex hull, calculated at creation by `Body.create`.
+     *
+     * @property area
+     * @type string
+     * @default 
+     */
+
+    /**
+     * A `Bounds` object that defines the AABB region for the body.
+     * It is automatically calculated from the given convex hull (`vertices` array) in `Body.create` and constantly updated by `Body.update` during simulation.
+     *
+     * @property bounds
+     * @type bounds
+     */
+
+})();
+
+
+/***/ }),
+/* 68 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculate the angle of the line in radians.
+ *
+ * @function Phaser.Geom.Line.Angle
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} line - The line to calculate the angle of.
+ *
+ * @return {number} The angle of the line, in radians.
+ */
+var Angle = function (line)
+{
+    return Math.atan2(line.y2 - line.y1, line.x2 - line.x1);
+};
+
+module.exports = Angle;
+
+
+/***/ }),
+/* 69 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  http://www.blackpawn.com/texts/pointinpoly/
