@@ -13821,3 +13821,209 @@ var Curve = new Class({
     },
 
     /**
+     * Returns an array of points, spaced out X distance pixels apart.
+     * The smaller the distance, the larger the array will be.
+     *
+     * @method Phaser.Curves.Curve#getDistancePoints
+     * @since 3.0.0
+     *
+     * @param {integer} distance - The distance, in pixels, between each point along the curve.
+     *
+     * @return {Phaser.Geom.Point[]} An Array of Point objects.
+     */
+    getDistancePoints: function (distance)
+    {
+        var len = this.getLength();
+
+        var spaced = Math.max(1, len / distance);
+
+        return this.getSpacedPoints(spaced);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Curve#getEndPoint
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector2} [out] - Optional Vector object to store the result in.
+     *
+     * @return {Phaser.Math.Vector2} Vector2 containing the coordinates of the curves end point.
+     */
+    getEndPoint: function (out)
+    {
+        if (out === undefined) { out = new Vector2(); }
+
+        return this.getPointAt(1, out);
+    },
+
+    // Get total curve arc length
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Curve#getLength
+     * @since 3.0.0
+     *
+     * @return {number} [description]
+     */
+    getLength: function ()
+    {
+        var lengths = this.getLengths();
+
+        return lengths[lengths.length - 1];
+    },
+
+    // Get list of cumulative segment lengths
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Curve#getLengths
+     * @since 3.0.0
+     *
+     * @param {integer} [divisions] - [description]
+     *
+     * @return {number[]} [description]
+     */
+    getLengths: function (divisions)
+    {
+        if (divisions === undefined) { divisions = this.arcLengthDivisions; }
+
+        if ((this.cacheArcLengths.length === divisions + 1) && !this.needsUpdate)
+        {
+            return this.cacheArcLengths;
+        }
+
+        this.needsUpdate = false;
+
+        var cache = [];
+        var current;
+        var last = this.getPoint(0, this._tmpVec2A);
+        var sum = 0;
+
+        cache.push(0);
+
+        for (var p = 1; p <= divisions; p++)
+        {
+            current = this.getPoint(p / divisions, this._tmpVec2B);
+
+            sum += current.distance(last);
+
+            cache.push(sum);
+
+            last.copy(current);
+        }
+
+        this.cacheArcLengths = cache;
+
+        return cache; // { sums: cache, sum:sum }; Sum is in the last element.
+    },
+
+    // Get point at relative position in curve according to arc length
+
+    // - u [0 .. 1]
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Curve#getPointAt
+     * @since 3.0.0
+     *
+     * @generic {Phaser.Math.Vector2} O - [out,$return]
+     *
+     * @param {number} u - [description]
+     * @param {Phaser.Math.Vector2} [out] - [description]
+     *
+     * @return {Phaser.Math.Vector2} [description]
+     */
+    getPointAt: function (u, out)
+    {
+        var t = this.getUtoTmapping(u);
+
+        return this.getPoint(t, out);
+    },
+
+    // Get sequence of points using getPoint( t )
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Curve#getPoints
+     * @since 3.0.0
+     *
+     * @param {integer} [divisions] - [description]
+     *
+     * @return {Phaser.Math.Vector2[]} [description]
+     */
+    getPoints: function (divisions)
+    {
+        if (divisions === undefined) { divisions = this.defaultDivisions; }
+
+        var points = [];
+
+        for (var d = 0; d <= divisions; d++)
+        {
+            points.push(this.getPoint(d / divisions));
+        }
+
+        return points;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Curve#getRandomPoint
+     * @since 3.0.0
+     *
+     * @generic {Phaser.Math.Vector2} O - [out,$return]
+     *
+     * @param {Phaser.Math.Vector2} [out] - [description]
+     *
+     * @return {Phaser.Math.Vector2} [description]
+     */
+    getRandomPoint: function (out)
+    {
+        if (out === undefined) { out = new Vector2(); }
+
+        return this.getPoint(Math.random(), out);
+    },
+
+    // Get sequence of points using getPointAt( u )
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Curve#getSpacedPoints
+     * @since 3.0.0
+     *
+     * @param {integer} [divisions] - [description]
+     *
+     * @return {Phaser.Math.Vector2[]} [description]
+     */
+    getSpacedPoints: function (divisions)
+    {
+        if (divisions === undefined) { divisions = this.defaultDivisions; }
+
+        var points = [];
+
+        for (var d = 0; d <= divisions; d++)
+        {
+            var t = this.getUtoTmapping(d / divisions, null, divisions);
+
+            points.push(this.getPoint(t));
+        }
+
+        return points;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Curve#getStartPoint
+     * @since 3.0.0
+     *
+     * @generic {Phaser.Math.Vector2} O - [out,$return]
+     *
+     * @param {Phaser.Math.Vector2} [out] - [description]
+     *
