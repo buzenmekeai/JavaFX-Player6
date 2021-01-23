@@ -13606,3 +13606,218 @@ module.exports = Angle;
  */
 
 //  http://www.blackpawn.com/texts/pointinpoly/
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Triangle.Contains
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ * @param {number} x - [description]
+ * @param {number} y - [description]
+ *
+ * @return {boolean} [description]
+ */
+var Contains = function (triangle, x, y)
+{
+    var v0x = triangle.x3 - triangle.x1;
+    var v0y = triangle.y3 - triangle.y1;
+
+    var v1x = triangle.x2 - triangle.x1;
+    var v1y = triangle.y2 - triangle.y1;
+
+    var v2x = x - triangle.x1;
+    var v2y = y - triangle.y1;
+
+    var dot00 = (v0x * v0x) + (v0y * v0y);
+    var dot01 = (v0x * v1x) + (v0y * v1y);
+    var dot02 = (v0x * v2x) + (v0y * v2y);
+    var dot11 = (v1x * v1x) + (v1y * v1y);
+    var dot12 = (v1x * v2x) + (v1y * v2y);
+
+    // Compute barycentric coordinates
+    var b = ((dot00 * dot11) - (dot01 * dot01));
+    var inv = (b === 0) ? 0 : (1 / b);
+    var u = ((dot11 * dot02) - (dot01 * dot12)) * inv;
+    var v = ((dot00 * dot12) - (dot01 * dot02)) * inv;
+
+    return (u >= 0 && v >= 0 && (u + v < 1));
+};
+
+module.exports = Contains;
+
+
+/***/ }),
+/* 70 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var FromPoints = __webpack_require__(173);
+var Rectangle = __webpack_require__(9);
+var Vector2 = __webpack_require__(3);
+
+/**
+ * @classdesc
+ * A Base Curve class, which all other curve types extend.
+ *
+ * Based on the three.js Curve classes created by [zz85](http://www.lab4games.net/zz85/blog)
+ *
+ * @class Curve
+ * @memberof Phaser.Curves
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {string} type - [description]
+ */
+var Curve = new Class({
+
+    initialize:
+
+    function Curve (type)
+    {
+        /**
+         * String based identifier for the type of curve.
+         *
+         * @name Phaser.Curves.Curve#type
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.type = type;
+
+        /**
+         * The default number of divisions within the curve.
+         *
+         * @name Phaser.Curves.Curve#defaultDivisions
+         * @type {integer}
+         * @default 5
+         * @since 3.0.0
+         */
+        this.defaultDivisions = 5;
+
+        /**
+         * The quantity of arc length divisions within the curve.
+         *
+         * @name Phaser.Curves.Curve#arcLengthDivisions
+         * @type {integer}
+         * @default 100
+         * @since 3.0.0
+         */
+        this.arcLengthDivisions = 100;
+
+        /**
+         * An array of cached arc length values.
+         *
+         * @name Phaser.Curves.Curve#cacheArcLengths
+         * @type {number[]}
+         * @default []
+         * @since 3.0.0
+         */
+        this.cacheArcLengths = [];
+
+        /**
+         * Does the data of this curve need updating?
+         *
+         * @name Phaser.Curves.Curve#needsUpdate
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.needsUpdate = true;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Curves.Curve#active
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.active = true;
+
+        /**
+         * A temporary calculation Vector.
+         *
+         * @name Phaser.Curves.Curve#_tmpVec2A
+         * @type {Phaser.Math.Vector2}
+         * @private
+         * @since 3.0.0
+         */
+        this._tmpVec2A = new Vector2();
+
+        /**
+         * A temporary calculation Vector.
+         *
+         * @name Phaser.Curves.Curve#_tmpVec2B
+         * @type {Phaser.Math.Vector2}
+         * @private
+         * @since 3.0.0
+         */
+        this._tmpVec2B = new Vector2();
+    },
+
+    /**
+     * Draws this curve on the given Graphics object.
+     *
+     * The curve is drawn using `Graphics.strokePoints` so will be drawn at whatever the present Graphics stroke color is.
+     * The Graphics object is not cleared before the draw, so the curve will appear on-top of anything else already rendered to it.
+     *
+     * @method Phaser.Curves.Curve#draw
+     * @since 3.0.0
+     *
+     * @generic {Phaser.GameObjects.Graphics} G - [graphics,$return]
+     *
+     * @param {Phaser.GameObjects.Graphics} graphics - The Graphics instance onto which this curve will be drawn.
+     * @param {integer} [pointsTotal=32] - The resolution of the curve. The higher the value the smoother it will render, at the cost of rendering performance.
+     *
+     * @return {Phaser.GameObjects.Graphics} The Graphics object to which the curve was drawn.
+     */
+    draw: function (graphics, pointsTotal)
+    {
+        if (pointsTotal === undefined) { pointsTotal = 32; }
+
+        //  So you can chain graphics calls
+        return graphics.strokePoints(this.getPoints(pointsTotal));
+    },
+    
+    /**
+     * Returns a Rectangle where the position and dimensions match the bounds of this Curve.
+     *
+     * You can control the accuracy of the bounds. The value given is used to work out how many points
+     * to plot across the curve. Higher values are more accurate at the cost of calculation speed.
+     *
+     * @method Phaser.Curves.Curve#getBounds
+     * @since 3.0.0
+     *
+     * @param {Phaser.Geom.Rectangle} [out] - The Rectangle to store the bounds in. If falsey a new object will be created.
+     * @param {integer} [accuracy=16] - The accuracy of the bounds calculations.
+     *
+     * @return {Phaser.Geom.Rectangle} A Rectangle object holding the bounds of this curve. If `out` was given it will be this object.
+     */
+    getBounds: function (out, accuracy)
+    {
+        if (!out) { out = new Rectangle(); }
+        if (accuracy === undefined) { accuracy = 16; }
+
+        var len = this.getLength();
+
+        if (accuracy > len)
+        {
+            accuracy = len / 2;
+        }
+
+        //  The length of the curve in pixels
+        //  So we'll have 1 spaced point per 'accuracy' pixels
+
+        var spaced = Math.max(1, Math.round(len / accuracy));
+
+        return FromPoints(this.getSpacedPoints(spaced), out);
+    },
+
+    /**
