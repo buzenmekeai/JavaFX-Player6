@@ -14027,3 +14027,222 @@ var Curve = new Class({
      *
      * @param {Phaser.Math.Vector2} [out] - [description]
      *
+     * @return {Phaser.Math.Vector2} [description]
+     */
+    getStartPoint: function (out)
+    {
+        if (out === undefined) { out = new Vector2(); }
+
+        return this.getPointAt(0, out);
+    },
+
+    // Returns a unit vector tangent at t
+    // In case any sub curve does not implement its tangent derivation,
+    // 2 points a small delta apart will be used to find its gradient
+    // which seems to give a reasonable approximation
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Curve#getTangent
+     * @since 3.0.0
+     *
+     * @generic {Phaser.Math.Vector2} O - [out,$return]
+     *
+     * @param {number} t - [description]
+     * @param {Phaser.Math.Vector2} [out] - [description]
+     *
+     * @return {Phaser.Math.Vector2} Vector approximating the tangent line at the point t (delta +/- 0.0001)
+     */
+    getTangent: function (t, out)
+    {
+        if (out === undefined) { out = new Vector2(); }
+
+        var delta = 0.0001;
+        var t1 = t - delta;
+        var t2 = t + delta;
+
+        // Capping in case of danger
+
+        if (t1 < 0)
+        {
+            t1 = 0;
+        }
+
+        if (t2 > 1)
+        {
+            t2 = 1;
+        }
+
+        this.getPoint(t1, this._tmpVec2A);
+        this.getPoint(t2, out);
+
+        return out.subtract(this._tmpVec2A).normalize();
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Curve#getTangentAt
+     * @since 3.0.0
+     *
+     * @generic {Phaser.Math.Vector2} O - [out,$return]
+     *
+     * @param {number} u - [description]
+     * @param {Phaser.Math.Vector2} [out] - [description]
+     *
+     * @return {Phaser.Math.Vector2} [description]
+     */
+    getTangentAt: function (u, out)
+    {
+        var t = this.getUtoTmapping(u);
+
+        return this.getTangent(t, out);
+    },
+
+    //  Given a distance in pixels, get a t to find p.
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Curve#getTFromDistance
+     * @since 3.0.0
+     *
+     * @param {integer} distance - [description]
+     * @param {integer} [divisions] - [description]
+     *
+     * @return {number} [description]
+     */
+    getTFromDistance: function (distance, divisions)
+    {
+        if (distance <= 0)
+        {
+            return 0;
+        }
+
+        return this.getUtoTmapping(0, distance, divisions);
+    },
+
+    // Given u ( 0 .. 1 ), get a t to find p. This gives you points which are equidistant
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Curve#getUtoTmapping
+     * @since 3.0.0
+     *
+     * @param {number} u - [description]
+     * @param {integer} distance - [description]
+     * @param {integer} [divisions] - [description]
+     *
+     * @return {number} [description]
+     */
+    getUtoTmapping: function (u, distance, divisions)
+    {
+        var arcLengths = this.getLengths(divisions);
+
+        var i = 0;
+        var il = arcLengths.length;
+
+        var targetArcLength; // The targeted u distance value to get
+
+        if (distance)
+        {
+            //  Cannot overshoot the curve
+            targetArcLength = Math.min(distance, arcLengths[il - 1]);
+        }
+        else
+        {
+            targetArcLength = u * arcLengths[il - 1];
+        }
+
+        // binary search for the index with largest value smaller than target u distance
+
+        var low = 0;
+        var high = il - 1;
+        var comparison;
+
+        while (low <= high)
+        {
+            i = Math.floor(low + (high - low) / 2); // less likely to overflow, though probably not issue here, JS doesn't really have integers, all numbers are floats
+
+            comparison = arcLengths[i] - targetArcLength;
+
+            if (comparison < 0)
+            {
+                low = i + 1;
+            }
+            else if (comparison > 0)
+            {
+                high = i - 1;
+            }
+            else
+            {
+                high = i;
+                break;
+            }
+        }
+
+        i = high;
+
+        if (arcLengths[i] === targetArcLength)
+        {
+            return i / (il - 1);
+        }
+
+        // we could get finer grain at lengths, or use simple interpolation between two points
+
+        var lengthBefore = arcLengths[i];
+        var lengthAfter = arcLengths[i + 1];
+
+        var segmentLength = lengthAfter - lengthBefore;
+
+        // determine where we are between the 'before' and 'after' points
+
+        var segmentFraction = (targetArcLength - lengthBefore) / segmentLength;
+
+        // add that fractional amount to t
+
+        return (i + segmentFraction) / (il - 1);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Curve#updateArcLengths
+     * @since 3.0.0
+     */
+    updateArcLengths: function ()
+    {
+        this.needsUpdate = true;
+
+        this.getLengths();
+    }
+
+});
+
+module.exports = Curve;
+
+
+/***/ }),
+/* 71 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Contains = __webpack_require__(40);
+var GetPoint = __webpack_require__(405);
+var GetPoints = __webpack_require__(403);
+var Random = __webpack_require__(191);
+
+/**
+ * @classdesc
+ * A Circle object.
+ *
+ * This is a geometry object, containing numerical values and related methods to inspect and modify them.
+ * It is not a Game Object, in that you cannot add it to the display list, and it has no texture.
+ * To render a Circle you should look at the capabilities of the Graphics class.
