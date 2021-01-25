@@ -15105,3 +15105,235 @@ var Common = __webpack_require__(33);
             }
 
             if (flag === 3) {
+                return false;
+            }
+        }
+
+        if (flag !== 0){
+            return true;
+        } else {
+            return null;
+        }
+    };
+
+    /**
+     * Returns the convex hull of the input vertices as a new array of points.
+     * @method hull
+     * @param {vertices} vertices
+     * @return [vertex] vertices
+     */
+    Vertices.hull = function(vertices) {
+        // http://geomalgorithms.com/a10-_hull-1.html
+
+        var upper = [],
+            lower = [], 
+            vertex,
+            i;
+
+        // sort vertices on x-axis (y-axis for ties)
+        vertices = vertices.slice(0);
+        vertices.sort(function(vertexA, vertexB) {
+            var dx = vertexA.x - vertexB.x;
+            return dx !== 0 ? dx : vertexA.y - vertexB.y;
+        });
+
+        // build lower hull
+        for (i = 0; i < vertices.length; i += 1) {
+            vertex = vertices[i];
+
+            while (lower.length >= 2 
+                   && Vector.cross3(lower[lower.length - 2], lower[lower.length - 1], vertex) <= 0) {
+                lower.pop();
+            }
+
+            lower.push(vertex);
+        }
+
+        // build upper hull
+        for (i = vertices.length - 1; i >= 0; i -= 1) {
+            vertex = vertices[i];
+
+            while (upper.length >= 2 
+                   && Vector.cross3(upper[upper.length - 2], upper[upper.length - 1], vertex) <= 0) {
+                upper.pop();
+            }
+
+            upper.push(vertex);
+        }
+
+        // concatenation of the lower and upper hulls gives the convex hull
+        // omit last points because they are repeated at the beginning of the other list
+        upper.pop();
+        lower.pop();
+
+        return upper.concat(lower);
+    };
+
+})();
+
+
+/***/ }),
+/* 77 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var GetFastValue = __webpack_require__(2);
+
+/**
+ * @classdesc
+ * A class for representing data about a map. Maps are parsed from CSV, Tiled, etc. into this
+ * format. A Tilemap object get a copy of this data and then unpacks the needed properties into
+ * itself.
+ *
+ * @class MapData
+ * @memberof Phaser.Tilemaps
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {object} [config] - [description]
+ */
+var MapData = new Class({
+
+    initialize:
+
+    function MapData (config)
+    {
+        if (config === undefined) { config = {}; }
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#name
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.name = GetFastValue(config, 'name', 'map');
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#width
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.width = GetFastValue(config, 'width', 0);
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#height
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.height = GetFastValue(config, 'height', 0);
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#tileWidth
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.tileWidth = GetFastValue(config, 'tileWidth', 0);
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#tileHeight
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.tileHeight = GetFastValue(config, 'tileHeight', 0);
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#widthInPixels
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.widthInPixels = GetFastValue(config, 'widthInPixels', this.width * this.tileWidth);
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#heightInPixels
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.heightInPixels = GetFastValue(config, 'heightInPixels', this.height * this.tileHeight);
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#format
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.format = GetFastValue(config, 'format', null);
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#orientation
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.orientation = GetFastValue(config, 'orientation', 'orthogonal');
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#renderOrder
+         * @type {string}
+         * @since 3.12.0
+         */
+        this.renderOrder = GetFastValue(config, 'renderOrder', 'right-down');
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#version
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.version = GetFastValue(config, 'version', '1');
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#properties
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.properties = GetFastValue(config, 'properties', {});
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#layers
+         * @type {array}
+         * @since 3.0.0
+         */
+        this.layers = GetFastValue(config, 'layers', []);
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#images
+         * @type {array}
+         * @since 3.0.0
+         */
+        this.images = GetFastValue(config, 'images', []);
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#objects
+         * @type {object}
