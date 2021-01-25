@@ -14686,3 +14686,213 @@ module.exports = SetCenterX;
 
 /***/ }),
 /* 75 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Returns the center x coordinate from the bounds of the Game Object.
+ *
+ * @function Phaser.Display.Bounds.GetCenterX
+ * @since 3.0.0
+ *
+ * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object to get the bounds value from.
+ *
+ * @return {number} The center x coordinate of the bounds of the Game Object.
+ */
+var GetCenterX = function (gameObject)
+{
+    return gameObject.x - (gameObject.width * gameObject.originX) + (gameObject.width * 0.5);
+};
+
+module.exports = GetCenterX;
+
+
+/***/ }),
+/* 76 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+* The `Matter.Vertices` module contains methods for creating and manipulating sets of vertices.
+* A set of vertices is an array of `Matter.Vector` with additional indexing properties inserted by `Vertices.create`.
+* A `Matter.Body` maintains a set of vertices to represent the shape of the object (its convex hull).
+*
+* See the included usage [examples](https://github.com/liabru/matter-js/tree/master/examples).
+*
+* @class Vertices
+*/
+
+var Vertices = {};
+
+module.exports = Vertices;
+
+var Vector = __webpack_require__(81);
+var Common = __webpack_require__(33);
+
+(function() {
+
+    /**
+     * Creates a new set of `Matter.Body` compatible vertices.
+     * The `points` argument accepts an array of `Matter.Vector` points orientated around the origin `(0, 0)`, for example:
+     *
+     *     [{ x: 0, y: 0 }, { x: 25, y: 50 }, { x: 50, y: 0 }]
+     *
+     * The `Vertices.create` method returns a new array of vertices, which are similar to Matter.Vector objects,
+     * but with some additional references required for efficient collision detection routines.
+     *
+     * Vertices must be specified in clockwise order.
+     *
+     * Note that the `body` argument is not optional, a `Matter.Body` reference must be provided.
+     *
+     * @method create
+     * @param {vector[]} points
+     * @param {body} body
+     */
+    Vertices.create = function(points, body) {
+        var vertices = [];
+
+        for (var i = 0; i < points.length; i++) {
+            var point = points[i],
+                vertex = {
+                    x: point.x,
+                    y: point.y,
+                    index: i,
+                    body: body,
+                    isInternal: false,
+                    contact: null
+                };
+
+            vertex.contact = {
+                vertex: vertex,
+                normalImpulse: 0,
+                tangentImpulse: 0
+            };
+
+            vertices.push(vertex);
+        }
+
+        return vertices;
+    };
+
+    /**
+     * Parses a string containing ordered x y pairs separated by spaces (and optionally commas), 
+     * into a `Matter.Vertices` object for the given `Matter.Body`.
+     * For parsing SVG paths, see `Svg.pathToVertices`.
+     * @method fromPath
+     * @param {string} path
+     * @param {body} body
+     * @return {vertices} vertices
+     */
+    Vertices.fromPath = function(path, body) {
+        var pathPattern = /L?\s*([\-\d\.e]+)[\s,]*([\-\d\.e]+)*/ig,
+            points = [];
+
+        path.replace(pathPattern, function(match, x, y) {
+            points.push({ x: parseFloat(x), y: parseFloat(y) });
+        });
+
+        return Vertices.create(points, body);
+    };
+
+    /**
+     * Returns the centre (centroid) of the set of vertices.
+     * @method centre
+     * @param {vertices} vertices
+     * @return {vector} The centre point
+     */
+    Vertices.centre = function(vertices) {
+        var area = Vertices.area(vertices, true),
+            centre = { x: 0, y: 0 },
+            cross,
+            temp,
+            j;
+
+        for (var i = 0; i < vertices.length; i++) {
+            j = (i + 1) % vertices.length;
+            cross = Vector.cross(vertices[i], vertices[j]);
+            temp = Vector.mult(Vector.add(vertices[i], vertices[j]), cross);
+            centre = Vector.add(centre, temp);
+        }
+
+        return Vector.div(centre, 6 * area);
+    };
+
+    /**
+     * Returns the average (mean) of the set of vertices.
+     * @method mean
+     * @param {vertices} vertices
+     * @return {vector} The average point
+     */
+    Vertices.mean = function(vertices) {
+        var average = { x: 0, y: 0 };
+
+        for (var i = 0; i < vertices.length; i++) {
+            average.x += vertices[i].x;
+            average.y += vertices[i].y;
+        }
+
+        return Vector.div(average, vertices.length);
+    };
+
+    /**
+     * Returns the area of the set of vertices.
+     * @method area
+     * @param {vertices} vertices
+     * @param {bool} signed
+     * @return {number} The area
+     */
+    Vertices.area = function(vertices, signed) {
+        var area = 0,
+            j = vertices.length - 1;
+
+        for (var i = 0; i < vertices.length; i++) {
+            area += (vertices[j].x - vertices[i].x) * (vertices[j].y + vertices[i].y);
+            j = i;
+        }
+
+        if (signed)
+            return area / 2;
+
+        return Math.abs(area) / 2;
+    };
+
+    /**
+     * Returns the moment of inertia (second moment of area) of the set of vertices given the total mass.
+     * @method inertia
+     * @param {vertices} vertices
+     * @param {number} mass
+     * @return {number} The polygon's moment of inertia
+     */
+    Vertices.inertia = function(vertices, mass) {
+        var numerator = 0,
+            denominator = 0,
+            v = vertices,
+            cross,
+            j;
+
+        // find the polygon's moment of inertia, using second moment of area
+        // from equations at http://www.physicsforums.com/showthread.php?t=25293
+        for (var n = 0; n < v.length; n++) {
+            j = (n + 1) % v.length;
+            cross = Math.abs(Vector.cross(v[j], v[n]));
+            numerator += cross * (Vector.dot(v[j], v[j]) + Vector.dot(v[j], v[n]) + Vector.dot(v[n], v[n]));
+            denominator += cross;
+        }
+
+        return (mass / 6) * (numerator / denominator);
+    };
+
+    /**
+     * Translates the set of vertices in-place.
+     * @method translate
+     * @param {vertices} vertices
+     * @param {vector} vector
+     * @param {number} scalar
+     */
+    Vertices.translate = function(vertices, vector, scalar) {
+        var i;
+        if (scalar) {
