@@ -14447,3 +14447,242 @@ var Circle = new Class({
      * @since 3.0.0
      *
      * @return {boolean} True if the Circle is empty, otherwise false.
+     */
+    isEmpty: function ()
+    {
+        return (this._radius <= 0);
+    },
+
+    /**
+     * The radius of the Circle.
+     *
+     * @name Phaser.Geom.Circle#radius
+     * @type {number}
+     * @since 3.0.0
+     */
+    radius: {
+
+        get: function ()
+        {
+            return this._radius;
+        },
+
+        set: function (value)
+        {
+            this._radius = value;
+            this._diameter = value * 2;
+        }
+
+    },
+
+    /**
+     * The diameter of the Circle.
+     *
+     * @name Phaser.Geom.Circle#diameter
+     * @type {number}
+     * @since 3.0.0
+     */
+    diameter: {
+
+        get: function ()
+        {
+            return this._diameter;
+        },
+
+        set: function (value)
+        {
+            this._diameter = value;
+            this._radius = value * 0.5;
+        }
+
+    },
+
+    /**
+     * The left position of the Circle.
+     *
+     * @name Phaser.Geom.Circle#left
+     * @type {number}
+     * @since 3.0.0
+     */
+    left: {
+
+        get: function ()
+        {
+            return this.x - this._radius;
+        },
+
+        set: function (value)
+        {
+            this.x = value + this._radius;
+        }
+
+    },
+
+    /**
+     * The right position of the Circle.
+     *
+     * @name Phaser.Geom.Circle#right
+     * @type {number}
+     * @since 3.0.0
+     */
+    right: {
+
+        get: function ()
+        {
+            return this.x + this._radius;
+        },
+
+        set: function (value)
+        {
+            this.x = value - this._radius;
+        }
+
+    },
+
+    /**
+     * The top position of the Circle.
+     *
+     * @name Phaser.Geom.Circle#top
+     * @type {number}
+     * @since 3.0.0
+     */
+    top: {
+
+        get: function ()
+        {
+            return this.y - this._radius;
+        },
+
+        set: function (value)
+        {
+            this.y = value + this._radius;
+        }
+
+    },
+
+    /**
+     * The bottom position of the Circle.
+     *
+     * @name Phaser.Geom.Circle#bottom
+     * @type {number}
+     * @since 3.0.0
+     */
+    bottom: {
+
+        get: function ()
+        {
+            return this.y + this._radius;
+        },
+
+        set: function (value)
+        {
+            this.y = value - this._radius;
+        }
+
+    }
+
+});
+
+module.exports = Circle;
+
+
+/***/ }),
+/* 72 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Returns the center y coordinate from the bounds of the Game Object.
+ *
+ * @function Phaser.Display.Bounds.GetCenterY
+ * @since 3.0.0
+ *
+ * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object to get the bounds value from.
+ *
+ * @return {number} The center y coordinate of the bounds of the Game Object.
+ */
+var GetCenterY = function (gameObject)
+{
+    return gameObject.y - (gameObject.height * gameObject.originY) + (gameObject.height * 0.5);
+};
+
+module.exports = GetCenterY;
+
+
+/***/ }),
+/* 73 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Positions the Game Object so that the center top of its bounds aligns with the given coordinate.
+ *
+ * @function Phaser.Display.Bounds.SetCenterY
+ * @since 3.0.0
+ *
+ * @generic {Phaser.GameObjects.GameObject} G - [gameObject,$return]
+ *
+ * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object that will be re-positioned.
+ * @param {number} y - The coordinate to position the Game Object bounds on.
+ *
+ * @return {Phaser.GameObjects.GameObject} The Game Object that was positioned.
+ */
+var SetCenterY = function (gameObject, y)
+{
+    var offsetY = gameObject.height * gameObject.originY;
+
+    gameObject.y = (y + offsetY) - (gameObject.height * 0.5);
+
+    return gameObject;
+};
+
+module.exports = SetCenterY;
+
+
+/***/ }),
+/* 74 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Positions the Game Object so that the center top of its bounds aligns with the given coordinate.
+ *
+ * @function Phaser.Display.Bounds.SetCenterX
+ * @since 3.0.0
+ *
+ * @generic {Phaser.GameObjects.GameObject} G - [gameObject,$return]
+ *
+ * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object that will be re-positioned.
+ * @param {number} x - The coordinate to position the Game Object bounds on.
+ *
+ * @return {Phaser.GameObjects.GameObject} The Game Object that was positioned.
+ */
+var SetCenterX = function (gameObject, x)
+{
+    var offsetX = gameObject.width * gameObject.originX;
+
+    gameObject.x = (x + offsetX) - (gameObject.width * 0.5);
+
+    return gameObject;
+};
+
+module.exports = SetCenterX;
+
+
+/***/ }),
+/* 75 */
