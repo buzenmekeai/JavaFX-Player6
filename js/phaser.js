@@ -15337,3 +15337,214 @@ var MapData = new Class({
          * 
          * @name Phaser.Tilemaps.MapData#objects
          * @type {object}
+         * @since 3.0.0
+         */
+        this.objects = GetFastValue(config, 'objects', {});
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#collision
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.collision = GetFastValue(config, 'collision', {});
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#tilesets
+         * @type {array}
+         * @since 3.0.0
+         */
+        this.tilesets = GetFastValue(config, 'tilesets', []);
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#imageCollections
+         * @type {array}
+         * @since 3.0.0
+         */
+        this.imageCollections = GetFastValue(config, 'imageCollections', []);
+
+        /**
+         * [description]
+         * 
+         * @name Phaser.Tilemaps.MapData#tiles
+         * @type {array}
+         * @since 3.0.0
+         */
+        this.tiles = GetFastValue(config, 'tiles', []);
+    }
+
+});
+
+module.exports = MapData;
+
+
+/***/ }),
+/* 78 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var GetFastValue = __webpack_require__(2);
+
+/**
+ * @classdesc
+ * A class for representing data about about a layer in a map. Maps are parsed from CSV, Tiled,
+ * etc. into this format. Tilemap, StaticTilemapLayer and DynamicTilemapLayer have a reference
+ * to this data and use it to look up and perform operations on tiles.
+ *
+ * @class LayerData
+ * @memberof Phaser.Tilemaps
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {object} [config] - [description]
+ */
+var LayerData = new Class({
+
+    initialize:
+
+    function LayerData (config)
+    {
+        if (config === undefined) { config = {}; }
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.LayerData#name
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.name = GetFastValue(config, 'name', 'layer');
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.LayerData#x
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.x = GetFastValue(config, 'x', 0);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.LayerData#y
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.y = GetFastValue(config, 'y', 0);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.LayerData#width
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.width = GetFastValue(config, 'width', 0);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.LayerData#height
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.height = GetFastValue(config, 'height', 0);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.LayerData#tileWidth
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.tileWidth = GetFastValue(config, 'tileWidth', 0);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.LayerData#tileHeight
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.tileHeight = GetFastValue(config, 'tileHeight', 0);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.LayerData#baseTileWidth
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.baseTileWidth = GetFastValue(config, 'baseTileWidth', this.tileWidth);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.LayerData#baseTileHeight
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.baseTileHeight = GetFastValue(config, 'baseTileHeight', this.tileHeight);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.LayerData#widthInPixels
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.widthInPixels = GetFastValue(config, 'widthInPixels', this.width * this.baseTileWidth);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.LayerData#heightInPixels
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.heightInPixels = GetFastValue(config, 'heightInPixels', this.height * this.baseTileHeight);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.LayerData#alpha
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.alpha = GetFastValue(config, 'alpha', 1);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.LayerData#visible
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.visible = GetFastValue(config, 'visible', true);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.LayerData#properties
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.properties = GetFastValue(config, 'properties', {});
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.LayerData#indexes
+         * @type {array}
