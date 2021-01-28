@@ -16193,3 +16193,243 @@ var TWEEN_CONST = {
     /**
      * Tween state.
      * 
+     * @name Phaser.Tweens.LOOP_DELAY
+     * @type {integer}
+     * @since 3.0.0
+     */
+    LOOP_DELAY: 22,
+
+    /**
+     * Tween state.
+     * 
+     * @name Phaser.Tweens.ACTIVE
+     * @type {integer}
+     * @since 3.0.0
+     */
+    ACTIVE: 23,
+
+    /**
+     * Tween state.
+     * 
+     * @name Phaser.Tweens.COMPLETE_DELAY
+     * @type {integer}
+     * @since 3.0.0
+     */
+    COMPLETE_DELAY: 24,
+
+    /**
+     * Tween state.
+     * 
+     * @name Phaser.Tweens.PENDING_REMOVE
+     * @type {integer}
+     * @since 3.0.0
+     */
+    PENDING_REMOVE: 25,
+
+    /**
+     * Tween state.
+     * 
+     * @name Phaser.Tweens.REMOVED
+     * @type {integer}
+     * @since 3.0.0
+     */
+    REMOVED: 26
+
+};
+
+module.exports = TWEEN_CONST;
+
+
+/***/ }),
+/* 84 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Retrieves the value of the given key from an object.
+ *
+ * @function Phaser.Tweens.Builders.GetBoolean
+ * @since 3.0.0
+ *
+ * @param {object} source - The object to retrieve the value from.
+ * @param {string} key - The key to look for in the `source` object.
+ * @param {*} defaultValue - The default value to return if the `key` doesn't exist or if no `source` object is provided.
+ *
+ * @return {*} The retrieved value.
+ */
+var GetBoolean = function (source, key, defaultValue)
+{
+    if (!source)
+    {
+        return defaultValue;
+    }
+    else if (source.hasOwnProperty(key))
+    {
+        return source[key];
+    }
+    else
+    {
+        return defaultValue;
+    }
+};
+
+module.exports = GetBoolean;
+
+
+/***/ }),
+/* 85 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Utils.Objects.HasValue
+ * @since 3.0.0
+ *
+ * @param {object} source - [description]
+ * @param {string} key - [description]
+ *
+ * @return {boolean} [description]
+ */
+var HasValue = function (source, key)
+{
+    return (source.hasOwnProperty(key));
+};
+
+module.exports = HasValue;
+
+
+/***/ }),
+/* 86 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var EaseMap = __webpack_require__(174);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Tweens.Builders.GetEaseFunction
+ * @since 3.0.0
+ *
+ * @param {(string|function)} ease - [description]
+ * @param {array} easeParams - [description]
+ *
+ * @return {function} [description]
+ */
+var GetEaseFunction = function (ease, easeParams)
+{
+    if (typeof ease === 'string' && EaseMap.hasOwnProperty(ease))
+    {
+        if (easeParams)
+        {
+            var cloneParams = easeParams.slice(0);
+
+            cloneParams.unshift(0);
+
+            return function (v)
+            {
+                cloneParams[0] = v;
+
+                return EaseMap[ease].apply(this, cloneParams);
+            };
+        }
+        else
+        {
+            //  String based look-up
+            return EaseMap[ease];
+        }
+    }
+    else if (typeof ease === 'function')
+    {
+        //  Custom function
+        return ease;
+    }
+    else if (Array.isArray(ease) && ease.length === 4)
+    {
+        //  Bezier function (TODO)
+    }
+
+    return EaseMap.Power0;
+};
+
+module.exports = GetEaseFunction;
+
+
+/***/ }),
+/* 87 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(14);
+var GameObject = __webpack_require__(19);
+var ImageRender = __webpack_require__(826);
+
+/**
+ * @classdesc
+ * An Image Game Object.
+ *
+ * An Image is a light-weight Game Object useful for the display of static images in your game,
+ * such as logos, backgrounds, scenery or other non-animated elements. Images can have input
+ * events and physics bodies, or be tweened, tinted or scrolled. The main difference between an
+ * Image and a Sprite is that you cannot animate an Image as they do not have the Animation component.
+ *
+ * @class Image
+ * @extends Phaser.GameObjects.GameObject
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @since 3.0.0
+ *
+ * @extends Phaser.GameObjects.Components.Alpha
+ * @extends Phaser.GameObjects.Components.BlendMode
+ * @extends Phaser.GameObjects.Components.Depth
+ * @extends Phaser.GameObjects.Components.Flip
+ * @extends Phaser.GameObjects.Components.GetBounds
+ * @extends Phaser.GameObjects.Components.Mask
+ * @extends Phaser.GameObjects.Components.Origin
+ * @extends Phaser.GameObjects.Components.Pipeline
+ * @extends Phaser.GameObjects.Components.ScaleMode
+ * @extends Phaser.GameObjects.Components.ScrollFactor
+ * @extends Phaser.GameObjects.Components.Size
+ * @extends Phaser.GameObjects.Components.TextureCrop
+ * @extends Phaser.GameObjects.Components.Tint
+ * @extends Phaser.GameObjects.Components.Transform
+ * @extends Phaser.GameObjects.Components.Visible
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Game Object belongs. A Game Object can only belong to one Scene at a time.
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {string} texture - The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
+ * @param {(string|integer)} [frame] - An optional frame from the Texture this Game Object is rendering with.
+ */
+var Image = new Class({
+
+    Extends: GameObject,
+
+    Mixins: [
+        Components.Alpha,
+        Components.BlendMode,
+        Components.Depth,
+        Components.Flip,
