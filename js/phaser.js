@@ -16635,3 +16635,226 @@ var Group = new Class({
         }
 
         /**
+         * This scene this group belongs to.
+         *
+         * @name Phaser.GameObjects.Group#scene
+         * @type {Phaser.Scene}
+         * @since 3.0.0
+         */
+        this.scene = scene;
+
+        /**
+         * Members of this group.
+         *
+         * @name Phaser.GameObjects.Group#children
+         * @type {Phaser.Structs.Set.<Phaser.GameObjects.GameObject>}
+         * @since 3.0.0
+         */
+        this.children = new Set(children);
+
+        /**
+         * A flag identifying this object as a group.
+         *
+         * @name Phaser.GameObjects.Group#isParent
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.isParent = true;
+
+        /**
+         * The class to create new group members from.
+         *
+         * @name Phaser.GameObjects.Group#classType
+         * @type {object}
+         * @since 3.0.0
+         * @default Phaser.GameObjects.Sprite
+         */
+        this.classType = GetFastValue(config, 'classType', Sprite);
+
+        /**
+         * Whether this group runs its {@link Phaser.GameObjects.Group#preUpdate} method
+         * (which may update any members).
+         *
+         * @name Phaser.GameObjects.Group#active
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.active = GetFastValue(config, 'active', true);
+
+        /**
+         * The maximum size of this group, if used as a pool. -1 is no limit.
+         *
+         * @name Phaser.GameObjects.Group#maxSize
+         * @type {integer}
+         * @since 3.0.0
+         * @default -1
+         */
+        this.maxSize = GetFastValue(config, 'maxSize', -1);
+
+        /**
+         * A default texture key to use when creating new group members.
+         *
+         * This is used in {@link Phaser.GameObjects.Group#create}
+         * but not in {@link Phaser.GameObjects.Group#createMultiple}.
+         *
+         * @name Phaser.GameObjects.Group#defaultKey
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.defaultKey = GetFastValue(config, 'defaultKey', null);
+
+        /**
+         * A default texture frame to use when creating new group members.
+         *
+         * @name Phaser.GameObjects.Group#defaultFrame
+         * @type {(string|integer)}
+         * @since 3.0.0
+         */
+        this.defaultFrame = GetFastValue(config, 'defaultFrame', null);
+
+        /**
+         * Whether to call the update method of any members.
+         *
+         * @name Phaser.GameObjects.Group#runChildUpdate
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Group#preUpdate
+         */
+        this.runChildUpdate = GetFastValue(config, 'runChildUpdate', false);
+
+        /**
+         * A function to be called when adding or creating group members.
+         *
+         * @name Phaser.GameObjects.Group#createCallback
+         * @type {?GroupCallback}
+         * @since 3.0.0
+         */
+        this.createCallback = GetFastValue(config, 'createCallback', null);
+
+        /**
+         * A function to be called when removing group members.
+         *
+         * @name Phaser.GameObjects.Group#removeCallback
+         * @type {?GroupCallback}
+         * @since 3.0.0
+         */
+        this.removeCallback = GetFastValue(config, 'removeCallback', null);
+
+        /**
+         * A function to be called when creating several group members at once.
+         *
+         * @name Phaser.GameObjects.Group#createMultipleCallback
+         * @type {?GroupMultipleCreateCallback}
+         * @since 3.0.0
+         */
+        this.createMultipleCallback = GetFastValue(config, 'createMultipleCallback', null);
+
+        if (config)
+        {
+            this.createMultiple(config);
+        }
+    },
+
+    /**
+     * Creates a new Game Object and adds it to this group, unless the group {@link Phaser.GameObjects.Group#isFull is full}.
+     *
+     * Calls {@link Phaser.GameObjects.Group#createCallback}.
+     *
+     * @method Phaser.GameObjects.Group#create
+     * @since 3.0.0
+     *
+     * @param {number} [x=0] - The horizontal position of the new Game Object in the world.
+     * @param {number} [y=0] - The vertical position of the new Game Object in the world.
+     * @param {string} [key=defaultKey] - The texture key of the new Game Object.
+     * @param {(string|integer)} [frame=defaultFrame] - The texture frame of the new Game Object.
+     * @param {boolean} [visible=true] - The {@link Phaser.GameObjects.Components.Visible#visible} state of the new Game Object.
+     * @param {boolean} [active=true] - The {@link Phaser.GameObjects.GameObject#active} state of the new Game Object.
+     *
+     * @return {any} The new Game Object (usually a Sprite, etc.).
+     */
+    create: function (x, y, key, frame, visible, active)
+    {
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = 0; }
+        if (key === undefined) { key = this.defaultKey; }
+        if (frame === undefined) { frame = this.defaultFrame; }
+        if (visible === undefined) { visible = true; }
+        if (active === undefined) { active = true; }
+
+        //  Pool?
+        if (this.isFull())
+        {
+            return null;
+        }
+
+        var child = new this.classType(this.scene, x, y, key, frame);
+
+        this.scene.sys.displayList.add(child);
+
+        if (child.preUpdate)
+        {
+            this.scene.sys.updateList.add(child);
+        }
+
+        child.visible = visible;
+        child.setActive(active);
+
+        this.add(child);
+
+        return child;
+    },
+
+    /**
+     * Creates several Game Objects and adds them to this group.
+     *
+     * If the group becomes {@link Phaser.GameObjects.Group#isFull}, no further Game Objects are created.
+     *
+     * Calls {@link Phaser.GameObjects.Group#createMultipleCallback} and {@link Phaser.GameObjects.Group#createCallback}.
+     *
+     * @method Phaser.GameObjects.Group#createMultiple
+     * @since 3.0.0
+     *
+     * @param {GroupCreateConfig|GroupCreateConfig[]} config - Creation settings. This can be a single configuration object or an array of such objects, which will be applied in turn.
+     *
+     * @return {any[]} The newly created Game Objects.
+     */
+    createMultiple: function (config)
+    {
+        if (this.isFull())
+        {
+            return [];
+        }
+
+        if (!Array.isArray(config))
+        {
+            config = [ config ];
+        }
+
+        var output = [];
+
+        if (config[0].key)
+        {
+            for (var i = 0; i < config.length; i++)
+            {
+                var entries = this.createFromConfig(config[i]);
+    
+                output = output.concat(entries);
+            }
+        }
+
+        return output;
+    },
+
+    /**
+     * A helper for {@link Phaser.GameObjects.Group#createMultiple}.
+     *
+     * @method Phaser.GameObjects.Group#createFromConfig
+     * @since 3.0.0
+     *
+     * @param {GroupCreateConfig} options - Creation settings.
+     *
+     * @return {any[]} The newly created Game Objects.
+     */
+    createFromConfig: function (options)
