@@ -16858,3 +16858,215 @@ var Group = new Class({
      * @return {any[]} The newly created Game Objects.
      */
     createFromConfig: function (options)
+    {
+        if (this.isFull())
+        {
+            return [];
+        }
+
+        this.classType = GetFastValue(options, 'classType', this.classType);
+
+        var key = GetFastValue(options, 'key', undefined);
+        var frame = GetFastValue(options, 'frame', null);
+        var visible = GetFastValue(options, 'visible', true);
+        var active = GetFastValue(options, 'active', true);
+
+        var entries = [];
+
+        //  Can't do anything without at least a key
+        if (key === undefined)
+        {
+            return entries;
+        }
+        else
+        {
+            if (!Array.isArray(key))
+            {
+                key = [ key ];
+            }
+
+            if (!Array.isArray(frame))
+            {
+                frame = [ frame ];
+            }
+        }
+
+        //  Build an array of key frame pairs to loop through
+
+        var repeat = GetFastValue(options, 'repeat', 0);
+        var randomKey = GetFastValue(options, 'randomKey', false);
+        var randomFrame = GetFastValue(options, 'randomFrame', false);
+        var yoyo = GetFastValue(options, 'yoyo', false);
+        var quantity = GetFastValue(options, 'frameQuantity', 1);
+        var max = GetFastValue(options, 'max', 0);
+
+        //  If a grid is set we use that to override the quantity?
+
+        var range = Range(key, frame, {
+            max: max,
+            qty: quantity,
+            random: randomKey,
+            randomB: randomFrame,
+            repeat: repeat,
+            yoyo: yoyo
+        });
+
+        for (var c = 0; c < range.length; c++)
+        {
+            var created = this.create(0, 0, range[c].a, range[c].b, visible, active);
+
+            if (!created)
+            {
+                break;
+            }
+
+            entries.push(created);
+        }
+
+        //  Post-creation options (applied only to those items created in this call):
+
+        var x = GetValue(options, 'setXY.x', 0);
+        var y = GetValue(options, 'setXY.y', 0);
+        var stepX = GetValue(options, 'setXY.stepX', 0);
+        var stepY = GetValue(options, 'setXY.stepY', 0);
+
+        Actions.SetXY(entries, x, y, stepX, stepY);
+
+        var rotation = GetValue(options, 'setRotation.value', 0);
+        var stepRotation = GetValue(options, 'setRotation.step', 0);
+
+        Actions.SetRotation(entries, rotation, stepRotation);
+
+        var scaleX = GetValue(options, 'setScale.x', 1);
+        var scaleY = GetValue(options, 'setScale.y', scaleX);
+        var stepScaleX = GetValue(options, 'setScale.stepX', 0);
+        var stepScaleY = GetValue(options, 'setScale.stepY', 0);
+
+        Actions.SetScale(entries, scaleX, scaleY, stepScaleX, stepScaleY);
+
+        var alpha = GetValue(options, 'setAlpha.value', 1);
+        var stepAlpha = GetValue(options, 'setAlpha.step', 0);
+
+        Actions.SetAlpha(entries, alpha, stepAlpha);
+
+        var hitArea = GetFastValue(options, 'hitArea', null);
+        var hitAreaCallback = GetFastValue(options, 'hitAreaCallback', null);
+
+        if (hitArea)
+        {
+            Actions.SetHitArea(entries, hitArea, hitAreaCallback);
+        }
+
+        var grid = GetFastValue(options, 'gridAlign', false);
+
+        if (grid)
+        {
+            Actions.GridAlign(entries, grid);
+        }
+
+        if (this.createMultipleCallback)
+        {
+            this.createMultipleCallback.call(this, entries);
+        }
+
+        return entries;
+    },
+
+    /**
+     * Updates any group members, if {@link Phaser.GameObjects.Group#runChildUpdate} is enabled.
+     *
+     * @method Phaser.GameObjects.Group#preUpdate
+     * @since 3.0.0
+     *
+     * @param {number} time - The current timestamp.
+     * @param {number} delta - The delta time elapsed since the last frame.
+     */
+    preUpdate: function (time, delta)
+    {
+        if (!this.runChildUpdate || this.children.size === 0)
+        {
+            return;
+        }
+
+        //  Because a Group child may mess with the length of the Group during its update
+        var temp = this.children.entries.slice();
+
+        for (var i = 0; i < temp.length; i++)
+        {
+            var item = temp[i];
+
+            if (item.active)
+            {
+                item.update(time, delta);
+            }
+        }
+    },
+
+    /**
+     * Adds a Game Object to this group.
+     *
+     * Calls {@link Phaser.GameObjects.Group#createCallback}.
+     *
+     * @method Phaser.GameObjects.Group#add
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} child - The Game Object to add.
+     * @param {boolean} [addToScene=false] - Also add the Game Object to the scene.
+     *
+     * @return {Phaser.GameObjects.Group} This Group object.
+     */
+    add: function (child, addToScene)
+    {
+        if (addToScene === undefined) { addToScene = false; }
+
+        if (this.isFull())
+        {
+            return this;
+        }
+
+        this.children.set(child);
+
+        if (this.createCallback)
+        {
+            this.createCallback.call(this, child);
+        }
+
+        if (addToScene)
+        {
+            this.scene.sys.displayList.add(child);
+
+            if (child.preUpdate)
+            {
+                this.scene.sys.updateList.add(child);
+            }
+        }
+
+        child.on('destroy', this.remove, this);
+
+        return this;
+    },
+
+    /**
+     * Adds several Game Objects to this group.
+     *
+     * Calls {@link Phaser.GameObjects.Group#createCallback}.
+     *
+     * @method Phaser.GameObjects.Group#addMultiple
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject[]} children - The Game Objects to add.
+     * @param {boolean} [addToScene=false] - Also add the Game Objects to the scene.
+     *
+     * @return {Phaser.GameObjects.Group} This group.
+     */
+    addMultiple: function (children, addToScene)
+    {
+        if (addToScene === undefined) { addToScene = false; }
+
+        if (Array.isArray(children))
+        {
+            for (var i = 0; i < children.length; i++)
+            {
+                this.add(children[i], addToScene);
+            }
+        }
