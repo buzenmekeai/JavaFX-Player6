@@ -17296,3 +17296,215 @@ var Group = new Class({
      *
      * @method Phaser.GameObjects.Group#getLastNth
      * @since 3.6.0
+     *
+     * @param {integer} nth - The nth matching Group member to search for.
+     * @param {boolean} [state=false] - The {@link Phaser.GameObjects.GameObject#active} value to match.
+     * @param {boolean} [createIfNull=false] - Create a new Game Object if no matching members are found, using the following arguments.
+     * @param {number} [x] - The horizontal position of the Game Object in the world.
+     * @param {number} [y] - The vertical position of the Game Object in the world.
+     * @param {string} [key=defaultKey] - The texture key assigned to a new Game Object (if one is created).
+     * @param {(string|integer)} [frame=defaultFrame] - A texture frame assigned to a new Game Object (if one is created).
+     * @param {boolean} [visible=true] - The {@link Phaser.GameObjects.Components.Visible#visible} state of a new Game Object (if one is created).
+     *
+     * @return {?any} The first matching group member, or a newly created member, or null.
+     */
+    getLastNth: function (nth, state, createIfNull, x, y, key, frame, visible)
+    {
+        return this.getHandler(false, nth, state, createIfNull, x, y, key, frame, visible);
+    },
+
+    /**
+     * Scans the group for the last member that has an {@link Phaser.GameObjects.GameObject#active} state matching the argument,
+     * assigns `x` and `y`, and returns the member.
+     *
+     * If no matching member is found and `createIfNull` is true and the group isn't full then it will create a new Game Object using `x`, `y`, `key`, `frame`, and `visible`.
+     * Unless a new member is created, `key`, `frame`, and `visible` are ignored.
+     *
+     * @method Phaser.GameObjects.Group#getHandler
+     * @private
+     * @since 3.6.0
+     *
+     * @param {boolean} forwards - Search front to back or back to front?
+     * @param {integer} nth - Stop matching after nth successful matches.
+     * @param {boolean} [state=false] - The {@link Phaser.GameObjects.GameObject#active} value to match.
+     * @param {boolean} [createIfNull=false] - Create a new Game Object if no matching members are found, using the following arguments.
+     * @param {number} [x] - The horizontal position of the Game Object in the world.
+     * @param {number} [y] - The vertical position of the Game Object in the world.
+     * @param {string} [key=defaultKey] - The texture key assigned to a new Game Object (if one is created).
+     * @param {(string|integer)} [frame=defaultFrame] - A texture frame assigned to a new Game Object (if one is created).
+     * @param {boolean} [visible=true] - The {@link Phaser.GameObjects.Components.Visible#visible} state of a new Game Object (if one is created).
+     *
+     * @return {?any} The first matching group member, or a newly created member, or null.
+     */
+    getHandler: function (forwards, nth, state, createIfNull, x, y, key, frame, visible)
+    {
+        if (state === undefined) { state = false; }
+        if (createIfNull === undefined) { createIfNull = false; }
+
+        var gameObject;
+
+        var i;
+        var total = 0;
+        var children = this.children.entries;
+
+        if (forwards)
+        {
+            for (i = 0; i < children.length; i++)
+            {
+                gameObject = children[i];
+
+                if (gameObject.active === state)
+                {
+                    total++;
+
+                    if (total === nth)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    gameObject = null;
+                }
+            }
+        }
+        else
+        {
+            for (i = children.length - 1; i >= 0; i--)
+            {
+                gameObject = children[i];
+
+                if (gameObject.active === state)
+                {
+                    total++;
+
+                    if (total === nth)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    gameObject = null;
+                }
+            }
+        }
+
+        if (gameObject)
+        {
+            if (typeof(x) === 'number')
+            {
+                gameObject.x = x;
+            }
+
+            if (typeof(y) === 'number')
+            {
+                gameObject.y = y;
+            }
+
+            return gameObject;
+        }
+
+        //  Got this far? We need to create or bail
+        if (createIfNull)
+        {
+            return this.create(x, y, key, frame, visible);
+        }
+        else
+        {
+            return null;
+        }
+    },
+
+    /**
+     * Scans the group for the first member that has an {@link Phaser.GameObjects.GameObject#active} state set to `false`,
+     * assigns `x` and `y`, and returns the member.
+     *
+     * If no inactive member is found and the group isn't full then it will create a new Game Object using `x`, `y`, `key`, `frame`, and `visible`.
+     * The new Game Object will have its active state set to `true`.
+     * Unless a new member is created, `key`, `frame`, and `visible` are ignored.
+     *
+     * @method Phaser.GameObjects.Group#get
+     * @since 3.0.0
+     *
+     * @param {number} [x] - The horizontal position of the Game Object in the world.
+     * @param {number} [y] - The vertical position of the Game Object in the world.
+     * @param {string} [key=defaultKey] - The texture key assigned to a new Game Object (if one is created).
+     * @param {(string|integer)} [frame=defaultFrame] - A texture frame assigned to a new Game Object (if one is created).
+     * @param {boolean} [visible=true] - The {@link Phaser.GameObjects.Components.Visible#visible} state of a new Game Object (if one is created).
+     *
+     * @return {?any} The first inactive group member, or a newly created member, or null.
+     */
+    get: function (x, y, key, frame, visible)
+    {
+        return this.getFirst(false, true, x, y, key, frame, visible);
+    },
+
+    /**
+     * Scans the group for the first member that has an {@link Phaser.GameObjects.GameObject#active} state set to `true`,
+     * assigns `x` and `y`, and returns the member.
+     *
+     * If no active member is found and `createIfNull` is `true` and the group isn't full then it will create a new one using `x`, `y`, `key`, `frame`, and `visible`.
+     * Unless a new member is created, `key`, `frame`, and `visible` are ignored.
+     *
+     * @method Phaser.GameObjects.Group#getFirstAlive
+     * @since 3.0.0
+     *
+     * @param {boolean} [createIfNull=false] - Create a new Game Object if no matching members are found, using the following arguments.
+     * @param {number} [x] - The horizontal position of the Game Object in the world.
+     * @param {number} [y] - The vertical position of the Game Object in the world.
+     * @param {string} [key=defaultKey] - The texture key assigned to a new Game Object (if one is created).
+     * @param {(string|integer)} [frame=defaultFrame] - A texture frame assigned to a new Game Object (if one is created).
+     * @param {boolean} [visible=true] - The {@link Phaser.GameObjects.Components.Visible#visible} state of a new Game Object (if one is created).
+     *
+     * @return {any} The first active group member, or a newly created member, or null.
+     */
+    getFirstAlive: function (createIfNull, x, y, key, frame, visible)
+    {
+        return this.getFirst(true, createIfNull, x, y, key, frame, visible);
+    },
+
+    /**
+     * Scans the group for the first member that has an {@link Phaser.GameObjects.GameObject#active} state set to `false`,
+     * assigns `x` and `y`, and returns the member.
+     *
+     * If no inactive member is found and `createIfNull` is `true` and the group isn't full then it will create a new one using `x`, `y`, `key`, `frame`, and `visible`.
+     * The new Game Object will have an active state set to `true`.
+     * Unless a new member is created, `key`, `frame`, and `visible` are ignored.
+     *
+     * @method Phaser.GameObjects.Group#getFirstDead
+     * @since 3.0.0
+     *
+     * @param {boolean} [createIfNull=false] - Create a new Game Object if no matching members are found, using the following arguments.
+     * @param {number} [x] - The horizontal position of the Game Object in the world.
+     * @param {number} [y] - The vertical position of the Game Object in the world.
+     * @param {string} [key=defaultKey] - The texture key assigned to a new Game Object (if one is created).
+     * @param {(string|integer)} [frame=defaultFrame] - A texture frame assigned to a new Game Object (if one is created).
+     * @param {boolean} [visible=true] - The {@link Phaser.GameObjects.Components.Visible#visible} state of a new Game Object (if one is created).
+     *
+     * @return {any} The first inactive group member, or a newly created member, or null.
+     */
+    getFirstDead: function (createIfNull, x, y, key, frame, visible)
+    {
+        return this.getFirst(false, createIfNull, x, y, key, frame, visible);
+    },
+
+    /**
+     * {@link Phaser.GameObjects.Components.Animation#play Plays} an animation for all members of this group.
+     *
+     * @method Phaser.GameObjects.Group#playAnimation
+     * @since 3.0.0
+     *
+     * @param {string} key - The string-based key of the animation to play.
+     * @param {string} [startFrame=0] - Optionally start the animation playing from this frame index.
+     *
+     * @return {Phaser.GameObjects.Group} This Group object.
+     */
+    playAnimation: function (key, startFrame)
+    {
+        Actions.PlayAnimation(this.children.entries, key, startFrame);
+
+        return this;
+    },
+
+    /**
