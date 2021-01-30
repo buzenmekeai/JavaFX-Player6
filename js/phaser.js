@@ -17704,3 +17704,217 @@ module.exports = Group;
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Check to see if the Ellipse contains the given x / y coordinates.
+ *
+ * @function Phaser.Geom.Ellipse.Contains
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Ellipse} ellipse - The Ellipse to check.
+ * @param {number} x - The x coordinate to check within the ellipse.
+ * @param {number} y - The y coordinate to check within the ellipse.
+ *
+ * @return {boolean} True if the coordinates are within the ellipse, otherwise false.
+ */
+var Contains = function (ellipse, x, y)
+{
+    if (ellipse.width <= 0 || ellipse.height <= 0)
+    {
+        return false;
+    }
+
+    //  Normalize the coords to an ellipse with center 0,0 and a radius of 0.5
+    var normx = ((x - ellipse.x) / ellipse.width);
+    var normy = ((y - ellipse.y) / ellipse.height);
+
+    normx *= normx;
+    normy *= normy;
+
+    return (normx + normy < 0.25);
+};
+
+module.exports = Contains;
+
+
+/***/ }),
+/* 90 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Contains = __webpack_require__(89);
+var GetPoint = __webpack_require__(308);
+var GetPoints = __webpack_require__(307);
+var Random = __webpack_require__(185);
+
+/**
+ * @classdesc
+ * An Ellipse object.
+ *
+ * This is a geometry object, containing numerical values and related methods to inspect and modify them.
+ * It is not a Game Object, in that you cannot add it to the display list, and it has no texture.
+ * To render an Ellipse you should look at the capabilities of the Graphics class.
+ *
+ * @class Ellipse
+ * @memberof Phaser.Geom
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {number} [x=0] - The x position of the center of the ellipse.
+ * @param {number} [y=0] - The y position of the center of the ellipse.
+ * @param {number} [width=0] - The width of the ellipse.
+ * @param {number} [height=0] - The height of the ellipse.
+ */
+var Ellipse = new Class({
+
+    initialize:
+
+    function Ellipse (x, y, width, height)
+    {
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = 0; }
+        if (width === undefined) { width = 0; }
+        if (height === undefined) { height = 0; }
+
+        /**
+         * The x position of the center of the ellipse.
+         *
+         * @name Phaser.Geom.Ellipse#x
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.x = x;
+
+        /**
+         * The y position of the center of the ellipse.
+         *
+         * @name Phaser.Geom.Ellipse#y
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.y = y;
+
+        /**
+         * The width of the ellipse.
+         *
+         * @name Phaser.Geom.Ellipse#width
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.width = width;
+
+        /**
+         * The height of the ellipse.
+         *
+         * @name Phaser.Geom.Ellipse#height
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.height = height;
+    },
+
+    /**
+     * Check to see if the Ellipse contains the given x / y coordinates.
+     *
+     * @method Phaser.Geom.Ellipse#contains
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate to check within the ellipse.
+     * @param {number} y - The y coordinate to check within the ellipse.
+     *
+     * @return {boolean} True if the coordinates are within the ellipse, otherwise false.
+     */
+    contains: function (x, y)
+    {
+        return Contains(this, x, y);
+    },
+
+    /**
+     * Returns a Point object containing the coordinates of a point on the circumference of the Ellipse
+     * based on the given angle normalized to the range 0 to 1. I.e. a value of 0.5 will give the point
+     * at 180 degrees around the circle.
+     *
+     * @method Phaser.Geom.Ellipse#getPoint
+     * @since 3.0.0
+     *
+     * @generic {Phaser.Geom.Point} O - [out,$return]
+     *
+     * @param {number} position - A value between 0 and 1, where 0 equals 0 degrees, 0.5 equals 180 degrees and 1 equals 360 around the ellipse.
+     * @param {(Phaser.Geom.Point|object)} [out] - An object to store the return values in. If not given a Point object will be created.
+     *
+     * @return {(Phaser.Geom.Point|object)} A Point, or point-like object, containing the coordinates of the point around the ellipse.
+     */
+    getPoint: function (position, point)
+    {
+        return GetPoint(this, position, point);
+    },
+
+    /**
+     * Returns an array of Point objects containing the coordinates of the points around the circumference of the Ellipse,
+     * based on the given quantity or stepRate values.
+     *
+     * @method Phaser.Geom.Ellipse#getPoints
+     * @since 3.0.0
+     *
+     * @param {integer} quantity - The amount of points to return. If a falsey value the quantity will be derived from the `stepRate` instead.
+     * @param {number} [stepRate] - Sets the quantity by getting the circumference of the ellipse and dividing it by the stepRate.
+     * @param {array} [output] - An array to insert the points in to. If not provided a new array will be created.
+     *
+     * @return {Phaser.Geom.Point[]} An array of Point objects pertaining to the points around the circumference of the ellipse.
+     */
+    getPoints: function (quantity, stepRate, output)
+    {
+        return GetPoints(this, quantity, stepRate, output);
+    },
+
+    /**
+     * Returns a uniformly distributed random point from anywhere within the given Ellipse.
+     *
+     * @method Phaser.Geom.Ellipse#getRandomPoint
+     * @since 3.0.0
+     *
+     * @generic {Phaser.Geom.Point} O - [point,$return]
+     *
+     * @param {(Phaser.Geom.Point|object)} [point] - A Point or point-like object to set the random `x` and `y` values in.
+     *
+     * @return {(Phaser.Geom.Point|object)} A Point object with the random values set in the `x` and `y` properties.
+     */
+    getRandomPoint: function (point)
+    {
+        return Random(this, point);
+    },
+
+    /**
+     * Sets the x, y, width and height of this ellipse.
+     *
+     * @method Phaser.Geom.Ellipse#setTo
+     * @since 3.0.0
+     *
+     * @param {number} x - The x position of the center of the ellipse.
+     * @param {number} y - The y position of the center of the ellipse.
+     * @param {number} width - The width of the ellipse.
+     * @param {number} height - The height of the ellipse.
+     *
+     * @return {Phaser.Geom.Ellipse} This Ellipse object.
+     */
+    setTo: function (x, y, width, height)
+    {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+
+        return this;
+    },
