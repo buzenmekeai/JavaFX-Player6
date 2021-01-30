@@ -17508,3 +17508,199 @@ var Group = new Class({
     },
 
     /**
+     * Whether this group's size at its {@link Phaser.GameObjects.Group#maxSize maximum}.
+     *
+     * @method Phaser.GameObjects.Group#isFull
+     * @since 3.0.0
+     *
+     * @return {boolean} True if the number of members equals {@link Phaser.GameObjects.Group#maxSize}.
+     */
+    isFull: function ()
+    {
+        if (this.maxSize === -1)
+        {
+            return false;
+        }
+        else
+        {
+            return (this.children.size >= this.maxSize);
+        }
+    },
+
+    /**
+     * Counts the number of active (or inactive) group members.
+     *
+     * @method Phaser.GameObjects.Group#countActive
+     * @since 3.0.0
+     *
+     * @param {boolean} [value=true] - Count active (true) or inactive (false) group members.
+     *
+     * @return {integer} The number of group members with an active state matching the `active` argument.
+     */
+    countActive: function (value)
+    {
+        if (value === undefined) { value = true; }
+
+        var total = 0;
+
+        for (var i = 0; i < this.children.size; i++)
+        {
+            if (this.children.entries[i].active === value)
+            {
+                total++;
+            }
+        }
+
+        return total;
+    },
+
+    /**
+     * Counts the number of in-use (active) group members.
+     *
+     * @method Phaser.GameObjects.Group#getTotalUsed
+     * @since 3.0.0
+     *
+     * @return {integer} The number of group members with an active state of true.
+     */
+    getTotalUsed: function ()
+    {
+        return this.countActive();
+    },
+
+    /**
+     * The difference of {@link Phaser.GameObjects.Group#maxSize} and the number of active group members.
+     *
+     * This represents the number of group members that could be created or reactivated before reaching the size limit.
+     *
+     * @method Phaser.GameObjects.Group#getTotalFree
+     * @since 3.0.0
+     *
+     * @return {integer} maxSize minus the number of active group numbers; or a large number (if maxSize is -1).
+     */
+    getTotalFree: function ()
+    {
+        var used = this.getTotalUsed();
+        var capacity = (this.maxSize === -1) ? 999999999999 : this.maxSize;
+
+        return (capacity - used);
+    },
+
+    /**
+     * Sets the depth of each group member.
+     *
+     * @method Phaser.GameObjects.Group#setDepth
+     * @since 3.0.0
+     *
+     * @param {number} value - The amount to set the property to.
+     * @param {number} step - This is added to the `value` amount, multiplied by the iteration counter.
+     *
+     * @return {Phaser.GameObjects.Group} This Group object.
+     */
+    setDepth: function (value, step)
+    {
+        Actions.SetDepth(this.children.entries, value, step);
+
+        return this;
+    },
+
+    /**
+     * Deactivates a member of this group.
+     *
+     * @method Phaser.GameObjects.Group#kill
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} gameObject - A member of this group.
+     */
+    kill: function (gameObject)
+    {
+        if (this.children.contains(gameObject))
+        {
+            gameObject.setActive(false);
+        }
+    },
+
+    /**
+     * Deactivates and hides a member of this group.
+     *
+     * @method Phaser.GameObjects.Group#killAndHide
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} gameObject - A member of this group.
+     */
+    killAndHide: function (gameObject)
+    {
+        if (this.children.contains(gameObject))
+        {
+            gameObject.setActive(false);
+            gameObject.setVisible(false);
+        }
+    },
+
+    /**
+     * Toggles (flips) the visible state of each member of this group.
+     *
+     * @method Phaser.GameObjects.Group#toggleVisible
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Group} This Group object.
+     */
+    toggleVisible: function ()
+    {
+        Actions.ToggleVisible(this.children.entries);
+
+        return this;
+    },
+
+    /**
+     * Empties this group and removes it from the Scene.
+     *
+     * Does not call {@link Phaser.GameObjects.Group#removeCallback}.
+     *
+     * @method Phaser.GameObjects.Group#destroy
+     * @since 3.0.0
+     *
+     * @param {boolean} [destroyChildren=false] - Also {@link Phaser.GameObjects.GameObject#destroy} each group member.
+     */
+    destroy: function (destroyChildren)
+    {
+        if (destroyChildren === undefined) { destroyChildren = false; }
+
+        //  This Game Object had already been destroyed
+        if (!this.scene || this.ignoreDestroy)
+        {
+            return;
+        }
+
+        if (destroyChildren)
+        {
+            var children = this.children;
+
+            for (var i = 0; i < children.size; i++)
+            {
+                var gameObject = children.entries[i];
+
+                //  Remove the event hook first or it'll go all recursive hell on us
+                gameObject.off('destroy', this.remove, this);
+
+                gameObject.destroy();
+            }
+        }
+
+        this.children.clear();
+
+        this.scene = undefined;
+        this.children = undefined;
+    }
+
+});
+
+module.exports = Group;
+
+
+/***/ }),
+/* 89 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
