@@ -18366,3 +18366,223 @@ var Clamp = __webpack_require__(23);
  * @param {number} [max] - The maximum value.
  *
  * @return {number} The value that is `percent` percent between `min` and `max`.
+ */
+var FromPercent = function (percent, min, max)
+{
+    percent = Clamp(percent, 0, 1);
+
+    return (max - min) * percent;
+};
+
+module.exports = FromPercent;
+
+
+/***/ }),
+/* 94 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Phaser Scale Modes.
+ * 
+ * @name Phaser.ScaleModes
+ * @enum {integer}
+ * @memberof Phaser
+ * @readonly
+ * @since 3.0.0
+ */
+
+module.exports = {
+
+    /**
+     * Default Scale Mode (Linear).
+     * 
+     * @name Phaser.ScaleModes.DEFAULT
+     */
+    DEFAULT: 0,
+
+    /**
+     * Linear Scale Mode.
+     * 
+     * @name Phaser.ScaleModes.LINEAR
+     */
+    LINEAR: 0,
+
+    /**
+     * Nearest Scale Mode.
+     * 
+     * @name Phaser.ScaleModes.NEAREST
+     */
+    NEAREST: 1
+
+};
+
+
+/***/ }),
+/* 95 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+
+/**
+ * @callback EachSetCallback
+ * @generic E - [entry]
+ *
+ * @param {*} entry - [description]
+ * @param {number} index - [description]
+ *
+ * @return {?boolean} [description]
+ */
+
+/**
+ * @classdesc
+ * A Set is a collection of unique elements.
+ *
+ * @class Set
+ * @memberof Phaser.Structs
+ * @constructor
+ * @since 3.0.0
+ *
+ * @generic T
+ * @genericUse {T[]} - [elements]
+ *
+ * @param {Array.<*>} [elements] - An optional array of elements to insert into this Set.
+ */
+var Set = new Class({
+
+    initialize:
+
+    function Set (elements)
+    {
+        /**
+         * The entries of this Set. Stored internally as an array.
+         *
+         * @genericUse {T[]} - [$type]
+         *
+         * @name Phaser.Structs.Set#entries
+         * @type {Array.<*>}
+         * @default []
+         * @since 3.0.0
+         */
+        this.entries = [];
+
+        if (Array.isArray(elements))
+        {
+            for (var i = 0; i < elements.length; i++)
+            {
+                this.set(elements[i]);
+            }
+        }
+    },
+
+    /**
+     * Inserts the provided value into this Set. If the value is already contained in this Set this method will have no effect.
+     *
+     * @method Phaser.Structs.Set#set
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [value]
+     * @genericUse {Phaser.Structs.Set.<T>} - [$return]
+     *
+     * @param {*} value - The value to insert into this Set.
+     *
+     * @return {Phaser.Structs.Set} This Set object.
+     */
+    set: function (value)
+    {
+        if (this.entries.indexOf(value) === -1)
+        {
+            this.entries.push(value);
+        }
+
+        return this;
+    },
+
+    /**
+     * Get an element of this Set which has a property of the specified name, if that property is equal to the specified value.
+     * If no elements of this Set satisfy the condition then this method will return `null`.
+     *
+     * @method Phaser.Structs.Set#get
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [value,$return]
+     *
+     * @param {string} property - The property name to check on the elements of this Set.
+     * @param {*} value - The value to check for.
+     *
+     * @return {*} The first element of this Set that meets the required condition, or `null` if this Set contains no elements that meet the condition.
+     */
+    get: function (property, value)
+    {
+        for (var i = 0; i < this.entries.length; i++)
+        {
+            var entry = this.entries[i];
+
+            if (entry[property] === value)
+            {
+                return entry;
+            }
+        }
+    },
+
+    /**
+     * Returns an array containing all the values in this Set.
+     *
+     * @method Phaser.Structs.Set#getArray
+     * @since 3.0.0
+     *
+     * @genericUse {T[]} - [$return]
+     *
+     * @return {Array.<*>} An array containing all the values in this Set.
+     */
+    getArray: function ()
+    {
+        return this.entries.slice(0);
+    },
+
+    /**
+     * Removes the given value from this Set if this Set contains that value.
+     *
+     * @method Phaser.Structs.Set#delete
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [value]
+     * @genericUse {Phaser.Structs.Set.<T>} - [$return]
+     *
+     * @param {*} value - The value to remove from the Set.
+     *
+     * @return {Phaser.Structs.Set} This Set object.
+     */
+    delete: function (value)
+    {
+        var index = this.entries.indexOf(value);
+
+        if (index > -1)
+        {
+            this.entries.splice(index, 1);
+        }
+
+        return this;
+    },
+
+    /**
+     * Dumps the contents of this Set to the console via `console.group`.
+     *
+     * @method Phaser.Structs.Set#dump
+     * @since 3.0.0
+     */
+    dump: function ()
+    {
+        // eslint-disable-next-line no-console
+        console.group('Set');
