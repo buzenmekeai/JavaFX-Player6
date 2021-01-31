@@ -18806,3 +18806,235 @@ var Set = new Class({
             {
                 newSet.set(value);
             }
+        });
+
+        return newSet;
+    },
+
+    /**
+     * Returns a new Set containing all the values in this Set which are *not* also in the given Set.
+     *
+     * @method Phaser.Structs.Set#difference
+     * @since 3.0.0
+     *
+     * @genericUse {Phaser.Structs.Set.<T>} - [set,$return]
+     *
+     * @param {Phaser.Structs.Set} set - The Set to perform the difference with.
+     *
+     * @return {Phaser.Structs.Set} A new Set containing all the values in this Set that are not also in the Set provided as an argument to this method.
+     */
+    difference: function (set)
+    {
+        var newSet = new Set();
+
+        this.entries.forEach(function (value)
+        {
+            if (!set.contains(value))
+            {
+                newSet.set(value);
+            }
+        });
+
+        return newSet;
+    },
+
+    /**
+     * The size of this Set. This is the number of entries within it.
+     * Changing the size will truncate the Set if the given value is smaller than the current size.
+     * Increasing the size larger than the current size has no effect.
+     *
+     * @name Phaser.Structs.Set#size
+     * @type {integer}
+     * @since 3.0.0
+     */
+    size: {
+
+        get: function ()
+        {
+            return this.entries.length;
+        },
+
+        set: function (value)
+        {
+            if (value < this.entries.length)
+            {
+                return this.entries.length = value;
+            }
+            else
+            {
+                return this.entries.length;
+            }
+        }
+
+    }
+
+});
+
+module.exports = Set;
+
+
+/***/ }),
+/* 96 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Clone = __webpack_require__(63);
+
+/**
+ * Creates a new Object using all values from obj1 and obj2.
+ * If a value exists in both obj1 and obj2, the value in obj1 is used.
+ *
+ * @function Phaser.Utils.Objects.Merge
+ * @since 3.0.0
+ *
+ * @param {object} obj1 - [description]
+ * @param {object} obj2 - [description]
+ *
+ * @return {object} [description]
+ */
+var Merge = function (obj1, obj2)
+{
+    var clone = Clone(obj1);
+
+    for (var key in obj2)
+    {
+        if (!clone.hasOwnProperty(key))
+        {
+            clone[key] = obj2[key];
+        }
+    }
+
+    return clone;
+};
+
+module.exports = Merge;
+
+
+/***/ }),
+/* 97 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Defaults = __webpack_require__(129);
+var GetAdvancedValue = __webpack_require__(12);
+var GetBoolean = __webpack_require__(84);
+var GetEaseFunction = __webpack_require__(86);
+var GetNewValue = __webpack_require__(98);
+var GetProps = __webpack_require__(205);
+var GetTargets = __webpack_require__(131);
+var GetValue = __webpack_require__(4);
+var GetValueOp = __webpack_require__(130);
+var Tween = __webpack_require__(128);
+var TweenData = __webpack_require__(127);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Tweens.Builders.TweenBuilder
+ * @since 3.0.0
+ *
+ * @param {(Phaser.Tweens.TweenManager|Phaser.Tweens.Timeline)} parent - [description]
+ * @param {object} config - [description]
+ * @param {Phaser.Tweens.TweenConfigDefaults} defaults - [description]
+ *
+ * @return {Phaser.Tweens.Tween} [description]
+ */
+var TweenBuilder = function (parent, config, defaults)
+{
+    if (defaults === undefined)
+    {
+        defaults = Defaults;
+    }
+
+    //  Create arrays of the Targets and the Properties
+    var targets = (defaults.targets) ? defaults.targets : GetTargets(config);
+
+    // var props = (defaults.props) ? defaults.props : GetProps(config);
+    var props = GetProps(config);
+
+    //  Default Tween values
+    var delay = GetNewValue(config, 'delay', defaults.delay);
+    var duration = GetNewValue(config, 'duration', defaults.duration);
+    var easeParams = GetValue(config, 'easeParams', defaults.easeParams);
+    var ease = GetEaseFunction(GetValue(config, 'ease', defaults.ease), easeParams);
+    var hold = GetNewValue(config, 'hold', defaults.hold);
+    var repeat = GetNewValue(config, 'repeat', defaults.repeat);
+    var repeatDelay = GetNewValue(config, 'repeatDelay', defaults.repeatDelay);
+    var yoyo = GetBoolean(config, 'yoyo', defaults.yoyo);
+    var flipX = GetBoolean(config, 'flipX', defaults.flipX);
+    var flipY = GetBoolean(config, 'flipY', defaults.flipY);
+
+    var data = [];
+
+    //  Loop through every property defined in the Tween, i.e.: props { x, y, alpha }
+    for (var p = 0; p < props.length; p++)
+    {
+        var key = props[p].key;
+        var value = props[p].value;
+
+        //  Create 1 TweenData per target, per property
+        for (var t = 0; t < targets.length; t++)
+        {
+            var ops = GetValueOp(key, value);
+
+            var tweenData = TweenData(
+                targets[t],
+                key,
+                ops.getEnd,
+                ops.getStart,
+                GetEaseFunction(GetValue(value, 'ease', ease), easeParams),
+                GetNewValue(value, 'delay', delay),
+                GetNewValue(value, 'duration', duration),
+                GetBoolean(value, 'yoyo', yoyo),
+                GetNewValue(value, 'hold', hold),
+                GetNewValue(value, 'repeat', repeat),
+                GetNewValue(value, 'repeatDelay', repeatDelay),
+                GetBoolean(value, 'flipX', flipX),
+                GetBoolean(value, 'flipY', flipY)
+            );
+
+            data.push(tweenData);
+        }
+    }
+
+    var tween = new Tween(parent, data, targets);
+
+    tween.offset = GetAdvancedValue(config, 'offset', null);
+    tween.completeDelay = GetAdvancedValue(config, 'completeDelay', 0);
+    tween.loop = Math.round(GetAdvancedValue(config, 'loop', 0));
+    tween.loopDelay = Math.round(GetAdvancedValue(config, 'loopDelay', 0));
+    tween.paused = GetBoolean(config, 'paused', false);
+    tween.useFrames = GetBoolean(config, 'useFrames', false);
+
+    //  Set the Callbacks
+    var scope = GetValue(config, 'callbackScope', tween);
+
+    //  Callback parameters: 0 = a reference to the Tween itself, 1 = the target/s of the Tween, ... your own params
+    var tweenArray = [ tween, null ];
+
+    var callbacks = Tween.TYPES;
+
+    for (var i = 0; i < callbacks.length; i++)
+    {
+        var type = callbacks[i];
+
+        var callback = GetValue(config, type, false);
+
+        if (callback)
+        {
+            var callbackScope = GetValue(config, type + 'Scope', scope);
+            var callbackParams = GetValue(config, type + 'Params', []);
+
+            //  The null is reset to be the Tween target
+            tween.setCallback(type, callback, tweenArray.concat(callbackParams), callbackScope);
+        }
