@@ -19479,3 +19479,218 @@ var Tileset = new Class({
 
         // In Tiled a tileset image that is not an even multiple of the tile dimensions is truncated
         // - hence the floor when calculating the rows/columns.
+        rowCount = Math.floor(rowCount);
+        colCount = Math.floor(colCount);
+
+        this.rows = rowCount;
+        this.columns = colCount;
+
+        // In Tiled, "empty" spaces in a tileset count as tiles and hence count towards the gid
+        this.total = rowCount * colCount;
+
+        this.texCoordinates.length = 0;
+
+        var tx = this.tileMargin;
+        var ty = this.tileMargin;
+
+        for (var y = 0; y < this.rows; y++)
+        {
+            for (var x = 0; x < this.columns; x++)
+            {
+                this.texCoordinates.push({ x: tx, y: ty });
+                tx += this.tileWidth + this.tileSpacing;
+            }
+
+            tx = this.tileMargin;
+            ty += this.tileHeight + this.tileSpacing;
+        }
+
+        return this;
+    }
+
+});
+
+module.exports = Tileset;
+
+
+/***/ }),
+/* 100 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Converts from tile Y coordinates (tile units) to world Y coordinates (pixels), factoring in the
+ * layer's position, scale and scroll.
+ *
+ * @function Phaser.Tilemaps.Components.TileToWorldY
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} tileY - The x coordinate, in tiles, not pixels.
+ * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ * 
+ * @return {number}
+ */
+var TileToWorldY = function (tileY, camera, layer)
+{
+    var tileHeight = layer.baseTileHeight;
+    var tilemapLayer = layer.tilemapLayer;
+    var layerWorldY = 0;
+
+    if (tilemapLayer)
+    {
+        if (camera === undefined) { camera = tilemapLayer.scene.cameras.main; }
+
+        layerWorldY = (tilemapLayer.y + camera.scrollY * (1 - tilemapLayer.scrollFactorY));
+
+        tileHeight *= tilemapLayer.scaleY;
+    }
+
+    return layerWorldY + tileY * tileHeight;
+};
+
+module.exports = TileToWorldY;
+
+
+/***/ }),
+/* 101 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Converts from tile X coordinates (tile units) to world X coordinates (pixels), factoring in the
+ * layer's position, scale and scroll.
+ *
+ * @function Phaser.Tilemaps.Components.TileToWorldX
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} tileX - The x coordinate, in tiles, not pixels.
+ * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ * 
+ * @return {number}
+ */
+var TileToWorldX = function (tileX, camera, layer)
+{
+    var tileWidth = layer.baseTileWidth;
+    var tilemapLayer = layer.tilemapLayer;
+    var layerWorldX = 0;
+
+    if (tilemapLayer)
+    {
+        if (camera === undefined) { camera = tilemapLayer.scene.cameras.main; }
+
+        layerWorldX = tilemapLayer.x + camera.scrollX * (1 - tilemapLayer.scrollFactorX);
+
+        tileWidth *= tilemapLayer.scaleX;
+    }
+
+    return layerWorldX + tileX * tileWidth;
+};
+
+module.exports = TileToWorldX;
+
+
+/***/ }),
+/* 102 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var IsInLayerBounds = __webpack_require__(79);
+
+/**
+ * Gets a tile at the given tile coordinates from the given layer.
+ *
+ * @function Phaser.Tilemaps.Components.GetTileAt
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} tileX - X position to get the tile from (given in tile units, not pixels).
+ * @param {integer} tileY - Y position to get the tile from (given in tile units, not pixels).
+ * @param {boolean} [nonNull=false] - If true getTile won't return null for empty tiles, but a Tile object with an index of -1.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ * 
+ * @return {Phaser.Tilemaps.Tile} The tile at the given coordinates or null if no tile was found or the coordinates
+ * were invalid.
+ */
+var GetTileAt = function (tileX, tileY, nonNull, layer)
+{
+    if (nonNull === undefined) { nonNull = false; }
+
+    if (IsInLayerBounds(tileX, tileY, layer))
+    {
+        var tile = layer.data[tileY][tileX];
+        if (tile === null)
+        {
+            return null;
+        }
+        else if (tile.index === -1)
+        {
+            return nonNull ? tile : null;
+        }
+        else
+        {
+            return tile;
+        }
+    }
+    else
+    {
+        return null;
+    }
+};
+
+module.exports = GetTileAt;
+
+
+/***/ }),
+/* 103 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Tilemaps.Components
+ */
+
+module.exports = {
+
+    CalculateFacesAt: __webpack_require__(136),
+    CalculateFacesWithin: __webpack_require__(34),
+    Copy: __webpack_require__(489),
+    CreateFromTiles: __webpack_require__(488),
+    CullTiles: __webpack_require__(487),
+    Fill: __webpack_require__(486),
+    FilterTiles: __webpack_require__(485),
+    FindByIndex: __webpack_require__(484),
+    FindTile: __webpack_require__(483),
+    ForEachTile: __webpack_require__(482),
+    GetTileAt: __webpack_require__(102),
+    GetTileAtWorldXY: __webpack_require__(481),
+    GetTilesWithin: __webpack_require__(17),
+    GetTilesWithinShape: __webpack_require__(480),
+    GetTilesWithinWorldXY: __webpack_require__(479),
+    HasTileAt: __webpack_require__(219),
+    HasTileAtWorldXY: __webpack_require__(478),
+    IsInLayerBounds: __webpack_require__(79),
+    PutTileAt: __webpack_require__(135),
