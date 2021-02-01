@@ -19038,3 +19038,231 @@ var TweenBuilder = function (parent, config, defaults)
             //  The null is reset to be the Tween target
             tween.setCallback(type, callback, tweenArray.concat(callbackParams), callbackScope);
         }
+    }
+
+    return tween;
+};
+
+module.exports = TweenBuilder;
+
+
+/***/ }),
+/* 98 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Tweens.Builders.GetNewValue
+ * @since 3.0.0
+ *
+ * @param {object} source - [description]
+ * @param {string} key - [description]
+ * @param {*} defaultValue - [description]
+ *
+ * @return {function} [description]
+ */
+var GetNewValue = function (source, key, defaultValue)
+{
+    var valueCallback;
+
+    if (source.hasOwnProperty(key))
+    {
+        var t = typeof(source[key]);
+
+        if (t === 'function')
+        {
+            valueCallback = function (index, totalTargets, target)
+            {
+                return source[key](index, totalTargets, target);
+            };
+        }
+        else
+        {
+            valueCallback = function ()
+            {
+                return source[key];
+            };
+        }
+    }
+    else if (typeof defaultValue === 'function')
+    {
+        valueCallback = defaultValue;
+    }
+    else
+    {
+        valueCallback = function ()
+        {
+            return defaultValue;
+        };
+    }
+
+    return valueCallback;
+};
+
+module.exports = GetNewValue;
+
+
+/***/ }),
+/* 99 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+
+/**
+ * @classdesc
+ * A Tileset is a combination of an image containing the tiles and a container for data about
+ * each tile.
+ *
+ * @class Tileset
+ * @memberof Phaser.Tilemaps
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {string} name - The name of the tileset in the map data.
+ * @param {integer} firstgid - The first tile index this tileset contains.
+ * @param {integer} [tileWidth=32] - Width of each tile (in pixels).
+ * @param {integer} [tileHeight=32] - Height of each tile (in pixels).
+ * @param {integer} [tileMargin=0] - The margin around all tiles in the sheet (in pixels).
+ * @param {integer} [tileSpacing=0] - The spacing between each tile in the sheet (in pixels).
+ * @param {object} [tileProperties={}] - Custom properties defined per tile in the Tileset.
+ * These typically are custom properties created in Tiled when editing a tileset.
+ * @param {object} [tileData={}] - Data stored per tile. These typically are created in Tiled
+ * when editing a tileset, e.g. from Tiled's tile collision editor or terrain editor.
+ */
+var Tileset = new Class({
+
+    initialize:
+
+    function Tileset (name, firstgid, tileWidth, tileHeight, tileMargin, tileSpacing, tileProperties, tileData)
+    {
+        if (tileWidth === undefined || tileWidth <= 0) { tileWidth = 32; }
+        if (tileHeight === undefined || tileHeight <= 0) { tileHeight = 32; }
+        if (tileMargin === undefined) { tileMargin = 0; }
+        if (tileSpacing === undefined) { tileSpacing = 0; }
+        if (tileProperties === undefined) { tileProperties = {}; }
+        if (tileData === undefined) { tileData = {}; }
+
+        /**
+         * The name of the Tileset.
+         *
+         * @name Phaser.Tilemaps.Tileset#name
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.name = name;
+
+        /**
+         * The starting index of the first tile index this Tileset contains.
+         *
+         * @name Phaser.Tilemaps.Tileset#firstgid
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.firstgid = firstgid;
+
+        /**
+         * The width of each tile (in pixels). Use setTileSize to change.
+         *
+         * @name Phaser.Tilemaps.Tileset#tileWidth
+         * @type {integer}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.tileWidth = tileWidth;
+
+        /**
+         * The height of each tile (in pixels). Use setTileSize to change.
+         *
+         * @name Phaser.Tilemaps.Tileset#tileHeight
+         * @type {integer}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.tileHeight = tileHeight;
+
+        /**
+         * The margin around the tiles in the sheet (in pixels). Use `setSpacing` to change.
+         *
+         * @name Phaser.Tilemaps.Tileset#tileMargin
+         * @type {integer}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.tileMargin = tileMargin;
+
+        /**
+         * The spacing between each the tile in the sheet (in pixels). Use `setSpacing` to change.
+         *
+         * @name Phaser.Tilemaps.Tileset#tileSpacing
+         * @type {integer}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.tileSpacing = tileSpacing;
+
+        /**
+         * Tileset-specific properties per tile that are typically defined in the Tiled editor in the
+         * Tileset editor.
+         *
+         * @name Phaser.Tilemaps.Tileset#tileProperties
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.tileProperties = tileProperties;
+
+        /**
+         * Tileset-specific data per tile that are typically defined in the Tiled editor, e.g. within
+         * the Tileset collision editor. This is where collision objects and terrain are stored.
+         *
+         * @name Phaser.Tilemaps.Tileset#tileData
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.tileData = tileData;
+
+        /**
+         * The cached image that contains the individual tiles. Use setImage to set.
+         *
+         * @name Phaser.Tilemaps.Tileset#image
+         * @type {?Phaser.Textures.Texture}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.image = null;
+
+        /**
+         * The gl texture used by the WebGL renderer.
+         *
+         * @name Phaser.Tilemaps.Tileset#glTexture
+         * @type {?WebGLTexture}
+         * @readonly
+         * @since 3.11.0
+         */
+        this.glTexture = null;
+
+        /**
+         * The number of tile rows in the the tileset.
+         *
+         * @name Phaser.Tilemaps.Tileset#rows
+         * @type {integer}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.rows = 0;
+
+        /**
+         * The number of tile columns in the tileset.
+         *
