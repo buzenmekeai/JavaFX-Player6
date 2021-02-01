@@ -19694,3 +19694,234 @@ module.exports = {
     HasTileAtWorldXY: __webpack_require__(478),
     IsInLayerBounds: __webpack_require__(79),
     PutTileAt: __webpack_require__(135),
+    PutTileAtWorldXY: __webpack_require__(477),
+    PutTilesAt: __webpack_require__(476),
+    Randomize: __webpack_require__(475),
+    RemoveTileAt: __webpack_require__(218),
+    RemoveTileAtWorldXY: __webpack_require__(474),
+    RenderDebug: __webpack_require__(473),
+    ReplaceByIndex: __webpack_require__(220),
+    SetCollision: __webpack_require__(472),
+    SetCollisionBetween: __webpack_require__(471),
+    SetCollisionByExclusion: __webpack_require__(470),
+    SetCollisionByProperty: __webpack_require__(469),
+    SetCollisionFromCollisionGroup: __webpack_require__(468),
+    SetTileIndexCallback: __webpack_require__(467),
+    SetTileLocationCallback: __webpack_require__(466),
+    Shuffle: __webpack_require__(465),
+    SwapByIndex: __webpack_require__(464),
+    TileToWorldX: __webpack_require__(101),
+    TileToWorldXY: __webpack_require__(463),
+    TileToWorldY: __webpack_require__(100),
+    WeightedRandomize: __webpack_require__(462),
+    WorldToTileX: __webpack_require__(50),
+    WorldToTileXY: __webpack_require__(461),
+    WorldToTileY: __webpack_require__(49)
+
+};
+
+
+/***/ }),
+/* 104 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(236);
+var Sprite = __webpack_require__(61);
+
+/**
+ * @classdesc
+ * An Arcade Physics Sprite Game Object.
+ *
+ * A Sprite Game Object is used for the display of both static and animated images in your game.
+ * Sprites can have input events and physics bodies. They can also be tweened, tinted, scrolled
+ * and animated.
+ *
+ * The main difference between a Sprite and an Image Game Object is that you cannot animate Images.
+ * As such, Sprites take a fraction longer to process and have a larger API footprint due to the Animation
+ * Component. If you do not require animation then you can safely use Images to replace Sprites in all cases.
+ *
+ * @class Sprite
+ * @extends Phaser.GameObjects.Sprite
+ * @memberof Phaser.Physics.Arcade
+ * @constructor
+ * @since 3.0.0
+ *
+ * @extends Phaser.Physics.Arcade.Components.Acceleration
+ * @extends Phaser.Physics.Arcade.Components.Angular
+ * @extends Phaser.Physics.Arcade.Components.Bounce
+ * @extends Phaser.Physics.Arcade.Components.Debug
+ * @extends Phaser.Physics.Arcade.Components.Drag
+ * @extends Phaser.Physics.Arcade.Components.Enable
+ * @extends Phaser.Physics.Arcade.Components.Friction
+ * @extends Phaser.Physics.Arcade.Components.Gravity
+ * @extends Phaser.Physics.Arcade.Components.Immovable
+ * @extends Phaser.Physics.Arcade.Components.Mass
+ * @extends Phaser.Physics.Arcade.Components.Size
+ * @extends Phaser.Physics.Arcade.Components.Velocity
+ * @extends Phaser.GameObjects.Components.Alpha
+ * @extends Phaser.GameObjects.Components.BlendMode
+ * @extends Phaser.GameObjects.Components.Depth
+ * @extends Phaser.GameObjects.Components.Flip
+ * @extends Phaser.GameObjects.Components.GetBounds
+ * @extends Phaser.GameObjects.Components.Origin
+ * @extends Phaser.GameObjects.Components.Pipeline
+ * @extends Phaser.GameObjects.Components.ScaleMode
+ * @extends Phaser.GameObjects.Components.ScrollFactor
+ * @extends Phaser.GameObjects.Components.Size
+ * @extends Phaser.GameObjects.Components.Texture
+ * @extends Phaser.GameObjects.Components.Tint
+ * @extends Phaser.GameObjects.Components.Transform
+ * @extends Phaser.GameObjects.Components.Visible
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Game Object belongs. A Game Object can only belong to one Scene at a time.
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {string} texture - The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
+ * @param {(string|integer)} [frame] - An optional frame from the Texture this Game Object is rendering with.
+ */
+var ArcadeSprite = new Class({
+
+    Extends: Sprite,
+
+    Mixins: [
+        Components.Acceleration,
+        Components.Angular,
+        Components.Bounce,
+        Components.Debug,
+        Components.Drag,
+        Components.Enable,
+        Components.Friction,
+        Components.Gravity,
+        Components.Immovable,
+        Components.Mass,
+        Components.Size,
+        Components.Velocity
+    ],
+
+    initialize:
+
+    function ArcadeSprite (scene, x, y, texture, frame)
+    {
+        Sprite.call(this, scene, x, y, texture, frame);
+
+        /**
+         * This Game Object's Physics Body.
+         *
+         * @name Phaser.Physics.Arcade.Sprite#body
+         * @type {?(Phaser.Physics.Arcade.Body|Phaser.Physics.Arcade.StaticBody)}
+         * @default null
+         * @since 3.0.0
+         */
+        this.body = null;
+    }
+
+});
+
+module.exports = ArcadeSprite;
+
+
+/***/ }),
+/* 105 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @typedef {object} XHRSettingsObject
+ *
+ * @property {XMLHttpRequestResponseType} responseType - The response type of the XHR request, i.e. `blob`, `text`, etc.
+ * @property {boolean} [async=true] - Should the XHR request use async or not?
+ * @property {string} [user=''] - Optional username for the XHR request.
+ * @property {string} [password=''] - Optional password for the XHR request.
+ * @property {integer} [timeout=0] - Optional XHR timeout value.
+ * @property {(string|undefined)} [header] - This value is used to populate the XHR `setRequestHeader` and is undefined by default.
+ * @property {(string|undefined)} [headerValue] - This value is used to populate the XHR `setRequestHeader` and is undefined by default.
+ * @property {(string|undefined)} [requestedWith] - This value is used to populate the XHR `setRequestHeader` and is undefined by default.
+ * @property {(string|undefined)} [overrideMimeType] - Provide a custom mime-type to use instead of the default.
+ */
+
+/**
+ * Creates an XHRSettings Object with default values.
+ *
+ * @function Phaser.Loader.XHRSettings
+ * @since 3.0.0
+ *
+ * @param {XMLHttpRequestResponseType} [responseType=''] - The responseType, such as 'text'.
+ * @param {boolean} [async=true] - Should the XHR request use async or not?
+ * @param {string} [user=''] - Optional username for the XHR request.
+ * @param {string} [password=''] - Optional password for the XHR request.
+ * @param {integer} [timeout=0] - Optional XHR timeout value.
+ *
+ * @return {XHRSettingsObject} The XHRSettings object as used by the Loader.
+ */
+var XHRSettings = function (responseType, async, user, password, timeout)
+{
+    if (responseType === undefined) { responseType = ''; }
+    if (async === undefined) { async = true; }
+    if (user === undefined) { user = ''; }
+    if (password === undefined) { password = ''; }
+    if (timeout === undefined) { timeout = 0; }
+
+    // Before sending a request, set the xhr.responseType to "text",
+    // "arraybuffer", "blob", or "document", depending on your data needs.
+    // Note, setting xhr.responseType = '' (or omitting) will default the response to "text".
+
+    return {
+
+        //  Ignored by the Loader, only used by File.
+        responseType: responseType,
+
+        async: async,
+
+        //  credentials
+        user: user,
+        password: password,
+
+        //  timeout in ms (0 = no timeout)
+        timeout: timeout,
+
+        //  setRequestHeader
+        header: undefined,
+        headerValue: undefined,
+        requestedWith: false,
+
+        //  overrideMimeType
+        overrideMimeType: undefined
+
+    };
+};
+
+module.exports = XHRSettings;
+
+
+/***/ }),
+/* 106 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetValue = __webpack_require__(4);
+
+//  Contains the plugins that Phaser uses globally and locally.
+//  These are the source objects, not instantiated.
+var inputPlugins = {};
+
+/**
+ * @typedef {object} InputPluginContainer
+ *
+ * @property {string} key - The unique name of this plugin in the input plugin cache.
