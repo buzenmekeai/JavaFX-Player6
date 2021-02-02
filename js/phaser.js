@@ -19925,3 +19925,229 @@ var inputPlugins = {};
  * @typedef {object} InputPluginContainer
  *
  * @property {string} key - The unique name of this plugin in the input plugin cache.
+ * @property {function} plugin - The plugin to be stored. Should be the source object, not instantiated.
+ * @property {string} [mapping] - If this plugin is to be injected into the Input Plugin, this is the property key map used.
+ */
+
+var InputPluginCache = {};
+
+/**
+ * Static method called directly by the Core internal Plugins.
+ * Key is a reference used to get the plugin from the plugins object (i.e. InputPlugin)
+ * Plugin is the object to instantiate to create the plugin
+ * Mapping is what the plugin is injected into the Scene.Systems as (i.e. input)
+ *
+ * @method Phaser.Input.InputPluginCache.register
+ * @since 3.10.0
+ * 
+ * @param {string} key - A reference used to get this plugin from the plugin cache.
+ * @param {function} plugin - The plugin to be stored. Should be the core object, not instantiated.
+ * @param {string} mapping - If this plugin is to be injected into the Input Plugin, this is the property key used.
+ * @param {string} settingsKey - The key in the Scene Settings to check to see if this plugin should install or not.
+ * @param {string} configKey - The key in the Game Config to check to see if this plugin should install or not.
+ */
+InputPluginCache.register = function (key, plugin, mapping, settingsKey, configKey)
+{
+    inputPlugins[key] = { plugin: plugin, mapping: mapping, settingsKey: settingsKey, configKey: configKey };
+};
+
+/**
+ * Returns the input plugin object from the cache based on the given key.
+ *
+ * @method Phaser.Input.InputPluginCache.getCore
+ * @since 3.10.0
+ * 
+ * @param {string} key - The key of the input plugin to get.
+ *
+ * @return {InputPluginContainer} The input plugin object.
+ */
+InputPluginCache.getPlugin = function (key)
+{
+    return inputPlugins[key];
+};
+
+/**
+ * Installs all of the registered Input Plugins into the given target.
+ *
+ * @method Phaser.Input.InputPluginCache.install
+ * @since 3.10.0
+ * 
+ * @param {Phaser.Input.InputPlugin} target - The target InputPlugin to install the plugins into.
+ */
+InputPluginCache.install = function (target)
+{
+    var sys = target.scene.sys;
+    var settings = sys.settings.input;
+    var config = sys.game.config;
+
+    for (var key in inputPlugins)
+    {
+        var source = inputPlugins[key].plugin;
+        var mapping = inputPlugins[key].mapping;
+        var settingsKey = inputPlugins[key].settingsKey;
+        var configKey = inputPlugins[key].configKey;
+
+        if (GetValue(settings, settingsKey, config[configKey]))
+        {
+            target[mapping] = new source(target);
+        }
+    }
+};
+
+/**
+ * Removes an input plugin based on the given key.
+ *
+ * @method Phaser.Input.InputPluginCache.remove
+ * @since 3.10.0
+ * 
+ * @param {string} key - The key of the input plugin to remove.
+ */
+InputPluginCache.remove = function (key)
+{
+    if (inputPlugins.hasOwnProperty(key))
+    {
+        delete inputPlugins[key];
+    }
+};
+
+module.exports = InputPluginCache;
+
+
+/***/ }),
+/* 107 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+//  This is based off an explanation and expanded math presented by Paul Bourke:
+//  See http:'local.wasp.uwa.edu.au/~pbourke/geometry/lineline2d/
+
+/**
+ * Checks if two Lines intersect. If the Lines are identical, they will be treated as parallel and thus non-intersecting.
+ *
+ * @function Phaser.Geom.Intersects.LineToLine
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} line1 - The first Line to check.
+ * @param {Phaser.Geom.Line} line2 - The second Line to check.
+ * @param {Phaser.Geom.Point} [out] - A Point in which to optionally store the point of intersection.
+ *
+ * @return {boolean} `true` if the two Lines intersect, and the `out` object will be populated, if given. Otherwise, `false`.
+ */
+var LineToLine = function (line1, line2, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    var x1 = line1.x1;
+    var y1 = line1.y1;
+    var x2 = line1.x2;
+    var y2 = line1.y2;
+
+    var x3 = line2.x1;
+    var y3 = line2.y1;
+    var x4 = line2.x2;
+    var y4 = line2.y2;
+
+    var numA = (x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3);
+    var numB = (x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3);
+    var deNom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+
+    //  Make sure there is not a division by zero - this also indicates that the lines are parallel.
+    //  If numA and numB were both equal to zero the lines would be on top of each other (coincidental).
+    //  This check is not done because it is not necessary for this implementation (the parallel check accounts for this).
+
+    if (deNom === 0)
+    {
+        return false;
+    }
+
+    //  Calculate the intermediate fractional point that the lines potentially intersect.
+
+    var uA = numA / deNom;
+    var uB = numB / deNom;
+
+    //  The fractional point will be between 0 and 1 inclusive if the lines intersect.
+    //  If the fractional calculation is larger than 1 or smaller than 0 the lines would need to be longer to intersect.
+
+    if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1)
+    {
+        out.x = x1 + (uA * (x2 - x1));
+        out.y = y1 + (uA * (y2 - y1));
+
+        return true;
+    }
+
+    return false;
+};
+
+module.exports = LineToLine;
+
+
+/***/ }),
+/* 108 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(14);
+var GameObject = __webpack_require__(19);
+var MeshRender = __webpack_require__(731);
+
+/**
+ * @classdesc
+ * A Mesh Game Object.
+ *
+ * @class Mesh
+ * @extends Phaser.GameObjects.GameObject
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @webglOnly
+ * @since 3.0.0
+ *
+ * @extends Phaser.GameObjects.Components.Alpha
+ * @extends Phaser.GameObjects.Components.BlendMode
+ * @extends Phaser.GameObjects.Components.Depth
+ * @extends Phaser.GameObjects.Components.Flip
+ * @extends Phaser.GameObjects.Components.GetBounds
+ * @extends Phaser.GameObjects.Components.Mask
+ * @extends Phaser.GameObjects.Components.Origin
+ * @extends Phaser.GameObjects.Components.Pipeline
+ * @extends Phaser.GameObjects.Components.ScaleMode
+ * @extends Phaser.GameObjects.Components.Size
+ * @extends Phaser.GameObjects.Components.Texture
+ * @extends Phaser.GameObjects.Components.Transform
+ * @extends Phaser.GameObjects.Components.Visible
+ * @extends Phaser.GameObjects.Components.ScrollFactor
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Game Object belongs. A Game Object can only belong to one Scene at a time.
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {number[]} vertices - An array containing the vertices data for this Mesh.
+ * @param {number[]} uv - An array containing the uv data for this Mesh.
+ * @param {number[]} colors - An array containing the color data for this Mesh.
+ * @param {number[]} alphas - An array containing the alpha data for this Mesh.
+ * @param {string} texture - The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
+ * @param {(string|integer)} [frame] - An optional frame from the Texture this Game Object is rendering with.
+ */
+var Mesh = new Class({
+
+    Extends: GameObject,
+
+    Mixins: [
+        Components.Alpha,
+        Components.BlendMode,
+        Components.Depth,
+        Components.Flip,
+        Components.GetBounds,
+        Components.Mask,
