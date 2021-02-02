@@ -20151,3 +20151,213 @@ var Mesh = new Class({
         Components.Flip,
         Components.GetBounds,
         Components.Mask,
+        Components.Origin,
+        Components.Pipeline,
+        Components.ScaleMode,
+        Components.Size,
+        Components.Texture,
+        Components.Transform,
+        Components.Visible,
+        Components.ScrollFactor,
+        MeshRender
+    ],
+
+    initialize:
+
+    function Mesh (scene, x, y, vertices, uv, colors, alphas, texture, frame)
+    {
+        GameObject.call(this, scene, 'Mesh');
+
+        if (vertices.length !== uv.length)
+        {
+            throw new Error('Mesh Vertex count must match UV count');
+        }
+
+        var verticesUB = (vertices.length / 2) | 0;
+
+        if (colors.length > 0 && colors.length < verticesUB)
+        {
+            throw new Error('Mesh Color count must match Vertex count');
+        }
+
+        if (alphas.length > 0 && alphas.length < verticesUB)
+        {
+            throw new Error('Mesh Alpha count must match Vertex count');
+        }
+
+        var i;
+
+        if (colors.length === 0)
+        {
+            for (i = 0; i < verticesUB; ++i)
+            {
+                colors[i] = 0xFFFFFF;
+            }
+        }
+
+        if (alphas.length === 0)
+        {
+            for (i = 0; i < verticesUB; ++i)
+            {
+                alphas[i] = 1.0;
+            }
+        }
+
+        /**
+         * An array containing the vertices data for this Mesh.
+         *
+         * @name Phaser.GameObjects.Mesh#vertices
+         * @type {Float32Array}
+         * @since 3.0.0
+         */
+        this.vertices = new Float32Array(vertices);
+
+        /**
+         * An array containing the uv data for this Mesh.
+         *
+         * @name Phaser.GameObjects.Mesh#uv
+         * @type {Float32Array}
+         * @since 3.0.0
+         */
+        this.uv = new Float32Array(uv);
+
+        /**
+         * An array containing the color data for this Mesh.
+         *
+         * @name Phaser.GameObjects.Mesh#colors
+         * @type {Uint32Array}
+         * @since 3.0.0
+         */
+        this.colors = new Uint32Array(colors);
+
+        /**
+         * An array containing the alpha data for this Mesh.
+         *
+         * @name Phaser.GameObjects.Mesh#alphas
+         * @type {Float32Array}
+         * @since 3.0.0
+         */
+        this.alphas = new Float32Array(alphas);
+
+        /**
+         * Fill or additive mode used when blending the color values?
+         * 
+         * @name Phaser.GameObjects.Mesh#tintFill
+         * @type {boolean}
+         * @default false
+         * @since 3.11.0
+         */
+        this.tintFill = false;
+
+        this.setTexture(texture, frame);
+        this.setPosition(x, y);
+        this.setSizeToFrame();
+        this.setOrigin();
+        this.initPipeline();
+    }
+
+});
+
+module.exports = Mesh;
+
+
+/***/ }),
+/* 109 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(14);
+var GameObject = __webpack_require__(19);
+var GetBitmapTextSize = __webpack_require__(846);
+var ParseFromAtlas = __webpack_require__(845);
+var Render = __webpack_require__(844);
+
+/**
+ * The font data for an individual character of a Bitmap Font.
+ *
+ * Describes the character's position, size, offset and kerning.
+ *
+ * @typedef {object} BitmapFontCharacterData
+ *
+ * @property {number} x - The x position of the character.
+ * @property {number} y - The y position of the character.
+ * @property {number} width - The width of the character.
+ * @property {number} height - The height of the character.
+ * @property {number} centerX - The center x position of the character.
+ * @property {number} centerY - The center y position of the character.
+ * @property {number} xOffset - The x offset of the character.
+ * @property {number} yOffset - The y offset of the character.
+ * @property {object} data - Extra data for the character.
+ * @property {Object.<number>} kerning - Kerning values, keyed by character code.
+ */
+
+/**
+ * Bitmap Font data that can be used by a BitmapText Game Object.
+ *
+ * @typedef {object} BitmapFontData
+ *
+ * @property {string} font - The name of the font.
+ * @property {number} size - The size of the font.
+ * @property {number} lineHeight - The line height of the font.
+ * @property {boolean} retroFont - Whether this font is a retro font (monospace).
+ * @property {Object.<number, BitmapFontCharacterData>} chars - The character data of the font, keyed by character code. Each character datum includes a position, size, offset and more.
+ */
+
+/**
+ * @typedef {object} JSONBitmapText
+ * @extends {JSONGameObject}
+ *
+ * @property {string} font - The name of the font.
+ * @property {string} text - The text that this Bitmap Text displays.
+ * @property {number} fontSize - The size of the font.
+ * @property {number} letterSpacing - Adds / Removes spacing between characters.
+ * @property {integer} align - The alignment of the text in a multi-line BitmapText object.
+ */
+
+/**
+ * @classdesc
+ * BitmapText objects work by taking a texture file and an XML or JSON file that describes the font structure.
+ * 
+ * During rendering for each letter of the text is rendered to the display, proportionally spaced out and aligned to
+ * match the font structure.
+ *
+ * BitmapText objects are less flexible than Text objects, in that they have less features such as shadows, fills and the ability
+ * to use Web Fonts, however you trade this flexibility for rendering speed. You can also create visually compelling BitmapTexts by
+ * processing the font texture in an image editor, applying fills and any other effects required.
+ *
+ * To create multi-line text insert \r, \n or \r\n escape codes into the text string.
+ *
+ * To create a BitmapText data files you need a 3rd party app such as:
+ *
+ * BMFont (Windows, free): http://www.angelcode.com/products/bmfont/
+ * Glyph Designer (OS X, commercial): http://www.71squared.com/en/glyphdesigner
+ * Littera (Web-based, free): http://kvazars.com/littera/
+ *
+ * For most use cases it is recommended to use XML. If you wish to use JSON, the formatting should be equal to the result of
+ * converting a valid XML file through the popular X2JS library. An online tool for conversion can be found here: http://codebeautify.org/xmltojson
+ *
+ * @class BitmapText
+ * @extends Phaser.GameObjects.GameObject
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @since 3.0.0
+ *
+ * @extends Phaser.GameObjects.Components.Alpha
+ * @extends Phaser.GameObjects.Components.BlendMode
+ * @extends Phaser.GameObjects.Components.Depth
+ * @extends Phaser.GameObjects.Components.Mask
+ * @extends Phaser.GameObjects.Components.Origin
+ * @extends Phaser.GameObjects.Components.Pipeline
+ * @extends Phaser.GameObjects.Components.ScaleMode
+ * @extends Phaser.GameObjects.Components.ScrollFactor
+ * @extends Phaser.GameObjects.Components.Texture
+ * @extends Phaser.GameObjects.Components.Tint
+ * @extends Phaser.GameObjects.Components.Transform
+ * @extends Phaser.GameObjects.Components.Visible
+ *
