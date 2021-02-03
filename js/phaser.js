@@ -20809,3 +20809,230 @@ var BitmapText = new Class({
         {
             return this._letterSpacing;
         }
+
+    },
+
+    /**
+     * The width of this Bitmap Text.
+     *
+     * @name Phaser.GameObjects.BitmapText#width
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    width: {
+
+        get: function ()
+        {
+            this.getTextBounds(false);
+
+            return this._bounds.global.width;
+        }
+
+    },
+
+    /**
+     * The height of this bitmap text.
+     *
+     * @name Phaser.GameObjects.BitmapText#height
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    height: {
+
+        get: function ()
+        {
+            this.getTextBounds(false);
+
+            return this._bounds.global.height;
+        }
+
+    },
+
+    /**
+     * Build a JSON representation of this Bitmap Text.
+     *
+     * @method Phaser.GameObjects.BitmapText#toJSON
+     * @since 3.0.0
+     *
+     * @return {JSONBitmapText} A JSON representation of this Bitmap Text.
+     */
+    toJSON: function ()
+    {
+        var out = Components.ToJSON(this);
+
+        //  Extra data is added here
+
+        var data = {
+            font: this.font,
+            text: this.text,
+            fontSize: this.fontSize,
+            letterSpacing: this.letterSpacing,
+            align: this.align
+        };
+
+        out.data = data;
+
+        return out;
+    }
+
+});
+
+/**
+ * Left align the text characters in a multi-line BitmapText object.
+ *
+ * @name Phaser.GameObjects.BitmapText.ALIGN_LEFT
+ * @type {integer}
+ * @since 3.11.0
+ */
+BitmapText.ALIGN_LEFT = 0;
+
+/**
+ * Center align the text characters in a multi-line BitmapText object.
+ *
+ * @name Phaser.GameObjects.BitmapText.ALIGN_CENTER
+ * @type {integer}
+ * @since 3.11.0
+ */
+BitmapText.ALIGN_CENTER = 1;
+
+/**
+ * Right align the text characters in a multi-line BitmapText object.
+ *
+ * @name Phaser.GameObjects.BitmapText.ALIGN_RIGHT
+ * @type {integer}
+ * @since 3.11.0
+ */
+BitmapText.ALIGN_RIGHT = 2;
+
+BitmapText.ParseFromAtlas = ParseFromAtlas;
+
+module.exports = BitmapText;
+
+
+/***/ }),
+/* 110 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//! stable.js 0.1.6, https://github.com/Two-Screen/stable
+//! © 2017 Angry Bytes and contributors. MIT licensed.
+
+(function() {
+
+// A stable array sort, because `Array#sort()` is not guaranteed stable.
+// This is an implementation of merge sort, without recursion.
+
+var stable = function(arr, comp) {
+    return exec(arr.slice(), comp);
+};
+
+stable.inplace = function(arr, comp) {
+    var result = exec(arr, comp);
+
+    // This simply copies back if the result isn't in the original array,
+    // which happens on an odd number of passes.
+    if (result !== arr) {
+        pass(result, null, arr.length, arr);
+    }
+
+    return arr;
+};
+
+// Execute the sort using the input array and a second buffer as work space.
+// Returns one of those two, containing the final result.
+function exec(arr, comp) {
+    if (typeof(comp) !== 'function') {
+        comp = function(a, b) {
+            return String(a).localeCompare(b);
+        };
+    }
+
+    // Short-circuit when there's nothing to sort.
+    var len = arr.length;
+    if (len <= 1) {
+        return arr;
+    }
+
+    // Rather than dividing input, simply iterate chunks of 1, 2, 4, 8, etc.
+    // Chunks are the size of the left or right hand in merge sort.
+    // Stop when the left-hand covers all of the array.
+    var buffer = new Array(len);
+    for (var chk = 1; chk < len; chk *= 2) {
+        pass(arr, comp, chk, buffer);
+
+        var tmp = arr;
+        arr = buffer;
+        buffer = tmp;
+    }
+
+    return arr;
+}
+
+// Run a single pass with the given chunk size.
+var pass = function(arr, comp, chk, result) {
+    var len = arr.length;
+    var i = 0;
+    // Step size / double chunk size.
+    var dbl = chk * 2;
+    // Bounds of the left and right chunks.
+    var l, r, e;
+    // Iterators over the left and right chunk.
+    var li, ri;
+
+    // Iterate over pairs of chunks.
+    for (l = 0; l < len; l += dbl) {
+        r = l + chk;
+        e = r + chk;
+        if (r > len) r = len;
+        if (e > len) e = len;
+
+        // Iterate both chunks in parallel.
+        li = l;
+        ri = r;
+        while (true) {
+            // Compare the chunks.
+            if (li < r && ri < e) {
+                // This works for a regular `sort()` compatible comparator,
+                // but also for a simple comparator like: `a > b`
+                if (comp(arr[li], arr[ri]) <= 0) {
+                    result[i++] = arr[li++];
+                }
+                else {
+                    result[i++] = arr[ri++];
+                }
+            }
+            // Nothing to compare, just flush what's left.
+            else if (li < r) {
+                result[i++] = arr[li++];
+            }
+            else if (ri < e) {
+                result[i++] = arr[ri++];
+            }
+            // Both iterators are at the chunk ends.
+            else {
+                break;
+            }
+        }
+    }
+};
+
+// Export using CommonJS or to the window.
+if (true) {
+    module.exports = stable;
+}
+else {}
+
+})();
+
+/***/ }),
+/* 111 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
