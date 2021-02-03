@@ -20598,3 +20598,214 @@ var BitmapText = new Class({
     },
 
     /**
+     * Set the textual content of this BitmapText.
+     *
+     * An array of strings will be converted into multi-line text. Use the align methods to change multi-line alignment.
+     *
+     * @method Phaser.GameObjects.BitmapText#setText
+     * @since 3.0.0
+     *
+     * @param {(string|string[])} value - The string, or array of strings, to be set as the content of this BitmapText.
+     *
+     * @return {this} This BitmapText Object.
+     */
+    setText: function (value)
+    {
+        if (!value && value !== 0)
+        {
+            value = '';
+        }
+
+        if (Array.isArray(value))
+        {
+            value = value.join('\n');
+        }
+
+        if (value !== this.text)
+        {
+            this._text = value.toString();
+
+            this._dirty = true;
+
+            this.updateDisplayOrigin();
+        }
+
+        return this;
+    },
+
+    /**
+     * Calculate the bounds of this Bitmap Text.
+     *
+     * An object is returned that contains the position, width and height of the Bitmap Text in local and global
+     * contexts.
+     *
+     * Local size is based on just the font size and a [0, 0] position.
+     *
+     * Global size takes into account the Game Object's scale, world position and display origin.
+     *
+     * Also in the object is data regarding the length of each line, should this be a multi-line BitmapText.
+     *
+     * @method Phaser.GameObjects.BitmapText#getTextBounds
+     * @since 3.0.0
+     *
+     * @param {boolean} [round] - Whether to round the results to the nearest integer.
+     *
+     * @return {BitmapTextSize} An object that describes the size of this Bitmap Text.
+     */
+    getTextBounds: function (round)
+    {
+        //  local = The BitmapText based on fontSize and 0x0 coords
+        //  global = The BitmapText, taking into account scale and world position
+        //  lines = The BitmapText line data
+
+        if (this._dirty)
+        {
+            GetBitmapTextSize(this, round, this._bounds);
+        }
+
+        return this._bounds;
+    },
+
+    /**
+     * Changes the font this BitmapText is using to render.
+     *
+     * The new texture is loaded and applied to the BitmapText. The existing test, size and alignment are preserved,
+     * unless overridden via the arguments.
+     *
+     * @method Phaser.GameObjects.BitmapText#setFont
+     * @since 3.11.0
+     *
+     * @param {string} font - The key of the font to use from the Bitmap Font cache.
+     * @param {number} [size] - The font size of this Bitmap Text. If not specified the current size will be used.
+     * @param {integer} [align=0] - The alignment of the text in a multi-line BitmapText object. If not specified the current alignment will be used.
+     *
+     * @return {this} This BitmapText Object.
+     */
+    setFont: function (key, size, align)
+    {
+        if (size === undefined) { size = this._fontSize; }
+        if (align === undefined) { align = this._align; }
+
+        if (key !== this.font)
+        {
+            var entry = this.scene.sys.cache.bitmapFont.get(key);
+
+            if (entry)
+            {
+                this.font = key;
+                this.fontData = entry.data;
+                this._fontSize = size;
+                this._align = align;
+
+                this.setTexture(entry.texture, entry.frame);
+
+                GetBitmapTextSize(this, false, this._bounds);
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Controls the alignment of each line of text in this BitmapText object.
+     *
+     * Only has any effect when this BitmapText contains multiple lines of text, split with carriage-returns.
+     * Has no effect with single-lines of text.
+     *
+     * See the methods `setLeftAlign`, `setCenterAlign` and `setRightAlign`.
+     *
+     * 0 = Left aligned (default)
+     * 1 = Middle aligned
+     * 2 = Right aligned
+     *
+     * The alignment position is based on the longest line of text.
+     *
+     * @name Phaser.GameObjects.BitmapText#align
+     * @type {integer}
+     * @since 3.11.0
+     */
+    align: {
+
+        set: function (value)
+        {
+            this._align = value;
+            this._dirty = true;
+        },
+
+        get: function ()
+        {
+            return this._align;
+        }
+
+    },
+
+    /**
+     * The text that this Bitmap Text object displays.
+     *
+     * You can also use the method `setText` if you want a chainable way to change the text content.
+     *
+     * @name Phaser.GameObjects.BitmapText#text
+     * @type {string}
+     * @since 3.0.0
+     */
+    text: {
+
+        set: function (value)
+        {
+            this.setText(value);
+        },
+
+        get: function ()
+        {
+            return this._text;
+        }
+
+    },
+
+    /**
+     * The font size of this Bitmap Text.
+     *
+     * You can also use the method `setFontSize` if you want a chainable way to change the font size.
+     *
+     * @name Phaser.GameObjects.BitmapText#fontSize
+     * @type {number}
+     * @since 3.0.0
+     */
+    fontSize: {
+
+        set: function (value)
+        {
+            this._fontSize = value;
+            this._dirty = true;
+        },
+
+        get: function ()
+        {
+            return this._fontSize;
+        }
+
+    },
+
+    /**
+     * Adds / Removes spacing between characters.
+     *
+     * Can be a negative or positive number.
+     *
+     * You can also use the method `setLetterSpacing` if you want a chainable way to change the letter spacing.
+     *
+     * @name Phaser.GameObjects.BitmapText#letterSpacing
+     * @type {number}
+     * @since 3.0.0
+     */
+    letterSpacing: {
+
+        set: function (value)
+        {
+            this._letterSpacing = value;
+            this._dirty = true;
+        },
+
+        get: function ()
+        {
+            return this._letterSpacing;
+        }
