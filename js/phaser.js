@@ -21036,3 +21036,226 @@ else {}
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+// Based on the routine from {@link http://jsfiddle.net/MrPolywhirl/NH42z/}.
+
+var CheckMatrix = __webpack_require__(163);
+var TransposeMatrix = __webpack_require__(315);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Utils.Array.Matrix.RotateMatrix
+ * @since 3.0.0
+ *
+ * @param {array} matrix - The array to rotate.
+ * @param {(number|string)} [direction=90] - The amount to rotate the matrix by. The value can be given in degrees: 90, -90, 270, -270 or 180, or a string command: `rotateLeft`, `rotateRight` or `rotate180`.
+ *
+ * @return {array} The rotated matrix array. The source matrix should be discard for the returned matrix.
+ */
+var RotateMatrix = function (matrix, direction)
+{
+    if (direction === undefined) { direction = 90; }
+
+    if (!CheckMatrix(matrix))
+    {
+        return null;
+    }
+
+    if (typeof direction !== 'string')
+    {
+        direction = ((direction % 360) + 360) % 360;
+    }
+
+    if (direction === 90 || direction === -270 || direction === 'rotateLeft')
+    {
+        matrix = TransposeMatrix(matrix);
+        matrix.reverse();
+    }
+    else if (direction === -90 || direction === 270 || direction === 'rotateRight')
+    {
+        matrix.reverse();
+        matrix = TransposeMatrix(matrix);
+    }
+    else if (Math.abs(direction) === 180 || direction === 'rotate180')
+    {
+        for (var i = 0; i < matrix.length; i++)
+        {
+            matrix[i].reverse();
+        }
+
+        matrix.reverse();
+    }
+
+    return matrix;
+};
+
+module.exports = RotateMatrix;
+
+
+/***/ }),
+/* 112 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var ArrayUtils = __webpack_require__(164);
+var Class = __webpack_require__(0);
+var NOOP = __webpack_require__(1);
+var StableSort = __webpack_require__(110);
+
+/**
+ * @callback EachListCallback
+ * @generic I - [item]
+ *
+ * @param {*} item - The item which is currently being processed.
+ * @param {...*} [args] - Additional arguments that will be passed to the callback, after the child.
+ */
+
+/**
+ * @classdesc
+ * List is a generic implementation of an ordered list which contains utility methods for retrieving, manipulating, and iterating items.
+ *
+ * @class List
+ * @memberof Phaser.Structs
+ * @constructor
+ * @since 3.0.0
+ *
+ * @generic T
+ *
+ * @param {*} parent - The parent of this list.
+ */
+var List = new Class({
+
+    initialize:
+
+    function List (parent)
+    {
+        /**
+         * The parent of this list.
+         *
+         * @name Phaser.Structs.List#parent
+         * @type {*}
+         * @since 3.0.0
+         */
+        this.parent = parent;
+
+        /**
+         * The objects that belong to this collection.
+         *
+         * @genericUse {T[]} - [$type]
+         *
+         * @name Phaser.Structs.List#list
+         * @type {Array.<*>}
+         * @default []
+         * @since 3.0.0
+         */
+        this.list = [];
+
+        /**
+         * The index of the current element.
+         * 
+         * This is used internally when iterating through the list with the {@link #first}, {@link #last}, {@link #get}, and {@link #previous} properties.
+         *
+         * @name Phaser.Structs.List#position
+         * @type {integer}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.position = 0;
+
+        /**
+         * A callback that is invoked every time a child is added to this list.
+         *
+         * @name Phaser.Structs.List#addCallback
+         * @type {function}
+         * @since 3.4.0
+         */
+        this.addCallback = NOOP;
+
+        /**
+         * A callback that is invoked every time a child is removed from this list.
+         *
+         * @name Phaser.Structs.List#removeCallback
+         * @type {function}
+         * @since 3.4.0
+         */
+        this.removeCallback = NOOP;
+
+        /**
+         * The property key to sort by.
+         *
+         * @name Phaser.Structs.List#_sortKey
+         * @type {string}
+         * @since 3.4.0
+         */
+        this._sortKey = '';
+    },
+
+    /**
+     * Adds the given item to the end of the list. Each item must be unique.
+     *
+     * @method Phaser.Structs.List#add
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [child,$return]
+     *
+     * @param {*|Array.<*>} child - The item, or array of items, to add to the list.
+     * @param {boolean} [skipCallback=false] - Skip calling the List.addCallback if this child is added successfully.
+     *
+     * @return {*} The list's underlying array.
+     */
+    add: function (child, skipCallback)
+    {
+        if (skipCallback)
+        {
+            return ArrayUtils.Add(this.list, child);
+        }
+        else
+        {
+            return ArrayUtils.Add(this.list, child, 0, this.addCallback, this);
+        }
+    },
+
+    /**
+     * Adds an item to list, starting at a specified index. Each item must be unique within the list.
+     *
+     * @method Phaser.Structs.List#addAt
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [child,$return]
+     *
+     * @param {*} child - The item, or array of items, to add to the list.
+     * @param {integer} [index=0] - The index in the list at which the element(s) will be inserted.
+     * @param {boolean} [skipCallback=false] - Skip calling the List.addCallback if this child is added successfully.
+     *
+     * @return {*} The List's underlying array.
+     */
+    addAt: function (child, index, skipCallback)
+    {
+        if (skipCallback)
+        {
+            return ArrayUtils.AddAt(this.list, child, index);
+        }
+        else
+        {
+            return ArrayUtils.AddAt(this.list, child, index, 0, this.addCallback, this);
+        }
+    },
+
+    /**
+     * Retrieves the item at a given position inside the List.
+     *
+     * @method Phaser.Structs.List#getAt
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [$return]
+     *
