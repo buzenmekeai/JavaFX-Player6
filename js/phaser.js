@@ -21259,3 +21259,231 @@ var List = new Class({
      *
      * @genericUse {T} - [$return]
      *
+     * @param {integer} index - The index of the item.
+     *
+     * @return {*} The retrieved item, or `undefined` if it's outside the List's bounds.
+     */
+    getAt: function (index)
+    {
+        return this.list[index];
+    },
+
+    /**
+     * Locates an item within the List and returns its index.
+     *
+     * @method Phaser.Structs.List#getIndex
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [child]
+     *
+     * @param {*} child - The item to locate.
+     *
+     * @return {integer} The index of the item within the List, or -1 if it's not in the List.
+     */
+    getIndex: function (child)
+    {
+        //  Return -1 if given child isn't a child of this display list
+        return this.list.indexOf(child);
+    },
+
+    /**
+     * Sort the contents of this List so the items are in order based
+     * on the given property. For example, `sort('alpha')` would sort the List
+     * contents based on the value of their `alpha` property.
+     *
+     * @method Phaser.Structs.List#sort
+     * @since 3.0.0
+     *
+     * @genericUse {T[]} - [children,$return]
+     *
+     * @param {string} property - The property to lexically sort by.
+     *
+     * @return {Phaser.Structs.List} This List object.
+     */
+    sort: function (property)
+    {
+        if (property)
+        {
+            this._sortKey = property;
+
+            StableSort.inplace(this.list, this.sortHandler);
+        }
+
+        return this;
+    },
+
+    /**
+     * Internal handler for the {@link #sort} method which compares two items.
+     *
+     * @method Phaser.Structs.List#sortHandler
+     * @private
+     * @since 3.4.0
+     *
+     * @genericUse {T} - [childA,childB]
+     *
+     * @param {*} childA - The first item to compare.
+     * @param {*} childB - The second item to compare.
+     *
+     * @return {integer} The result of the comparison, which will be negative if the first item is smaller then second, positive if the first item is larger than the second, or 0 if they're equal.
+     */
+    sortHandler: function (childA, childB)
+    {
+        return childA[this._sortKey] - childB[this._sortKey];
+    },
+
+    /**
+     * Searches for the first instance of a child with its `name`
+     * property matching the given argument. Should more than one child have
+     * the same name only the first is returned.
+     *
+     * @method Phaser.Structs.List#getByName
+     * @since 3.0.0
+     *
+     * @genericUse {T | null} - [$return]
+     *
+     * @param {string} name - The name to search for.
+     *
+     * @return {?*} The first child with a matching name, or null if none were found.
+     */
+    getByName: function (name)
+    {
+        return ArrayUtils.GetFirst(this.list, 'name', name);
+    },
+
+    /**
+     * Returns a random child from the group.
+     *
+     * @method Phaser.Structs.List#getRandom
+     * @since 3.0.0
+     *
+     * @genericUse {T | null} - [$return]
+     *
+     * @param {integer} [startIndex=0] - Offset from the front of the group (lowest child).
+     * @param {integer} [length=(to top)] - Restriction on the number of values you want to randomly select from.
+     *
+     * @return {?*} A random child of this Group.
+     */
+    getRandom: function (startIndex, length)
+    {
+        return ArrayUtils.GetRandom(this.list, startIndex, length);
+    },
+
+    /**
+     * Returns the first element in a given part of the List which matches a specific criterion.
+     *
+     * @method Phaser.Structs.List#getFirst
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [value]
+     * @genericUse {T | null} - [$return]
+     *
+     * @param {string} property - The name of the property to test or a falsey value to have no criterion.
+     * @param {*} value - The value to test the `property` against, or `undefined` to allow any value and only check for existence.
+     * @param {number} [startIndex=0] - The position in the List to start the search at.
+     * @param {number} [endIndex] - The position in the List to optionally stop the search at. It won't be checked.
+     *
+     * @return {?*} The first item which matches the given criterion, or `null` if no such item exists.
+     */
+    getFirst: function (property, value, startIndex, endIndex)
+    {
+        return ArrayUtils.GetFirstElement(this.list, property, value, startIndex, endIndex);
+    },
+
+    /**
+     * Returns all children in this List.
+     *
+     * You can optionally specify a matching criteria using the `property` and `value` arguments.
+     *
+     * For example: `getAll('parent')` would return only children that have a property called `parent`.
+     *
+     * You can also specify a value to compare the property to:
+     * 
+     * `getAll('visible', true)` would return only children that have their visible property set to `true`.
+     *
+     * Optionally you can specify a start and end index. For example if this List had 100 children,
+     * and you set `startIndex` to 0 and `endIndex` to 50, it would return matches from only
+     * the first 50 children in the List.
+     *
+     * @method Phaser.Structs.List#getAll
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [value]
+     * @genericUse {T[]} - [$return]
+     *
+     * @param {string} [property] - An optional property to test against the value argument.
+     * @param {*} [value] - If property is set then Child.property must strictly equal this value to be included in the results.
+     * @param {integer} [startIndex] - The first child index to start the search from.
+     * @param {integer} [endIndex] - The last child index to search up until.
+     *
+     * @return {Array.<*>} All items of the List which match the given criterion, if any.
+     */
+    getAll: function (property, value, startIndex, endIndex)
+    {
+        return ArrayUtils.GetAll(this.list, property, value, startIndex, endIndex);
+    },
+
+    /**
+     * Returns the total number of items in the List which have a property matching the given value.
+     *
+     * @method Phaser.Structs.List#count
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [value]
+     *
+     * @param {string} property - The property to test on each item.
+     * @param {*} value - The value to test the property against.
+     *
+     * @return {integer} The total number of matching elements.
+     */
+    count: function (property, value)
+    {
+        return ArrayUtils.CountAllMatching(this.list, property, value);
+    },
+
+    /**
+     * Swaps the positions of two items in the list.
+     *
+     * @method Phaser.Structs.List#swap
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [child1,child2]
+     *
+     * @param {*} child1 - The first item to swap.
+     * @param {*} child2 - The second item to swap.
+     */
+    swap: function (child1, child2)
+    {
+        ArrayUtils.Swap(this.list, child1, child2);
+    },
+
+    /**
+     * Moves an item in the List to a new position.
+     *
+     * @method Phaser.Structs.List#moveTo
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [child,$return]
+     *
+     * @param {*} child - The item to move.
+     * @param {integer} index - Moves an item in the List to a new position.
+     *
+     * @return {*} The item that was moved.
+     */
+    moveTo: function (child, index)
+    {
+        return ArrayUtils.MoveTo(this.list, child, index);
+    },
+
+    /**
+     * Removes one or many items from the List.
+     *
+     * @method Phaser.Structs.List#remove
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [child,$return]
+     *
+     * @param {*} child - The item, or array of items, to remove.
+     * @param {boolean} [skipCallback=false] - Skip calling the List.removeCallback.
+     *
+     * @return {*} The item, or array of items, which were successfully removed from the List.
+     */
