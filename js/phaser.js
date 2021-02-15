@@ -21487,3 +21487,202 @@ var List = new Class({
      *
      * @return {*} The item, or array of items, which were successfully removed from the List.
      */
+    remove: function (child, skipCallback)
+    {
+        if (skipCallback)
+        {
+            return ArrayUtils.Remove(this.list, child);
+        }
+        else
+        {
+            return ArrayUtils.Remove(this.list, child, this.removeCallback, this);
+        }
+    },
+
+    /**
+     * Removes the item at the given position in the List.
+     *
+     * @method Phaser.Structs.List#removeAt
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [$return]
+     *
+     * @param {integer} index - The position to remove the item from.
+     * @param {boolean} [skipCallback=false] - Skip calling the List.removeCallback.
+     *
+     * @return {*} The item that was removed.
+     */
+    removeAt: function (index, skipCallback)
+    {
+        if (skipCallback)
+        {
+            return ArrayUtils.RemoveAt(this.list, index);
+        }
+        else
+        {
+            return ArrayUtils.RemoveAt(this.list, index, this.removeCallback, this);
+        }
+    },
+
+    /**
+     * Removes the items within the given range in the List.
+     *
+     * @method Phaser.Structs.List#removeBetween
+     * @since 3.0.0
+     *
+     * @genericUse {T[]} - [$return]
+     *
+     * @param {integer} [startIndex=0] - The index to start removing from.
+     * @param {integer} [endIndex] - The position to stop removing at. The item at this position won't be removed.
+     * @param {boolean} [skipCallback=false] - Skip calling the List.removeCallback.
+     *
+     * @return {Array.<*>} An array of the items which were removed.[description]
+     */
+    removeBetween: function (startIndex, endIndex, skipCallback)
+    {
+        if (skipCallback)
+        {
+            return ArrayUtils.RemoveBetween(this.list, startIndex, endIndex);
+        }
+        else
+        {
+            return ArrayUtils.RemoveBetween(this.list, startIndex, endIndex, this.removeCallback, this);
+        }
+    },
+
+    /**
+     * Removes all the items.
+     *
+     * @method Phaser.Structs.List#removeAll
+     * @since 3.0.0
+     *
+     * @genericUse {Phaser.Structs.List.<T>} - [$return]
+     * 
+     * @param {boolean} [skipCallback=false] - Skip calling the List.removeCallback.
+     *
+     * @return {Phaser.Structs.List} This List object.
+     */
+    removeAll: function (skipCallback)
+    {
+        var i = this.list.length;
+
+        while (i--)
+        {
+            this.remove(this.list[i], skipCallback);
+        }
+
+        return this;
+    },
+
+    /**
+     * Brings the given child to the top of this List.
+     *
+     * @method Phaser.Structs.List#bringToTop
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [child,$return]
+     *
+     * @param {*} child - The item to bring to the top of the List.
+     *
+     * @return {*} The item which was moved.
+     */
+    bringToTop: function (child)
+    {
+        return ArrayUtils.BringToTop(this.list, child);
+    },
+
+    /**
+     * Sends the given child to the bottom of this List.
+     *
+     * @method Phaser.Structs.List#sendToBack
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [child,$return]
+     *
+     * @param {*} child - The item to send to the back of the list.
+     *
+     * @return {*} The item which was moved.
+     */
+    sendToBack: function (child)
+    {
+        return ArrayUtils.SendToBack(this.list, child);
+    },
+
+    /**
+     * Moves the given child up one place in this group unless it's already at the top.
+     *
+     * @method Phaser.Structs.List#moveUp
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [child,$return]
+     *
+     * @param {*} child - The item to move up.
+     *
+     * @return {*} The item which was moved.
+     */
+    moveUp: function (child)
+    {
+        ArrayUtils.MoveUp(this.list, child);
+
+        return child;
+    },
+
+    /**
+     * Moves the given child down one place in this group unless it's already at the bottom.
+     *
+     * @method Phaser.Structs.List#moveDown
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [child,$return]
+     *
+     * @param {*} child - The item to move down.
+     *
+     * @return {*} The item which was moved.
+     */
+    moveDown: function (child)
+    {
+        ArrayUtils.MoveDown(this.list, child);
+
+        return child;
+    },
+
+    /**
+     * Reverses the order of all children in this List.
+     *
+     * @method Phaser.Structs.List#reverse
+     * @since 3.0.0
+     *
+     * @genericUse {Phaser.Structs.List.<T>} - [$return]
+     *
+     * @return {Phaser.Structs.List} This List object.
+     */
+    reverse: function ()
+    {
+        this.list.reverse();
+
+        return this;
+    },
+
+    /**
+     * Shuffles the items in the list.
+     *
+     * @method Phaser.Structs.List#shuffle
+     * @since 3.0.0
+     *
+     * @genericUse {Phaser.Structs.List.<T>} - [$return]
+     *
+     * @return {Phaser.Structs.List} This List object.
+     */
+    shuffle: function ()
+    {
+        ArrayUtils.Shuffle(this.list);
+
+        return this;
+    },
+
+    /**
+     * Replaces a child of this List with the given newChild. The newChild cannot be a member of this List.
+     *
+     * @method Phaser.Structs.List#replace
+     * @since 3.0.0
+     *
