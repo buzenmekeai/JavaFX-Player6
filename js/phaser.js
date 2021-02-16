@@ -21686,3 +21686,233 @@ var List = new Class({
      * @method Phaser.Structs.List#replace
      * @since 3.0.0
      *
+     * @genericUse {T} - [oldChild,newChild,$return]
+     *
+     * @param {*} oldChild - The child in this List that will be replaced.
+     * @param {*} newChild - The child to be inserted into this List.
+     *
+     * @return {*} Returns the oldChild that was replaced within this group.
+     */
+    replace: function (oldChild, newChild)
+    {
+        return ArrayUtils.Replace(this.list, oldChild, newChild);
+    },
+
+    /**
+     * Checks if an item exists within the List.
+     *
+     * @method Phaser.Structs.List#exists
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [child]
+     *
+     * @param {*} child - The item to check for the existence of.
+     *
+     * @return {boolean} `true` if the item is found in the list, otherwise `false`.
+     */
+    exists: function (child)
+    {
+        return (this.list.indexOf(child) > -1);
+    },
+
+    /**
+     * Sets the property `key` to the given value on all members of this List.
+     *
+     * @method Phaser.Structs.List#setAll
+     * @since 3.0.0
+     *
+     * @genericUse {T} - [value]
+     *
+     * @param {string} property - The name of the property to set.
+     * @param {*} value - The value to set the property to.
+     * @param {integer} [startIndex] - The first child index to start the search from.
+     * @param {integer} [endIndex] - The last child index to search up until.
+     */
+    setAll: function (property, value, startIndex, endIndex)
+    {
+        ArrayUtils.SetAll(this.list, property, value, startIndex, endIndex);
+
+        return this;
+    },
+
+    /**
+     * Passes all children to the given callback.
+     *
+     * @method Phaser.Structs.List#each
+     * @since 3.0.0
+     *
+     * @genericUse {EachListCallback.<T>} - [callback]
+     *
+     * @param {EachListCallback} callback - The function to call.
+     * @param {*} [context] - Value to use as `this` when executing callback.
+     * @param {...*} [args] - Additional arguments that will be passed to the callback, after the child.
+     */
+    each: function (callback, context)
+    {
+        var args = [ null ];
+
+        for (var i = 2; i < arguments.length; i++)
+        {
+            args.push(arguments[i]);
+        }
+
+        for (i = 0; i < this.list.length; i++)
+        {
+            args[0] = this.list[i];
+
+            callback.apply(context, args);
+        }
+    },
+
+    /**
+     * Clears the List and recreates its internal array.
+     *
+     * @method Phaser.Structs.List#shutdown
+     * @since 3.0.0
+     */
+    shutdown: function ()
+    {
+        this.removeAll();
+
+        this.list = [];
+    },
+
+    /**
+     * Destroys this List.
+     *
+     * @method Phaser.Structs.List#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.removeAll();
+
+        this.parent = null;
+        this.addCallback = null;
+        this.removeCallback = null;
+    },
+
+    /**
+     * The number of items inside the List.
+     *
+     * @name Phaser.Structs.List#length
+     * @type {integer}
+     * @readonly
+     * @since 3.0.0
+     */
+    length: {
+
+        get: function ()
+        {
+            return this.list.length;
+        }
+
+    },
+
+    /**
+     * The first item in the List or `null` for an empty List.
+     *
+     * @name Phaser.Structs.List#first
+     * @type {integer}
+     * @readonly
+     * @since 3.0.0
+     */
+    first: {
+
+        get: function ()
+        {
+            this.position = 0;
+
+            if (this.list.length > 0)
+            {
+                return this.list[0];
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+    },
+
+    /**
+     * The last item in the List, or `null` for an empty List.
+     *
+     * @name Phaser.Structs.List#last
+     * @type {integer}
+     * @readonly
+     * @since 3.0.0
+     */
+    last: {
+
+        get: function ()
+        {
+            if (this.list.length > 0)
+            {
+                this.position = this.list.length - 1;
+
+                return this.list[this.position];
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+    },
+
+    /**
+     * The next item in the List, or `null` if the entire List has been traversed.
+     * 
+     * This property can be read successively after reading {@link #first} or manually setting the {@link #position} to iterate the List.
+     *
+     * @name Phaser.Structs.List#next
+     * @type {integer}
+     * @readonly
+     * @since 3.0.0
+     */
+    next: {
+
+        get: function ()
+        {
+            if (this.position < this.list.length)
+            {
+                this.position++;
+
+                return this.list[this.position];
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+    },
+
+    /**
+     * The previous item in the List, or `null` if the entire List has been traversed.
+     * 
+     * This property can be read successively after reading {@link #last} or manually setting the {@link #position} to iterate the List backwards.
+     *
+     * @name Phaser.Structs.List#previous
+     * @type {integer}
+     * @readonly
+     * @since 3.0.0
+     */
+    previous: {
+
+        get: function ()
+        {
+            if (this.position > 0)
+            {
+                this.position--;
+
+                return this.list[this.position];
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+    }
