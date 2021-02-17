@@ -22394,3 +22394,233 @@ var Frame = new Class({
      * @param {number} y - The y coordinate to start the crop from. Cannot be negative or exceed the Frame height.
      * @param {number} width - The width of the crop rectangle. Cannot exceed the Frame width.
      * @param {number} height - The height of the crop rectangle. Cannot exceed the Frame height.
+     * @param {boolean} flipX - Does the parent Game Object have flipX set?
+     * @param {boolean} flipY - Does the parent Game Object have flipY set?
+     *
+     * @return {object} The updated crop data object.
+     */
+    setCropUVs: function (crop, x, y, width, height, flipX, flipY)
+    {
+        //  Clamp the input values
+
+        var cx = this.cutX;
+        var cy = this.cutY;
+        var cw = this.cutWidth;
+        var ch = this.cutHeight;
+        var rw = this.realWidth;
+        var rh = this.realHeight;
+
+        x = Clamp(x, 0, rw);
+        y = Clamp(y, 0, rh);
+
+        width = Clamp(width, 0, rw - x);
+        height = Clamp(height, 0, rh - y);
+
+        var ox = cx + x;
+        var oy = cy + y;
+        var ow = width;
+        var oh = height;
+
+        var data = this.data;
+
+        if (data.trim)
+        {
+            var ss = data.spriteSourceSize;
+
+            //  Need to check for intersection between the cut area and the crop area
+            //  If there is none, we set UV to be empty, otherwise set it to be the intersection area
+
+            width = Clamp(width, 0, cw - x);
+            height = Clamp(height, 0, ch - y);
+    
+            var cropRight = x + width;
+            var cropBottom = y + height;
+
+            var intersects = !(ss.r < x || ss.b < y || ss.x > cropRight || ss.y > cropBottom);
+
+            if (intersects)
+            {
+                var ix = Math.max(ss.x, x);
+                var iy = Math.max(ss.y, y);
+                var iw = Math.min(ss.r, cropRight) - ix;
+                var ih = Math.min(ss.b, cropBottom) - iy;
+
+                ow = iw;
+                oh = ih;
+    
+                if (flipX)
+                {
+                    ox = cx + (cw - (ix - ss.x) - iw);
+                }
+                else
+                {
+                    ox = cx + (ix - ss.x);
+                }
+        
+                if (flipY)
+                {
+                    oy = cy + (ch - (iy - ss.y) - ih);
+                }
+                else
+                {
+                    oy = cy + (iy - ss.y);
+                }
+
+                x = ix;
+                y = iy;
+
+                width = iw;
+                height = ih;
+            }
+            else
+            {
+                ox = 0;
+                oy = 0;
+                ow = 0;
+                oh = 0;
+            }
+        }
+        else
+        {
+            if (flipX)
+            {
+                ox = cx + (cw - x - width);
+            }
+    
+            if (flipY)
+            {
+                oy = cy + (ch - y - height);
+            }
+        }
+
+        var tw = this.source.width;
+        var th = this.source.height;
+
+        //  Map the given coordinates into UV space, clamping to the 0-1 range.
+
+        crop.u0 = Math.max(0, ox / tw);
+        crop.v0 = Math.max(0, oy / th);
+        crop.u1 = Math.min(1, (ox + ow) / tw);
+        crop.v1 = Math.min(1, (oy + oh) / th);
+
+        crop.x = x;
+        crop.y = y;
+
+        crop.cx = ox;
+        crop.cy = oy;
+        crop.cw = ow;
+        crop.ch = oh;
+
+        crop.width = width;
+        crop.height = height;
+
+        crop.flipX = flipX;
+        crop.flipY = flipY;
+
+        return crop;
+    },
+
+    /**
+     * Takes a crop data object and recalculates the UVs based on the dimensions inside the crop object.
+     * Called automatically by `setFrame`.
+     *
+     * @method Phaser.Textures.Frame#updateCropUVs
+     * @since 3.11.0
+     * 
+     * @param {object} crop - The crop data object. This is the `GameObject._crop` property.
+     * @param {boolean} flipX - Does the parent Game Object have flipX set?
+     * @param {boolean} flipY - Does the parent Game Object have flipY set?
+     *
+     * @return {object} The updated crop data object.
+     */
+    updateCropUVs: function (crop, flipX, flipY)
+    {
+        return this.setCropUVs(crop, crop.x, crop.y, crop.width, crop.height, flipX, flipY);
+    },
+
+    /**
+     * Updates the internal WebGL UV cache and the drawImage cache.
+     *
+     * @method Phaser.Textures.Frame#updateUVs
+     * @since 3.0.0
+     *
+     * @return {Phaser.Textures.Frame} This Frame object.
+     */
+    updateUVs: function ()
+    {
+        var cx = this.cutX;
+        var cy = this.cutY;
+        var cw = this.cutWidth;
+        var ch = this.cutHeight;
+
+        //  Canvas data
+
+        var cd = this.data.drawImage;
+
+        cd.width = cw;
+        cd.height = ch;
+
+        //  WebGL data
+
+        var tw = this.source.width;
+        var th = this.source.height;
+
+        this.u0 = cx / tw;
+        this.v0 = cy / th;
+
+        this.u1 = (cx + cw) / tw;
+        this.v1 = (cy + ch) / th;
+
+        return this;
+    },
+
+    /**
+     * Updates the internal WebGL UV cache.
+     *
+     * @method Phaser.Textures.Frame#updateUVsInverted
+     * @since 3.0.0
+     *
+     * @return {Phaser.Textures.Frame} This Frame object.
+     */
+    updateUVsInverted: function ()
+    {
+        var tw = this.source.width;
+        var th = this.source.height;
+
+        this.u0 = (this.cutX + this.cutHeight) / tw;
+        this.v0 = this.cutY / th;
+
+        this.u1 = this.cutX / tw;
+        this.v1 = (this.cutY + this.cutWidth) / th;
+
+        return this;
+    },
+
+    /**
+     * Clones this Frame into a new Frame object.
+     *
+     * @method Phaser.Textures.Frame#clone
+     * @since 3.0.0
+     *
+     * @return {Phaser.Textures.Frame} A clone of this Frame.
+     */
+    clone: function ()
+    {
+        var clone = new Frame(this.texture, this.name, this.sourceIndex);
+
+        clone.cutX = this.cutX;
+        clone.cutY = this.cutY;
+        clone.cutWidth = this.cutWidth;
+        clone.cutHeight = this.cutHeight;
+
+        clone.x = this.x;
+        clone.y = this.y;
+
+        clone.width = this.width;
+        clone.height = this.height;
+
+        clone.halfWidth = this.halfWidth;
+        clone.halfHeight = this.halfHeight;
+
+        clone.centerX = this.centerX;
+        clone.centerY = this.centerY;
