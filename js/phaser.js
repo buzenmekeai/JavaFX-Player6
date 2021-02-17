@@ -22160,3 +22160,237 @@ var Frame = new Class({
          * @default false
          * @since 3.0.0
          */
+        this.rotated = false;
+
+        /**
+         * Over-rides the Renderer setting.
+         * -1 = use Renderer Setting
+         * 0 = No rounding
+         * 1 = Round
+         *
+         * @name Phaser.Textures.Frame#autoRound
+         * @type {integer}
+         * @default -1
+         * @since 3.0.0
+         */
+        this.autoRound = -1;
+
+        /**
+         * Any Frame specific custom data can be stored here.
+         *
+         * @name Phaser.Textures.Frame#customData
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.customData = {};
+
+        /**
+         * WebGL UV u0 value.
+         *
+         * @name Phaser.Textures.Frame#u0
+         * @type {number}
+         * @default 0
+         * @since 3.11.0
+         */
+        this.u0 = 0;
+
+        /**
+         * WebGL UV v0 value.
+         *
+         * @name Phaser.Textures.Frame#v0
+         * @type {number}
+         * @default 0
+         * @since 3.11.0
+         */
+        this.v0 = 0;
+
+        /**
+         * WebGL UV u1 value.
+         *
+         * @name Phaser.Textures.Frame#u1
+         * @type {number}
+         * @default 0
+         * @since 3.11.0
+         */
+        this.u1 = 0;
+
+        /**
+         * WebGL UV v1 value.
+         *
+         * @name Phaser.Textures.Frame#v1
+         * @type {number}
+         * @default 0
+         * @since 3.11.0
+         */
+        this.v1 = 0;
+
+        /**
+         * The un-modified source frame, trim and UV data.
+         *
+         * @name Phaser.Textures.Frame#data
+         * @type {object}
+         * @private
+         * @since 3.0.0
+         */
+        this.data = {
+            cut: {
+                x: 0,
+                y: 0,
+                w: 0,
+                h: 0,
+                r: 0,
+                b: 0
+            },
+            trim: false,
+            sourceSize: {
+                w: 0,
+                h: 0
+            },
+            spriteSourceSize: {
+                x: 0,
+                y: 0,
+                w: 0,
+                h: 0,
+                r: 0,
+                b: 0
+            },
+            radius: 0,
+            drawImage: {
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0
+            }
+        };
+
+        this.setSize(width, height, x, y);
+    },
+
+    /**
+     * Sets the width, height, x and y of this Frame.
+     * 
+     * This is called automatically by the constructor
+     * and should rarely be changed on-the-fly.
+     *
+     * @method Phaser.Textures.Frame#setSize
+     * @since 3.7.0
+     *
+     * @param {integer} width - The width of the frame before being trimmed.
+     * @param {integer} height - The height of the frame before being trimmed.
+     * @param {integer} [x=0] - The x coordinate of the top-left of this Frame.
+     * @param {integer} [y=0] - The y coordinate of the top-left of this Frame.
+     *
+     * @return {Phaser.Textures.Frame} This Frame object.
+     */
+    setSize: function (width, height, x, y)
+    {
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = 0; }
+
+        this.cutX = x;
+        this.cutY = y;
+        this.cutWidth = width;
+        this.cutHeight = height;
+
+        this.width = width;
+        this.height = height;
+
+        this.halfWidth = Math.floor(width * 0.5);
+        this.halfHeight = Math.floor(height * 0.5);
+
+        this.centerX = Math.floor(width / 2);
+        this.centerY = Math.floor(height / 2);
+
+        var data = this.data;
+        var cut = data.cut;
+
+        cut.x = x;
+        cut.y = y;
+        cut.w = width;
+        cut.h = height;
+        cut.r = x + width;
+        cut.b = y + height;
+
+        data.sourceSize.w = width;
+        data.sourceSize.h = height;
+
+        data.spriteSourceSize.w = width;
+        data.spriteSourceSize.h = height;
+
+        data.radius = 0.5 * Math.sqrt(width * width + height * height);
+
+        var drawImage = data.drawImage;
+
+        drawImage.x = x;
+        drawImage.y = y;
+        drawImage.width = width;
+        drawImage.height = height;
+
+        return this.updateUVs();
+    },
+
+    /**
+     * If the frame was trimmed when added to the Texture Atlas, this records the trim and source data.
+     *
+     * @method Phaser.Textures.Frame#setTrim
+     * @since 3.0.0
+     *
+     * @param {number} actualWidth - The width of the frame before being trimmed.
+     * @param {number} actualHeight - The height of the frame before being trimmed.
+     * @param {number} destX - The destination X position of the trimmed frame for display.
+     * @param {number} destY - The destination Y position of the trimmed frame for display.
+     * @param {number} destWidth - The destination width of the trimmed frame for display.
+     * @param {number} destHeight - The destination height of the trimmed frame for display.
+     *
+     * @return {Phaser.Textures.Frame} This Frame object.
+     */
+    setTrim: function (actualWidth, actualHeight, destX, destY, destWidth, destHeight)
+    {
+        var data = this.data;
+        var ss = data.spriteSourceSize;
+
+        //  Store actual values
+
+        data.trim = true;
+
+        data.sourceSize.w = actualWidth;
+        data.sourceSize.h = actualHeight;
+
+        ss.x = destX;
+        ss.y = destY;
+        ss.w = destWidth;
+        ss.h = destHeight;
+        ss.r = destX + destWidth;
+        ss.b = destY + destHeight;
+
+        //  Adjust properties
+        this.x = destX;
+        this.y = destY;
+
+        this.width = destWidth;
+        this.height = destHeight;
+
+        this.halfWidth = destWidth * 0.5;
+        this.halfHeight = destHeight * 0.5;
+
+        this.centerX = Math.floor(destWidth / 2);
+        this.centerY = Math.floor(destHeight / 2);
+
+        return this.updateUVs();
+    },
+
+    /**
+     * Takes a crop data object and, based on the rectangular region given, calculates the
+     * required UV coordinates in order to crop this Frame for WebGL and Canvas rendering.
+     * 
+     * This is called directly by the Game Object Texture Components `setCrop` method.
+     * Please use that method to crop a Game Object.
+     *
+     * @method Phaser.Textures.Frame#setCropUVs
+     * @since 3.11.0
+     * 
+     * @param {object} crop - The crop data object. This is the `GameObject._crop` property.
+     * @param {number} x - The x coordinate to start the crop from. Cannot be negative or exceed the Frame width.
+     * @param {number} y - The y coordinate to start the crop from. Cannot be negative or exceed the Frame height.
+     * @param {number} width - The width of the crop rectangle. Cannot exceed the Frame width.
+     * @param {number} height - The height of the crop rectangle. Cannot exceed the Frame height.
