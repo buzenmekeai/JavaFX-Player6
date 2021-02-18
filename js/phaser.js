@@ -22624,3 +22624,199 @@ var Frame = new Class({
 
         clone.centerX = this.centerX;
         clone.centerY = this.centerY;
+
+        clone.rotated = this.rotated;
+
+        clone.data = Extend(true, clone.data, this.data);
+
+        clone.updateUVs();
+
+        return clone;
+    },
+
+    /**
+     * Destroys this Frames references.
+     *
+     * @method Phaser.Textures.Frame#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.texture = null;
+
+        this.source = null;
+    },
+
+    /**
+     * The width of the Frame in its un-trimmed, un-padded state, as prepared in the art package,
+     * before being packed.
+     *
+     * @name Phaser.Textures.Frame#realWidth
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    realWidth: {
+
+        get: function ()
+        {
+            return this.data.sourceSize.w;
+        }
+
+    },
+
+    /**
+     * The height of the Frame in its un-trimmed, un-padded state, as prepared in the art package,
+     * before being packed.
+     *
+     * @name Phaser.Textures.Frame#realHeight
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    realHeight: {
+
+        get: function ()
+        {
+            return this.data.sourceSize.h;
+        }
+
+    },
+
+    /**
+     * The radius of the Frame (derived from sqrt(w * w + h * h) / 2)
+     *
+     * @name Phaser.Textures.Frame#radius
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    radius: {
+
+        get: function ()
+        {
+            return this.data.radius;
+        }
+
+    },
+
+    /**
+     * Is the Frame trimmed or not?
+     *
+     * @name Phaser.Textures.Frame#trimmed
+     * @type {boolean}
+     * @readonly
+     * @since 3.0.0
+     */
+    trimmed: {
+
+        get: function ()
+        {
+            return this.data.trim;
+        }
+
+    },
+
+    /**
+     * The Canvas drawImage data object.
+     *
+     * @name Phaser.Textures.Frame#canvasData
+     * @type {object}
+     * @readonly
+     * @since 3.0.0
+     */
+    canvasData: {
+
+        get: function ()
+        {
+            return this.data.drawImage;
+        }
+
+    }
+
+});
+
+module.exports = Frame;
+
+
+/***/ }),
+/* 114 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Pavle Goloskokovic <pgoloskokovic@gmail.com> (http://prunegames.com)
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var EventEmitter = __webpack_require__(11);
+var Extend = __webpack_require__(20);
+var NOOP = __webpack_require__(1);
+
+/**
+ * @classdesc
+ * Class containing all the shared state and behavior of a sound object, independent of the implementation.
+ *
+ * @class BaseSound
+ * @extends Phaser.Events.EventEmitter
+ * @memberof Phaser.Sound
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Sound.BaseSoundManager} manager - Reference to the current sound manager instance.
+ * @param {string} key - Asset key for the sound.
+ * @param {SoundConfig} [config] - An optional config object containing default sound settings.
+ */
+var BaseSound = new Class({
+
+    Extends: EventEmitter,
+
+    initialize:
+
+    function BaseSound (manager, key, config)
+    {
+        EventEmitter.call(this);
+
+        /**
+         * Local reference to the sound manager.
+         *
+         * @name Phaser.Sound.BaseSound#manager
+         * @type {Phaser.Sound.BaseSoundManager}
+         * @private
+         * @since 3.0.0
+         */
+        this.manager = manager;
+
+        /**
+         * Asset key for the sound.
+         *
+         * @name Phaser.Sound.BaseSound#key
+         * @type {string}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.key = key;
+
+        /**
+         * Flag indicating if sound is currently playing.
+         *
+         * @name Phaser.Sound.BaseSound#isPlaying
+         * @type {boolean}
+         * @default false
+         * @readonly
+         * @since 3.0.0
+         */
+        this.isPlaying = false;
+
+        /**
+         * Flag indicating if sound is currently paused.
+         *
+         * @name Phaser.Sound.BaseSound#isPaused
+         * @type {boolean}
+         * @default false
+         * @readonly
+         * @since 3.0.0
+         */
+        this.isPaused = false;
