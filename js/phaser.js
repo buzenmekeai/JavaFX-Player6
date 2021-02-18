@@ -22820,3 +22820,199 @@ var BaseSound = new Class({
          * @since 3.0.0
          */
         this.isPaused = false;
+
+        /**
+         * A property that holds the value of sound's actual playback rate,
+         * after its rate and detune values has been combined with global
+         * rate and detune values.
+         *
+         * @name Phaser.Sound.BaseSound#totalRate
+         * @type {number}
+         * @default 1
+         * @readonly
+         * @since 3.0.0
+         */
+        this.totalRate = 1;
+
+        /**
+         * A value representing the duration, in seconds.
+         * It could be total sound duration or a marker duration.
+         *
+         * @name Phaser.Sound.BaseSound#duration
+         * @type {number}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.duration = this.duration || 0;
+
+        /**
+         * The total duration of the sound in seconds.
+         *
+         * @name Phaser.Sound.BaseSound#totalDuration
+         * @type {number}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.totalDuration = this.totalDuration || 0;
+
+        /**
+         * A config object used to store default sound settings' values.
+         * Default values will be set by properties' setters.
+         *
+         * @name Phaser.Sound.BaseSound#config
+         * @type {SoundConfig}
+         * @private
+         * @since 3.0.0
+         */
+        this.config = {
+
+            mute: false,
+            volume: 1,
+            rate: 1,
+            detune: 0,
+            seek: 0,
+            loop: false,
+            delay: 0
+
+        };
+
+        /**
+         * Reference to the currently used config.
+         * It could be default config or marker config.
+         *
+         * @name Phaser.Sound.BaseSound#currentConfig
+         * @type {SoundConfig}
+         * @private
+         * @since 3.0.0
+         */
+        this.currentConfig = this.config;
+
+        this.config = Extend(this.config, config);
+
+        /**
+         * Object containing markers definitions.
+         *
+         * @name Phaser.Sound.BaseSound#markers
+         * @type {Object.<string, SoundMarker>}
+         * @default {}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.markers = {};
+
+        /**
+         * Currently playing marker.
+         * 'null' if whole sound is playing.
+         *
+         * @name Phaser.Sound.BaseSound#currentMarker
+         * @type {SoundMarker}
+         * @default null
+         * @readonly
+         * @since 3.0.0
+         */
+        this.currentMarker = null;
+
+        /**
+         * Flag indicating if destroy method was called on this sound.
+         *
+         * @name Phaser.Sound.BaseSound#pendingRemove
+         * @type {boolean}
+         * @private
+         * @default false
+         * @since 3.0.0
+         */
+        this.pendingRemove = false;
+    },
+
+    /**
+     * Adds a marker into the current sound. A marker is represented by name, start time, duration, and optionally config object.
+     * This allows you to bundle multiple sounds together into a single audio file and use markers to jump between them for playback.
+     *
+     * @method Phaser.Sound.BaseSound#addMarker
+     * @since 3.0.0
+     *
+     * @param {SoundMarker} marker - Marker object.
+     *
+     * @return {boolean} Whether the marker was added successfully.
+     */
+    addMarker: function (marker)
+    {
+        if (!marker || !marker.name || typeof marker.name !== 'string')
+        {
+            return false;
+        }
+
+        if (this.markers[marker.name])
+        {
+            // eslint-disable-next-line no-console
+            console.error('addMarker ' + marker.name + ' already exists in Sound');
+
+            return false;
+        }
+
+        marker = Extend(true, {
+            name: '',
+            start: 0,
+            duration: this.totalDuration - (marker.start || 0),
+            config: {
+                mute: false,
+                volume: 1,
+                rate: 1,
+                detune: 0,
+                seek: 0,
+                loop: false,
+                delay: 0
+            }
+        }, marker);
+
+        this.markers[marker.name] = marker;
+
+        return true;
+    },
+
+    /**
+     * Updates previously added marker.
+     *
+     * @method Phaser.Sound.BaseSound#updateMarker
+     * @since 3.0.0
+     *
+     * @param {SoundMarker} marker - Marker object with updated values.
+     *
+     * @return {boolean} Whether the marker was updated successfully.
+     */
+    updateMarker: function (marker)
+    {
+        if (!marker || !marker.name || typeof marker.name !== 'string')
+        {
+            return false;
+        }
+
+        if (!this.markers[marker.name])
+        {
+            // eslint-disable-next-line no-console
+            console.warn('Audio Marker: ' + marker.name + ' missing in Sound: ' + this.key);
+
+            return false;
+        }
+
+        this.markers[marker.name] = Extend(true, this.markers[marker.name], marker);
+
+        return true;
+    },
+
+    /**
+     * Removes a marker from the sound.
+     *
+     * @method Phaser.Sound.BaseSound#removeMarker
+     * @since 3.0.0
+     *
+     * @param {string} markerName - The name of the marker to remove.
+     *
+     * @return {?SoundMarker} Removed marker object or 'null' if there was no marker with provided name.
+     */
+    removeMarker: function (markerName)
+    {
+        var marker = this.markers[markerName];
+
+        if (!marker)
+        {
