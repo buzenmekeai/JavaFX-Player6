@@ -23448,3 +23448,211 @@ var BaseSoundManager = new Class({
      * @since 3.0.0
      *
      * @param {string} key - Asset key for the sound.
+     * @param {SoundConfig} [config] - An optional config object containing default sound settings.
+     *
+     * @return {Phaser.Sound.BaseSound.AudioSpriteSound} The new audio sprite sound instance.
+     */
+    addAudioSprite: function (key, config)
+    {
+        if (config === undefined) { config = {}; }
+
+        var sound = this.add(key, config);
+
+        sound.spritemap = this.jsonCache.get(key).spritemap;
+
+        for (var markerName in sound.spritemap)
+        {
+            if (!sound.spritemap.hasOwnProperty(markerName))
+            {
+                continue;
+            }
+
+            var markerConfig = Clone(config);
+
+            var marker = sound.spritemap[markerName];
+
+            markerConfig.loop = (marker.hasOwnProperty('loop')) ? marker.loop : false;
+
+            sound.addMarker({
+                name: markerName,
+                start: marker.start,
+                duration: marker.end - marker.start,
+                config: markerConfig
+            });
+        }
+
+        return sound;
+    },
+
+    /**
+     * Enables playing sound on the fly without the need to keep a reference to it.
+     * Sound will auto destroy once its playback ends.
+     *
+     * @method Phaser.Sound.BaseSoundManager#play
+     * @since 3.0.0
+     *
+     * @param {string} key - Asset key for the sound.
+     * @param {(SoundConfig|SoundMarker)} [extra] - An optional additional object containing settings to be applied to the sound. It could be either config or marker object.
+     *
+     * @return {boolean} Whether the sound started playing successfully.
+     */
+    play: function (key, extra)
+    {
+        var sound = this.add(key);
+
+        sound.once('ended', sound.destroy, sound);
+
+        if (extra)
+        {
+            if (extra.name)
+            {
+                sound.addMarker(extra);
+
+                return sound.play(extra.name);
+            }
+            else
+            {
+                return sound.play(extra);
+            }
+        }
+        else
+        {
+            return sound.play();
+        }
+    },
+
+    /**
+     * Enables playing audio sprite sound on the fly without the need to keep a reference to it.
+     * Sound will auto destroy once its playback ends.
+     *
+     * @method Phaser.Sound.BaseSoundManager#playAudioSprite
+     * @since 3.0.0
+     *
+     * @param {string} key - Asset key for the sound.
+     * @param {string} spriteName - The name of the sound sprite to play.
+     * @param {SoundConfig} [config] - An optional config object containing default sound settings.
+     *
+     * @return {boolean} Whether the audio sprite sound started playing successfully.
+     */
+    playAudioSprite: function (key, spriteName, config)
+    {
+        var sound = this.addAudioSprite(key);
+
+        sound.once('ended', sound.destroy, sound);
+
+        return sound.play(spriteName, config);
+    },
+
+    /**
+     * Removes a sound from the sound manager.
+     * The removed sound is destroyed before removal.
+     *
+     * @method Phaser.Sound.BaseSoundManager#remove
+     * @since 3.0.0
+     *
+     * @param {Phaser.Sound.BaseSound} sound - The sound object to remove.
+     *
+     * @return {boolean} True if the sound was removed successfully, otherwise false.
+     */
+    remove: function (sound)
+    {
+        var index = this.sounds.indexOf(sound);
+
+        if (index !== -1)
+        {
+            sound.destroy();
+
+            this.sounds.splice(index, 1);
+
+            return true;
+        }
+
+        return false;
+    },
+
+    /**
+     * Removes all sounds from the sound manager that have an asset key matching the given value.
+     * The removed sounds are destroyed before removal.
+     *
+     * @method Phaser.Sound.BaseSoundManager#removeByKey
+     * @since 3.0.0
+     *
+     * @param {string} key - The key to match when removing sound objects.
+     *
+     * @return {number} The number of matching sound objects that were removed.
+     */
+    removeByKey: function (key)
+    {
+        var removed = 0;
+
+        for (var i = this.sounds.length - 1; i >= 0; i--)
+        {
+            var sound = this.sounds[i];
+
+            if (sound.key === key)
+            {
+                sound.destroy();
+
+                this.sounds.splice(i, 1);
+
+                removed++;
+            }
+        }
+
+        return removed;
+    },
+
+    /**
+     * @event Phaser.Sound.BaseSoundManager#pauseall
+     * @param {Phaser.Sound.BaseSoundManager} soundManager - Reference to the sound manager that emitted event.
+     */
+
+    /**
+     * Pauses all the sounds in the game.
+     *
+     * @method Phaser.Sound.BaseSoundManager#pauseAll
+     * @fires Phaser.Sound.BaseSoundManager#pauseall
+     * @since 3.0.0
+     */
+    pauseAll: function ()
+    {
+        this.forEachActiveSound(function (sound)
+        {
+            sound.pause();
+        });
+
+        this.emit('pauseall', this);
+    },
+
+    /**
+     * @event Phaser.Sound.BaseSoundManager#resumeall
+     * @param {Phaser.Sound.BaseSoundManager} soundManager - Reference to the sound manager that emitted event.
+     */
+
+    /**
+     * Resumes all the sounds in the game.
+     *
+     * @method Phaser.Sound.BaseSoundManager#resumeAll
+     * @fires Phaser.Sound.BaseSoundManager#resumeall
+     * @since 3.0.0
+     */
+    resumeAll: function ()
+    {
+        this.forEachActiveSound(function (sound)
+        {
+            sound.resume();
+        });
+
+        this.emit('resumeall', this);
+    },
+
+    /**
+     * @event Phaser.Sound.BaseSoundManager#stopall
+     * @param {Phaser.Sound.BaseSoundManager} soundManager - Reference to the sound manager that emitted event.
+     */
+
+    /**
+     * Stops all the sounds in the game.
+     *
+     * @method Phaser.Sound.BaseSoundManager#stopAll
+     * @fires Phaser.Sound.BaseSoundManager#stopall
