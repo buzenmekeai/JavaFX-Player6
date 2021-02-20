@@ -23866,3 +23866,213 @@ var BaseSoundManager = new Class({
     /**
      * @event Phaser.Sound.BaseSoundManager#detune
      * @param {Phaser.Sound.BaseSoundManager} soundManager - Reference to the sound manager that emitted event.
+     * @param {number} value - An updated value of Phaser.Sound.BaseSoundManager#detune property.
+     */
+
+    /**
+     * Global detuning of all sounds in [cents](https://en.wikipedia.org/wiki/Cent_%28music%29).
+     * The range of the value is -1200 to 1200, but we recommend setting it to [50](https://en.wikipedia.org/wiki/50_Cent).
+     *
+     * @name Phaser.Sound.BaseSoundManager#detune
+     * @type {number}
+     * @default 0
+     * @since 3.0.0
+     */
+    detune: {
+
+        get: function ()
+        {
+            return this._detune;
+        },
+
+        set: function (value)
+        {
+            this._detune = value;
+
+            this.forEachActiveSound(function (sound)
+            {
+                sound.calculateRate();
+            });
+
+            this.emit('detune', this, value);
+        }
+
+    }
+
+});
+
+module.exports = BaseSoundManager;
+
+
+/***/ }),
+/* 116 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Scene consts.
+ * 
+ * @ignore
+ */
+
+var CONST = {
+
+    /**
+     * Scene state.
+     * 
+     * @name Phaser.Scenes.PENDING
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    PENDING: 0,
+
+    /**
+     * Scene state.
+     * 
+     * @name Phaser.Scenes.INIT
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    INIT: 1,
+
+    /**
+     * Scene state.
+     * 
+     * @name Phaser.Scenes.START
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    START: 2,
+
+    /**
+     * Scene state.
+     * 
+     * @name Phaser.Scenes.LOADING
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    LOADING: 3,
+
+    /**
+     * Scene state.
+     * 
+     * @name Phaser.Scenes.CREATING
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    CREATING: 4,
+
+    /**
+     * Scene state.
+     * 
+     * @name Phaser.Scenes.RUNNING
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    RUNNING: 5,
+
+    /**
+     * Scene state.
+     * 
+     * @name Phaser.Scenes.PAUSED
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    PAUSED: 6,
+
+    /**
+     * Scene state.
+     * 
+     * @name Phaser.Scenes.SLEEPING
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    SLEEPING: 7,
+
+    /**
+     * Scene state.
+     * 
+     * @name Phaser.Scenes.SHUTDOWN
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    SHUTDOWN: 8,
+
+    /**
+     * Scene state.
+     * 
+     * @name Phaser.Scenes.DESTROYED
+     * @readonly
+     * @type {integer}
+     * @since 3.0.0
+     */
+    DESTROYED: 9
+
+};
+
+module.exports = CONST;
+
+
+/***/ }),
+/* 117 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Checks if the given `width` and `height` are a power of two.
+ * Useful for checking texture dimensions.
+ *
+ * @function Phaser.Math.Pow2.IsSizePowerOfTwo
+ * @since 3.0.0
+ *
+ * @param {number} width - The width.
+ * @param {number} height - The height.
+ *
+ * @return {boolean} `true` if `width` and `height` are a power of two, otherwise `false`.
+ */
+var IsSizePowerOfTwo = function (width, height)
+{
+    return (width > 0 && (width & (width - 1)) === 0 && height > 0 && (height & (height - 1)) === 0);
+};
+
+module.exports = IsSizePowerOfTwo;
+
+
+/***/ }),
+/* 118 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var OS = __webpack_require__(92);
+
+/**
+ * Determines the browser type and version running this Phaser Game instance.
+ * These values are read-only and populated during the boot sequence of the game.
+ * They are then referenced by internal game systems and are available for you to access
+ * via `this.sys.game.device.browser` from within any Scene.
+ * 
+ * @typedef {object} Phaser.Device.Browser
