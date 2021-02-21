@@ -24304,3 +24304,209 @@ var Smoothing = function ()
     /**
      * Returns `true` if the given context has image smoothing enabled, otherwise returns `false`.
      * Returns null if no smoothing prefix is available.
+     *
+     * @function Phaser.Display.Canvas.Smoothing.isEnabled
+     * @since 3.0.0
+     *
+     * @param {(CanvasRenderingContext2D|WebGLRenderingContext)} context - [description]
+     *
+     * @return {?boolean} [description]
+     */
+    var isEnabled = function (context)
+    {
+        return (prefix !== null) ? context[prefix] : null;
+    };
+
+    return {
+        disable: disable,
+        enable: enable,
+        getPrefix: getPrefix,
+        isEnabled: isEnabled
+    };
+
+};
+
+module.exports = Smoothing();
+
+
+/***/ }),
+/* 121 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(14);
+var DegToRad = __webpack_require__(31);
+var EventEmitter = __webpack_require__(11);
+var Rectangle = __webpack_require__(9);
+var TransformMatrix = __webpack_require__(38);
+var ValueToColor = __webpack_require__(178);
+var Vector2 = __webpack_require__(3);
+
+/**
+ * @typedef {object} JSONCameraBounds
+ * @property {number} x - The horizontal position of camera
+ * @property {number} y - The vertical position of camera
+ * @property {number} width - The width size of camera
+ * @property {number} height - The height size of camera
+ */
+
+/**
+ * @typedef {object} JSONCamera
+ *
+ * @property {string} name - The name of the camera
+ * @property {number} x - The horizontal position of camera
+ * @property {number} y - The vertical position of camera
+ * @property {number} width - The width size of camera
+ * @property {number} height - The height size of camera
+ * @property {number} zoom - The zoom of camera
+ * @property {number} rotation - The rotation of camera
+ * @property {boolean} roundPixels - The round pixels st status of camera
+ * @property {number} scrollX - The horizontal scroll of camera
+ * @property {number} scrollY - The vertical scroll of camera
+ * @property {string} backgroundColor - The background color of camera
+ * @property {(JSONCameraBounds|undefined)} [bounds] - The bounds of camera
+ */
+
+/**
+ * @classdesc
+ * A Base Camera class.
+ *
+ * The Camera is the way in which all games are rendered in Phaser. They provide a view into your game world,
+ * and can be positioned, rotated, zoomed and scrolled accordingly.
+ *
+ * A Camera consists of two elements: The viewport and the scroll values.
+ *
+ * The viewport is the physical position and size of the Camera within your game. Cameras, by default, are
+ * created the same size as your game, but their position and size can be set to anything. This means if you
+ * wanted to create a camera that was 320x200 in size, positioned in the bottom-right corner of your game,
+ * you'd adjust the viewport to do that (using methods like `setViewport` and `setSize`).
+ *
+ * If you wish to change where the Camera is looking in your game, then you scroll it. You can do this
+ * via the properties `scrollX` and `scrollY` or the method `setScroll`. Scrolling has no impact on the
+ * viewport, and changing the viewport has no impact on the scrolling.
+ *
+ * By default a Camera will render all Game Objects it can see. You can change this using the `ignore` method,
+ * allowing you to filter Game Objects out on a per-Camera basis.
+ * 
+ * The Base Camera is extended by the Camera class, which adds in special effects including Fade,
+ * Flash and Camera Shake, as well as the ability to follow Game Objects.
+ * 
+ * The Base Camera was introduced in Phaser 3.12. It was split off from the Camera class, to allow
+ * you to isolate special effects as needed. Therefore the 'since' values for properties of this class relate
+ * to when they were added to the Camera class.
+ *
+ * @class BaseCamera
+ * @memberof Phaser.Cameras.Scene2D
+ * @constructor
+ * @since 3.12.0
+ * 
+ * @extends Phaser.Events.EventEmitter
+ * @extends Phaser.GameObjects.Components.Alpha
+ * @extends Phaser.GameObjects.Components.Visible
+ *
+ * @param {number} x - The x position of the Camera, relative to the top-left of the game canvas.
+ * @param {number} y - The y position of the Camera, relative to the top-left of the game canvas.
+ * @param {number} width - The width of the Camera, in pixels.
+ * @param {number} height - The height of the Camera, in pixels.
+ */
+var BaseCamera = new Class({
+
+    Extends: EventEmitter,
+
+    Mixins: [
+        Components.Alpha,
+        Components.Visible
+    ],
+
+    initialize:
+
+    function BaseCamera (x, y, width, height)
+    {
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = 0; }
+        if (width === undefined) { width = 0; }
+        if (height === undefined) { height = 0; }
+
+        EventEmitter.call(this);
+
+        /**
+         * A reference to the Scene this camera belongs to.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#scene
+         * @type {Phaser.Scene}
+         * @since 3.0.0
+         */
+        this.scene;
+
+        /**
+         * A reference to the Game Scene Manager.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#sceneManager
+         * @type {Phaser.Scenes.SceneManager}
+         * @since 3.12.0
+         */
+        this.sceneManager;
+
+        /**
+         * A reference to the Game Config.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#config
+         * @type {object}
+         * @readonly
+         * @since 3.12.0
+         */
+        this.config;
+
+        /**
+         * The Camera ID. Assigned by the Camera Manager and used to handle camera exclusion.
+         * This value is a bitmask.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#id
+         * @type {integer}
+         * @readonly
+         * @since 3.11.0
+         */
+        this.id = 0;
+
+        /**
+         * The name of the Camera. This is left empty for your own use.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#name
+         * @type {string}
+         * @default ''
+         * @since 3.0.0
+         */
+        this.name = '';
+
+        /**
+         * The resolution of the Game, used in most Camera calculations.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#resolution
+         * @type {number}
+         * @readonly
+         * @since 3.12.0
+         */
+        this.resolution = 1;
+
+        /**
+         * Should this camera round its pixel values to integers?
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#roundPixels
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.roundPixels = false;
+
+        /**
+         * Is this Camera visible or not?
+         *
+         * A visible camera will render and perform input tests.
+         * An invisible camera will not render anything and will skip input tests.
+         *
