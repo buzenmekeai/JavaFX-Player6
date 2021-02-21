@@ -24076,3 +24076,231 @@ var OS = __webpack_require__(92);
  * via `this.sys.game.device.browser` from within any Scene.
  * 
  * @typedef {object} Phaser.Device.Browser
+ * @since 3.0.0
+ * 
+ * @property {boolean} chrome - Set to true if running in Chrome.
+ * @property {boolean} edge - Set to true if running in Microsoft Edge browser.
+ * @property {boolean} firefox - Set to true if running in Firefox.
+ * @property {boolean} ie - Set to true if running in Internet Explorer 11 or less (not Edge).
+ * @property {boolean} mobileSafari - Set to true if running in Mobile Safari.
+ * @property {boolean} opera - Set to true if running in Opera.
+ * @property {boolean} safari - Set to true if running in Safari.
+ * @property {boolean} silk - Set to true if running in the Silk browser (as used on the Amazon Kindle)
+ * @property {boolean} trident - Set to true if running a Trident version of Internet Explorer (IE11+)
+ * @property {number} chromeVersion - If running in Chrome this will contain the major version number.
+ * @property {number} firefoxVersion - If running in Firefox this will contain the major version number.
+ * @property {number} ieVersion - If running in Internet Explorer this will contain the major version number. Beyond IE10 you should use Browser.trident and Browser.tridentVersion.
+ * @property {number} safariVersion - If running in Safari this will contain the major version number.
+ * @property {number} tridentVersion - If running in Internet Explorer 11 this will contain the major version number. See {@link http://msdn.microsoft.com/en-us/library/ie/ms537503(v=vs.85).aspx}
+ */
+var Browser = {
+
+    chrome: false,
+    chromeVersion: 0,
+    edge: false,
+    firefox: false,
+    firefoxVersion: 0,
+    ie: false,
+    ieVersion: 0,
+    mobileSafari: false,
+    opera: false,
+    safari: false,
+    safariVersion: 0,
+    silk: false,
+    trident: false,
+    tridentVersion: 0
+
+};
+
+function init ()
+{
+    var ua = navigator.userAgent;
+
+    if (/Edge\/\d+/.test(ua))
+    {
+        Browser.edge = true;
+    }
+    else if ((/Chrome\/(\d+)/).test(ua) && !OS.windowsPhone)
+    {
+        Browser.chrome = true;
+        Browser.chromeVersion = parseInt(RegExp.$1, 10);
+    }
+    else if ((/Firefox\D+(\d+)/).test(ua))
+    {
+        Browser.firefox = true;
+        Browser.firefoxVersion = parseInt(RegExp.$1, 10);
+    }
+    else if ((/AppleWebKit/).test(ua) && OS.iOS)
+    {
+        Browser.mobileSafari = true;
+    }
+    else if ((/MSIE (\d+\.\d+);/).test(ua))
+    {
+        Browser.ie = true;
+        Browser.ieVersion = parseInt(RegExp.$1, 10);
+    }
+    else if ((/Opera/).test(ua))
+    {
+        Browser.opera = true;
+    }
+    else if ((/Safari/).test(ua) && !OS.windowsPhone)
+    {
+        Browser.safari = true;
+    }
+    else if ((/Trident\/(\d+\.\d+)(.*)rv:(\d+\.\d+)/).test(ua))
+    {
+        Browser.ie = true;
+        Browser.trident = true;
+        Browser.tridentVersion = parseInt(RegExp.$1, 10);
+        Browser.ieVersion = parseInt(RegExp.$3, 10);
+    }
+
+    //  Silk gets its own if clause because its ua also contains 'Safari'
+    if ((/Silk/).test(ua))
+    {
+        Browser.silk = true;
+    }
+
+    return Browser;
+}
+
+module.exports = init();
+
+
+/***/ }),
+/* 119 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculates a linear (interpolation) value over t.
+ *
+ * @function Phaser.Math.Linear
+ * @since 3.0.0
+ *
+ * @param {number} p0 - The first point.
+ * @param {number} p1 - The second point.
+ * @param {number} t - The percentage between p0 and p1 to return, represented as a number between 0 and 1.
+ *
+ * @return {number} The step t% of the way between p0 and p1.
+ */
+var Linear = function (p0, p1, t)
+{
+    return (p1 - p0) * t + p0;
+};
+
+module.exports = Linear;
+
+
+/***/ }),
+/* 120 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  Browser specific prefix, so not going to change between contexts, only between browsers
+var prefix = '';
+
+/**
+ * @namespace Phaser.Display.Canvas.Smoothing
+ * @since 3.0.0
+ */
+var Smoothing = function ()
+{
+    /**
+     * Gets the Smoothing Enabled vendor prefix being used on the given context, or null if not set.
+     *
+     * @function Phaser.Display.Canvas.Smoothing.getPrefix
+     * @since 3.0.0
+     *
+     * @param {(CanvasRenderingContext2D|WebGLRenderingContext)} context - [description]
+     *
+     * @return {string} [description]
+     */
+    var getPrefix = function (context)
+    {
+        var vendors = [ 'i', 'webkitI', 'msI', 'mozI', 'oI' ];
+
+        for (var i = 0; i < vendors.length; i++)
+        {
+            var s = vendors[i] + 'mageSmoothingEnabled';
+
+            if (s in context)
+            {
+                return s;
+            }
+        }
+
+        return null;
+    };
+
+    /**
+     * Sets the Image Smoothing property on the given context. Set to false to disable image smoothing.
+     * By default browsers have image smoothing enabled, which isn't always what you visually want, especially
+     * when using pixel art in a game. Note that this sets the property on the context itself, so that any image
+     * drawn to the context will be affected. This sets the property across all current browsers but support is
+     * patchy on earlier browsers, especially on mobile.
+     *
+     * @function Phaser.Display.Canvas.Smoothing.enable
+     * @since 3.0.0
+     *
+     * @param {(CanvasRenderingContext2D|WebGLRenderingContext)} context - [description]
+     *
+     * @return {(CanvasRenderingContext2D|WebGLRenderingContext)} [description]
+     */
+    var enable = function (context)
+    {
+        if (prefix === '')
+        {
+            prefix = getPrefix(context);
+        }
+
+        if (prefix)
+        {
+            context[prefix] = true;
+        }
+
+        return context;
+    };
+
+    /**
+     * Sets the Image Smoothing property on the given context. Set to false to disable image smoothing.
+     * By default browsers have image smoothing enabled, which isn't always what you visually want, especially
+     * when using pixel art in a game. Note that this sets the property on the context itself, so that any image
+     * drawn to the context will be affected. This sets the property across all current browsers but support is
+     * patchy on earlier browsers, especially on mobile.
+     *
+     * @function Phaser.Display.Canvas.Smoothing.disable
+     * @since 3.0.0
+     *
+     * @param {(CanvasRenderingContext2D|WebGLRenderingContext)} context - [description]
+     *
+     * @return {(CanvasRenderingContext2D|WebGLRenderingContext)} [description]
+     */
+    var disable = function (context)
+    {
+        if (prefix === '')
+        {
+            prefix = getPrefix(context);
+        }
+
+        if (prefix)
+        {
+            context[prefix] = false;
+        }
+
+        return context;
+    };
+
+    /**
+     * Returns `true` if the given context has image smoothing enabled, otherwise returns `false`.
+     * Returns null if no smoothing prefix is available.
