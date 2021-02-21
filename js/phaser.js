@@ -24510,3 +24510,206 @@ var BaseCamera = new Class({
          * A visible camera will render and perform input tests.
          * An invisible camera will not render anything and will skip input tests.
          *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#visible
+         * @type {boolean}
+         * @default true
+         * @since 3.10.0
+         */
+
+        /**
+         * Is this Camera using a bounds to restrict scrolling movement?
+         *
+         * Set this property along with the bounds via `Camera.setBounds`.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#useBounds
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.useBounds = false;
+
+        /**
+         * The World View is a Rectangle that defines the area of the 'world' the Camera is currently looking at.
+         * This factors in the Camera viewport size, zoom and scroll position and is updated in the Camera preRender step.
+         * If you have enabled Camera bounds the worldview will be clamped to those bounds accordingly.
+         * You can use it for culling or intersection checks.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#worldView
+         * @type {Phaser.Geom.Rectangle}
+         * @readonly
+         * @since 3.11.0
+         */
+        this.worldView = new Rectangle();
+
+        /**
+         * Is this Camera dirty?
+         * 
+         * A dirty Camera has had either its viewport size, bounds, scroll, rotation or zoom levels changed since the last frame.
+         * 
+         * This flag is cleared during the `postRenderCamera` method of the renderer.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#dirty
+         * @type {boolean}
+         * @default true
+         * @since 3.11.0
+         */
+        this.dirty = true;
+
+        /**
+         * The x position of the Camera viewport, relative to the top-left of the game canvas.
+         * The viewport is the area into which the camera renders.
+         * To adjust the position the camera is looking at in the game world, see the `scrollX` value.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#x
+         * @type {number}
+         * @private
+         * @since 3.0.0
+         */
+        this._x = x;
+
+        /**
+         * The y position of the Camera, relative to the top-left of the game canvas.
+         * The viewport is the area into which the camera renders.
+         * To adjust the position the camera is looking at in the game world, see the `scrollY` value.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#y
+         * @type {number}
+         * @private
+         * @since 3.0.0
+         */
+        this._y = y;
+
+        /**
+         * Internal Camera X value multiplied by the resolution.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#_cx
+         * @type {number}
+         * @private
+         * @since 3.12.0
+         */
+        this._cx = 0;
+
+        /**
+         * Internal Camera Y value multiplied by the resolution.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#_cy
+         * @type {number}
+         * @private
+         * @since 3.12.0
+         */
+        this._cy = 0;
+
+        /**
+         * Internal Camera Width value multiplied by the resolution.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#_cw
+         * @type {number}
+         * @private
+         * @since 3.12.0
+         */
+        this._cw = 0;
+
+        /**
+         * Internal Camera Height value multiplied by the resolution.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#_ch
+         * @type {number}
+         * @private
+         * @since 3.12.0
+         */
+        this._ch = 0;
+
+        /**
+         * The width of the Camera viewport, in pixels.
+         *
+         * The viewport is the area into which the Camera renders. Setting the viewport does
+         * not restrict where the Camera can scroll to.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#_width
+         * @type {number}
+         * @private
+         * @since 3.11.0
+         */
+        this._width = width;
+
+        /**
+         * The height of the Camera viewport, in pixels.
+         *
+         * The viewport is the area into which the Camera renders. Setting the viewport does
+         * not restrict where the Camera can scroll to.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#_height
+         * @type {number}
+         * @private
+         * @since 3.11.0
+         */
+        this._height = height;
+
+        /**
+         * The bounds the camera is restrained to during scrolling.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#_bounds
+         * @type {Phaser.Geom.Rectangle}
+         * @private
+         * @since 3.0.0
+         */
+        this._bounds = new Rectangle();
+
+        /**
+         * The horizontal scroll position of this Camera.
+         *
+         * Change this value to cause the Camera to scroll around your Scene.
+         *
+         * Alternatively, setting the Camera to follow a Game Object, via the `startFollow` method,
+         * will automatically adjust the Camera scroll values accordingly.
+         *
+         * You can set the bounds within which the Camera can scroll via the `setBounds` method.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#_scrollX
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.11.0
+         */
+        this._scrollX = 0;
+
+        /**
+         * The vertical scroll position of this Camera.
+         *
+         * Change this value to cause the Camera to scroll around your Scene.
+         *
+         * Alternatively, setting the Camera to follow a Game Object, via the `startFollow` method,
+         * will automatically adjust the Camera scroll values accordingly.
+         *
+         * You can set the bounds within which the Camera can scroll via the `setBounds` method.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#_scrollY
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.11.0
+         */
+        this._scrollY = 0;
+
+        /**
+         * The Camera zoom value. Change this value to zoom in, or out of, a Scene.
+         *
+         * A value of 0.5 would zoom the Camera out, so you can now see twice as much
+         * of the Scene as before. A value of 2 would zoom the Camera in, so every pixel
+         * now takes up 2 pixels when rendered.
+         *
+         * Set to 1 to return to the default zoom level.
+         *
+         * Be careful to never set this value to zero.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#_zoom
+         * @type {number}
+         * @private
+         * @default 1
+         * @since 3.11.0
+         */
+        this._zoom = 1;
+
+        /**
+         * The rotation of the Camera in radians.
+         *
