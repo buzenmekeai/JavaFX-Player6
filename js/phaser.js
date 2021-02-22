@@ -24713,3 +24713,195 @@ var BaseCamera = new Class({
         /**
          * The rotation of the Camera in radians.
          *
+         * Camera rotation always takes place based on the Camera viewport. By default, rotation happens
+         * in the center of the viewport. You can adjust this with the `originX` and `originY` properties.
+         *
+         * Rotation influences the rendering of _all_ Game Objects visible by this Camera. However, it does not
+         * rotate the Camera viewport itself, which always remains an axis-aligned rectangle.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#_rotation
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.11.0
+         */
+        this._rotation = 0;
+
+        /**
+         * A local transform matrix used for internal calculations.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#matrix
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @private
+         * @since 3.0.0
+         */
+        this.matrix = new TransformMatrix();
+
+        /**
+         * Does this Camera have a transparent background?
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#transparent
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.transparent = true;
+
+        /**
+         * The background color of this Camera. Only used if `transparent` is `false`.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#backgroundColor
+         * @type {Phaser.Display.Color}
+         * @since 3.0.0
+         */
+        this.backgroundColor = ValueToColor('rgba(0,0,0,0)');
+
+        /**
+         * The Camera alpha value. Setting this property impacts every single object that this Camera
+         * renders. You can either set the property directly, i.e. via a Tween, to fade a Camera in or out,
+         * or via the chainable `setAlpha` method instead.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#alpha
+         * @type {number}
+         * @default 1
+         * @since 3.11.0
+         */
+
+        /**
+         * Should the camera cull Game Objects before checking them for input hit tests?
+         * In some special cases it may be beneficial to disable this.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#disableCull
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.disableCull = false;
+
+        /**
+         * A temporary array of culled objects.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#culledObjects
+         * @type {Phaser.GameObjects.GameObject[]}
+         * @default []
+         * @private
+         * @since 3.0.0
+         */
+        this.culledObjects = [];
+
+        /**
+         * The mid-point of the Camera in 'world' coordinates.
+         *
+         * Use it to obtain exactly where in the world the center of the camera is currently looking.
+         *
+         * This value is updated in the preRender method, after the scroll values and follower
+         * have been processed.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#midPoint
+         * @type {Phaser.Math.Vector2}
+         * @readonly
+         * @since 3.11.0
+         */
+        this.midPoint = new Vector2(width / 2, height / 2);
+
+        /**
+         * The horizontal origin of rotation for this Camera.
+         *
+         * By default the camera rotates around the center of the viewport.
+         *
+         * Changing the origin allows you to adjust the point in the viewport from which rotation happens.
+         * A value of 0 would rotate from the top-left of the viewport. A value of 1 from the bottom right.
+         *
+         * See `setOrigin` to set both origins in a single, chainable call.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#originX
+         * @type {number}
+         * @default 0.5
+         * @since 3.11.0
+         */
+        this.originX = 0.5;
+
+        /**
+         * The vertical origin of rotation for this Camera.
+         *
+         * By default the camera rotates around the center of the viewport.
+         *
+         * Changing the origin allows you to adjust the point in the viewport from which rotation happens.
+         * A value of 0 would rotate from the top-left of the viewport. A value of 1 from the bottom right.
+         *
+         * See `setOrigin` to set both origins in a single, chainable call.
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#originY
+         * @type {number}
+         * @default 0.5
+         * @since 3.11.0
+         */
+        this.originY = 0.5;
+
+        /**
+         * Does this Camera have a custom viewport?
+         *
+         * @name Phaser.Cameras.Scene2D.BaseCamera#_customViewport
+         * @type {boolean}
+         * @private
+         * @default false
+         * @since 3.12.0
+         */
+        this._customViewport = false;
+    },
+
+    /**
+     * Set the Alpha level of this Camera. The alpha controls the opacity of the Camera as it renders.
+     * Alpha values are provided as a float between 0, fully transparent, and 1, fully opaque.
+     *
+     * @method Phaser.Cameras.Scene2D.BaseCamera#setAlpha
+     * @since 3.11.0
+     *
+     * @param {number} [value=1] - The Camera alpha value.
+     *
+     * @return {this} This Camera instance.
+     */
+
+    /**
+     * Sets the rotation origin of this Camera.
+     *
+     * The values are given in the range 0 to 1 and are only used when calculating Camera rotation.
+     *
+     * By default the camera rotates around the center of the viewport.
+     *
+     * Changing the origin allows you to adjust the point in the viewport from which rotation happens.
+     * A value of 0 would rotate from the top-left of the viewport. A value of 1 from the bottom right.
+     *
+     * @method Phaser.Cameras.Scene2D.BaseCamera#setOrigin
+     * @since 3.11.0
+     *
+     * @param {number} [x=0.5] - The horizontal origin value.
+     * @param {number} [y=x] - The vertical origin value. If not defined it will be set to the value of `x`.
+     *
+     * @return {this} This Camera instance.
+     */
+    setOrigin: function (x, y)
+    {
+        if (x === undefined) { x = 0.5; }
+        if (y === undefined) { y = x; }
+
+        this.originX = x;
+        this.originY = y;
+
+        return this;
+    },
+
+    /**
+     * Calculates what the Camera.scrollX and scrollY values would need to be in order to move
+     * the Camera so it is centered on the given x and y coordinates, without actually moving
+     * the Camera there. The results are clamped based on the Camera bounds, if set.
+     *
+     * @method Phaser.Cameras.Scene2D.BaseCamera#getScroll
+     * @since 3.11.0
+     *
+     * @param {number} x - The horizontal coordinate to center on.
+     * @param {number} y - The vertical coordinate to center on.
+     * @param {Phaser.Math.Vector2} [out] - A Vec2 to store the values in. If not given a new Vec2 is created.
+     *
+     * @return {Phaser.Math.Vector2} The scroll coordinates stored in the `x` abd `y` properties.
+     */
