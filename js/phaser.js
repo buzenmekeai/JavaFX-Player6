@@ -24905,3 +24905,259 @@ var BaseCamera = new Class({
      *
      * @return {Phaser.Math.Vector2} The scroll coordinates stored in the `x` abd `y` properties.
      */
+    getScroll: function (x, y, out)
+    {
+        if (out === undefined) { out = new Vector2(); }
+
+        var originX = this.width * 0.5;
+        var originY = this.height * 0.5;
+
+        out.x = x - originX;
+        out.y = y - originY;
+
+        if (this.useBounds)
+        {
+            out.x = this.clampX(out.x);
+            out.y = this.clampY(out.y);
+        }
+
+        return out;
+    },
+
+    /**
+     * Moves the Camera so that it is centered on the given coordinates, bounds allowing.
+     *
+     * @method Phaser.Cameras.Scene2D.BaseCamera#centerOn
+     * @since 3.11.0
+     *
+     * @param {number} x - The horizontal coordinate to center on.
+     * @param {number} y - The vertical coordinate to center on.
+     *
+     * @return {Phaser.Cameras.Scene2D.BaseCamera} This Camera instance.
+     */
+    centerOn: function (x, y)
+    {
+        var originX = this.width * 0.5;
+        var originY = this.height * 0.5;
+
+        this.midPoint.set(x, y);
+
+        this.scrollX = x - originX;
+        this.scrollY = y - originY;
+
+        if (this.useBounds)
+        {
+            this.scrollX = this.clampX(this.scrollX);
+            this.scrollY = this.clampY(this.scrollY);
+        }
+
+        return this;
+    },
+
+    /**
+     * Moves the Camera so that it is looking at the center of the Camera Bounds, if enabled.
+     *
+     * @method Phaser.Cameras.Scene2D.BaseCamera#centerToBounds
+     * @since 3.0.0
+     *
+     * @return {Phaser.Cameras.Scene2D.BaseCamera} This Camera instance.
+     */
+    centerToBounds: function ()
+    {
+        if (this.useBounds)
+        {
+            var bounds = this._bounds;
+            var originX = this.width * 0.5;
+            var originY = this.height * 0.5;
+
+            this.midPoint.set(bounds.centerX, bounds.centerY);
+
+            this.scrollX = bounds.centerX - originX;
+            this.scrollY = bounds.centerY - originY;
+        }
+
+        return this;
+    },
+
+    /**
+     * Moves the Camera so that it is re-centered based on its viewport size.
+     *
+     * @method Phaser.Cameras.Scene2D.BaseCamera#centerToSize
+     * @since 3.0.0
+     *
+     * @return {Phaser.Cameras.Scene2D.BaseCamera} This Camera instance.
+     */
+    centerToSize: function ()
+    {
+        this.scrollX = this.width * 0.5;
+        this.scrollY = this.height * 0.5;
+
+        return this;
+    },
+
+    /**
+     * Takes an array of Game Objects and returns a new array featuring only those objects
+     * visible by this camera.
+     *
+     * @method Phaser.Cameras.Scene2D.BaseCamera#cull
+     * @since 3.0.0
+     *
+     * @generic {Phaser.GameObjects.GameObject[]} G - [renderableObjects,$return]
+     *
+     * @param {Phaser.GameObjects.GameObject[]} renderableObjects - An array of Game Objects to cull.
+     *
+     * @return {Phaser.GameObjects.GameObject[]} An array of Game Objects visible to this Camera.
+     */
+    cull: function (renderableObjects)
+    {
+        if (this.disableCull)
+        {
+            return renderableObjects;
+        }
+
+        var cameraMatrix = this.matrix.matrix;
+
+        var mva = cameraMatrix[0];
+        var mvb = cameraMatrix[1];
+        var mvc = cameraMatrix[2];
+        var mvd = cameraMatrix[3];
+
+        /* First Invert Matrix */
+        var determinant = (mva * mvd) - (mvb * mvc);
+
+        if (!determinant)
+        {
+            return renderableObjects;
+        }
+
+        var mve = cameraMatrix[4];
+        var mvf = cameraMatrix[5];
+
+        var scrollX = this.scrollX;
+        var scrollY = this.scrollY;
+        var cameraW = this.width;
+        var cameraH = this.height;
+        var culledObjects = this.culledObjects;
+        var length = renderableObjects.length;
+
+        determinant = 1 / determinant;
+
+        culledObjects.length = 0;
+
+        for (var index = 0; index < length; ++index)
+        {
+            var object = renderableObjects[index];
+
+            if (!object.hasOwnProperty('width') || object.parentContainer)
+            {
+                culledObjects.push(object);
+                continue;
+            }
+
+            var objectW = object.width;
+            var objectH = object.height;
+            var objectX = (object.x - (scrollX * object.scrollFactorX)) - (objectW * object.originX);
+            var objectY = (object.y - (scrollY * object.scrollFactorY)) - (objectH * object.originY);
+            var tx = (objectX * mva + objectY * mvc + mve);
+            var ty = (objectX * mvb + objectY * mvd + mvf);
+            var tw = ((objectX + objectW) * mva + (objectY + objectH) * mvc + mve);
+            var th = ((objectX + objectW) * mvb + (objectY + objectH) * mvd + mvf);
+            var cullW = cameraW + objectW;
+            var cullH = cameraH + objectH;
+
+            if (tx > -objectW && ty > -objectH && tx < cullW && ty < cullH &&
+                tw > -objectW && th > -objectH && tw < cullW && th < cullH)
+            {
+                culledObjects.push(object);
+            }
+        }
+
+        return culledObjects;
+    },
+
+    /**
+     * Converts the given `x` and `y` coordinates into World space, based on this Cameras transform.
+     * You can optionally provide a Vector2, or similar object, to store the results in.
+     *
+     * @method Phaser.Cameras.Scene2D.BaseCamera#getWorldPoint
+     * @since 3.0.0
+     *
+     * @generic {Phaser.Math.Vector2} O - [output,$return]
+     *
+     * @param {number} x - The x position to convert to world space.
+     * @param {number} y - The y position to convert to world space.
+     * @param {(object|Phaser.Math.Vector2)} [output] - An optional object to store the results in. If not provided a new Vector2 will be created.
+     *
+     * @return {Phaser.Math.Vector2} An object holding the converted values in its `x` and `y` properties.
+     */
+    getWorldPoint: function (x, y, output)
+    {
+        if (output === undefined) { output = new Vector2(); }
+
+        var cameraMatrix = this.matrix.matrix;
+
+        var mva = cameraMatrix[0];
+        var mvb = cameraMatrix[1];
+        var mvc = cameraMatrix[2];
+        var mvd = cameraMatrix[3];
+        var mve = cameraMatrix[4];
+        var mvf = cameraMatrix[5];
+
+        //  Invert Matrix
+        var determinant = (mva * mvd) - (mvb * mvc);
+
+        if (!determinant)
+        {
+            output.x = x;
+            output.y = y;
+
+            return output;
+        }
+
+        determinant = 1 / determinant;
+
+        var ima = mvd * determinant;
+        var imb = -mvb * determinant;
+        var imc = -mvc * determinant;
+        var imd = mva * determinant;
+        var ime = (mvc * mvf - mvd * mve) * determinant;
+        var imf = (mvb * mve - mva * mvf) * determinant;
+
+        var c = Math.cos(this.rotation);
+        var s = Math.sin(this.rotation);
+
+        var zoom = this.zoom;
+        var res = this.resolution;
+
+        var scrollX = this.scrollX;
+        var scrollY = this.scrollY;
+
+        //  Works for zoom of 1 with any resolution, but resolution > 1 and zoom !== 1 breaks
+        var sx = x + ((scrollX * c - scrollY * s) * zoom);
+        var sy = y + ((scrollX * s + scrollY * c) * zoom);
+
+        //  Apply transform to point
+        output.x = (sx * ima + sy * imc) * res + ime;
+        output.y = (sx * imb + sy * imd) * res + imf;
+
+        return output;
+    },
+
+    /**
+     * Given a Game Object, or an array of Game Objects, it will update all of their camera filter settings
+     * so that they are ignored by this Camera. This means they will not be rendered by this Camera.
+     *
+     * @method Phaser.Cameras.Scene2D.BaseCamera#ignore
+     * @since 3.0.0
+     *
+     * @param {(Phaser.GameObjects.GameObject|Phaser.GameObjects.GameObject[]|Phaser.GameObjects.Group)} entries - The Game Object, or array of Game Objects, to be ignored by this Camera.
+     *
+     * @return {Phaser.Cameras.Scene2D.BaseCamera} This Camera instance.
+     */
+    ignore: function (entries)
+    {
+        var id = this.id;
+
+        if (!Array.isArray(entries))
+        {
+            entries = [ entries ];
