@@ -25161,3 +25161,233 @@ var BaseCamera = new Class({
         if (!Array.isArray(entries))
         {
             entries = [ entries ];
+        }
+
+        for (var i = 0; i < entries.length; i++)
+        {
+            var entry = entries[i];
+
+            if (Array.isArray(entry))
+            {
+                this.ignore(entry);
+            }
+            else if (entry.isParent)
+            {
+                this.ignore(entry.getChildren());
+            }
+            else
+            {
+                entry.cameraFilter |= id;
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Internal preRender step.
+     *
+     * @method Phaser.Cameras.Scene2D.BaseCamera#preRender
+     * @protected
+     * @since 3.0.0
+     *
+     * @param {number} baseScale - The base scale, as set in the Camera Manager.
+     * @param {number} resolution - The game resolution.
+     */
+    preRender: function (baseScale, resolution)
+    {
+        var width = this.width;
+        var height = this.height;
+
+        var halfWidth = width * 0.5;
+        var halfHeight = height * 0.5;
+
+        var zoom = this.zoom * baseScale;
+        var matrix = this.matrix;
+
+        var originX = width * this.originX;
+        var originY = height * this.originY;
+
+        var sx = this.scrollX;
+        var sy = this.scrollY;
+
+        if (this.useBounds)
+        {
+            sx = this.clampX(sx);
+            sy = this.clampY(sy);
+        }
+
+        if (this.roundPixels)
+        {
+            originX = Math.round(originX);
+            originY = Math.round(originY);
+        }
+
+        //  Values are in pixels and not impacted by zooming the Camera
+        this.scrollX = sx;
+        this.scrollY = sy;
+
+        var midX = sx + halfWidth;
+        var midY = sy + halfHeight;
+
+        //  The center of the camera, in world space, so taking zoom into account
+        //  Basically the pixel value of what it's looking at in the middle of the cam
+        this.midPoint.set(midX, midY);
+
+        var displayWidth = width / zoom;
+        var displayHeight = height / zoom;
+
+        this.worldView.setTo(
+            midX - (displayWidth / 2),
+            midY - (displayHeight / 2),
+            displayWidth,
+            displayHeight
+        );
+
+        matrix.loadIdentity();
+        matrix.scale(resolution, resolution);
+        matrix.translate(this.x + originX, this.y + originY);
+        matrix.rotate(this.rotation);
+        matrix.scale(zoom, zoom);
+        matrix.translate(-originX, -originY);
+    },
+
+    /**
+     * Takes an x value and checks it's within the range of the Camera bounds, adjusting if required.
+     * Do not call this method if you are not using camera bounds.
+     *
+     * @method Phaser.Cameras.Scene2D.BaseCamera#clampX
+     * @since 3.11.0
+     *
+     * @param {number} x - The value to horizontally scroll clamp.
+     *
+     * @return {number} The adjusted value to use as scrollX.
+     */
+    clampX: function (x)
+    {
+        var bounds = this._bounds;
+
+        var dw = this.displayWidth;
+
+        var bx = bounds.x + ((dw - this.width) / 2);
+        var bw = Math.max(bx, bx + bounds.width - dw);
+
+        if (x < bx)
+        {
+            x = bx;
+        }
+        else if (x > bw)
+        {
+            x = bw;
+        }
+
+        return x;
+    },
+
+    /**
+     * Takes a y value and checks it's within the range of the Camera bounds, adjusting if required.
+     * Do not call this method if you are not using camera bounds.
+     *
+     * @method Phaser.Cameras.Scene2D.BaseCamera#clampY
+     * @since 3.11.0
+     *
+     * @param {number} y - The value to vertically scroll clamp.
+     *
+     * @return {number} The adjusted value to use as scrollY.
+     */
+    clampY: function (y)
+    {
+        var bounds = this._bounds;
+
+        var dh = this.displayHeight;
+
+        var by = bounds.y + ((dh - this.height) / 2);
+        var bh = Math.max(by, by + bounds.height - dh);
+
+        if (y < by)
+        {
+            y = by;
+        }
+        else if (y > bh)
+        {
+            y = bh;
+        }
+
+        return y;
+    },
+
+    /*
+        var gap = this._zoomInversed;
+        return gap * Math.round((src.x - this.scrollX * src.scrollFactorX) / gap);
+    */
+
+    /**
+     * If this Camera has previously had movement bounds set on it, this will remove them.
+     *
+     * @method Phaser.Cameras.Scene2D.BaseCamera#removeBounds
+     * @since 3.0.0
+     *
+     * @return {Phaser.Cameras.Scene2D.BaseCamera} This Camera instance.
+     */
+    removeBounds: function ()
+    {
+        this.useBounds = false;
+
+        this.dirty = true;
+
+        this._bounds.setEmpty();
+
+        return this;
+    },
+
+    /**
+     * Set the rotation of this Camera. This causes everything it renders to appear rotated.
+     *
+     * Rotating a camera does not rotate the viewport itself, it is applied during rendering.
+     *
+     * @method Phaser.Cameras.Scene2D.BaseCamera#setAngle
+     * @since 3.0.0
+     *
+     * @param {number} [value=0] - The cameras angle of rotation, given in degrees.
+     *
+     * @return {Phaser.Cameras.Scene2D.BaseCamera} This Camera instance.
+     */
+    setAngle: function (value)
+    {
+        if (value === undefined) { value = 0; }
+
+        this.rotation = DegToRad(value);
+
+        return this;
+    },
+
+    /**
+     * Sets the background color for this Camera.
+     *
+     * By default a Camera has a transparent background but it can be given a solid color, with any level
+     * of transparency, via this method.
+     *
+     * The color value can be specified using CSS color notation, hex or numbers.
+     *
+     * @method Phaser.Cameras.Scene2D.BaseCamera#setBackgroundColor
+     * @since 3.0.0
+     *
+     * @param {(string|number|InputColorObject)} [color='rgba(0,0,0,0)'] - The color value. In CSS, hex or numeric color notation.
+     *
+     * @return {Phaser.Cameras.Scene2D.BaseCamera} This Camera instance.
+     */
+    setBackgroundColor: function (color)
+    {
+        if (color === undefined) { color = 'rgba(0,0,0,0)'; }
+
+        this.backgroundColor = ValueToColor(color);
+
+        this.transparent = (this.backgroundColor.alpha === 0);
+
+        return this;
+    },
+
+    /**
+     * Set the bounds of the Camera. The bounds are an axis-aligned rectangle.
+     * 
+     * The Camera bounds controls where the Camera can scroll to, stopping it from scrolling off the
