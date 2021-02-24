@@ -26075,3 +26075,257 @@ var BaseCamera = new Class({
      * would be 1600, as it's displaying twice as many pixels as zoom level 1.
      *
      * Equally, a camera with a width of 800 and zoom of 2 would have a display width
+     * of 400 pixels.
+     *
+     * @name Phaser.Cameras.Scene2D.BaseCamera#displayWidth
+     * @type {number}
+     * @readonly
+     * @since 3.11.0
+     */
+    displayWidth: {
+
+        get: function ()
+        {
+            return this.width / this.zoom;
+        }
+
+    },
+
+    /**
+     * The displayed height of the camera viewport, factoring in the camera zoom level.
+     *
+     * If a camera has a viewport height of 600 and a zoom of 0.5 then its display height
+     * would be 1200, as it's displaying twice as many pixels as zoom level 1.
+     *
+     * Equally, a camera with a height of 600 and zoom of 2 would have a display height
+     * of 300 pixels.
+     *
+     * @name Phaser.Cameras.Scene2D.BaseCamera#displayHeight
+     * @type {number}
+     * @readonly
+     * @since 3.11.0
+     */
+    displayHeight: {
+
+        get: function ()
+        {
+            return this.height / this.zoom;
+        }
+
+    }
+
+});
+
+module.exports = BaseCamera;
+
+
+/***/ }),
+/* 122 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Shuffles the contents of the given array using the Fisher-Yates implementation.
+ *
+ * The original array is modified directly and returned.
+ *
+ * @function Phaser.Utils.Array.Shuffle
+ * @since 3.0.0
+ *
+ * @param {array} array - The array to shuffle. This array is modified in place.
+ *
+ * @return {array} The shuffled array.
+ */
+var Shuffle = function (array)
+{
+    for (var i = array.length - 1; i > 0; i--)
+    {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+
+    return array;
+};
+
+module.exports = Shuffle;
+
+
+/***/ }),
+/* 123 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+
+/**
+ * @callback DataEachCallback
+ *
+ * @param {*} parent - The parent object of the DataManager.
+ * @param {string} key - The key of the value.
+ * @param {*} value - The value.
+ * @param {...*} [args] - Additional arguments that will be passed to the callback, after the game object, key, and data.
+ */
+
+/**
+ * @classdesc
+ * The Data Component features a means to store pieces of data specific to a Game Object, System or Plugin.
+ * You can then search, query it, and retrieve the data. The parent must either extend EventEmitter,
+ * or have a property called `events` that is an instance of it.
+ *
+ * @class DataManager
+ * @memberof Phaser.Data
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {object} parent - The object that this DataManager belongs to.
+ * @param {Phaser.Events.EventEmitter} eventEmitter - The DataManager's event emitter.
+ */
+var DataManager = new Class({
+
+    initialize:
+
+    function DataManager (parent, eventEmitter)
+    {
+        /**
+         * The object that this DataManager belongs to.
+         *
+         * @name Phaser.Data.DataManager#parent
+         * @type {*}
+         * @since 3.0.0
+         */
+        this.parent = parent;
+
+        /**
+         * The DataManager's event emitter.
+         *
+         * @name Phaser.Data.DataManager#events
+         * @type {Phaser.Events.EventEmitter}
+         * @since 3.0.0
+         */
+        this.events = eventEmitter;
+
+        if (!eventEmitter)
+        {
+            this.events = (parent.events) ? parent.events : parent;
+        }
+
+        /**
+         * The data list.
+         *
+         * @name Phaser.Data.DataManager#list
+         * @type {Object.<string, *>}
+         * @default {}
+         * @since 3.0.0
+         */
+        this.list = {};
+
+        /**
+         * The public values list. You can use this to access anything you have stored
+         * in this Data Manager. For example, if you set a value called `gold` you can
+         * access it via:
+         *
+         * ```javascript
+         * this.data.values.gold;
+         * ```
+         *
+         * You can also modify it directly:
+         * 
+         * ```javascript
+         * this.data.values.gold += 1000;
+         * ```
+         *
+         * Doing so will emit a `setdata` event from the parent of this Data Manager.
+         * 
+         * Do not modify this object directly. Adding properties directly to this object will not
+         * emit any events. Always use `DataManager.set` to create new items the first time around.
+         *
+         * @name Phaser.Data.DataManager#values
+         * @type {Object.<string, *>}
+         * @default {}
+         * @since 3.10.0
+         */
+        this.values = {};
+
+        /**
+         * Whether setting data is frozen for this DataManager.
+         *
+         * @name Phaser.Data.DataManager#_frozen
+         * @type {boolean}
+         * @private
+         * @default false
+         * @since 3.0.0
+         */
+        this._frozen = false;
+
+        if (!parent.hasOwnProperty('sys') && this.events)
+        {
+            this.events.once('destroy', this.destroy, this);
+        }
+    },
+
+    /**
+     * Retrieves the value for the given key, or undefined if it doesn't exist.
+     *
+     * You can also access values via the `values` object. For example, if you had a key called `gold` you can do either:
+     * 
+     * ```javascript
+     * this.data.get('gold');
+     * ```
+     *
+     * Or access the value directly:
+     * 
+     * ```javascript
+     * this.data.values.gold;
+     * ```
+     *
+     * You can also pass in an array of keys, in which case an array of values will be returned:
+     * 
+     * ```javascript
+     * this.data.get([ 'gold', 'armor', 'health' ]);
+     * ```
+     *
+     * This approach is useful for destructuring arrays in ES6.
+     *
+     * @method Phaser.Data.DataManager#get
+     * @since 3.0.0
+     *
+     * @param {(string|string[])} key - The key of the value to retrieve, or an array of keys.
+     *
+     * @return {*} The value belonging to the given key, or an array of values, the order of which will match the input array.
+     */
+    get: function (key)
+    {
+        var list = this.list;
+
+        if (Array.isArray(key))
+        {
+            var output = [];
+
+            for (var i = 0; i < key.length; i++)
+            {
+                output.push(list[key[i]]);
+            }
+
+            return output;
+        }
+        else
+        {
+            return list[key];
+        }
+    },
+
+    /**
+     * Retrieves all data values in a new object.
+     *
