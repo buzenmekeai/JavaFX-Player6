@@ -25850,3 +25850,228 @@ var BaseCamera = new Class({
         get: function ()
         {
             return this._y;
+        },
+
+        set: function (value)
+        {
+            this._y = value;
+            this._cy = value * this.resolution;
+            this.updateSystem();
+        }
+
+    },
+
+    /**
+     * The width of the Camera viewport, in pixels.
+     *
+     * The viewport is the area into which the Camera renders. Setting the viewport does
+     * not restrict where the Camera can scroll to.
+     *
+     * @name Phaser.Cameras.Scene2D.BaseCamera#width
+     * @type {number}
+     * @since 3.0.0
+     */
+    width: {
+
+        get: function ()
+        {
+            return this._width;
+        },
+
+        set: function (value)
+        {
+            this._width = value;
+            this._cw = value * this.resolution;
+            this.updateSystem();
+        }
+
+    },
+
+    /**
+     * The height of the Camera viewport, in pixels.
+     *
+     * The viewport is the area into which the Camera renders. Setting the viewport does
+     * not restrict where the Camera can scroll to.
+     *
+     * @name Phaser.Cameras.Scene2D.BaseCamera#height
+     * @type {number}
+     * @since 3.0.0
+     */
+    height: {
+
+        get: function ()
+        {
+            return this._height;
+        },
+
+        set: function (value)
+        {
+            this._height = value;
+            this._ch = value * this.resolution;
+            this.updateSystem();
+        }
+
+    },
+
+    /**
+     * The horizontal scroll position of this Camera.
+     *
+     * Change this value to cause the Camera to scroll around your Scene.
+     *
+     * Alternatively, setting the Camera to follow a Game Object, via the `startFollow` method,
+     * will automatically adjust the Camera scroll values accordingly.
+     *
+     * You can set the bounds within which the Camera can scroll via the `setBounds` method.
+     *
+     * @name Phaser.Cameras.Scene2D.BaseCamera#scrollX
+     * @type {number}
+     * @default 0
+     * @since 3.0.0
+     */
+    scrollX: {
+
+        get: function ()
+        {
+            return this._scrollX;
+        },
+
+        set: function (value)
+        {
+            this._scrollX = value;
+            this.dirty = true;
+        }
+
+    },
+
+    /**
+     * The vertical scroll position of this Camera.
+     *
+     * Change this value to cause the Camera to scroll around your Scene.
+     *
+     * Alternatively, setting the Camera to follow a Game Object, via the `startFollow` method,
+     * will automatically adjust the Camera scroll values accordingly.
+     *
+     * You can set the bounds within which the Camera can scroll via the `setBounds` method.
+     *
+     * @name Phaser.Cameras.Scene2D.BaseCamera#scrollY
+     * @type {number}
+     * @default 0
+     * @since 3.0.0
+     */
+    scrollY: {
+
+        get: function ()
+        {
+            return this._scrollY;
+        },
+
+        set: function (value)
+        {
+            this._scrollY = value;
+            this.dirty = true;
+        }
+
+    },
+
+    /**
+     * The Camera zoom value. Change this value to zoom in, or out of, a Scene.
+     *
+     * A value of 0.5 would zoom the Camera out, so you can now see twice as much
+     * of the Scene as before. A value of 2 would zoom the Camera in, so every pixel
+     * now takes up 2 pixels when rendered.
+     *
+     * Set to 1 to return to the default zoom level.
+     *
+     * Be careful to never set this value to zero.
+     *
+     * @name Phaser.Cameras.Scene2D.BaseCamera#zoom
+     * @type {number}
+     * @default 1
+     * @since 3.0.0
+     */
+    zoom: {
+
+        get: function ()
+        {
+            return this._zoom;
+        },
+
+        set: function (value)
+        {
+            this._zoom = value;
+            this.dirty = true;
+        }
+
+    },
+
+    /**
+     * The rotation of the Camera in radians.
+     *
+     * Camera rotation always takes place based on the Camera viewport. By default, rotation happens
+     * in the center of the viewport. You can adjust this with the `originX` and `originY` properties.
+     *
+     * Rotation influences the rendering of _all_ Game Objects visible by this Camera. However, it does not
+     * rotate the Camera viewport itself, which always remains an axis-aligned rectangle.
+     *
+     * @name Phaser.Cameras.Scene2D.BaseCamera#rotation
+     * @type {number}
+     * @private
+     * @default 0
+     * @since 3.11.0
+     */
+    rotation: {
+
+        get: function ()
+        {
+            return this._rotation;
+        },
+
+        set: function (value)
+        {
+            this._rotation = value;
+            this.dirty = true;
+        }
+
+    },
+
+    /**
+     * The x position of the center of the Camera's viewport, relative to the top-left of the game canvas.
+     *
+     * @name Phaser.Cameras.Scene2D.BaseCamera#centerX
+     * @type {number}
+     * @readonly
+     * @since 3.10.0
+     */
+    centerX: {
+
+        get: function ()
+        {
+            return this.x + (0.5 * this.width);
+        }
+
+    },
+
+    /**
+     * The y position of the center of the Camera's viewport, relative to the top-left of the game canvas.
+     *
+     * @name Phaser.Cameras.Scene2D.BaseCamera#centerY
+     * @type {number}
+     * @readonly
+     * @since 3.10.0
+     */
+    centerY: {
+
+        get: function ()
+        {
+            return this.y + (0.5 * this.height);
+        }
+
+    },
+
+    /**
+     * The displayed width of the camera viewport, factoring in the camera zoom level.
+     *
+     * If a camera has a viewport width of 800 and a zoom of 0.5 then its display width
+     * would be 1600, as it's displaying twice as many pixels as zoom level 1.
+     *
+     * Equally, a camera with a width of 800 and zoom of 2 would have a display width
