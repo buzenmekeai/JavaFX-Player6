@@ -26329,3 +26329,210 @@ var DataManager = new Class({
     /**
      * Retrieves all data values in a new object.
      *
+     * @method Phaser.Data.DataManager#getAll
+     * @since 3.0.0
+     *
+     * @return {Object.<string, *>} All data values.
+     */
+    getAll: function ()
+    {
+        var results = {};
+
+        for (var key in this.list)
+        {
+            if (this.list.hasOwnProperty(key))
+            {
+                results[key] = this.list[key];
+            }
+        }
+
+        return results;
+    },
+
+    /**
+     * Queries the DataManager for the values of keys matching the given regular expression.
+     *
+     * @method Phaser.Data.DataManager#query
+     * @since 3.0.0
+     *
+     * @param {RegExp} search - A regular expression object. If a non-RegExp object obj is passed, it is implicitly converted to a RegExp by using new RegExp(obj).
+     *
+     * @return {Object.<string, *>} The values of the keys matching the search string.
+     */
+    query: function (search)
+    {
+        var results = {};
+
+        for (var key in this.list)
+        {
+            if (this.list.hasOwnProperty(key) && key.match(search))
+            {
+                results[key] = this.list[key];
+            }
+        }
+
+        return results;
+    },
+
+    /**
+     * Sets a value for the given key. If the key doesn't already exist in the Data Manager then it is created.
+     * 
+     * ```javascript
+     * data.set('name', 'Red Gem Stone');
+     * ```
+     *
+     * You can also pass in an object of key value pairs as the first argument:
+     *
+     * ```javascript
+     * data.set({ name: 'Red Gem Stone', level: 2, owner: 'Link', gold: 50 });
+     * ```
+     *
+     * To get a value back again you can call `get`:
+     * 
+     * ```javascript
+     * data.get('gold');
+     * ```
+     * 
+     * Or you can access the value directly via the `values` property, where it works like any other variable:
+     * 
+     * ```javascript
+     * data.values.gold += 50;
+     * ```
+     *
+     * When the value is first set, a `setdata` event is emitted.
+     *
+     * If the key already exists, a `changedata` event is emitted instead, along an event named after the key.
+     * For example, if you updated an existing key called `PlayerLives` then it would emit the event `changedata_PlayerLives`.
+     * These events will be emitted regardless if you use this method to set the value, or the direct `values` setter.
+     *
+     * Please note that the data keys are case-sensitive and must be valid JavaScript Object property strings.
+     * This means the keys `gold` and `Gold` are treated as two unique values within the Data Manager.
+     *
+     * @method Phaser.Data.DataManager#set
+     * @since 3.0.0
+     *
+     * @param {(string|object)} key - The key to set the value for. Or an object or key value pairs. If an object the `data` argument is ignored.
+     * @param {*} data - The value to set for the given key. If an object is provided as the key this argument is ignored.
+     *
+     * @return {Phaser.Data.DataManager} This DataManager object.
+     */
+    set: function (key, data)
+    {
+        if (this._frozen)
+        {
+            return this;
+        }
+
+        if (typeof key === 'string')
+        {
+            return this.setValue(key, data);
+        }
+        else
+        {
+            for (var entry in key)
+            {
+                this.setValue(entry, key[entry]);
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Internal value setter, called automatically by the `set` method.
+     *
+     * @method Phaser.Data.DataManager#setValue
+     * @private
+     * @since 3.10.0
+     *
+     * @param {string} key - The key to set the value for.
+     * @param {*} data - The value to set.
+     *
+     * @return {Phaser.Data.DataManager} This DataManager object.
+     */
+    setValue: function (key, data)
+    {
+        if (this._frozen)
+        {
+            return this;
+        }
+
+        if (this.has(key))
+        {
+            //  Hit the key getter, which will in turn emit the events.
+            this.values[key] = data;
+        }
+        else
+        {
+            var _this = this;
+            var list = this.list;
+            var events = this.events;
+            var parent = this.parent;
+
+            Object.defineProperty(this.values, key, {
+
+                enumerable: true,
+                
+                configurable: true,
+
+                get: function ()
+                {
+                    return list[key];
+                },
+
+                set: function (value)
+                {
+                    if (!_this._frozen)
+                    {
+                        var previousValue = list[key];
+                        list[key] = value;
+
+                        events.emit('changedata', parent, key, value, previousValue);
+                        events.emit('changedata_' + key, parent, value, previousValue);
+                    }
+                }
+
+            });
+
+            list[key] = data;
+
+            events.emit('setdata', parent, key, data);
+        }
+
+        return this;
+    },
+
+    /**
+     * Passes all data entries to the given callback.
+     *
+     * @method Phaser.Data.DataManager#each
+     * @since 3.0.0
+     *
+     * @param {DataEachCallback} callback - The function to call.
+     * @param {*} [context] - Value to use as `this` when executing callback.
+     * @param {...*} [args] - Additional arguments that will be passed to the callback, after the game object, key, and data.
+     *
+     * @return {Phaser.Data.DataManager} This DataManager object.
+     */
+    each: function (callback, context)
+    {
+        var args = [ this.parent, null, undefined ];
+
+        for (var i = 1; i < arguments.length; i++)
+        {
+            args.push(arguments[i]);
+        }
+
+        for (var key in this.list)
+        {
+            args[1] = key;
+            args[2] = this.list[key];
+
+            callback.apply(context, args);
+        }
+
+        return this;
+    },
+
+    /**
+     * Merge the given object of key value pairs into this DataManager.
