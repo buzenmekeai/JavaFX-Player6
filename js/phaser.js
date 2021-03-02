@@ -26771,3 +26771,229 @@ var DataManager = new Class({
             {
                 if (this.list[key] !== undefined)
                 {
+                    i++;
+                }
+            }
+
+            return i;
+        }
+
+    }
+
+});
+
+module.exports = DataManager;
+
+
+/***/ }),
+/* 124 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Rectangle.Perimeter
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Rectangle} rect - [description]
+ *
+ * @return {number} [description]
+ */
+var Perimeter = function (rect)
+{
+    return 2 * (rect.width + rect.height);
+};
+
+module.exports = Perimeter;
+
+
+/***/ }),
+/* 125 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var BlendModes = __webpack_require__(66);
+var Circle = __webpack_require__(71);
+var CircleContains = __webpack_require__(40);
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(14);
+var GameObject = __webpack_require__(19);
+var Rectangle = __webpack_require__(9);
+var RectangleContains = __webpack_require__(39);
+
+/**
+ * @classdesc
+ * A Zone Game Object.
+ *
+ * A Zone is a non-rendering rectangular Game Object that has a position and size.
+ * It has no texture and never displays, but does live on the display list and
+ * can be moved, scaled and rotated like any other Game Object.
+ *
+ * Its primary use is for creating Drop Zones and Input Hit Areas and it has a couple of helper methods
+ * specifically for this. It is also useful for object overlap checks, or as a base for your own
+ * non-displaying Game Objects.
+
+ * The default origin is 0.5, the center of the Zone, the same as with Game Objects.
+ *
+ * @class Zone
+ * @extends Phaser.GameObjects.GameObject
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @since 3.0.0
+ *
+ * @extends Phaser.GameObjects.Components.Depth
+ * @extends Phaser.GameObjects.Components.GetBounds
+ * @extends Phaser.GameObjects.Components.Origin
+ * @extends Phaser.GameObjects.Components.ScaleMode
+ * @extends Phaser.GameObjects.Components.Transform
+ * @extends Phaser.GameObjects.Components.ScrollFactor
+ * @extends Phaser.GameObjects.Components.Visible
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Game Object belongs.
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {number} [width=1] - The width of the Game Object.
+ * @param {number} [height=1] - The height of the Game Object.
+ */
+var Zone = new Class({
+
+    Extends: GameObject,
+
+    Mixins: [
+        Components.Depth,
+        Components.GetBounds,
+        Components.Origin,
+        Components.ScaleMode,
+        Components.Transform,
+        Components.ScrollFactor,
+        Components.Visible
+    ],
+
+    initialize:
+
+    function Zone (scene, x, y, width, height)
+    {
+        if (width === undefined) { width = 1; }
+        if (height === undefined) { height = width; }
+
+        GameObject.call(this, scene, 'Zone');
+
+        this.setPosition(x, y);
+
+        /**
+         * The native (un-scaled) width of this Game Object.
+         *
+         * @name Phaser.GameObjects.Zone#width
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.width = width;
+
+        /**
+         * The native (un-scaled) height of this Game Object.
+         *
+         * @name Phaser.GameObjects.Zone#height
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.height = height;
+
+        /**
+         * The Blend Mode of the Game Object.
+         * Although a Zone never renders, it still has a blend mode to allow it to fit seamlessly into
+         * display lists without causing a batch flush.
+         *
+         * @name Phaser.GameObjects.Zone#blendMode
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.blendMode = BlendModes.NORMAL;
+
+        this.updateDisplayOrigin();
+    },
+
+    /**
+     * The displayed width of this Game Object.
+     * This value takes into account the scale factor.
+     *
+     * @name Phaser.GameObjects.Zone#displayWidth
+     * @type {number}
+     * @since 3.0.0
+     */
+    displayWidth: {
+
+        get: function ()
+        {
+            return this.scaleX * this.width;
+        },
+
+        set: function (value)
+        {
+            this.scaleX = value / this.width;
+        }
+
+    },
+
+    /**
+     * The displayed height of this Game Object.
+     * This value takes into account the scale factor.
+     *
+     * @name Phaser.GameObjects.Zone#displayHeight
+     * @type {number}
+     * @since 3.0.0
+     */
+    displayHeight: {
+
+        get: function ()
+        {
+            return this.scaleY * this.height;
+        },
+
+        set: function (value)
+        {
+            this.scaleY = value / this.height;
+        }
+
+    },
+
+    /**
+     * Sets the size of this Game Object.
+     *
+     * @method Phaser.GameObjects.Zone#setSize
+     * @since 3.0.0
+     *
+     * @param {number} width - The width of this Game Object.
+     * @param {number} height - The height of this Game Object.
+     * @param {boolean} [resizeInput=true] - If this Zone has a Rectangle for a hit area this argument will resize the hit area as well.
+     *
+     * @return {Phaser.GameObjects.Zone} This Game Object.
+     */
+    setSize: function (width, height, resizeInput)
+    {
+        if (resizeInput === undefined) { resizeInput = true; }
+
+        this.width = width;
+        this.height = height;
+
+        if (resizeInput && this.input && this.input.hitArea instanceof Rectangle)
+        {
+            this.input.hitArea.width = width;
+            this.input.hitArea.height = height;
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets the display size of this Game Object.
