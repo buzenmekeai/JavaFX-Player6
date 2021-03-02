@@ -26536,3 +26536,238 @@ var DataManager = new Class({
 
     /**
      * Merge the given object of key value pairs into this DataManager.
+     *
+     * Any newly created values will emit a `setdata` event. Any updated values (see the `overwrite` argument)
+     * will emit a `changedata` event.
+     *
+     * @method Phaser.Data.DataManager#merge
+     * @since 3.0.0
+     *
+     * @param {Object.<string, *>} data - The data to merge.
+     * @param {boolean} [overwrite=true] - Whether to overwrite existing data. Defaults to true.
+     *
+     * @return {Phaser.Data.DataManager} This DataManager object.
+     */
+    merge: function (data, overwrite)
+    {
+        if (overwrite === undefined) { overwrite = true; }
+
+        //  Merge data from another component into this one
+        for (var key in data)
+        {
+            if (data.hasOwnProperty(key) && (overwrite || (!overwrite && !this.has(key))))
+            {
+                this.setValue(key, data[key]);
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Remove the value for the given key.
+     *
+     * If the key is found in this Data Manager it is removed from the internal lists and a
+     * `removedata` event is emitted.
+     * 
+     * You can also pass in an array of keys, in which case all keys in the array will be removed:
+     * 
+     * ```javascript
+     * this.data.remove([ 'gold', 'armor', 'health' ]);
+     * ```
+     *
+     * @method Phaser.Data.DataManager#remove
+     * @since 3.0.0
+     *
+     * @param {(string|string[])} key - The key to remove, or an array of keys to remove.
+     *
+     * @return {Phaser.Data.DataManager} This DataManager object.
+     */
+    remove: function (key)
+    {
+        if (this._frozen)
+        {
+            return this;
+        }
+
+        if (Array.isArray(key))
+        {
+            for (var i = 0; i < key.length; i++)
+            {
+                this.removeValue(key[i]);
+            }
+        }
+        else
+        {
+            return this.removeValue(key);
+        }
+
+        return this;
+    },
+
+    /**
+     * Internal value remover, called automatically by the `remove` method.
+     *
+     * @method Phaser.Data.DataManager#removeValue
+     * @private
+     * @since 3.10.0
+     *
+     * @param {string} key - The key to set the value for.
+     *
+     * @return {Phaser.Data.DataManager} This DataManager object.
+     */
+    removeValue: function (key)
+    {
+        if (this.has(key))
+        {
+            var data = this.list[key];
+
+            delete this.list[key];
+            delete this.values[key];
+
+            this.events.emit('removedata', this.parent, key, data);
+        }
+
+        return this;
+    },
+
+    /**
+     * Retrieves the data associated with the given 'key', deletes it from this Data Manager, then returns it.
+     *
+     * @method Phaser.Data.DataManager#pop
+     * @since 3.0.0
+     *
+     * @param {string} key - The key of the value to retrieve and delete.
+     *
+     * @return {*} The value of the given key.
+     */
+    pop: function (key)
+    {
+        var data = undefined;
+
+        if (!this._frozen && this.has(key))
+        {
+            data = this.list[key];
+
+            delete this.list[key];
+            delete this.values[key];
+
+            this.events.emit('removedata', this, key, data);
+        }
+
+        return data;
+    },
+
+    /**
+     * Determines whether the given key is set in this Data Manager.
+     * 
+     * Please note that the keys are case-sensitive and must be valid JavaScript Object property strings.
+     * This means the keys `gold` and `Gold` are treated as two unique values within the Data Manager.
+     *
+     * @method Phaser.Data.DataManager#has
+     * @since 3.0.0
+     *
+     * @param {string} key - The key to check.
+     *
+     * @return {boolean} Returns `true` if the key exists, otherwise `false`.
+     */
+    has: function (key)
+    {
+        return this.list.hasOwnProperty(key);
+    },
+
+    /**
+     * Freeze or unfreeze this Data Manager. A frozen Data Manager will block all attempts
+     * to create new values or update existing ones.
+     *
+     * @method Phaser.Data.DataManager#setFreeze
+     * @since 3.0.0
+     *
+     * @param {boolean} value - Whether to freeze or unfreeze the Data Manager.
+     *
+     * @return {Phaser.Data.DataManager} This DataManager object.
+     */
+    setFreeze: function (value)
+    {
+        this._frozen = value;
+
+        return this;
+    },
+
+    /**
+     * Delete all data in this Data Manager and unfreeze it.
+     *
+     * @method Phaser.Data.DataManager#reset
+     * @since 3.0.0
+     *
+     * @return {Phaser.Data.DataManager} This DataManager object.
+     */
+    reset: function ()
+    {
+        for (var key in this.list)
+        {
+            delete this.list[key];
+            delete this.values[key];
+        }
+
+        this._frozen = false;
+
+        return this;
+    },
+
+    /**
+     * Destroy this data manager.
+     *
+     * @method Phaser.Data.DataManager#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.reset();
+
+        this.events.off('changedata');
+        this.events.off('setdata');
+        this.events.off('removedata');
+
+        this.parent = null;
+    },
+
+    /**
+     * Gets or sets the frozen state of this Data Manager.
+     * A frozen Data Manager will block all attempts to create new values or update existing ones.
+     *
+     * @name Phaser.Data.DataManager#freeze
+     * @type {boolean}
+     * @since 3.0.0
+     */
+    freeze: {
+
+        get: function ()
+        {
+            return this._frozen;
+        },
+
+        set: function (value)
+        {
+            this._frozen = (value) ? true : false;
+        }
+
+    },
+
+    /**
+     * Return the total number of entries in this Data Manager.
+     *
+     * @name Phaser.Data.DataManager#count
+     * @type {integer}
+     * @since 3.0.0
+     */
+    count: {
+
+        get: function ()
+        {
+            var i = 0;
+
+            for (var key in this.list)
+            {
+                if (this.list[key] !== undefined)
+                {
