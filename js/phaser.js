@@ -26997,3 +26997,258 @@ var Zone = new Class({
 
     /**
      * Sets the display size of this Game Object.
+     * Calling this will adjust the scale.
+     *
+     * @method Phaser.GameObjects.Zone#setDisplaySize
+     * @since 3.0.0
+     *
+     * @param {number} width - The width of this Game Object.
+     * @param {number} height - The height of this Game Object.
+     *
+     * @return {Phaser.GameObjects.Zone} This Game Object.
+     */
+    setDisplaySize: function (width, height)
+    {
+        this.displayWidth = width;
+        this.displayHeight = height;
+
+        return this;
+    },
+
+    /**
+     * Sets this Zone to be a Circular Drop Zone.
+     * The circle is centered on this Zones `x` and `y` coordinates.
+     *
+     * @method Phaser.GameObjects.Zone#setCircleDropZone
+     * @since 3.0.0
+     *
+     * @param {number} radius - The radius of the Circle that will form the Drop Zone.
+     *
+     * @return {Phaser.GameObjects.Zone} This Game Object.
+     */
+    setCircleDropZone: function (radius)
+    {
+        return this.setDropZone(new Circle(0, 0, radius), CircleContains);
+    },
+
+    /**
+     * Sets this Zone to be a Rectangle Drop Zone.
+     * The rectangle is centered on this Zones `x` and `y` coordinates.
+     *
+     * @method Phaser.GameObjects.Zone#setRectangleDropZone
+     * @since 3.0.0
+     *
+     * @param {number} width - The width of the rectangle drop zone.
+     * @param {number} height - The height of the rectangle drop zone.
+     *
+     * @return {Phaser.GameObjects.Zone} This Game Object.
+     */
+    setRectangleDropZone: function (width, height)
+    {
+        return this.setDropZone(new Rectangle(0, 0, width, height), RectangleContains);
+    },
+
+    /**
+     * Allows you to define your own Geometry shape to be used as a Drop Zone.
+     *
+     * @method Phaser.GameObjects.Zone#setDropZone
+     * @since 3.0.0
+     *
+     * @param {object} shape - A Geometry shape instance, such as Phaser.Geom.Ellipse, or your own custom shape.
+     * @param {HitAreaCallback} callback - A function that will return `true` if the given x/y coords it is sent are within the shape.
+     *
+     * @return {Phaser.GameObjects.Zone} This Game Object.
+     */
+    setDropZone: function (shape, callback)
+    {
+        if (shape === undefined)
+        {
+            this.setRectangleDropZone(this.width, this.height);
+        }
+        else if (!this.input)
+        {
+            this.setInteractive(shape, callback, true);
+        }
+
+        return this;
+    },
+
+    /**
+     * A NOOP method so you can pass a Zone to a Container.
+     * Calling this method will do nothing. It is intentionally empty.
+     *
+     * @method Phaser.GameObjects.Zone#setAlpha
+     * @private
+     * @since 3.11.0
+     */
+    setAlpha: function ()
+    {
+    },
+    
+    /**
+     * A Zone does not render.
+     *
+     * @method Phaser.GameObjects.Zone#renderCanvas
+     * @private
+     * @since 3.0.0
+     */
+    renderCanvas: function ()
+    {
+    },
+
+    /**
+     * A Zone does not render.
+     *
+     * @method Phaser.GameObjects.Zone#renderWebGL
+     * @private
+     * @since 3.0.0
+     */
+    renderWebGL: function ()
+    {
+    }
+
+});
+
+module.exports = Zone;
+
+
+/***/ }),
+/* 126 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+* The `Matter.Bodies` module contains factory methods for creating rigid body models 
+* with commonly used body configurations (such as rectangles, circles and other polygons).
+*
+* See the included usage [examples](https://github.com/liabru/matter-js/tree/master/examples).
+*
+* @class Bodies
+*/
+
+// TODO: true circle bodies
+
+var Bodies = {};
+
+module.exports = Bodies;
+
+var Vertices = __webpack_require__(76);
+var Common = __webpack_require__(33);
+var Body = __webpack_require__(67);
+var Bounds = __webpack_require__(80);
+var Vector = __webpack_require__(81);
+var decomp = __webpack_require__(1069);
+
+(function() {
+
+    /**
+     * Creates a new rigid body model with a rectangle hull. 
+     * The options parameter is an object that specifies any properties you wish to override the defaults.
+     * See the properties section of the `Matter.Body` module for detailed information on what you can pass via the `options` object.
+     * @method rectangle
+     * @param {number} x
+     * @param {number} y
+     * @param {number} width
+     * @param {number} height
+     * @param {object} [options]
+     * @return {body} A new rectangle body
+     */
+    Bodies.rectangle = function(x, y, width, height, options) {
+        options = options || {};
+
+        var rectangle = { 
+            label: 'Rectangle Body',
+            position: { x: x, y: y },
+            vertices: Vertices.fromPath('L 0 0 L ' + width + ' 0 L ' + width + ' ' + height + ' L 0 ' + height)
+        };
+
+        if (options.chamfer) {
+            var chamfer = options.chamfer;
+            rectangle.vertices = Vertices.chamfer(rectangle.vertices, chamfer.radius, 
+                                    chamfer.quality, chamfer.qualityMin, chamfer.qualityMax);
+            delete options.chamfer;
+        }
+
+        return Body.create(Common.extend({}, rectangle, options));
+    };
+    
+    /**
+     * Creates a new rigid body model with a trapezoid hull. 
+     * The options parameter is an object that specifies any properties you wish to override the defaults.
+     * See the properties section of the `Matter.Body` module for detailed information on what you can pass via the `options` object.
+     * @method trapezoid
+     * @param {number} x
+     * @param {number} y
+     * @param {number} width
+     * @param {number} height
+     * @param {number} slope
+     * @param {object} [options]
+     * @return {body} A new trapezoid body
+     */
+    Bodies.trapezoid = function(x, y, width, height, slope, options) {
+        options = options || {};
+
+        slope *= 0.5;
+        var roof = (1 - (slope * 2)) * width;
+        
+        var x1 = width * slope,
+            x2 = x1 + roof,
+            x3 = x2 + x1,
+            verticesPath;
+
+        if (slope < 0.5) {
+            verticesPath = 'L 0 0 L ' + x1 + ' ' + (-height) + ' L ' + x2 + ' ' + (-height) + ' L ' + x3 + ' 0';
+        } else {
+            verticesPath = 'L 0 0 L ' + x2 + ' ' + (-height) + ' L ' + x3 + ' 0';
+        }
+
+        var trapezoid = { 
+            label: 'Trapezoid Body',
+            position: { x: x, y: y },
+            vertices: Vertices.fromPath(verticesPath)
+        };
+
+        if (options.chamfer) {
+            var chamfer = options.chamfer;
+            trapezoid.vertices = Vertices.chamfer(trapezoid.vertices, chamfer.radius, 
+                                    chamfer.quality, chamfer.qualityMin, chamfer.qualityMax);
+            delete options.chamfer;
+        }
+
+        return Body.create(Common.extend({}, trapezoid, options));
+    };
+
+    /**
+     * Creates a new rigid body model with a circle hull. 
+     * The options parameter is an object that specifies any properties you wish to override the defaults.
+     * See the properties section of the `Matter.Body` module for detailed information on what you can pass via the `options` object.
+     * @method circle
+     * @param {number} x
+     * @param {number} y
+     * @param {number} radius
+     * @param {object} [options]
+     * @param {number} [maxSides]
+     * @return {body} A new circle body
+     */
+    Bodies.circle = function(x, y, radius, options, maxSides) {
+        options = options || {};
+
+        var circle = {
+            label: 'Circle Body',
+            circleRadius: radius
+        };
+        
+        // approximate circles with polygons until true circles implemented in SAT
+        maxSides = maxSides || 25;
+        var sides = Math.ceil(Math.max(10, Math.min(maxSides, radius)));
+
+        // optimisation: always use even number of sides (half the number of unique axes)
+        if (sides % 2 === 1)
+            sides += 1;
+
+        return Bodies.polygon(x, y, sides, radius, Common.extend({}, circle, options));
+    };
+
+    /**
+     * Creates a new rigid body model with a regular polygon hull with the given number of sides. 
+     * The options parameter is an object that specifies any properties you wish to override the defaults.
+     * See the properties section of the `Matter.Body` module for detailed information on what you can pass via the `options` object.
