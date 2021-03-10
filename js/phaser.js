@@ -27712,3 +27712,205 @@ var Tween = new Class({
         this.timeScale = 1;
 
         /**
+         * Loop this tween? Can be -1 for an infinite loop, or an integer.
+         * When enabled it will play through ALL TweenDatas again (use TweenData.repeat to loop a single TD)
+         *
+         * @name Phaser.Tweens.Tween#loop
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.loop = 0;
+
+        /**
+         * Time in ms/frames before the tween loops.
+         *
+         * @name Phaser.Tweens.Tween#loopDelay
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.loopDelay = 0;
+
+        /**
+         * How many loops are left to run?
+         *
+         * @name Phaser.Tweens.Tween#loopCounter
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.loopCounter = 0;
+
+        /**
+         * Time in ms/frames before the 'onComplete' event fires. This never fires if loop = -1 (as it never completes)
+         *
+         * @name Phaser.Tweens.Tween#completeDelay
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.completeDelay = 0;
+
+        /**
+         * Countdown timer (used by timeline offset, loopDelay and completeDelay)
+         *
+         * @name Phaser.Tweens.Tween#countdown
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.countdown = 0;
+
+        /**
+         * Set only if this Tween is part of a Timeline.
+         *
+         * @name Phaser.Tweens.Tween#offset
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.offset = 0;
+
+        /**
+         * Set only if this Tween is part of a Timeline. The calculated offset amount.
+         *
+         * @name Phaser.Tweens.Tween#calculatedOffset
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.calculatedOffset = 0;
+
+        /**
+         * The current state of the tween
+         *
+         * @name Phaser.Tweens.Tween#state
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.state = TWEEN_CONST.PENDING_ADD;
+
+        /**
+         * The state of the tween when it was paused (used by Resume)
+         *
+         * @name Phaser.Tweens.Tween#_pausedState
+         * @type {integer}
+         * @private
+         * @since 3.0.0
+         */
+        this._pausedState = TWEEN_CONST.PENDING_ADD;
+
+        /**
+         * Does the Tween start off paused? (if so it needs to be started with Tween.play)
+         *
+         * @name Phaser.Tweens.Tween#paused
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.paused = false;
+
+        /**
+         * Elapsed time in ms/frames of this run through the Tween.
+         *
+         * @name Phaser.Tweens.Tween#elapsed
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.elapsed = 0;
+
+        /**
+         * Total elapsed time in ms/frames of the entire Tween, including looping.
+         *
+         * @name Phaser.Tweens.Tween#totalElapsed
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.totalElapsed = 0;
+
+        /**
+         * Time in ms/frames for the whole Tween to play through once, excluding loop amounts and loop delays.
+         *
+         * @name Phaser.Tweens.Tween#duration
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.duration = 0;
+
+        /**
+         * Value between 0 and 1. The amount through the Tween, excluding loops.
+         *
+         * @name Phaser.Tweens.Tween#progress
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.progress = 0;
+
+        /**
+         * Time in ms/frames for the Tween to complete (including looping)
+         *
+         * @name Phaser.Tweens.Tween#totalDuration
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.totalDuration = 0;
+
+        /**
+         * Value between 0 and 1. The amount through the entire Tween, including looping.
+         *
+         * @name Phaser.Tweens.Tween#totalProgress
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.totalProgress = 0;
+
+        /**
+         * An object containing the various Tween callback references.
+         *
+         * @name Phaser.Tweens.Tween#callbacks
+         * @type {object}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.callbacks = {
+            onComplete: null,
+            onLoop: null,
+            onRepeat: null,
+            onStart: null,
+            onUpdate: null,
+            onYoyo: null
+        };
+
+        this.callbackScope;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Tween#getValue
+     * @since 3.0.0
+     *
+     * @return {number} [description]
+     */
+    getValue: function ()
+    {
+        return this.data[0].current;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Tween#setTimeScale
+     * @since 3.0.0
+     *
+     * @param {number} value - [description]
+     *
+     * @return {Phaser.Tweens.Tween} This Tween object.
+     */
