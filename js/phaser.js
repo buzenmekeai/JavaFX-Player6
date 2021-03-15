@@ -28404,3 +28404,218 @@ var Tween = new Class({
 
                 //  remainder
                 ms = ((ms / tweenData.t2) % 1) * tweenData.t2;
+
+                if (ms > tweenData.repeatDelay)
+                {
+                    progress = ms / tweenData.t1;
+                    elapsed = tweenData.duration * progress;
+                }
+            }
+
+            tweenData.progress = progress;
+            tweenData.elapsed = elapsed;
+
+            var v = tweenData.ease(tweenData.progress);
+
+            tweenData.current = tweenData.start + ((tweenData.end - tweenData.start) * v);
+
+            // console.log(tweenData.key, 'Seek', tweenData.target[tweenData.key], 'to', tweenData.current, 'pro', tweenData.progress, 'marker', toPosition, progress);
+
+            // if (tweenData.current === 0)
+            // {
+            //     console.log('zero', tweenData.start, tweenData.end, v, 'progress', progress);
+            // }
+
+            tweenData.target[tweenData.key] = tweenData.current;
+        }
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Tween#setCallback
+     * @since 3.0.0
+     *
+     * @param {string} type - [description]
+     * @param {function} callback - [description]
+     * @param {array} [params] - [description]
+     * @param {object} [scope] - [description]
+     *
+     * @return {Phaser.Tweens.Tween} This Tween object.
+     */
+    setCallback: function (type, callback, params, scope)
+    {
+        this.callbacks[type] = { func: callback, scope: scope, params: params };
+
+        return this;
+    },
+
+    /**
+     * Flags the Tween as being complete, whatever stage of progress it is at.
+     *
+     * If an onComplete callback has been defined it will automatically invoke it, unless a `delay`
+     * argument is provided, in which case the Tween will delay for that period of time before calling the callback.
+     *
+     * If you don't need a delay, or have an onComplete callback, then call `Tween.stop` instead.
+     *
+     * @method Phaser.Tweens.Tween#complete
+     * @since 3.2.0
+     *
+     * @param {number} [delay=0] - The time to wait before invoking the complete callback. If zero it will fire immediately.
+     */
+    complete: function (delay)
+    {
+        if (delay === undefined) { delay = 0; }
+
+        if (delay)
+        {
+            this.countdown = delay;
+            this.state = TWEEN_CONST.COMPLETE_DELAY;
+        }
+        else
+        {
+            var onComplete = this.callbacks.onComplete;
+
+            if (onComplete)
+            {
+                onComplete.params[1] = this.targets;
+
+                onComplete.func.apply(onComplete.scope, onComplete.params);
+            }
+
+            this.state = TWEEN_CONST.PENDING_REMOVE;
+        }
+    },
+
+    /**
+     * Stops the Tween immediately, whatever stage of progress it is at and flags it for removal by the TweenManager.
+     *
+     * @method Phaser.Tweens.Tween#stop
+     * @since 3.0.0
+     *
+     * @param {number} [resetTo] - A value between 0 and 1.
+     */
+    stop: function (resetTo)
+    {
+        if (this.state === TWEEN_CONST.ACTIVE)
+        {
+            if (resetTo !== undefined)
+            {
+                this.seek(resetTo);
+            }
+        }
+
+        if (this.state !== TWEEN_CONST.REMOVED)
+        {
+            if (this.state === TWEEN_CONST.PAUSED || this.state === TWEEN_CONST.PENDING_ADD)
+            {
+                this.parent._destroy.push(this);
+                this.parent._toProcess++;
+            }
+
+            this.state = TWEEN_CONST.PENDING_REMOVE;
+        }
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Tween#update
+     * @since 3.0.0
+     *
+     * @param {number} timestamp - [description]
+     * @param {number} delta - The delta time in ms since the last frame. This is a smoothed and capped value based on the FPS rate.
+     *
+     * @return {boolean} Returns `true` if this Tween has finished and should be removed from the Tween Manager, otherwise returns `false`.
+     */
+    update: function (timestamp, delta)
+    {
+        if (this.state === TWEEN_CONST.PAUSED)
+        {
+            return false;
+        }
+
+        if (this.useFrames)
+        {
+            delta = 1 * this.parent.timeScale;
+        }
+
+        delta *= this.timeScale;
+
+        this.elapsed += delta;
+        this.progress = Math.min(this.elapsed / this.duration, 1);
+
+        this.totalElapsed += delta;
+        this.totalProgress = Math.min(this.totalElapsed / this.totalDuration, 1);
+
+        switch (this.state)
+        {
+            case TWEEN_CONST.ACTIVE:
+
+                var stillRunning = false;
+
+                for (var i = 0; i < this.totalData; i++)
+                {
+                    if (this.updateTweenData(this, this.data[i], delta))
+                    {
+                        stillRunning = true;
+                    }
+                }
+
+                //  Anything still running? If not, we're done
+                if (!stillRunning)
+                {
+                    this.nextState();
+                }
+
+                break;
+
+            case TWEEN_CONST.LOOP_DELAY:
+
+                this.countdown -= delta;
+
+                if (this.countdown <= 0)
+                {
+                    this.state = TWEEN_CONST.ACTIVE;
+                }
+
+                break;
+
+            case TWEEN_CONST.OFFSET_DELAY:
+
+                this.countdown -= delta;
+
+                if (this.countdown <= 0)
+                {
+                    var onStart = this.callbacks.onStart;
+
+                    if (onStart)
+                    {
+                        onStart.params[1] = this.targets;
+
+                        onStart.func.apply(onStart.scope, onStart.params);
+                    }
+
+                    this.state = TWEEN_CONST.ACTIVE;
+                }
+
+                break;
+
+            case TWEEN_CONST.COMPLETE_DELAY:
+
+                this.countdown -= delta;
+
+                if (this.countdown <= 0)
+                {
+                    var onComplete = this.callbacks.onComplete;
+
+                    if (onComplete)
+                    {
+                        onComplete.func.apply(onComplete.scope, onComplete.params);
+                    }
+
+                    this.state = TWEEN_CONST.PENDING_REMOVE;
+                }
+
+                break;
+        }
