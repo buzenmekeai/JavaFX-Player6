@@ -27914,3 +27914,241 @@ var Tween = new Class({
      *
      * @return {Phaser.Tweens.Tween} This Tween object.
      */
+    setTimeScale: function (value)
+    {
+        this.timeScale = value;
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Tween#getTimeScale
+     * @since 3.0.0
+     *
+     * @return {number} [description]
+     */
+    getTimeScale: function ()
+    {
+        return this.timeScale;
+    },
+
+    /**
+     * Checks if the Tween is currently active.
+     *
+     * @method Phaser.Tweens.Tween#isPlaying
+     * @since 3.0.0
+     *
+     * @return {boolean} `true` if the Tween is active, otherwise `false`.
+     */
+    isPlaying: function ()
+    {
+        return (this.state === TWEEN_CONST.ACTIVE);
+    },
+
+    /**
+     * Checks if the Tween is currently paused.
+     *
+     * @method Phaser.Tweens.Tween#isPaused
+     * @since 3.0.0
+     *
+     * @return {boolean} `true` if the Tween is paused, otherwise `false`.
+     */
+    isPaused: function ()
+    {
+        return (this.state === TWEEN_CONST.PAUSED);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Tween#hasTarget
+     * @since 3.0.0
+     *
+     * @param {object} target - [description]
+     *
+     * @return {boolean} [description]
+     */
+    hasTarget: function (target)
+    {
+        return (this.targets.indexOf(target) !== -1);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Tween#updateTo
+     * @since 3.0.0
+     *
+     * @param {string} key - [description]
+     * @param {*} value - [description]
+     * @param {boolean} startToCurrent - [description]
+     *
+     * @return {Phaser.Tweens.Tween} This Tween object.
+     */
+    updateTo: function (key, value, startToCurrent)
+    {
+        for (var i = 0; i < this.totalData; i++)
+        {
+            var tweenData = this.data[i];
+
+            if (tweenData.key === key)
+            {
+                tweenData.end = value;
+
+                if (startToCurrent)
+                {
+                    tweenData.start = tweenData.current;
+                }
+
+                break;
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Tween#restart
+     * @since 3.0.0
+     */
+    restart: function ()
+    {
+        if (this.state === TWEEN_CONST.REMOVED)
+        {
+            this.seek(0);
+            this.parent.makeActive(this);
+        }
+        else
+        {
+            this.stop();
+            this.play();
+        }
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Tween#calcDuration
+     * @since 3.0.0
+     */
+    calcDuration: function ()
+    {
+        var max = 0;
+
+        var data = this.data;
+
+        for (var i = 0; i < this.totalData; i++)
+        {
+            var tweenData = data[i];
+
+            //  Set t1 (duration + hold + yoyo)
+            tweenData.t1 = tweenData.duration + tweenData.hold;
+
+            if (tweenData.yoyo)
+            {
+                tweenData.t1 += tweenData.duration;
+            }
+
+            //  Set t2 (repeatDelay + duration + hold + yoyo)
+            tweenData.t2 = tweenData.t1 + tweenData.repeatDelay;
+
+            //  Total Duration
+            tweenData.totalDuration = tweenData.delay + tweenData.t1;
+
+            if (tweenData.repeat === -1)
+            {
+                tweenData.totalDuration += (tweenData.t2 * 999999999999);
+            }
+            else if (tweenData.repeat > 0)
+            {
+                tweenData.totalDuration += (tweenData.t2 * tweenData.repeat);
+            }
+
+            if (tweenData.totalDuration > max)
+            {
+                //  Get the longest TweenData from the Tween, used to calculate the Tween TD
+                max = tweenData.totalDuration;
+            }
+        }
+
+        //  Excludes loop values
+        this.duration = max;
+
+        this.loopCounter = (this.loop === -1) ? 999999999999 : this.loop;
+
+        if (this.loopCounter > 0)
+        {
+            this.totalDuration = this.duration + this.completeDelay + ((this.duration + this.loopDelay) * this.loopCounter);
+        }
+        else
+        {
+            this.totalDuration = this.duration + this.completeDelay;
+        }
+    },
+
+    /**
+     * Called by TweenManager.preUpdate as part of its loop to check pending and active tweens.
+     * Should not be called directly.
+     *
+     * @method Phaser.Tweens.Tween#init
+     * @since 3.0.0
+     *
+     * @return {boolean} Returns `true` if this Tween should be moved from the pending list to the active list by the Tween Manager.
+     */
+    init: function ()
+    {
+        var data = this.data;
+        var totalTargets = this.totalTargets;
+
+        for (var i = 0; i < this.totalData; i++)
+        {
+            var tweenData = data[i];
+            var target = tweenData.target;
+            var gen = tweenData.gen;
+
+            tweenData.delay = gen.delay(i, totalTargets, target);
+            tweenData.duration = gen.duration(i, totalTargets, target);
+            tweenData.hold = gen.hold(i, totalTargets, target);
+            tweenData.repeat = gen.repeat(i, totalTargets, target);
+            tweenData.repeatDelay = gen.repeatDelay(i, totalTargets, target);
+        }
+
+        this.calcDuration();
+
+        this.progress = 0;
+        this.totalProgress = 0;
+        this.elapsed = 0;
+        this.totalElapsed = 0;
+
+        //  You can't have a paused Tween if it's part of a Timeline
+        if (this.paused && !this.parentIsTimeline)
+        {
+            this.state = TWEEN_CONST.PENDING_ADD;
+            this._pausedState = TWEEN_CONST.INIT;
+
+            return false;
+        }
+        else
+        {
+            this.state = TWEEN_CONST.INIT;
+
+            return true;
+        }
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Tween#nextState
+     * @since 3.0.0
+     */
+    nextState: function ()
+    {
+        if (this.loopCounter > 0)
+        {
+            this.elapsed = 0;
+            this.progress = 0;
