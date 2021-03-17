@@ -28619,3 +28619,225 @@ var Tween = new Class({
 
                 break;
         }
+
+        return (this.state === TWEEN_CONST.PENDING_REMOVE);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Tween#setStateFromEnd
+     * @since 3.0.0
+     *
+     * @param {Phaser.Tweens.Tween} tween - [description]
+     * @param {Phaser.Tweens.TweenDataConfig} tweenData - [description]
+     * @param {number} diff - [description]
+     *
+     * @return {integer} The state of this Tween.
+     */
+    setStateFromEnd: function (tween, tweenData, diff)
+    {
+        if (tweenData.yoyo)
+        {
+            //  We've hit the end of a Playing Forward TweenData and we have a yoyo
+
+            //  Account for any extra time we got from the previous frame
+            tweenData.elapsed = diff;
+            tweenData.progress = diff / tweenData.duration;
+
+            if (tweenData.flipX)
+            {
+                tweenData.target.toggleFlipX();
+            }
+
+            //  Problem: The flip and callback and so on gets called for every TweenData that triggers it at the same time.
+            //  If you're tweening several properties it can fire for all of them, at once.
+
+            if (tweenData.flipY)
+            {
+                tweenData.target.toggleFlipY();
+            }
+
+            var onYoyo = tween.callbacks.onYoyo;
+
+            if (onYoyo)
+            {
+                //  Element 1 is reserved for the target of the yoyo (and needs setting here)
+                onYoyo.params[1] = tweenData.target;
+
+                onYoyo.func.apply(onYoyo.scope, onYoyo.params);
+            }
+
+            tweenData.start = tweenData.getStartValue(tweenData.target, tweenData.key, tweenData.start);
+
+            return TWEEN_CONST.PLAYING_BACKWARD;
+        }
+        else if (tweenData.repeatCounter > 0)
+        {
+            //  We've hit the end of a Playing Forward TweenData and we have a Repeat.
+            //  So we're going to go right back to the start to repeat it again.
+
+            tweenData.repeatCounter--;
+
+            //  Account for any extra time we got from the previous frame
+            tweenData.elapsed = diff;
+            tweenData.progress = diff / tweenData.duration;
+
+            if (tweenData.flipX)
+            {
+                tweenData.target.toggleFlipX();
+            }
+
+            if (tweenData.flipY)
+            {
+                tweenData.target.toggleFlipY();
+            }
+
+            var onRepeat = tween.callbacks.onRepeat;
+
+            if (onRepeat)
+            {
+                //  Element 1 is reserved for the target of the repeat (and needs setting here)
+                onRepeat.params[1] = tweenData.target;
+
+                onRepeat.func.apply(onRepeat.scope, onRepeat.params);
+            }
+
+            tweenData.start = tweenData.getStartValue(tweenData.target, tweenData.key, tweenData.start);
+
+            tweenData.end = tweenData.getEndValue(tweenData.target, tweenData.key, tweenData.start);
+
+            //  Delay?
+            if (tweenData.repeatDelay > 0)
+            {
+                tweenData.elapsed = tweenData.repeatDelay - diff;
+
+                tweenData.current = tweenData.start;
+
+                tweenData.target[tweenData.key] = tweenData.current;
+
+                return TWEEN_CONST.REPEAT_DELAY;
+            }
+            else
+            {
+                return TWEEN_CONST.PLAYING_FORWARD;
+            }
+        }
+
+        return TWEEN_CONST.COMPLETE;
+    },
+
+    /**
+     * Was PLAYING_BACKWARD and has hit the start.
+     *
+     * @method Phaser.Tweens.Tween#setStateFromStart
+     * @since 3.0.0
+     *
+     * @param {Phaser.Tweens.Tween} tween - [description]
+     * @param {Phaser.Tweens.TweenDataConfig} tweenData - [description]
+     * @param {number} diff - [description]
+     *
+     * @return {integer} The state of this Tween.
+     */
+    setStateFromStart: function (tween, tweenData, diff)
+    {
+        if (tweenData.repeatCounter > 0)
+        {
+            tweenData.repeatCounter--;
+
+            //  Account for any extra time we got from the previous frame
+            tweenData.elapsed = diff;
+            tweenData.progress = diff / tweenData.duration;
+
+            if (tweenData.flipX)
+            {
+                tweenData.target.toggleFlipX();
+            }
+
+            if (tweenData.flipY)
+            {
+                tweenData.target.toggleFlipY();
+            }
+
+            var onRepeat = tween.callbacks.onRepeat;
+
+            if (onRepeat)
+            {
+                //  Element 1 is reserved for the target of the repeat (and needs setting here)
+                onRepeat.params[1] = tweenData.target;
+
+                onRepeat.func.apply(onRepeat.scope, onRepeat.params);
+            }
+
+            tweenData.end = tweenData.getEndValue(tweenData.target, tweenData.key, tweenData.start);
+
+            //  Delay?
+            if (tweenData.repeatDelay > 0)
+            {
+                tweenData.elapsed = tweenData.repeatDelay - diff;
+
+                tweenData.current = tweenData.start;
+
+                tweenData.target[tweenData.key] = tweenData.current;
+
+                return TWEEN_CONST.REPEAT_DELAY;
+            }
+            else
+            {
+                return TWEEN_CONST.PLAYING_FORWARD;
+            }
+        }
+
+        return TWEEN_CONST.COMPLETE;
+    },
+
+    //
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Tween#updateTweenData
+     * @since 3.0.0
+     *
+     * @param {Phaser.Tweens.Tween} tween - [description]
+     * @param {Phaser.Tweens.TweenDataConfig} tweenData - [description]
+     * @param {number} delta - Either a value in ms, or 1 if Tween.useFrames is true
+     *
+     * @return {boolean} [description]
+     */
+    updateTweenData: function (tween, tweenData, delta)
+    {
+        switch (tweenData.state)
+        {
+            case TWEEN_CONST.PLAYING_FORWARD:
+            case TWEEN_CONST.PLAYING_BACKWARD:
+
+                if (!tweenData.target)
+                {
+                    tweenData.state = TWEEN_CONST.COMPLETE;
+                    break;
+                }
+
+                var elapsed = tweenData.elapsed;
+                var duration = tweenData.duration;
+                var diff = 0;
+
+                elapsed += delta;
+
+                if (elapsed > duration)
+                {
+                    diff = elapsed - duration;
+                    elapsed = duration;
+                }
+
+                var forward = (tweenData.state === TWEEN_CONST.PLAYING_FORWARD);
+                var progress = elapsed / duration;
+
+                var v;
+
+                if (forward)
+                {
+                    v = tweenData.ease(progress);
+                }
+                else
+                {
+                    v = tweenData.ease(1 - progress);
