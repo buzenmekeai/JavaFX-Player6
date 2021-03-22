@@ -28841,3 +28841,227 @@ var Tween = new Class({
                 else
                 {
                     v = tweenData.ease(1 - progress);
+                }
+
+                tweenData.current = tweenData.start + ((tweenData.end - tweenData.start) * v);
+
+                tweenData.target[tweenData.key] = tweenData.current;
+
+                tweenData.elapsed = elapsed;
+                tweenData.progress = progress;
+
+                var onUpdate = tween.callbacks.onUpdate;
+
+                if (onUpdate)
+                {
+                    onUpdate.params[1] = tweenData.target;
+
+                    onUpdate.func.apply(onUpdate.scope, onUpdate.params);
+                }
+
+                if (progress === 1)
+                {
+                    if (forward)
+                    {
+                        if (tweenData.hold > 0)
+                        {
+                            tweenData.elapsed = tweenData.hold - diff;
+
+                            tweenData.state = TWEEN_CONST.HOLD_DELAY;
+                        }
+                        else
+                        {
+                            tweenData.state = this.setStateFromEnd(tween, tweenData, diff);
+                        }
+                    }
+                    else
+                    {
+                        tweenData.state = this.setStateFromStart(tween, tweenData, diff);
+                    }
+                }
+
+                break;
+
+            case TWEEN_CONST.DELAY:
+
+                tweenData.elapsed -= delta;
+
+                if (tweenData.elapsed <= 0)
+                {
+                    tweenData.elapsed = Math.abs(tweenData.elapsed);
+
+                    tweenData.state = TWEEN_CONST.PENDING_RENDER;
+                }
+
+                break;
+
+            case TWEEN_CONST.REPEAT_DELAY:
+
+                tweenData.elapsed -= delta;
+
+                if (tweenData.elapsed <= 0)
+                {
+                    tweenData.elapsed = Math.abs(tweenData.elapsed);
+
+                    tweenData.state = TWEEN_CONST.PLAYING_FORWARD;
+                }
+
+                break;
+
+            case TWEEN_CONST.HOLD_DELAY:
+
+                tweenData.elapsed -= delta;
+
+                if (tweenData.elapsed <= 0)
+                {
+                    tweenData.state = this.setStateFromEnd(tween, tweenData, Math.abs(tweenData.elapsed));
+                }
+
+                break;
+
+            case TWEEN_CONST.PENDING_RENDER:
+
+                if (tweenData.target)
+                {
+                    tweenData.start = tweenData.getStartValue(tweenData.target, tweenData.key, tweenData.target[tweenData.key]);
+
+                    tweenData.end = tweenData.getEndValue(tweenData.target, tweenData.key, tweenData.start);
+
+                    tweenData.current = tweenData.start;
+
+                    tweenData.target[tweenData.key] = tweenData.start;
+
+                    tweenData.state = TWEEN_CONST.PLAYING_FORWARD;
+                }
+                else
+                {
+                    tweenData.state = TWEEN_CONST.COMPLETE;
+                }
+
+                break;
+        }
+
+        //  Return TRUE if this TweenData still playing, otherwise return FALSE
+        return (tweenData.state !== TWEEN_CONST.COMPLETE);
+    }
+
+});
+
+Tween.TYPES = [
+    'onComplete',
+    'onLoop',
+    'onRepeat',
+    'onStart',
+    'onUpdate',
+    'onYoyo'
+];
+
+/**
+ * Creates a new Tween object.
+ *
+ * Note: This method will only be available Tweens have been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#tween
+ * @since 3.0.0
+ *
+ * @param {object} config - The Tween configuration.
+ *
+ * @return {Phaser.Tweens.Tween} The Tween that was created.
+ */
+GameObjectFactory.register('tween', function (config)
+{
+    return this.scene.sys.tweens.add(config);
+});
+
+//  When registering a factory function 'this' refers to the GameObjectFactory context.
+//
+//  There are several properties available to use:
+//
+//  this.scene - a reference to the Scene that owns the GameObjectFactory
+//  this.displayList - a reference to the Display List the Scene owns
+//  this.updateList - a reference to the Update List the Scene owns
+
+/**
+ * Creates a new Tween object and returns it.
+ *
+ * Note: This method will only be available if Tweens have been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectCreator#tween
+ * @since 3.0.0
+ *
+ * @param {object} config - The Tween configuration.
+ *
+ * @return {Phaser.Tweens.Tween} The Tween that was created.
+ */
+GameObjectCreator.register('tween', function (config)
+{
+    return this.scene.sys.tweens.create(config);
+});
+
+//  When registering a factory function 'this' refers to the GameObjectCreator context.
+
+module.exports = Tween;
+
+
+/***/ }),
+/* 129 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @typedef {object} Phaser.Tweens.TweenConfigDefaults
+ * 
+ * @property {(object|object[])} targets - The object, or an array of objects, to run the tween on.
+ * @property {number} [delay=0] - The number of milliseconds to delay before the tween will start.
+ * @property {number} [duration=1000] - The duration of the tween in milliseconds.
+ * @property {string} [ease='Power0'] - The easing equation to use for the tween.
+ * @property {array} [easeParams] - Optional easing parameters.
+ * @property {number} [hold=0] - The number of milliseconds to hold the tween for before yoyo'ing.
+ * @property {number} [repeat=0] - The number of times to repeat the tween.
+ * @property {number} [repeatDelay=0] - The number of milliseconds to pause before a tween will repeat.
+ * @property {boolean} [yoyo=false] - Should the tween complete, then reverse the values incrementally to get back to the starting tween values? The reverse tweening will also take `duration` milliseconds to complete.
+ * @property {boolean} [flipX=false] - Horizontally flip the target of the Tween when it completes (before it yoyos, if set to do so). Only works for targets that support the `flipX` property.
+ * @property {boolean} [flipY=false] - Vertically flip the target of the Tween when it completes (before it yoyos, if set to do so). Only works for targets that support the `flipY` property.
+ */
+
+var TWEEN_DEFAULTS = {
+    targets: null,
+    delay: 0,
+    duration: 1000,
+    ease: 'Power0',
+    easeParams: null,
+    hold: 0,
+    repeat: 0,
+    repeatDelay: 0,
+    yoyo: false,
+    flipX: false,
+    flipY: false
+};
+
+module.exports = TWEEN_DEFAULTS;
+
+
+/***/ }),
+/* 130 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+function hasGetStart (def)
+{
+    return (!!def.getStart && typeof def.getStart === 'function');
+}
+
+function hasGetEnd (def)
+{
+    return (!!def.getEnd && typeof def.getEnd === 'function');
+}
