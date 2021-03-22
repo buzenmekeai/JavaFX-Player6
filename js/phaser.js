@@ -29259,3 +29259,225 @@ var GetTargets = function (config)
     {
         targets = [ targets ];
     }
+
+    return targets;
+};
+
+module.exports = GetTargets;
+
+
+/***/ }),
+/* 132 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Formats = __webpack_require__(29);
+var MapData = __webpack_require__(77);
+var Parse = __webpack_require__(217);
+var Tilemap = __webpack_require__(209);
+
+/**
+ * Create a Tilemap from the given key or data. If neither is given, make a blank Tilemap. When
+ * loading from CSV or a 2D array, you should specify the tileWidth & tileHeight. When parsing from
+ * a map from Tiled, the tileWidth, tileHeight, width & height will be pulled from the map data. For
+ * an empty map, you should specify tileWidth, tileHeight, width & height.
+ *
+ * @function Phaser.Tilemaps.ParseToTilemap
+ * @since 3.0.0
+ * 
+ * @param {Phaser.Scene} scene - The Scene to which this Tilemap belongs.
+ * @param {string} [key] - The key in the Phaser cache that corresponds to the loaded tilemap data.
+ * @param {integer} [tileWidth=32] - The width of a tile in pixels.
+ * @param {integer} [tileHeight=32] - The height of a tile in pixels.
+ * @param {integer} [width=10] - The width of the map in tiles.
+ * @param {integer} [height=10] - The height of the map in tiles.
+ * @param {integer[][]} [data] - Instead of loading from the cache, you can also load directly from
+ * a 2D array of tile indexes.
+ * @param {boolean} [insertNull=false] - Controls how empty tiles, tiles with an index of -1, in the
+ * map data are handled. If `true`, empty locations will get a value of `null`. If `false`, empty
+ * location will get a Tile object with an index of -1. If you've a large sparsely populated map and
+ * the tile data doesn't need to change then setting this value to `true` will help with memory
+ * consumption. However if your map is small or you need to update the tiles dynamically, then leave
+ * the default value set.
+ * 
+ * @return {Phaser.Tilemaps.Tilemap}
+ */
+var ParseToTilemap = function (scene, key, tileWidth, tileHeight, width, height, data, insertNull)
+{
+    if (tileWidth === undefined) { tileWidth = 32; }
+    if (tileHeight === undefined) { tileHeight = 32; }
+    if (width === undefined) { width = 10; }
+    if (height === undefined) { height = 10; }
+    if (insertNull === undefined) { insertNull = false; }
+
+    var mapData = null;
+
+    if (Array.isArray(data))
+    {
+        var name = key !== undefined ? key : 'map';
+        mapData = Parse(name, Formats.ARRAY_2D, data, tileWidth, tileHeight, insertNull);
+    }
+    else if (key !== undefined)
+    {
+        var tilemapData = scene.cache.tilemap.get(key);
+
+        if (!tilemapData)
+        {
+            console.warn('No map data found for key ' + key);
+        }
+        else
+        {
+            mapData = Parse(key, tilemapData.format, tilemapData.data, tileWidth, tileHeight, insertNull);
+        }
+    }
+
+    if (mapData === null)
+    {
+        mapData = new MapData({
+            tileWidth: tileWidth,
+            tileHeight: tileHeight,
+            width: width,
+            height: height
+        });
+    }
+
+    return new Tilemap(scene, mapData);
+};
+
+module.exports = ParseToTilemap;
+
+
+/***/ }),
+/* 133 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Formats = __webpack_require__(29);
+var LayerData = __webpack_require__(78);
+var MapData = __webpack_require__(77);
+var Tile = __webpack_require__(55);
+
+/**
+ * Parses a 2D array of tile indexes into a new MapData object with a single layer.
+ *
+ * @function Phaser.Tilemaps.Parsers.Parse2DArray
+ * @since 3.0.0
+ *
+ * @param {string} name - The name of the tilemap, used to set the name on the MapData.
+ * @param {integer[][]} data - 2D array, CSV string or Tiled JSON object.
+ * @param {integer} tileWidth - The width of a tile in pixels.
+ * @param {integer} tileHeight - The height of a tile in pixels.
+ * @param {boolean} insertNull - Controls how empty tiles, tiles with an index of -1, in the map
+ * data are handled. If `true`, empty locations will get a value of `null`. If `false`, empty
+ * location will get a Tile object with an index of -1. If you've a large sparsely populated map and
+ * the tile data doesn't need to change then setting this value to `true` will help with memory
+ * consumption. However if your map is small or you need to update the tiles dynamically, then leave
+ * the default value set.
+ *
+ * @return {Phaser.Tilemaps.MapData} [description]
+ */
+var Parse2DArray = function (name, data, tileWidth, tileHeight, insertNull)
+{
+    var layerData = new LayerData({
+        tileWidth: tileWidth,
+        tileHeight: tileHeight
+    });
+
+    var mapData = new MapData({
+        name: name,
+        tileWidth: tileWidth,
+        tileHeight: tileHeight,
+        format: Formats.ARRAY_2D,
+        layers: [ layerData ]
+    });
+
+    var tiles = [];
+    var height = data.length;
+    var width = 0;
+
+    for (var y = 0; y < data.length; y++)
+    {
+        tiles[y] = [];
+        var row = data[y];
+
+        for (var x = 0; x < row.length; x++)
+        {
+            var tileIndex = parseInt(row[x], 10);
+
+            if (isNaN(tileIndex) || tileIndex === -1)
+            {
+                tiles[y][x] = insertNull
+                    ? null
+                    : new Tile(layerData, -1, x, y, tileWidth, tileHeight);
+            }
+            else
+            {
+                tiles[y][x] = new Tile(layerData, tileIndex, x, y, tileWidth, tileHeight);
+            }
+        }
+
+        if (width === 0)
+        {
+            width = row.length;
+        }
+    }
+
+    mapData.width = layerData.width = width;
+    mapData.height = layerData.height = height;
+    mapData.widthInPixels = layerData.widthInPixels = width * tileWidth;
+    mapData.heightInPixels = layerData.heightInPixels = height * tileHeight;
+    layerData.data = tiles;
+
+    return mapData;
+};
+
+module.exports = Parse2DArray;
+
+
+/***/ }),
+/* 134 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Internally used method to keep track of the tile indexes that collide within a layer. This
+ * updates LayerData.collideIndexes to either contain or not contain the given `tileIndex`.
+ *
+ * @function Phaser.Tilemaps.Components.SetLayerCollisionIndex
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} tileIndex - The tile index to set the collision boolean for.
+ * @param {boolean} [collides=true] - Should the tile index collide or not?
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var SetLayerCollisionIndex = function (tileIndex, collides, layer)
+{
+    var loc = layer.collideIndexes.indexOf(tileIndex);
+
+    if (collides && loc === -1)
+    {
+        layer.collideIndexes.push(tileIndex);
+    }
+    else if (!collides && loc !== -1)
+    {
+        layer.collideIndexes.splice(loc, 1);
+    }
+};
+
+module.exports = SetLayerCollisionIndex;
