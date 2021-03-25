@@ -29481,3 +29481,241 @@ var SetLayerCollisionIndex = function (tileIndex, collides, layer)
 };
 
 module.exports = SetLayerCollisionIndex;
+
+
+/***/ }),
+/* 135 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Tile = __webpack_require__(55);
+var IsInLayerBounds = __webpack_require__(79);
+var CalculateFacesAt = __webpack_require__(136);
+var SetTileCollision = __webpack_require__(56);
+
+/**
+ * Puts a tile at the given tile coordinates in the specified layer. You can pass in either an index
+ * or a Tile object. If you pass in a Tile, all attributes will be copied over to the specified
+ * location. If you pass in an index, only the index at the specified location will be changed.
+ * Collision information will be recalculated at the specified location.
+ *
+ * @function Phaser.Tilemaps.Components.PutTileAt
+ * @private
+ * @since 3.0.0
+ *
+ * @param {(integer|Phaser.Tilemaps.Tile)} tile - The index of this tile to set or a Tile object.
+ * @param {integer} tileX - The x coordinate, in tiles, not pixels.
+ * @param {integer} tileY - The y coordinate, in tiles, not pixels.
+ * @param {boolean} [recalculateFaces=true] - `true` if the faces data should be recalculated.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ *
+ * @return {Phaser.Tilemaps.Tile} The Tile object that was created or added to this map.
+ */
+var PutTileAt = function (tile, tileX, tileY, recalculateFaces, layer)
+{
+    if (!IsInLayerBounds(tileX, tileY, layer)) { return null; }
+    if (recalculateFaces === undefined) { recalculateFaces = true; }
+
+    var oldTile = layer.data[tileY][tileX];
+    var oldTileCollides = oldTile && oldTile.collides;
+
+    if (tile instanceof Tile)
+    {
+        if (layer.data[tileY][tileX] === null)
+        {
+            layer.data[tileY][tileX] = new Tile(layer, tile.index, tileX, tileY, tile.width, tile.height);
+        }
+        layer.data[tileY][tileX].copy(tile);
+    }
+    else
+    {
+        var index = tile;
+        if (layer.data[tileY][tileX] === null)
+        {
+            layer.data[tileY][tileX] = new Tile(layer, index, tileX, tileY, layer.tileWidth, layer.tileHeight);
+        }
+        else
+        {
+            layer.data[tileY][tileX].index = index;
+        }
+    }
+
+    // Updating colliding flag on the new tile
+    var newTile = layer.data[tileY][tileX];
+    var collides = layer.collideIndexes.indexOf(newTile.index) !== -1;
+    SetTileCollision(newTile, collides);
+
+    // Recalculate faces only if the colliding flag at (tileX, tileY) has changed
+    if (recalculateFaces && (oldTileCollides !== newTile.collides))
+    {
+        CalculateFacesAt(tileX, tileY, layer);
+    }
+
+    return newTile;
+};
+
+module.exports = PutTileAt;
+
+
+
+/***/ }),
+/* 136 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetTileAt = __webpack_require__(102);
+
+/**
+ * Calculates interesting faces at the given tile coordinates of the specified layer. Interesting
+ * faces are used internally for optimizing collisions against tiles. This method is mostly used
+ * internally to optimize recalculating faces when only one tile has been changed.
+ *
+ * @function Phaser.Tilemaps.Components.CalculateFacesAt
+ * @private
+ * @since 3.0.0
+ * 
+ * @param {integer} tileX - The x coordinate.
+ * @param {integer} tileY - The y coordinate.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var CalculateFacesAt = function (tileX, tileY, layer)
+{
+    var tile = GetTileAt(tileX, tileY, true, layer);
+    var above = GetTileAt(tileX, tileY - 1, true, layer);
+    var below = GetTileAt(tileX, tileY + 1, true, layer);
+    var left = GetTileAt(tileX - 1, tileY, true, layer);
+    var right = GetTileAt(tileX + 1, tileY, true, layer);
+    var tileCollides = tile && tile.collides;
+
+    // Assume the changed tile has all interesting edges
+    if (tileCollides)
+    {
+        tile.faceTop = true;
+        tile.faceBottom = true;
+        tile.faceLeft = true;
+        tile.faceRight = true;
+    }
+
+    // Reset edges that are shared between tile and its neighbors
+    if (above && above.collides)
+    {
+        if (tileCollides) { tile.faceTop = false; }
+        above.faceBottom = !tileCollides;
+    }
+
+    if (below && below.collides)
+    {
+        if (tileCollides) { tile.faceBottom = false; }
+        below.faceTop = !tileCollides;
+    }
+
+    if (left && left.collides)
+    {
+        if (tileCollides) { tile.faceLeft = false; }
+        left.faceRight = !tileCollides;
+    }
+
+    if (right && right.collides)
+    {
+        if (tileCollides) { tile.faceRight = false; }
+        right.faceLeft = !tileCollides;
+    }
+
+    if (tile && !tile.collides) { tile.resetFaces(); }
+
+    return tile;
+};
+
+module.exports = CalculateFacesAt;
+
+
+/***/ }),
+/* 137 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+* The `Matter.Composite` module contains methods for creating and manipulating composite bodies.
+* A composite body is a collection of `Matter.Body`, `Matter.Constraint` and other `Matter.Composite`, therefore composites form a tree structure.
+* It is important to use the functions in this module to modify composites, rather than directly modifying their properties.
+* Note that the `Matter.World` object is also a type of `Matter.Composite` and as such all composite methods here can also operate on a `Matter.World`.
+*
+* See the included usage [examples](https://github.com/liabru/matter-js/tree/master/examples).
+*
+* @class Composite
+*/
+
+var Composite = {};
+
+module.exports = Composite;
+
+var Events = __webpack_require__(195);
+var Common = __webpack_require__(33);
+var Bounds = __webpack_require__(80);
+var Body = __webpack_require__(67);
+
+(function() {
+
+    /**
+     * Creates a new composite. The options parameter is an object that specifies any properties you wish to override the defaults.
+     * See the properites section below for detailed information on what you can pass via the `options` object.
+     * @method create
+     * @param {} [options]
+     * @return {composite} A new composite
+     */
+    Composite.create = function(options) {
+        return Common.extend({ 
+            id: Common.nextId(),
+            type: 'composite',
+            parent: null,
+            isModified: false,
+            bodies: [], 
+            constraints: [], 
+            composites: [],
+            label: 'Composite',
+            plugin: {}
+        }, options);
+    };
+
+    /**
+     * Sets the composite's `isModified` flag. 
+     * If `updateParents` is true, all parents will be set (default: false).
+     * If `updateChildren` is true, all children will be set (default: false).
+     * @method setModified
+     * @param {composite} composite
+     * @param {boolean} isModified
+     * @param {boolean} [updateParents=false]
+     * @param {boolean} [updateChildren=false]
+     */
+    Composite.setModified = function(composite, isModified, updateParents, updateChildren) {
+        composite.isModified = isModified;
+
+        if (updateParents && composite.parent) {
+            Composite.setModified(composite.parent, isModified, updateParents, updateChildren);
+        }
+
+        if (updateChildren) {
+            for(var i = 0; i < composite.composites.length; i++) {
+                var childComposite = composite.composites[i];
+                Composite.setModified(childComposite, isModified, updateParents, updateChildren);
+            }
+        }
+    };
+
+    /**
+     * Generic add function. Adds one or many body(s), constraint(s) or a composite(s) to the given composite.
+     * Triggers `beforeAdd` and `afterAdd` events on the `composite`.
+     * @method add
+     * @param {composite} composite
+     * @param {} object
+     * @return {composite} The original composite with the objects added
+     */
