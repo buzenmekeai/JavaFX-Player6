@@ -29948,3 +29948,201 @@ var Body = __webpack_require__(67);
      * @method removeConstraintAt
      * @param {composite} composite
      * @param {number} position
+     * @return {composite} The original composite with the constraint removed
+     */
+    Composite.removeConstraintAt = function(composite, position) {
+        composite.constraints.splice(position, 1);
+        Composite.setModified(composite, true, true, false);
+        return composite;
+    };
+
+    /**
+     * Removes all bodies, constraints and composites from the given composite.
+     * Optionally clearing its children recursively.
+     * @method clear
+     * @param {composite} composite
+     * @param {boolean} keepStatic
+     * @param {boolean} [deep=false]
+     */
+    Composite.clear = function(composite, keepStatic, deep) {
+        if (deep) {
+            for (var i = 0; i < composite.composites.length; i++){
+                Composite.clear(composite.composites[i], keepStatic, true);
+            }
+        }
+        
+        if (keepStatic) {
+            composite.bodies = composite.bodies.filter(function(body) { return body.isStatic; });
+        } else {
+            composite.bodies.length = 0;
+        }
+
+        composite.constraints.length = 0;
+        composite.composites.length = 0;
+        Composite.setModified(composite, true, true, false);
+
+        return composite;
+    };
+
+    /**
+     * Returns all bodies in the given composite, including all bodies in its children, recursively.
+     * @method allBodies
+     * @param {composite} composite
+     * @return {body[]} All the bodies
+     */
+    Composite.allBodies = function(composite) {
+        var bodies = [].concat(composite.bodies);
+
+        for (var i = 0; i < composite.composites.length; i++)
+            bodies = bodies.concat(Composite.allBodies(composite.composites[i]));
+
+        return bodies;
+    };
+
+    /**
+     * Returns all constraints in the given composite, including all constraints in its children, recursively.
+     * @method allConstraints
+     * @param {composite} composite
+     * @return {constraint[]} All the constraints
+     */
+    Composite.allConstraints = function(composite) {
+        var constraints = [].concat(composite.constraints);
+
+        for (var i = 0; i < composite.composites.length; i++)
+            constraints = constraints.concat(Composite.allConstraints(composite.composites[i]));
+
+        return constraints;
+    };
+
+    /**
+     * Returns all composites in the given composite, including all composites in its children, recursively.
+     * @method allComposites
+     * @param {composite} composite
+     * @return {composite[]} All the composites
+     */
+    Composite.allComposites = function(composite) {
+        var composites = [].concat(composite.composites);
+
+        for (var i = 0; i < composite.composites.length; i++)
+            composites = composites.concat(Composite.allComposites(composite.composites[i]));
+
+        return composites;
+    };
+
+    /**
+     * Searches the composite recursively for an object matching the type and id supplied, null if not found.
+     * @method get
+     * @param {composite} composite
+     * @param {number} id
+     * @param {string} type
+     * @return {object} The requested object, if found
+     */
+    Composite.get = function(composite, id, type) {
+        var objects,
+            object;
+
+        switch (type) {
+        case 'body':
+            objects = Composite.allBodies(composite);
+            break;
+        case 'constraint':
+            objects = Composite.allConstraints(composite);
+            break;
+        case 'composite':
+            objects = Composite.allComposites(composite).concat(composite);
+            break;
+        }
+
+        if (!objects)
+            return null;
+
+        object = objects.filter(function(object) { 
+            return object.id.toString() === id.toString(); 
+        });
+
+        return object.length === 0 ? null : object[0];
+    };
+
+    /**
+     * Moves the given object(s) from compositeA to compositeB (equal to a remove followed by an add).
+     * @method move
+     * @param {compositeA} compositeA
+     * @param {object[]} objects
+     * @param {compositeB} compositeB
+     * @return {composite} Returns compositeA
+     */
+    Composite.move = function(compositeA, objects, compositeB) {
+        Composite.remove(compositeA, objects);
+        Composite.add(compositeB, objects);
+        return compositeA;
+    };
+
+    /**
+     * Assigns new ids for all objects in the composite, recursively.
+     * @method rebase
+     * @param {composite} composite
+     * @return {composite} Returns composite
+     */
+    Composite.rebase = function(composite) {
+        var objects = Composite.allBodies(composite)
+                        .concat(Composite.allConstraints(composite))
+                        .concat(Composite.allComposites(composite));
+
+        for (var i = 0; i < objects.length; i++) {
+            objects[i].id = Common.nextId();
+        }
+
+        Composite.setModified(composite, true, true, false);
+
+        return composite;
+    };
+
+    /**
+     * Translates all children in the composite by a given vector relative to their current positions, 
+     * without imparting any velocity.
+     * @method translate
+     * @param {composite} composite
+     * @param {vector} translation
+     * @param {bool} [recursive=true]
+     */
+    Composite.translate = function(composite, translation, recursive) {
+        var bodies = recursive ? Composite.allBodies(composite) : composite.bodies;
+
+        for (var i = 0; i < bodies.length; i++) {
+            Body.translate(bodies[i], translation);
+        }
+
+        Composite.setModified(composite, true, true, false);
+
+        return composite;
+    };
+
+    /**
+     * Rotates all children in the composite by a given angle about the given point, without imparting any angular velocity.
+     * @method rotate
+     * @param {composite} composite
+     * @param {number} rotation
+     * @param {vector} point
+     * @param {bool} [recursive=true]
+     */
+    Composite.rotate = function(composite, rotation, point, recursive) {
+        var cos = Math.cos(rotation),
+            sin = Math.sin(rotation),
+            bodies = recursive ? Composite.allBodies(composite) : composite.bodies;
+
+        for (var i = 0; i < bodies.length; i++) {
+            var body = bodies[i],
+                dx = body.position.x - point.x,
+                dy = body.position.y - point.y;
+                
+            Body.setPosition(body, {
+                x: point.x + (dx * cos - dy * sin),
+                y: point.y + (dx * sin + dy * cos)
+            });
+
+            Body.rotate(body, rotation);
+        }
+
+        Composite.setModified(composite, true, true, false);
+
+        return composite;
