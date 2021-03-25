@@ -29719,3 +29719,232 @@ var Body = __webpack_require__(67);
      * @param {} object
      * @return {composite} The original composite with the objects added
      */
+    Composite.add = function(composite, object) {
+        var objects = [].concat(object);
+
+        Events.trigger(composite, 'beforeAdd', { object: object });
+
+        for (var i = 0; i < objects.length; i++) {
+            var obj = objects[i];
+
+            switch (obj.type) {
+
+            case 'body':
+                // skip adding compound parts
+                if (obj.parent !== obj) {
+                    Common.warn('Composite.add: skipped adding a compound body part (you must add its parent instead)');
+                    break;
+                }
+
+                Composite.addBody(composite, obj);
+                break;
+            case 'constraint':
+                Composite.addConstraint(composite, obj);
+                break;
+            case 'composite':
+                Composite.addComposite(composite, obj);
+                break;
+            case 'mouseConstraint':
+                Composite.addConstraint(composite, obj.constraint);
+                break;
+
+            }
+        }
+
+        Events.trigger(composite, 'afterAdd', { object: object });
+
+        return composite;
+    };
+
+    /**
+     * Generic remove function. Removes one or many body(s), constraint(s) or a composite(s) to the given composite.
+     * Optionally searching its children recursively.
+     * Triggers `beforeRemove` and `afterRemove` events on the `composite`.
+     * @method remove
+     * @param {composite} composite
+     * @param {} object
+     * @param {boolean} [deep=false]
+     * @return {composite} The original composite with the objects removed
+     */
+    Composite.remove = function(composite, object, deep) {
+        var objects = [].concat(object);
+
+        Events.trigger(composite, 'beforeRemove', { object: object });
+
+        for (var i = 0; i < objects.length; i++) {
+            var obj = objects[i];
+
+            switch (obj.type) {
+
+            case 'body':
+                Composite.removeBody(composite, obj, deep);
+                break;
+            case 'constraint':
+                Composite.removeConstraint(composite, obj, deep);
+                break;
+            case 'composite':
+                Composite.removeComposite(composite, obj, deep);
+                break;
+            case 'mouseConstraint':
+                Composite.removeConstraint(composite, obj.constraint);
+                break;
+
+            }
+        }
+
+        Events.trigger(composite, 'afterRemove', { object: object });
+
+        return composite;
+    };
+
+    /**
+     * Adds a composite to the given composite.
+     * @private
+     * @method addComposite
+     * @param {composite} compositeA
+     * @param {composite} compositeB
+     * @return {composite} The original compositeA with the objects from compositeB added
+     */
+    Composite.addComposite = function(compositeA, compositeB) {
+        compositeA.composites.push(compositeB);
+        compositeB.parent = compositeA;
+        Composite.setModified(compositeA, true, true, false);
+        return compositeA;
+    };
+
+    /**
+     * Removes a composite from the given composite, and optionally searching its children recursively.
+     * @private
+     * @method removeComposite
+     * @param {composite} compositeA
+     * @param {composite} compositeB
+     * @param {boolean} [deep=false]
+     * @return {composite} The original compositeA with the composite removed
+     */
+    Composite.removeComposite = function(compositeA, compositeB, deep) {
+        var position = compositeA.composites.indexOf(compositeB);
+        if (position !== -1) {
+            Composite.removeCompositeAt(compositeA, position);
+            Composite.setModified(compositeA, true, true, false);
+        }
+
+        if (deep) {
+            for (var i = 0; i < compositeA.composites.length; i++){
+                Composite.removeComposite(compositeA.composites[i], compositeB, true);
+            }
+        }
+
+        return compositeA;
+    };
+
+    /**
+     * Removes a composite from the given composite.
+     * @private
+     * @method removeCompositeAt
+     * @param {composite} composite
+     * @param {number} position
+     * @return {composite} The original composite with the composite removed
+     */
+    Composite.removeCompositeAt = function(composite, position) {
+        composite.composites.splice(position, 1);
+        Composite.setModified(composite, true, true, false);
+        return composite;
+    };
+
+    /**
+     * Adds a body to the given composite.
+     * @private
+     * @method addBody
+     * @param {composite} composite
+     * @param {body} body
+     * @return {composite} The original composite with the body added
+     */
+    Composite.addBody = function(composite, body) {
+        composite.bodies.push(body);
+        Composite.setModified(composite, true, true, false);
+        return composite;
+    };
+
+    /**
+     * Removes a body from the given composite, and optionally searching its children recursively.
+     * @private
+     * @method removeBody
+     * @param {composite} composite
+     * @param {body} body
+     * @param {boolean} [deep=false]
+     * @return {composite} The original composite with the body removed
+     */
+    Composite.removeBody = function(composite, body, deep) {
+        var position = composite.bodies.indexOf(body);
+        if (position !== -1) {
+            Composite.removeBodyAt(composite, position);
+            Composite.setModified(composite, true, true, false);
+        }
+
+        if (deep) {
+            for (var i = 0; i < composite.composites.length; i++){
+                Composite.removeBody(composite.composites[i], body, true);
+            }
+        }
+
+        return composite;
+    };
+
+    /**
+     * Removes a body from the given composite.
+     * @private
+     * @method removeBodyAt
+     * @param {composite} composite
+     * @param {number} position
+     * @return {composite} The original composite with the body removed
+     */
+    Composite.removeBodyAt = function(composite, position) {
+        composite.bodies.splice(position, 1);
+        Composite.setModified(composite, true, true, false);
+        return composite;
+    };
+
+    /**
+     * Adds a constraint to the given composite.
+     * @private
+     * @method addConstraint
+     * @param {composite} composite
+     * @param {constraint} constraint
+     * @return {composite} The original composite with the constraint added
+     */
+    Composite.addConstraint = function(composite, constraint) {
+        composite.constraints.push(constraint);
+        Composite.setModified(composite, true, true, false);
+        return composite;
+    };
+
+    /**
+     * Removes a constraint from the given composite, and optionally searching its children recursively.
+     * @private
+     * @method removeConstraint
+     * @param {composite} composite
+     * @param {constraint} constraint
+     * @param {boolean} [deep=false]
+     * @return {composite} The original composite with the constraint removed
+     */
+    Composite.removeConstraint = function(composite, constraint, deep) {
+        var position = composite.constraints.indexOf(constraint);
+        if (position !== -1) {
+            Composite.removeConstraintAt(composite, position);
+        }
+
+        if (deep) {
+            for (var i = 0; i < composite.composites.length; i++){
+                Composite.removeConstraint(composite.composites[i], constraint, true);
+            }
+        }
+
+        return composite;
+    };
+
+    /**
+     * Removes a body from the given composite.
+     * @private
+     * @method removeConstraintAt
+     * @param {composite} composite
+     * @param {number} position
