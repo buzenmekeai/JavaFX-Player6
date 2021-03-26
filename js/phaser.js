@@ -30146,3 +30146,230 @@ var Body = __webpack_require__(67);
         Composite.setModified(composite, true, true, false);
 
         return composite;
+    };
+
+    /**
+     * Scales all children in the composite, including updating physical properties (mass, area, axes, inertia), from a world-space point.
+     * @method scale
+     * @param {composite} composite
+     * @param {number} scaleX
+     * @param {number} scaleY
+     * @param {vector} point
+     * @param {bool} [recursive=true]
+     */
+    Composite.scale = function(composite, scaleX, scaleY, point, recursive) {
+        var bodies = recursive ? Composite.allBodies(composite) : composite.bodies;
+
+        for (var i = 0; i < bodies.length; i++) {
+            var body = bodies[i],
+                dx = body.position.x - point.x,
+                dy = body.position.y - point.y;
+                
+            Body.setPosition(body, {
+                x: point.x + dx * scaleX,
+                y: point.y + dy * scaleY
+            });
+
+            Body.scale(body, scaleX, scaleY);
+        }
+
+        Composite.setModified(composite, true, true, false);
+
+        return composite;
+    };
+
+    /**
+     * Returns the union of the bounds of all of the composite's bodies.
+     * @method bounds
+     * @param {composite} composite The composite.
+     * @returns {bounds} The composite bounds.
+     */
+    Composite.bounds = function(composite) {
+        var bodies = Composite.allBodies(composite),
+            vertices = [];
+
+        for (var i = 0; i < bodies.length; i += 1) {
+            var body = bodies[i];
+            vertices.push(body.bounds.min, body.bounds.max);
+        }
+
+        return Bounds.create(vertices);
+    };
+
+    /*
+    *
+    *  Events Documentation
+    *
+    */
+
+    /**
+    * Fired when a call to `Composite.add` is made, before objects have been added.
+    *
+    * @event beforeAdd
+    * @param {} event An event object
+    * @param {} event.object The object(s) to be added (may be a single body, constraint, composite or a mixed array of these)
+    * @param {} event.source The source object of the event
+    * @param {} event.name The name of the event
+    */
+
+    /**
+    * Fired when a call to `Composite.add` is made, after objects have been added.
+    *
+    * @event afterAdd
+    * @param {} event An event object
+    * @param {} event.object The object(s) that have been added (may be a single body, constraint, composite or a mixed array of these)
+    * @param {} event.source The source object of the event
+    * @param {} event.name The name of the event
+    */
+
+    /**
+    * Fired when a call to `Composite.remove` is made, before objects have been removed.
+    *
+    * @event beforeRemove
+    * @param {} event An event object
+    * @param {} event.object The object(s) to be removed (may be a single body, constraint, composite or a mixed array of these)
+    * @param {} event.source The source object of the event
+    * @param {} event.name The name of the event
+    */
+
+    /**
+    * Fired when a call to `Composite.remove` is made, after objects have been removed.
+    *
+    * @event afterRemove
+    * @param {} event An event object
+    * @param {} event.object The object(s) that have been removed (may be a single body, constraint, composite or a mixed array of these)
+    * @param {} event.source The source object of the event
+    * @param {} event.name The name of the event
+    */
+
+    /*
+    *
+    *  Properties Documentation
+    *
+    */
+
+    /**
+     * An integer `Number` uniquely identifying number generated in `Composite.create` by `Common.nextId`.
+     *
+     * @property id
+     * @type number
+     */
+
+    /**
+     * A `String` denoting the type of object.
+     *
+     * @property type
+     * @type string
+     * @default "composite"
+     * @readOnly
+     */
+
+    /**
+     * An arbitrary `String` name to help the user identify and manage composites.
+     *
+     * @property label
+     * @type string
+     * @default "Composite"
+     */
+
+    /**
+     * A flag that specifies whether the composite has been modified during the current step.
+     * Most `Matter.Composite` methods will automatically set this flag to `true` to inform the engine of changes to be handled.
+     * If you need to change it manually, you should use the `Composite.setModified` method.
+     *
+     * @property isModified
+     * @type boolean
+     * @default false
+     */
+
+    /**
+     * The `Composite` that is the parent of this composite. It is automatically managed by the `Matter.Composite` methods.
+     *
+     * @property parent
+     * @type composite
+     * @default null
+     */
+
+    /**
+     * An array of `Body` that are _direct_ children of this composite.
+     * To add or remove bodies you should use `Composite.add` and `Composite.remove` methods rather than directly modifying this property.
+     * If you wish to recursively find all descendants, you should use the `Composite.allBodies` method.
+     *
+     * @property bodies
+     * @type body[]
+     * @default []
+     */
+
+    /**
+     * An array of `Constraint` that are _direct_ children of this composite.
+     * To add or remove constraints you should use `Composite.add` and `Composite.remove` methods rather than directly modifying this property.
+     * If you wish to recursively find all descendants, you should use the `Composite.allConstraints` method.
+     *
+     * @property constraints
+     * @type constraint[]
+     * @default []
+     */
+
+    /**
+     * An array of `Composite` that are _direct_ children of this composite.
+     * To add or remove composites you should use `Composite.add` and `Composite.remove` methods rather than directly modifying this property.
+     * If you wish to recursively find all descendants, you should use the `Composite.allComposites` method.
+     *
+     * @property composites
+     * @type composite[]
+     * @default []
+     */
+
+    /**
+     * An object reserved for storing plugin-specific properties.
+     *
+     * @property plugin
+     * @type {}
+     */
+
+})();
+
+
+/***/ }),
+/* 138 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  Adapted from [gl-matrix](https://github.com/toji/gl-matrix) by toji
+//  and [vecmath](https://github.com/mattdesl/vecmath) by mattdesl
+
+var Class = __webpack_require__(0);
+
+/**
+ * @classdesc
+ * A representation of a vector in 3D space.
+ *
+ * A three-component vector.
+ *
+ * @class Vector3
+ * @memberof Phaser.Math
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {number} [x] - The x component.
+ * @param {number} [y] - The y component.
+ * @param {number} [z] - The z component.
+ */
+var Vector3 = new Class({
+
+    initialize:
+
+    function Vector3 (x, y, z)
+    {
+        /**
+         * The x component of this Vector.
+         *
+         * @name Phaser.Math.Vector3#x
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
