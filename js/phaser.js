@@ -30373,3 +30373,217 @@ var Vector3 = new Class({
          * @type {number}
          * @default 0
          * @since 3.0.0
+         */
+        this.x = 0;
+
+        /**
+         * The y component of this Vector.
+         *
+         * @name Phaser.Math.Vector3#y
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.y = 0;
+
+        /**
+         * The z component of this Vector.
+         *
+         * @name Phaser.Math.Vector3#z
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.z = 0;
+
+        if (typeof x === 'object')
+        {
+            this.x = x.x || 0;
+            this.y = x.y || 0;
+            this.z = x.z || 0;
+        }
+        else
+        {
+            this.x = x || 0;
+            this.y = y || 0;
+            this.z = z || 0;
+        }
+    },
+
+    /**
+     * Set this Vector to point up.
+     *
+     * Sets the y component of the vector to 1, and the others to 0.
+     *
+     * @method Phaser.Math.Vector3#up
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    up: function ()
+    {
+        this.x = 0;
+        this.y = 1;
+        this.z = 0;
+
+        return this;
+    },
+
+    /**
+     * Make a clone of this Vector3.
+     *
+     * @method Phaser.Math.Vector3#clone
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Vector3} A new Vector3 object containing this Vectors values.
+     */
+    clone: function ()
+    {
+        return new Vector3(this.x, this.y, this.z);
+    },
+
+    /**
+     * Calculate the cross (vector) product of two given Vectors.
+     *
+     * @method Phaser.Math.Vector3#crossVectors
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector3} a - The first Vector to multiply.
+     * @param {Phaser.Math.Vector3} b - The second Vector to multiply.
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    crossVectors: function (a, b)
+    {
+        var ax = a.x;
+        var ay = a.y;
+        var az = a.z;
+        var bx = b.x;
+        var by = b.y;
+        var bz = b.z;
+
+        this.x = ay * bz - az * by;
+        this.y = az * bx - ax * bz;
+        this.z = ax * by - ay * bx;
+
+        return this;
+    },
+
+    /**
+     * Check whether this Vector is equal to a given Vector.
+     *
+     * Performs a strict equality check against each Vector's components.
+     *
+     * @method Phaser.Math.Vector3#equals
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector3} v - The Vector3 to compare against.
+     *
+     * @return {boolean} True if the two vectors strictly match, otherwise false.
+     */
+    equals: function (v)
+    {
+        return ((this.x === v.x) && (this.y === v.y) && (this.z === v.z));
+    },
+
+    /**
+     * Copy the components of a given Vector into this Vector.
+     *
+     * @method Phaser.Math.Vector3#copy
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Vector2|Phaser.Math.Vector3)} src - The Vector to copy the components from.
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    copy: function (src)
+    {
+        this.x = src.x;
+        this.y = src.y;
+        this.z = src.z || 0;
+
+        return this;
+    },
+
+    /**
+     * Set the `x`, `y`, and `z` components of this Vector to the given `x`, `y`, and `z` values.
+     *
+     * @method Phaser.Math.Vector3#set
+     * @since 3.0.0
+     *
+     * @param {(number|object)} x - The x value to set for this Vector, or an object containing x, y and z components.
+     * @param {number} [y] - The y value to set for this Vector.
+     * @param {number} [z] - The z value to set for this Vector.
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    set: function (x, y, z)
+    {
+        if (typeof x === 'object')
+        {
+            this.x = x.x || 0;
+            this.y = x.y || 0;
+            this.z = x.z || 0;
+        }
+        else
+        {
+            this.x = x || 0;
+            this.y = y || 0;
+            this.z = z || 0;
+        }
+
+        return this;
+    },
+
+    /**
+     * Add a given Vector to this Vector. Addition is component-wise.
+     *
+     * @method Phaser.Math.Vector3#add
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Vector2|Phaser.Math.Vector3)} v - The Vector to add to this Vector.
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    add: function (v)
+    {
+        this.x += v.x;
+        this.y += v.y;
+        this.z += v.z || 0;
+
+        return this;
+    },
+
+    /**
+     * Subtract the given Vector from this Vector. Subtraction is component-wise.
+     *
+     * @method Phaser.Math.Vector3#subtract
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Vector2|Phaser.Math.Vector3)} v - The Vector to subtract from this Vector.
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    subtract: function (v)
+    {
+        this.x -= v.x;
+        this.y -= v.y;
+        this.z -= v.z || 0;
+
+        return this;
+    },
+
+    /**
+     * Perform a component-wise multiplication between this Vector and the given Vector.
+     *
+     * Multiplies this Vector by the given Vector.
+     *
+     * @method Phaser.Math.Vector3#multiply
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Vector2|Phaser.Math.Vector3)} v - The Vector to multiply this Vector by.
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    multiply: function (v)
+    {
