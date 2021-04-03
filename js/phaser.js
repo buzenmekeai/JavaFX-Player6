@@ -30786,3 +30786,233 @@ var Vector3 = new Class({
      *
      * @return {Phaser.Math.Vector3} This Vector3.
      */
+    cross: function (v)
+    {
+        var ax = this.x;
+        var ay = this.y;
+        var az = this.z;
+        var bx = v.x;
+        var by = v.y;
+        var bz = v.z;
+
+        this.x = ay * bz - az * by;
+        this.y = az * bx - ax * bz;
+        this.z = ax * by - ay * bx;
+
+        return this;
+    },
+
+    /**
+     * Linearly interpolate between this Vector and the given Vector.
+     *
+     * Interpolates this Vector towards the given Vector.
+     *
+     * @method Phaser.Math.Vector3#lerp
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector3} v - The Vector3 to interpolate towards.
+     * @param {number} [t=0] - The interpolation percentage, between 0 and 1.
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    lerp: function (v, t)
+    {
+        if (t === undefined) { t = 0; }
+
+        var ax = this.x;
+        var ay = this.y;
+        var az = this.z;
+
+        this.x = ax + t * (v.x - ax);
+        this.y = ay + t * (v.y - ay);
+        this.z = az + t * (v.z - az);
+
+        return this;
+    },
+
+    /**
+     * Transform this Vector with the given Matrix.
+     *
+     * @method Phaser.Math.Vector3#transformMat3
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Matrix3} mat - The Matrix3 to transform this Vector3 with.
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    transformMat3: function (mat)
+    {
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+        var m = mat.val;
+
+        this.x = x * m[0] + y * m[3] + z * m[6];
+        this.y = x * m[1] + y * m[4] + z * m[7];
+        this.z = x * m[2] + y * m[5] + z * m[8];
+
+        return this;
+    },
+
+    /**
+     * Transform this Vector with the given Matrix.
+     *
+     * @method Phaser.Math.Vector3#transformMat4
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Matrix4} mat - The Matrix4 to transform this Vector3 with.
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    transformMat4: function (mat)
+    {
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+        var m = mat.val;
+
+        this.x = m[0] * x + m[4] * y + m[8] * z + m[12];
+        this.y = m[1] * x + m[5] * y + m[9] * z + m[13];
+        this.z = m[2] * x + m[6] * y + m[10] * z + m[14];
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Math.Vector3#transformCoordinates
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Matrix4} mat - The Matrix4 to transform this Vector3 with.
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    transformCoordinates: function (mat)
+    {
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+        var m = mat.val;
+
+        var tx = (x * m[0]) + (y * m[4]) + (z * m[8]) + m[12];
+        var ty = (x * m[1]) + (y * m[5]) + (z * m[9]) + m[13];
+        var tz = (x * m[2]) + (y * m[6]) + (z * m[10]) + m[14];
+        var tw = (x * m[3]) + (y * m[7]) + (z * m[11]) + m[15];
+
+        this.x = tx / tw;
+        this.y = ty / tw;
+        this.z = tz / tw;
+
+        return this;
+    },
+
+    /**
+     * Transform this Vector with the given Quaternion.
+     *
+     * @method Phaser.Math.Vector3#transformQuat
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Quaternion} q - The Quaternion to transform this Vector with.
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    transformQuat: function (q)
+    {
+        // benchmarks: http://jsperf.com/quaternion-transform-vec3-implementations
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+        var qx = q.x;
+        var qy = q.y;
+        var qz = q.z;
+        var qw = q.w;
+
+        // calculate quat * vec
+        var ix = qw * x + qy * z - qz * y;
+        var iy = qw * y + qz * x - qx * z;
+        var iz = qw * z + qx * y - qy * x;
+        var iw = -qx * x - qy * y - qz * z;
+
+        // calculate result * inverse quat
+        this.x = ix * qw + iw * -qx + iy * -qz - iz * -qy;
+        this.y = iy * qw + iw * -qy + iz * -qx - ix * -qz;
+        this.z = iz * qw + iw * -qz + ix * -qy - iy * -qx;
+
+        return this;
+    },
+
+    /**
+     * Multiplies this Vector3 by the specified matrix, applying a W divide. This is useful for projection,
+     * e.g. unprojecting a 2D point into 3D space.
+     *
+     * @method Phaser.Math.Vector3#project
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Matrix4} mat - The Matrix4 to multiply this Vector3 with.
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    project: function (mat)
+    {
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+        var m = mat.val;
+
+        var a00 = m[0];
+        var a01 = m[1];
+        var a02 = m[2];
+        var a03 = m[3];
+        var a10 = m[4];
+        var a11 = m[5];
+        var a12 = m[6];
+        var a13 = m[7];
+        var a20 = m[8];
+        var a21 = m[9];
+        var a22 = m[10];
+        var a23 = m[11];
+        var a30 = m[12];
+        var a31 = m[13];
+        var a32 = m[14];
+        var a33 = m[15];
+
+        var lw = 1 / (x * a03 + y * a13 + z * a23 + a33);
+
+        this.x = (x * a00 + y * a10 + z * a20 + a30) * lw;
+        this.y = (x * a01 + y * a11 + z * a21 + a31) * lw;
+        this.z = (x * a02 + y * a12 + z * a22 + a32) * lw;
+
+        return this;
+    },
+
+    /**
+     * Unproject this point from 2D space to 3D space.
+     * The point should have its x and y properties set to
+     * 2D screen space, and the z either at 0 (near plane)
+     * or 1 (far plane). The provided matrix is assumed to already
+     * be combined, i.e. projection * view * model.
+     *
+     * After this operation, this vector's (x, y, z) components will
+     * represent the unprojected 3D coordinate.
+     *
+     * @method Phaser.Math.Vector3#unproject
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector4} viewport - Screen x, y, width and height in pixels.
+     * @param {Phaser.Math.Matrix4} invProjectionView - Combined projection and view matrix.
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    unproject: function (viewport, invProjectionView)
+    {
+        var viewX = viewport.x;
+        var viewY = viewport.y;
+        var viewWidth = viewport.z;
+        var viewHeight = viewport.w;
+
+        var x = this.x - viewX;
+        var y = (viewHeight - this.y - 1) - viewY;
+        var z = this.z;
+
+        this.x = (2 * x) / viewWidth - 1;
