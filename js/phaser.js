@@ -30587,3 +30587,202 @@ var Vector3 = new Class({
      */
     multiply: function (v)
     {
+        this.x *= v.x;
+        this.y *= v.y;
+        this.z *= v.z || 1;
+
+        return this;
+    },
+
+    /**
+     * Scale this Vector by the given value.
+     *
+     * @method Phaser.Math.Vector3#scale
+     * @since 3.0.0
+     *
+     * @param {number} scale - The value to scale this Vector by.
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    scale: function (scale)
+    {
+        if (isFinite(scale))
+        {
+            this.x *= scale;
+            this.y *= scale;
+            this.z *= scale;
+        }
+        else
+        {
+            this.x = 0;
+            this.y = 0;
+            this.z = 0;
+        }
+
+        return this;
+    },
+
+    /**
+     * Perform a component-wise division between this Vector and the given Vector.
+     *
+     * Divides this Vector by the given Vector.
+     *
+     * @method Phaser.Math.Vector3#divide
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Vector2|Phaser.Math.Vector3)} v - The Vector to divide this Vector by.
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    divide: function (v)
+    {
+        this.x /= v.x;
+        this.y /= v.y;
+        this.z /= v.z || 1;
+
+        return this;
+    },
+
+    /**
+     * Negate the `x`, `y` and `z` components of this Vector.
+     *
+     * @method Phaser.Math.Vector3#negate
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    negate: function ()
+    {
+        this.x = -this.x;
+        this.y = -this.y;
+        this.z = -this.z;
+
+        return this;
+    },
+
+    /**
+     * Calculate the distance between this Vector and the given Vector.
+     *
+     * @method Phaser.Math.Vector3#distance
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Vector2|Phaser.Math.Vector3)} v - The Vector to calculate the distance to.
+     *
+     * @return {number} The distance from this Vector to the given Vector.
+     */
+    distance: function (v)
+    {
+        var dx = v.x - this.x;
+        var dy = v.y - this.y;
+        var dz = v.z - this.z || 0;
+
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    },
+
+    /**
+     * Calculate the distance between this Vector and the given Vector, squared.
+     *
+     * @method Phaser.Math.Vector3#distanceSq
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Vector2|Phaser.Math.Vector3)} v - The Vector to calculate the distance to.
+     *
+     * @return {number} The distance from this Vector to the given Vector, squared.
+     */
+    distanceSq: function (v)
+    {
+        var dx = v.x - this.x;
+        var dy = v.y - this.y;
+        var dz = v.z - this.z || 0;
+
+        return dx * dx + dy * dy + dz * dz;
+    },
+
+    /**
+     * Calculate the length (or magnitude) of this Vector.
+     *
+     * @method Phaser.Math.Vector3#length
+     * @since 3.0.0
+     *
+     * @return {number} The length of this Vector.
+     */
+    length: function ()
+    {
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+
+        return Math.sqrt(x * x + y * y + z * z);
+    },
+
+    /**
+     * Calculate the length of this Vector squared.
+     *
+     * @method Phaser.Math.Vector3#lengthSq
+     * @since 3.0.0
+     *
+     * @return {number} The length of this Vector, squared.
+     */
+    lengthSq: function ()
+    {
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+
+        return x * x + y * y + z * z;
+    },
+
+    /**
+     * Normalize this Vector.
+     *
+     * Makes the vector a unit length vector (magnitude of 1) in the same direction.
+     *
+     * @method Phaser.Math.Vector3#normalize
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    normalize: function ()
+    {
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+        var len = x * x + y * y + z * z;
+
+        if (len > 0)
+        {
+            len = 1 / Math.sqrt(len);
+
+            this.x = x * len;
+            this.y = y * len;
+            this.z = z * len;
+        }
+
+        return this;
+    },
+
+    /**
+     * Calculate the dot product of this Vector and the given Vector.
+     *
+     * @method Phaser.Math.Vector3#dot
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector3} v - The Vector3 to dot product with this Vector3.
+     *
+     * @return {number} The dot product of this Vector and `v`.
+     */
+    dot: function (v)
+    {
+        return this.x * v.x + this.y * v.y + this.z * v.z;
+    },
+
+    /**
+     * Calculate the cross (vector) product of this Vector (which will be modified) and the given Vector.
+     *
+     * @method Phaser.Math.Vector3#cross
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector3} v - The Vector to cross product with.
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
