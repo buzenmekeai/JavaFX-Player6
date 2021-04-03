@@ -31016,3 +31016,220 @@ var Vector3 = new Class({
         var z = this.z;
 
         this.x = (2 * x) / viewWidth - 1;
+        this.y = (2 * y) / viewHeight - 1;
+        this.z = 2 * z - 1;
+
+        return this.project(invProjectionView);
+    },
+
+    /**
+     * Make this Vector the zero vector (0, 0, 0).
+     *
+     * @method Phaser.Math.Vector3#reset
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Vector3} This Vector3.
+     */
+    reset: function ()
+    {
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+
+        return this;
+    }
+
+});
+
+/*
+Vector3.Zero = function ()
+{
+    return new Vector3(0, 0, 0);
+};
+
+Vector3.Up = function ()
+{
+    return new Vector3(0, 1.0, 0);
+};
+
+Vector3.Copy = function (source)
+{
+    return new Vector3(source.x, source.y, source.z);
+};
+
+Vector3.TransformCoordinates = function (vector, transformation)
+{
+    var x = (vector.x * transformation.m[0]) + (vector.y * transformation.m[4]) + (vector.z * transformation.m[8]) + transformation.m[12];
+    var y = (vector.x * transformation.m[1]) + (vector.y * transformation.m[5]) + (vector.z * transformation.m[9]) + transformation.m[13];
+    var z = (vector.x * transformation.m[2]) + (vector.y * transformation.m[6]) + (vector.z * transformation.m[10]) + transformation.m[14];
+    var w = (vector.x * transformation.m[3]) + (vector.y * transformation.m[7]) + (vector.z * transformation.m[11]) + transformation.m[15];
+
+    return new Vector3(x / w, y / w, z / w);
+};
+
+Vector3.TransformNormal = function (vector, transformation)
+{
+    var x = (vector.x * transformation.m[0]) + (vector.y * transformation.m[4]) + (vector.z * transformation.m[8]);
+    var y = (vector.x * transformation.m[1]) + (vector.y * transformation.m[5]) + (vector.z * transformation.m[9]);
+    var z = (vector.x * transformation.m[2]) + (vector.y * transformation.m[6]) + (vector.z * transformation.m[10]);
+
+    return new Vector3(x, y, z);
+};
+
+Vector3.Dot = function (left, right)
+{
+    return (left.x * right.x + left.y * right.y + left.z * right.z);
+};
+
+Vector3.Cross = function (left, right)
+{
+    var x = left.y * right.z - left.z * right.y;
+    var y = left.z * right.x - left.x * right.z;
+    var z = left.x * right.y - left.y * right.x;
+
+    return new Vector3(x, y, z);
+};
+
+Vector3.Normalize = function (vector)
+{
+    var newVector = Vector3.Copy(vector);
+    newVector.normalize();
+
+    return newVector;
+};
+
+Vector3.Distance = function (value1, value2)
+{
+    return Math.sqrt(Vector3.DistanceSquared(value1, value2));
+};
+
+Vector3.DistanceSquared = function (value1, value2)
+{
+    var x = value1.x - value2.x;
+    var y = value1.y - value2.y;
+    var z = value1.z - value2.z;
+
+    return (x * x) + (y * y) + (z * z);
+};
+*/
+
+module.exports = Vector3;
+
+
+/***/ }),
+/* 139 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var CONST = __webpack_require__(18);
+var File = __webpack_require__(21);
+var FileTypesManager = __webpack_require__(7);
+var GetFastValue = __webpack_require__(2);
+var IsPlainObject = __webpack_require__(8);
+var ParseXML = __webpack_require__(343);
+
+/**
+ * @typedef {object} Phaser.Loader.FileTypes.XMLFileConfig
+ *
+ * @property {string} key - The key of the file. Must be unique within both the Loader and the Text Cache.
+ * @property {string} [url] - The absolute or relative URL to load the file from.
+ * @property {string} [extension='xml'] - The default file extension to use if no url is provided.
+ * @property {XHRSettingsObject} [xhrSettings] - Extra XHR Settings specifically for this file.
+ */
+
+/**
+ * @classdesc
+ * A single XML File suitable for loading by the Loader.
+ *
+ * These are created when you use the Phaser.Loader.LoaderPlugin#xml method and are not typically created directly.
+ * 
+ * For documentation about what all the arguments and configuration options mean please see Phaser.Loader.LoaderPlugin#xml.
+ *
+ * @class XMLFile
+ * @extends Phaser.Loader.File
+ * @memberof Phaser.Loader.FileTypes
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Loader.LoaderPlugin} loader - A reference to the Loader that is responsible for this file.
+ * @param {(string|Phaser.Loader.FileTypes.XMLFileConfig)} key - The key to use for this file, or a file configuration object.
+ * @param {string} [url] - The absolute or relative URL to load this file from. If undefined or `null` it will be set to `<key>.xml`, i.e. if `key` was "alien" then the URL will be "alien.xml".
+ * @param {XHRSettingsObject} [xhrSettings] - Extra XHR Settings specifically for this file.
+ */
+var XMLFile = new Class({
+
+    Extends: File,
+
+    initialize:
+
+    function XMLFile (loader, key, url, xhrSettings)
+    {
+        var extension = 'xml';
+
+        if (IsPlainObject(key))
+        {
+            var config = key;
+
+            key = GetFastValue(config, 'key');
+            url = GetFastValue(config, 'url');
+            xhrSettings = GetFastValue(config, 'xhrSettings');
+            extension = GetFastValue(config, 'extension', extension);
+        }
+
+        var fileConfig = {
+            type: 'xml',
+            cache: loader.cacheManager.xml,
+            extension: extension,
+            responseType: 'text',
+            key: key,
+            url: url,
+            xhrSettings: xhrSettings
+        };
+
+        File.call(this, loader, fileConfig);
+    },
+
+    /**
+     * Called automatically by Loader.nextFile.
+     * This method controls what extra work this File does with its loaded data.
+     *
+     * @method Phaser.Loader.FileTypes.XMLFile#onProcess
+     * @since 3.7.0
+     */
+    onProcess: function ()
+    {
+        this.state = CONST.FILE_PROCESSING;
+
+        this.data = ParseXML(this.xhrLoader.responseText);
+
+        if (this.data)
+        {
+            this.onProcessComplete();
+        }
+        else
+        {
+            console.warn('Invalid XMLFile: ' + this.key);
+            
+            this.onProcessError();
+        }
+    }
+
+});
+
+/**
+ * Adds an XML file, or array of XML files, to the current load queue.
+ *
+ * You can call this method from within your Scene's `preload`, along with any other files you wish to load:
+ * 
+ * ```javascript
+ * function preload ()
+ * {
+ *     this.load.xml('wavedata', 'files/AlienWaveData.xml');
+ * }
+ * ```
