@@ -31233,3 +31233,236 @@ var XMLFile = new Class({
  *     this.load.xml('wavedata', 'files/AlienWaveData.xml');
  * }
  * ```
+ *
+ * The file is **not** loaded right away. It is added to a queue ready to be loaded either when the loader starts,
+ * or if it's already running, when the next free load slot becomes available. This happens automatically if you
+ * are calling this from within the Scene's `preload` method, or a related callback. Because the file is queued
+ * it means you cannot use the file immediately after calling this method, but must wait for the file to complete.
+ * The typical flow for a Phaser Scene is that you load assets in the Scene's `preload` method and then when the
+ * Scene's `create` method is called you are guaranteed that all of those assets are ready for use and have been
+ * loaded.
+ * 
+ * The key must be a unique String. It is used to add the file to the global XML Cache upon a successful load.
+ * The key should be unique both in terms of files being loaded and files already present in the XML Cache.
+ * Loading a file using a key that is already taken will result in a warning. If you wish to replace an existing file
+ * then remove it from the XML Cache first, before loading a new one.
+ *
+ * Instead of passing arguments you can pass a configuration object, such as:
+ * 
+ * ```javascript
+ * this.load.xml({
+ *     key: 'wavedata',
+ *     url: 'files/AlienWaveData.xml'
+ * });
+ * ```
+ *
+ * See the documentation for `Phaser.Loader.FileTypes.XMLFileConfig` for more details.
+ *
+ * Once the file has finished loading you can access it from its Cache using its key:
+ * 
+ * ```javascript
+ * this.load.xml('wavedata', 'files/AlienWaveData.xml');
+ * // and later in your game ...
+ * var data = this.cache.xml.get('wavedata');
+ * ```
+ *
+ * If you have specified a prefix in the loader, via `Loader.setPrefix` then this value will be prepended to this files
+ * key. For example, if the prefix was `LEVEL1.` and the key was `Waves` the final key will be `LEVEL1.Waves` and
+ * this is what you would use to retrieve the text from the XML Cache.
+ *
+ * The URL can be relative or absolute. If the URL is relative the `Loader.baseURL` and `Loader.path` values will be prepended to it.
+ *
+ * If the URL isn't specified the Loader will take the key and create a filename from that. For example if the key is "data"
+ * and no URL is given then the Loader will set the URL to be "data.xml". It will always add `.xml` as the extension, although
+ * this can be overridden if using an object instead of method arguments. If you do not desire this action then provide a URL.
+ *
+ * Note: The ability to load this type of file will only be available if the XML File type has been built into Phaser.
+ * It is available in the default build but can be excluded from custom builds.
+ *
+ * @method Phaser.Loader.LoaderPlugin#xml
+ * @fires Phaser.Loader.LoaderPlugin#addFileEvent
+ * @since 3.0.0
+ *
+ * @param {(string|Phaser.Loader.FileTypes.XMLFileConfig|Phaser.Loader.FileTypes.XMLFileConfig[])} key - The key to use for this file, or a file configuration object, or array of them.
+ * @param {string} [url] - The absolute or relative URL to load this file from. If undefined or `null` it will be set to `<key>.xml`, i.e. if `key` was "alien" then the URL will be "alien.xml".
+ * @param {XHRSettingsObject} [xhrSettings] - An XHR Settings configuration object. Used in replacement of the Loaders default XHR Settings.
+ *
+ * @return {Phaser.Loader.LoaderPlugin} The Loader instance.
+ */
+FileTypesManager.register('xml', function (key, url, xhrSettings)
+{
+    if (Array.isArray(key))
+    {
+        for (var i = 0; i < key.length; i++)
+        {
+            //  If it's an array it has to be an array of Objects, so we get everything out of the 'key' object
+            this.addFile(new XMLFile(this, key[i]));
+        }
+    }
+    else
+    {
+        this.addFile(new XMLFile(this, key, url, xhrSettings));
+    }
+
+    return this;
+});
+
+module.exports = XMLFile;
+
+
+/***/ }),
+/* 140 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Extend = __webpack_require__(20);
+var XHRSettings = __webpack_require__(105);
+
+/**
+ * Takes two XHRSettings Objects and creates a new XHRSettings object from them.
+ *
+ * The new object is seeded by the values given in the global settings, but any setting in
+ * the local object overrides the global ones.
+ *
+ * @function Phaser.Loader.MergeXHRSettings
+ * @since 3.0.0
+ *
+ * @param {XHRSettingsObject} global - The global XHRSettings object.
+ * @param {XHRSettingsObject} local - The local XHRSettings object.
+ *
+ * @return {XHRSettingsObject} A newly formed XHRSettings object.
+ */
+var MergeXHRSettings = function (global, local)
+{
+    var output = (global === undefined) ? XHRSettings() : Extend({}, global);
+
+    if (local)
+    {
+        for (var setting in local)
+        {
+            if (local[setting] !== undefined)
+            {
+                output[setting] = local[setting];
+            }
+        }
+    }
+
+    return output;
+};
+
+module.exports = MergeXHRSettings;
+
+
+/***/ }),
+/* 141 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Given a File and a baseURL value this returns the URL the File will use to download from.
+ *
+ * @function Phaser.Loader.GetURL
+ * @since 3.0.0
+ *
+ * @param {Phaser.Loader.File} file - The File object.
+ * @param {string} baseURL - A default base URL.
+ *
+ * @return {string} The URL the File will use.
+ */
+var GetURL = function (file, baseURL)
+{
+    if (!file.url)
+    {
+        return false;
+    }
+
+    if (file.url.match(/^(?:blob:|data:|http:\/\/|https:\/\/|\/\/)/))
+    {
+        return file.url;
+    }
+    else
+    {
+        return baseURL + file.url;
+    }
+};
+
+module.exports = GetURL;
+
+
+/***/ }),
+/* 142 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Snap a value to nearest grid slice, using floor.
+ *
+ * Example: if you have an interval gap of `5` and a position of `12`... you will snap to `10`.
+ * As will `14` snap to `10`... but `16` will snap to `15`.
+ *
+ * @function Phaser.Math.Snap.Floor
+ * @since 3.0.0
+ *
+ * @param {number} value - The value to snap.
+ * @param {number} gap - The interval gap of the grid.
+ * @param {number} [start=0] - Optional starting offset for gap.
+ * @param {boolean} [divide=false] - If `true` it will divide the snapped value by the gap before returning.
+ *
+ * @return {number} The snapped value.
+ */
+var SnapFloor = function (value, gap, start, divide)
+{
+    if (start === undefined) { start = 0; }
+
+    if (gap === 0)
+    {
+        return value;
+    }
+
+    value -= start;
+    value = gap * Math.floor(value / gap);
+
+    return (divide) ? (start + value) / gap : start + value;
+};
+
+module.exports = SnapFloor;
+
+
+/***/ }),
+/* 143 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Keyboard Codes.
+ * 
+ * @name Phaser.Input.Keyboard.KeyCodes
+ * @enum {integer}
+ * @memberof Phaser.Input.Keyboard
+ * @readonly
+ * @since 3.0.0
+ */
+
+var KeyCodes = {
+
+    /**
