@@ -31466,3 +31466,229 @@ module.exports = SnapFloor;
 var KeyCodes = {
 
     /**
+     * @name Phaser.Input.Keyboard.KeyCodes.BACKSPACE
+     */
+    BACKSPACE: 8,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.TAB
+     */
+    TAB: 9,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.ENTER
+     */
+    ENTER: 13,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.SHIFT
+     */
+    SHIFT: 16,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.CTRL
+     */
+    CTRL: 17,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.ALT
+     */
+    ALT: 18,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.PAUSE
+     */
+    PAUSE: 19,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.CAPS_LOCK
+     */
+    CAPS_LOCK: 20,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.ESC
+     */
+    ESC: 27,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.SPACE
+     */
+    SPACE: 32,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.PAGE_UP
+     */
+    PAGE_UP: 33,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.PAGE_DOWN
+     */
+    PAGE_DOWN: 34,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.END
+     */
+    END: 35,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.HOME
+     */
+    HOME: 36,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.LEFT
+     */
+    LEFT: 37,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.UP
+     */
+    UP: 38,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.RIGHT
+     */
+    RIGHT: 39,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.DOWN
+     */
+    DOWN: 40,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.PRINT_SCREEN
+     */
+    PRINT_SCREEN: 42,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.INSERT
+     */
+    INSERT: 45,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.DELETE
+     */
+    DELETE: 46,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.ZERO
+     */
+    ZERO: 48,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.ONE
+     */
+    ONE: 49,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.TWO
+     */
+    TWO: 50,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.THREE
+     */
+    THREE: 51,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.FOUR
+     */
+    FOUR: 52,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.FIVE
+     */
+    FIVE: 53,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.SIX
+     */
+    SIX: 54,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.SEVEN
+     */
+    SEVEN: 55,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.EIGHT
+     */
+    EIGHT: 56,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.NINE
+     */
+    NINE: 57,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.NUMPAD_ZERO
+     */
+    NUMPAD_ZERO: 96,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.NUMPAD_ONE
+     */
+    NUMPAD_ONE: 97,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.NUMPAD_TWO
+     */
+    NUMPAD_TWO: 98,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.NUMPAD_THREE
+     */
+    NUMPAD_THREE: 99,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.NUMPAD_FOUR
+     */
+    NUMPAD_FOUR: 100,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.NUMPAD_FIVE
+     */
+    NUMPAD_FIVE: 101,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.NUMPAD_SIX
+     */
+    NUMPAD_SIX: 102,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.NUMPAD_SEVEN
+     */
+    NUMPAD_SEVEN: 103,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.NUMPAD_EIGHT
+     */
+    NUMPAD_EIGHT: 104,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.NUMPAD_NINE
+     */
+    NUMPAD_NINE: 105,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.A
+     */
+    A: 65,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.B
+     */
+    B: 66,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.C
+     */
+    C: 67,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.D
+     */
+    D: 68,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.E
