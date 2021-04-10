@@ -32330,3 +32330,179 @@ var Quad = new Class({
      * @type {number}
      * @since 3.0.0
      */
+    topLeftX: {
+
+        get: function ()
+        {
+            return this.x + this.vertices[0];
+        },
+
+        set: function (value)
+        {
+            this.vertices[0] = value - this.x;
+            this.vertices[6] = value - this.x;
+        }
+
+    },
+
+    /**
+     * The top-left y vertex of this Quad.
+     *
+     * @name Phaser.GameObjects.Quad#topLeftY
+     * @type {number}
+     * @since 3.0.0
+     */
+    topLeftY: {
+
+        get: function ()
+        {
+            return this.y + this.vertices[1];
+        },
+
+        set: function (value)
+        {
+            this.vertices[1] = value - this.y;
+            this.vertices[7] = value - this.y;
+        }
+
+    },
+
+    /**
+     * The top-right x vertex of this Quad.
+     *
+     * @name Phaser.GameObjects.Quad#topRightX
+     * @type {number}
+     * @since 3.0.0
+     */
+    topRightX: {
+
+        get: function ()
+        {
+            return this.x + this.vertices[10];
+        },
+
+        set: function (value)
+        {
+            this.vertices[10] = value - this.x;
+        }
+
+    },
+
+    /**
+     * The top-right y vertex of this Quad.
+     *
+     * @name Phaser.GameObjects.Quad#topRightY
+     * @type {number}
+     * @since 3.0.0
+     */
+    topRightY: {
+
+        get: function ()
+        {
+            return this.y + this.vertices[11];
+        },
+
+        set: function (value)
+        {
+            this.vertices[11] = value - this.y;
+        }
+
+    },
+
+    /**
+     * The bottom-left x vertex of this Quad.
+     *
+     * @name Phaser.GameObjects.Quad#bottomLeftX
+     * @type {number}
+     * @since 3.0.0
+     */
+    bottomLeftX: {
+
+        get: function ()
+        {
+            return this.x + this.vertices[2];
+        },
+
+        set: function (value)
+        {
+            this.vertices[2] = value - this.x;
+        }
+
+    },
+
+    /**
+     * The bottom-left y vertex of this Quad.
+     *
+     * @name Phaser.GameObjects.Quad#bottomLeftY
+     * @type {number}
+     * @since 3.0.0
+     */
+    bottomLeftY: {
+
+        get: function ()
+        {
+            return this.y + this.vertices[3];
+        },
+
+        set: function (value)
+        {
+            this.vertices[3] = value - this.y;
+        }
+
+    },
+
+    /**
+     * The bottom-right x vertex of this Quad.
+     *
+     * @name Phaser.GameObjects.Quad#bottomRightX
+     * @type {number}
+     * @since 3.0.0
+     */
+    bottomRightX: {
+
+        get: function ()
+        {
+            return this.x + this.vertices[4];
+        },
+
+        set: function (value)
+        {
+            this.vertices[4] = value - this.x;
+            this.vertices[8] = value - this.x;
+        }
+
+    },
+
+    /**
+     * The bottom-right y vertex of this Quad.
+     *
+     * @name Phaser.GameObjects.Quad#bottomRightY
+     * @type {number}
+     * @since 3.0.0
+     */
+    bottomRightY: {
+
+        get: function ()
+        {
+            return this.y + this.vertices[5];
+        },
+
+        set: function (value)
+        {
+            this.vertices[5] = value - this.y;
+            this.vertices[9] = value - this.y;
+        }
+
+    },
+
+    /**
+     * The top-left alpha value of this Quad.
+     *
+     * @name Phaser.GameObjects.Quad#topLeftAlpha
+     * @type {number}
+     * @since 3.0.0
+     */
+    topLeftAlpha: {
+
+        get: function ()
+        {
