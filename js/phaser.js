@@ -32105,3 +32105,228 @@ var ContainsArray = function (triangle, points, returnFirst, out)
     var v2y;
     var dot02;
     var dot12;
+
+    var x1 = triangle.x1;
+    var y1 = triangle.y1;
+
+    for (var i = 0; i < points.length; i++)
+    {
+        v2x = points[i].x - x1;
+        v2y = points[i].y - y1;
+
+        dot02 = (v0x * v2x) + (v0y * v2y);
+        dot12 = (v1x * v2x) + (v1y * v2y);
+
+        u = ((dot11 * dot02) - (dot01 * dot12)) * inv;
+        v = ((dot00 * dot12) - (dot01 * dot02)) * inv;
+    
+        if (u >= 0 && v >= 0 && (u + v < 1))
+        {
+            out.push({ x: points[i].x, y: points[i].y });
+
+            if (returnFirst)
+            {
+                break;
+            }
+        }
+    }
+
+    return out;
+};
+
+module.exports = ContainsArray;
+
+
+/***/ }),
+/* 148 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Intersects.RectangleToRectangle
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Rectangle} rectA - [description]
+ * @param {Phaser.Geom.Rectangle} rectB - [description]
+ *
+ * @return {boolean} [description]
+ */
+var RectangleToRectangle = function (rectA, rectB)
+{
+    if (rectA.width <= 0 || rectA.height <= 0 || rectB.width <= 0 || rectB.height <= 0)
+    {
+        return false;
+    }
+
+    return !(rectA.right < rectB.x || rectA.bottom < rectB.y || rectA.x > rectB.right || rectA.y > rectB.bottom);
+};
+
+module.exports = RectangleToRectangle;
+
+
+/***/ }),
+/* 149 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Mesh = __webpack_require__(108);
+
+/**
+ * @classdesc
+ * A Quad Game Object.
+ *
+ * A Quad is a Mesh Game Object pre-configured with two triangles arranged into a rectangle, with a single
+ * texture spread across them.
+ *
+ * You can manipulate the corner points of the quad via the getters and setters such as `topLeftX`, and also
+ * change their alpha and color values. The quad itself can be moved by adjusting the `x` and `y` properties.
+ *
+ * @class Quad
+ * @extends Phaser.GameObjects.Mesh
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @webglOnly
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Quad belongs.
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {string} texture - The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
+ * @param {(string|integer)} [frame] - An optional frame from the Texture this Game Object is rendering with.
+ */
+var Quad = new Class({
+
+    Extends: Mesh,
+
+    initialize:
+
+    function Quad (scene, x, y, texture, frame)
+    {
+        //  0----3
+        //  |\  B|
+        //  | \  |
+        //  |  \ |
+        //  | A \|
+        //  |    \
+        //  1----2
+
+        var vertices = [
+            0, 0, // tl
+            0, 0, // bl
+            0, 0, // br
+            0, 0, // tl
+            0, 0, // br
+            0, 0 // tr
+        ];
+
+        var uv = [
+            0, 0, // tl
+            0, 1, // bl
+            1, 1, // br
+            0, 0, // tl
+            1, 1, // br
+            1, 0 // tr
+        ];
+
+        var colors = [
+            0xffffff, // tl
+            0xffffff, // bl
+            0xffffff, // br
+            0xffffff, // tl
+            0xffffff, // br
+            0xffffff // tr
+        ];
+
+        var alphas = [
+            1, // tl
+            1, // bl
+            1, // br
+            1, // tl
+            1, // br
+            1 // tr
+        ];
+
+        Mesh.call(this, scene, x, y, vertices, uv, colors, alphas, texture, frame);
+
+        this.resetPosition();
+    },
+
+    /**
+     * Sets the frame this Game Object will use to render with.
+     *
+     * The Frame has to belong to the current Texture being used.
+     *
+     * It can be either a string or an index.
+     *
+     * Calling `setFrame` will modify the `width` and `height` properties of your Game Object.
+     * It will also change the `origin` if the Frame has a custom pivot point, as exported from packages like Texture Packer.
+     *
+     * @method Phaser.GameObjects.Quad#setFrame
+     * @since 3.11.0
+     *
+     * @param {(string|integer)} frame - The name or index of the frame within the Texture.
+     *
+     * @return {this} This Game Object instance.
+     */
+    setFrame: function (frame)
+    {
+        this.frame = this.texture.get(frame);
+
+        if (!this.frame.cutWidth || !this.frame.cutHeight)
+        {
+            this.renderFlags &= ~8;
+        }
+        else
+        {
+            this.renderFlags |= 8;
+        }
+
+        frame = this.frame;
+
+        //   TL
+        this.uv[0] = frame.u0;
+        this.uv[1] = frame.v0;
+
+        //   BL
+        this.uv[2] = frame.u0;
+        this.uv[3] = frame.v1;
+
+        //   BR
+        this.uv[4] = frame.u1;
+        this.uv[5] = frame.v1;
+
+        //   TL
+        this.uv[6] = frame.u0;
+        this.uv[7] = frame.v0;
+
+        //   BR
+        this.uv[8] = frame.u1;
+        this.uv[9] = frame.v1;
+
+        //   TR
+        this.uv[10] = frame.u1;
+        this.uv[11] = frame.v0;
+
+        return this;
+    },
+
+    /**
+     * The top-left x vertex of this Quad.
+     *
+     * @name Phaser.GameObjects.Quad#topLeftX
+     * @type {number}
+     * @since 3.0.0
+     */
