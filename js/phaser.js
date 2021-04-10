@@ -31882,3 +31882,226 @@ var KeyCodes = {
 
     /**
      * @name Phaser.Input.Keyboard.KeyCodes.PERIOD
+     */
+    PERIOD: 190,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.FORWARD_SLASH
+     */
+    FORWARD_SLASH: 191,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.BACK_SLASH
+     */
+    BACK_SLASH: 220,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.QUOTES
+     */
+    QUOTES: 222,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.BACKTICK
+     */
+    BACKTICK: 192,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.OPEN_BRACKET
+     */
+    OPEN_BRACKET: 219,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.CLOSED_BRACKET
+     */
+    CLOSED_BRACKET: 221
+
+};
+
+module.exports = KeyCodes;
+
+
+/***/ }),
+/* 144 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Triangle.RotateAroundXY
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Triangle} O - [triangle,$return]
+ *
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ * @param {number} x - [description]
+ * @param {number} y - [description]
+ * @param {number} angle - [description]
+ *
+ * @return {Phaser.Geom.Triangle} [description]
+ */
+var RotateAroundXY = function (triangle, x, y, angle)
+{
+    var c = Math.cos(angle);
+    var s = Math.sin(angle);
+
+    var tx = triangle.x1 - x;
+    var ty = triangle.y1 - y;
+
+    triangle.x1 = tx * c - ty * s + x;
+    triangle.y1 = tx * s + ty * c + y;
+
+    tx = triangle.x2 - x;
+    ty = triangle.y2 - y;
+
+    triangle.x2 = tx * c - ty * s + x;
+    triangle.y2 = tx * s + ty * c + y;
+
+    tx = triangle.x3 - x;
+    ty = triangle.y3 - y;
+
+    triangle.x3 = tx * c - ty * s + x;
+    triangle.y3 = tx * s + ty * c + y;
+
+    return triangle;
+};
+
+module.exports = RotateAroundXY;
+
+
+/***/ }),
+/* 145 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Rectangle.GetAspectRatio
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Rectangle} rect - [description]
+ *
+ * @return {number} [description]
+ */
+var GetAspectRatio = function (rect)
+{
+    return (rect.height === 0) ? NaN : rect.width / rect.height;
+};
+
+module.exports = GetAspectRatio;
+
+
+/***/ }),
+/* 146 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Rotate a line around the given coordinates by the given angle in radians.
+ *
+ * @function Phaser.Geom.Line.RotateAroundXY
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Line} O - [line,$return]
+ *
+ * @param {Phaser.Geom.Line} line - The line to rotate.
+ * @param {number} x - The horizontal coordinate to rotate the line around.
+ * @param {number} y - The vertical coordinate to rotate the line around.
+ * @param {number} angle - The angle of rotation in radians.
+ *
+ * @return {Phaser.Geom.Line} The rotated line.
+ */
+var RotateAroundXY = function (line, x, y, angle)
+{
+    var c = Math.cos(angle);
+    var s = Math.sin(angle);
+
+    var tx = line.x1 - x;
+    var ty = line.y1 - y;
+
+    line.x1 = tx * c - ty * s + x;
+    line.y1 = tx * s + ty * c + y;
+
+    tx = line.x2 - x;
+    ty = line.y2 - y;
+
+    line.x2 = tx * c - ty * s + x;
+    line.y2 = tx * s + ty * c + y;
+
+    return line;
+};
+
+module.exports = RotateAroundXY;
+
+
+/***/ }),
+/* 147 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  http://www.blackpawn.com/texts/pointinpoly/
+
+//  points is an array of Point-like objects with public x/y properties
+//  returns an array containing all points that are within the triangle, or an empty array if none
+//  if 'returnFirst' is true it will return after the first point within the triangle is found
+
+/**
+ * Filters an array of point-like objects to only those contained within a triangle.
+ * If `returnFirst` is true, will return an array containing only the first point in the provided array that is within the triangle (or an empty array if there are no such points).
+ *
+ * @function Phaser.Geom.Triangle.ContainsArray
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Triangle} triangle - The triangle that the points are being checked in.
+ * @param {Phaser.Geom.Point[]} points - An array of point-like objects (objects that have an `x` and `y` property)
+ * @param {boolean} [returnFirst=false] - If `true`, return an array containing only the first point found that is within the triangle.
+ * @param {array} [out] - If provided, the points that are within the triangle will be appended to this array instead of being added to a new array. If `returnFirst` is true, only the first point found within the triangle will be appended. This array will also be returned by this function.
+ *
+ * @return {Phaser.Geom.Point[]} An array containing all the points from `points` that are within the triangle, if an array was provided as `out`, points will be appended to that array and it will also be returned here.
+ */
+var ContainsArray = function (triangle, points, returnFirst, out)
+{
+    if (returnFirst === undefined) { returnFirst = false; }
+    if (out === undefined) { out = []; }
+
+    var v0x = triangle.x3 - triangle.x1;
+    var v0y = triangle.y3 - triangle.y1;
+
+    var v1x = triangle.x2 - triangle.x1;
+    var v1y = triangle.y2 - triangle.y1;
+
+    var dot00 = (v0x * v0x) + (v0y * v0y);
+    var dot01 = (v0x * v1x) + (v0y * v1y);
+    var dot11 = (v1x * v1x) + (v1y * v1y);
+
+    // Compute barycentric coordinates
+    var b = ((dot00 * dot11) - (dot01 * dot01));
+    var inv = (b === 0) ? 0 : (1 / b);
+
+    var u;
+    var v;
+    var v2x;
+    var v2y;
+    var dot02;
+    var dot12;
