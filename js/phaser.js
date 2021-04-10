@@ -31692,3 +31692,193 @@ var KeyCodes = {
 
     /**
      * @name Phaser.Input.Keyboard.KeyCodes.E
+     */
+    E: 69,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.F
+     */
+    F: 70,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.G
+     */
+    G: 71,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.H
+     */
+    H: 72,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.I
+     */
+    I: 73,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.J
+     */
+    J: 74,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.K
+     */
+    K: 75,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.L
+     */
+    L: 76,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.M
+     */
+    M: 77,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.N
+     */
+    N: 78,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.O
+     */
+    O: 79,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.P
+     */
+    P: 80,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.Q
+     */
+    Q: 81,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.R
+     */
+    R: 82,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.S
+     */
+    S: 83,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.T
+     */
+    T: 84,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.U
+     */
+    U: 85,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.V
+     */
+    V: 86,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.W
+     */
+    W: 87,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.X
+     */
+    X: 88,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.Y
+     */
+    Y: 89,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.Z
+     */
+    Z: 90,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.F1
+     */
+    F1: 112,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.F2
+     */
+    F2: 113,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.F3
+     */
+    F3: 114,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.F4
+     */
+    F4: 115,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.F5
+     */
+    F5: 116,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.F6
+     */
+    F6: 117,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.F7
+     */
+    F7: 118,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.F8
+     */
+    F8: 119,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.F9
+     */
+    F9: 120,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.F10
+     */
+    F10: 121,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.F11
+     */
+    F11: 122,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.F12
+     */
+    F12: 123,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.SEMICOLON
+     */
+    SEMICOLON: 186,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.PLUS
+     */
+    PLUS: 187,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.COMMA
+     */
+    COMMA: 188,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.MINUS
+     */
+    MINUS: 189,
+
+    /**
+     * @name Phaser.Input.Keyboard.KeyCodes.PERIOD
