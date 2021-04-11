@@ -32722,3 +32722,241 @@ var Quad = new Class({
         this.bottomLeftY = y;
 
         return this;
+    },
+
+    /**
+     * Sets the bottom-right vertex position of this Quad.
+     *
+     * @method Phaser.GameObjects.Quad#setBottomRight
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal coordinate of the vertex.
+     * @param {number} y - The vertical coordinate of the vertex.
+     *
+     * @return {Phaser.GameObjects.Quad} This Game Object.
+     */
+    setBottomRight: function (x, y)
+    {
+        this.bottomRightX = x;
+        this.bottomRightY = y;
+
+        return this;
+    },
+
+    /**
+     * Resets the positions of the four corner vertices of this Quad.
+     *
+     * @method Phaser.GameObjects.Quad#resetPosition
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Quad} This Game Object.
+     */
+    resetPosition: function ()
+    {
+        var x = this.x;
+        var y = this.y;
+        var halfWidth = Math.floor(this.width / 2);
+        var halfHeight = Math.floor(this.height / 2);
+
+        this.setTopLeft(x - halfWidth, y - halfHeight);
+        this.setTopRight(x + halfWidth, y - halfHeight);
+        this.setBottomLeft(x - halfWidth, y + halfHeight);
+        this.setBottomRight(x + halfWidth, y + halfHeight);
+
+        return this;
+    },
+
+    /**
+     * Resets the alpha values used by this Quad back to 1.
+     *
+     * @method Phaser.GameObjects.Quad#resetAlpha
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Quad} This Game Object.
+     */
+    resetAlpha: function ()
+    {
+        var alphas = this.alphas;
+
+        alphas[0] = 1;
+        alphas[1] = 1;
+        alphas[2] = 1;
+        alphas[3] = 1;
+        alphas[4] = 1;
+        alphas[5] = 1;
+
+        return this;
+    },
+
+    /**
+     * Resets the color values used by this Quad back to 0xffffff.
+     *
+     * @method Phaser.GameObjects.Quad#resetColors
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Quad} This Game Object.
+     */
+    resetColors: function ()
+    {
+        var colors = this.colors;
+
+        colors[0] = 0xffffff;
+        colors[1] = 0xffffff;
+        colors[2] = 0xffffff;
+        colors[3] = 0xffffff;
+        colors[4] = 0xffffff;
+        colors[5] = 0xffffff;
+
+        return this;
+    },
+
+    /**
+     * Resets the position, alpha and color values used by this Quad.
+     *
+     * @method Phaser.GameObjects.Quad#reset
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Quad} This Game Object.
+     */
+    reset: function ()
+    {
+        this.resetPosition();
+
+        this.resetAlpha();
+
+        return this.resetColors();
+    }
+
+});
+
+module.exports = Quad;
+
+
+/***/ }),
+/* 150 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+// Checks whether the x and y coordinates are contained within this polygon.
+//  Adapted from http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html by Jonas Raoni Soares Silva
+
+/**
+ * Checks if a point is within the bounds of a Polygon.
+ *
+ * @function Phaser.Geom.Polygon.Contains
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Polygon} polygon - The Polygon to check against.
+ * @param {number} x - The X coordinate of the point to check.
+ * @param {number} y - The Y coordinate of the point to check.
+ *
+ * @return {boolean} `true` if the point is within the bounds of the Polygon, otherwise `false`.
+ */
+var Contains = function (polygon, x, y)
+{
+    var inside = false;
+
+    for (var i = -1, j = polygon.points.length - 1; ++i < polygon.points.length; j = i)
+    {
+        var ix = polygon.points[i].x;
+        var iy = polygon.points[i].y;
+
+        var jx = polygon.points[j].x;
+        var jy = polygon.points[j].y;
+
+        if (((iy <= y && y < jy) || (jy <= y && y < iy)) && (x < (jx - ix) * (y - iy) / (jy - iy) + ix))
+        {
+            inside = !inside;
+        }
+    }
+
+    return inside;
+};
+
+module.exports = Contains;
+
+
+/***/ }),
+/* 151 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Contains = __webpack_require__(150);
+var GetPoints = __webpack_require__(284);
+
+/**
+ * @classdesc
+ * [description]
+ *
+ * @class Polygon
+ * @memberof Phaser.Geom
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Point[]} [points] - [description]
+ */
+var Polygon = new Class({
+
+    initialize:
+
+    function Polygon (points)
+    {
+        /**
+         * The area of this Polygon.
+         *
+         * @name Phaser.Geom.Polygon#area
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.area = 0;
+
+        /**
+         * An array of number pair objects that make up this polygon. I.e. [ {x,y}, {x,y}, {x,y} ]
+         *
+         * @name Phaser.Geom.Polygon#points
+         * @type {Phaser.Geom.Point[]}
+         * @since 3.0.0
+         */
+        this.points = [];
+
+        if (points)
+        {
+            this.setTo(points);
+        }
+    },
+
+    /**
+     * Check to see if the Polygon contains the given x / y coordinates.
+     *
+     * @method Phaser.Geom.Polygon#contains
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate to check within the polygon.
+     * @param {number} y - The y coordinate to check within the polygon.
+     *
+     * @return {boolean} `true` if the coordinates are within the polygon, otherwise `false`.
+     */
+    contains: function (x, y)
+    {
+        return Contains(this, x, y);
+    },
+
+    /**
+     * Sets this Polygon to the given points.
+     *
+     * The points can be set from a variety of formats:
+     *
+     * - A string containing paired values separated by a single space: `'40 0 40 20 100 20 100 80 40 80 40 100 0 50'`
+     * - An array of Point objects: `[new Phaser.Point(x1, y1), ...]`
