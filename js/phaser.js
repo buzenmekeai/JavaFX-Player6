@@ -32960,3 +32960,242 @@ var Polygon = new Class({
      *
      * - A string containing paired values separated by a single space: `'40 0 40 20 100 20 100 80 40 80 40 100 0 50'`
      * - An array of Point objects: `[new Phaser.Point(x1, y1), ...]`
+     * - An array of objects with public x/y properties: `[obj1, obj2, ...]`
+     * - An array of paired numbers that represent point coordinates: `[x1,y1, x2,y2, ...]`
+     * - An array of arrays with two elements representing x/y coordinates: `[[x1, y1], [x2, y2], ...]`
+     *
+     * `setTo` may also be called without any arguments to remove all points.
+     *
+     * @method Phaser.Geom.Polygon#setTo
+     * @since 3.0.0
+     *
+     * @param {array} points - [description]
+     *
+     * @return {Phaser.Geom.Polygon} This Polygon object.
+     */
+    setTo: function (points)
+    {
+        this.area = 0;
+        this.points = [];
+
+        if (typeof points === 'string')
+        {
+            points = points.split(' ');
+        }
+
+        if (!Array.isArray(points))
+        {
+            return this;
+        }
+
+        var p;
+        var y0 = Number.MAX_VALUE;
+
+        //  The points argument is an array, so iterate through it
+        for (var i = 0; i < points.length; i++)
+        {
+            p = { x: 0, y: 0 };
+
+            if (typeof points[i] === 'number' || typeof points[i] === 'string')
+            {
+                p.x = parseFloat(points[i]);
+                p.y = parseFloat(points[i + 1]);
+                i++;
+            }
+            else if (Array.isArray(points[i]))
+            {
+                //  An array of arrays?
+                p.x = points[i][0];
+                p.y = points[i][1];
+            }
+            else
+            {
+                p.x = points[i].x;
+                p.y = points[i].y;
+            }
+
+            this.points.push(p);
+
+            //  Lowest boundary
+            if (p.y < y0)
+            {
+                y0 = p.y;
+            }
+        }
+
+        this.calculateArea(y0);
+
+        return this;
+    },
+
+    /**
+     * Calculates the area of the Polygon. This is available in the property Polygon.area
+     *
+     * @method Phaser.Geom.Polygon#calculateArea
+     * @since 3.0.0
+     *
+     * @return {number} The area of the polygon.
+     */
+    calculateArea: function ()
+    {
+        if (this.points.length < 3)
+        {
+            this.area = 0;
+
+            return this.area;
+        }
+
+        var sum = 0;
+        var p1;
+        var p2;
+
+        for (var i = 0; i < this.points.length - 1; i++)
+        {
+            p1 = this.points[i];
+            p2 = this.points[i + 1];
+
+            sum += (p2.x - p1.x) * (p1.y + p2.y);
+        }
+
+        p1 = this.points[0];
+        p2 = this.points[this.points.length - 1];
+
+        sum += (p1.x - p2.x) * (p2.y + p1.y);
+
+        this.area = -sum * 0.5;
+
+        return this.area;
+    },
+
+    /**
+     * Returns an array of Point objects containing the coordinates of the points around the perimeter of the Polygon,
+     * based on the given quantity or stepRate values.
+     *
+     * @method Phaser.Geom.Polygon#getPoints
+     * @since 3.12.0
+     *
+     * @param {integer} quantity - The amount of points to return. If a falsey value the quantity will be derived from the `stepRate` instead.
+     * @param {number} [stepRate] - Sets the quantity by getting the perimeter of the Polygon and dividing it by the stepRate.
+     * @param {array} [output] - An array to insert the points in to. If not provided a new array will be created.
+     *
+     * @return {Phaser.Geom.Point[]} An array of Point objects pertaining to the points around the perimeter of the Polygon.
+     */
+    getPoints: function (quantity, step, output)
+    {
+        return GetPoints(this, quantity, step, output);
+    }
+
+});
+
+module.exports = Polygon;
+
+
+/***/ }),
+/* 152 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CanvasPool = __webpack_require__(24);
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(14);
+var CONST = __webpack_require__(26);
+var GameObject = __webpack_require__(19);
+var GetPowerOfTwo = __webpack_require__(294);
+var Smoothing = __webpack_require__(120);
+var TileSpriteRender = __webpack_require__(805);
+var Vector2 = __webpack_require__(3);
+
+//  bitmask flag for GameObject.renderMask
+var _FLAG = 8; // 1000
+
+/**
+ * @classdesc
+ * A TileSprite is a Sprite that has a repeating texture.
+ *
+ * The texture can be scrolled and scaled independently of the TileSprite itself. Textures will automatically wrap and
+ * are designed so that you can create game backdrops using seamless textures as a source.
+ *
+ * You shouldn't ever create a TileSprite any larger than your actual screen size. If you want to create a large repeating background
+ * that scrolls across the whole map of your game, then you create a TileSprite that fits the screen size and then use the `tilePosition`
+ * property to scroll the texture as the player moves. If you create a TileSprite that is thousands of pixels in size then it will 
+ * consume huge amounts of memory and cause performance issues. Remember: use `tilePosition` to scroll your texture and `tileScale` to
+ * adjust the scale of the texture - don't resize the sprite itself or make it larger than it needs.
+ * 
+ * An important note about Tile Sprites and NPOT textures: Internally, TileSprite textures use GL_REPEAT to provide
+ * seamless repeating of the textures. This, combined with the way in which the textures are handled in WebGL, means
+ * they need to be POT (power-of-two) sizes in order to wrap. If you provide a NPOT (non power-of-two) texture to a
+ * TileSprite it will generate a POT sized canvas and draw your texture to it, scaled up to the POT size. It's then
+ * scaled back down again during rendering to the original dimensions. While this works, in that it allows you to use
+ * any size texture for a Tile Sprite, it does mean that NPOT textures are going to appear anti-aliased when rendered,
+ * due to the interpolation that took place when it was resized into a POT texture. This is especially visible in
+ * pixel art graphics. If you notice it and it becomes an issue, the only way to avoid it is to ensure that you
+ * provide POT textures for Tile Sprites.
+ *
+ * @class TileSprite
+ * @extends Phaser.GameObjects.GameObject
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @since 3.0.0
+ *
+ * @extends Phaser.GameObjects.Components.Alpha
+ * @extends Phaser.GameObjects.Components.BlendMode
+ * @extends Phaser.GameObjects.Components.ComputedSize
+ * @extends Phaser.GameObjects.Components.Crop
+ * @extends Phaser.GameObjects.Components.Depth
+ * @extends Phaser.GameObjects.Components.Flip
+ * @extends Phaser.GameObjects.Components.GetBounds
+ * @extends Phaser.GameObjects.Components.Mask
+ * @extends Phaser.GameObjects.Components.Origin
+ * @extends Phaser.GameObjects.Components.Pipeline
+ * @extends Phaser.GameObjects.Components.ScaleMode
+ * @extends Phaser.GameObjects.Components.ScrollFactor
+ * @extends Phaser.GameObjects.Components.Tint
+ * @extends Phaser.GameObjects.Components.Transform
+ * @extends Phaser.GameObjects.Components.Visible
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Game Object belongs. A Game Object can only belong to one Scene at a time.
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {integer} width - The width of the Game Object. If zero it will use the size of the texture frame.
+ * @param {integer} height - The height of the Game Object. If zero it will use the size of the texture frame.
+ * @param {string} textureKey - The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
+ * @param {(string|integer)} [frameKey] - An optional frame from the Texture this Game Object is rendering with.
+ */
+var TileSprite = new Class({
+
+    Extends: GameObject,
+
+    Mixins: [
+        Components.Alpha,
+        Components.BlendMode,
+        Components.ComputedSize,
+        Components.Crop,
+        Components.Depth,
+        Components.Flip,
+        Components.GetBounds,
+        Components.Mask,
+        Components.Origin,
+        Components.Pipeline,
+        Components.ScaleMode,
+        Components.ScrollFactor,
+        Components.Tint,
+        Components.Transform,
+        Components.Visible,
+        TileSpriteRender
+    ],
+
+    initialize:
+
+    function TileSprite (scene, x, y, width, height, textureKey, frameKey)
+    {
+        var renderer = scene.sys.game.renderer;
+
+        GameObject.call(this, scene, 'TileSprite');
+
+        var displayTexture = scene.sys.textures.get(textureKey);
+        var displayFrame = displayTexture.get(frameKey);
