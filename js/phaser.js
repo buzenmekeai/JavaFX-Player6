@@ -33665,3 +33665,214 @@ var TileSprite = new Class({
      * @since 3.0.0
      */
     tilePositionY: {
+
+        get: function ()
+        {
+            return this._tilePosition.y;
+        },
+
+        set: function (value)
+        {
+            this._tilePosition.y = value;
+            this.dirty = true;
+        }
+
+    },
+
+    /**
+     * The horizontal scale of the Tile Sprite texture.
+     *
+     * @name Phaser.GameObjects.TileSprite#tileScaleX
+     * @type {number}
+     * @default 1
+     * @since 3.11.0
+     */
+    tileScaleX: {
+
+        get: function ()
+        {
+            return this._tileScale.x;
+        },
+
+        set: function (value)
+        {
+            this._tileScale.x = value;
+            this.dirty = true;
+        }
+
+    },
+
+    /**
+     * The vertical scale of the Tile Sprite texture.
+     *
+     * @name Phaser.GameObjects.TileSprite#tileScaleY
+     * @type {number}
+     * @default 1
+     * @since 3.11.0
+     */
+    tileScaleY: {
+
+        get: function ()
+        {
+            return this._tileScale.y;
+        },
+
+        set: function (value)
+        {
+            this._tileScale.y = value;
+            this.dirty = true;
+        }
+
+    }
+
+});
+
+module.exports = TileSprite;
+
+
+/***/ }),
+/* 153 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var AddToDOM = __webpack_require__(169);
+var CanvasPool = __webpack_require__(24);
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(14);
+var CONST = __webpack_require__(26);
+var GameObject = __webpack_require__(19);
+var GetTextSize = __webpack_require__(811);
+var GetValue = __webpack_require__(4);
+var RemoveFromDOM = __webpack_require__(342);
+var TextRender = __webpack_require__(810);
+var TextStyle = __webpack_require__(807);
+
+/**
+ * @classdesc
+ * A Text Game Object.
+ * 
+ * Text objects work by creating their own internal hidden Canvas and then renders text to it using
+ * the standard Canvas `fillText` API. It then creates a texture from this canvas which is rendered
+ * to your game during the render pass.
+ * 
+ * Because it uses the Canvas API you can take advantage of all the features this offers, such as
+ * applying gradient fills to the text, or strokes, shadows and more. You can also use custom fonts
+ * loaded externally, such as Google or TypeKit Web fonts.
+ *
+ * You can only display fonts that are currently loaded and available to the browser: therefore fonts must
+ * be pre-loaded. Phaser does not do ths for you, so you will require the use of a 3rd party font loader,
+ * or have the fonts ready available in the CSS on the page in which your Phaser game resides.
+ *
+ * See {@link http://www.jordanm.co.uk/tinytype this compatibility table} for the available default fonts
+ * across mobile browsers.
+ * 
+ * A note on performance: Every time the contents of a Text object changes, i.e. changing the text being
+ * displayed, or the style of the text, it needs to remake the Text canvas, and if on WebGL, re-upload the
+ * new texture to the GPU. This can be an expensive operation if used often, or with large quantities of
+ * Text objects in your game. If you run into performance issues you would be better off using Bitmap Text
+ * instead, as it benefits from batching and avoids expensive Canvas API calls.
+ *
+ * @class Text
+ * @extends Phaser.GameObjects.GameObject
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @since 3.0.0
+ *
+ * @extends Phaser.GameObjects.Components.Alpha
+ * @extends Phaser.GameObjects.Components.BlendMode
+ * @extends Phaser.GameObjects.Components.ComputedSize
+ * @extends Phaser.GameObjects.Components.Crop
+ * @extends Phaser.GameObjects.Components.Depth
+ * @extends Phaser.GameObjects.Components.Flip
+ * @extends Phaser.GameObjects.Components.GetBounds
+ * @extends Phaser.GameObjects.Components.Mask
+ * @extends Phaser.GameObjects.Components.Origin
+ * @extends Phaser.GameObjects.Components.Pipeline
+ * @extends Phaser.GameObjects.Components.ScaleMode
+ * @extends Phaser.GameObjects.Components.ScrollFactor
+ * @extends Phaser.GameObjects.Components.Tint
+ * @extends Phaser.GameObjects.Components.Transform
+ * @extends Phaser.GameObjects.Components.Visible
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Game Object belongs. A Game Object can only belong to one Scene at a time.
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {(string|string[])} text - The text this Text object will display.
+ * @param {object} style - The text style configuration object.
+ */
+var Text = new Class({
+
+    Extends: GameObject,
+
+    Mixins: [
+        Components.Alpha,
+        Components.BlendMode,
+        Components.ComputedSize,
+        Components.Crop,
+        Components.Depth,
+        Components.Flip,
+        Components.GetBounds,
+        Components.Mask,
+        Components.Origin,
+        Components.Pipeline,
+        Components.ScaleMode,
+        Components.ScrollFactor,
+        Components.Tint,
+        Components.Transform,
+        Components.Visible,
+        TextRender
+    ],
+
+    initialize:
+
+    function Text (scene, x, y, text, style)
+    {
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = 0; }
+
+        GameObject.call(this, scene, 'Text');
+
+        /**
+         * The renderer in use by this Text object.
+         *
+         * @name Phaser.GameObjects.Text#renderer
+         * @type {(Phaser.Renderer.Canvas.CanvasRenderer|Phaser.Renderer.WebGL.WebGLRenderer)}
+         * @since 3.12.0
+         */
+        this.renderer = scene.sys.game.renderer;
+
+        this.setPosition(x, y);
+        this.setOrigin(0, 0);
+        this.initPipeline();
+
+        /**
+         * The canvas element that the text is rendered to.
+         *
+         * @name Phaser.GameObjects.Text#canvas
+         * @type {HTMLCanvasElement}
+         * @since 3.0.0
+         */
+        this.canvas = CanvasPool.create(this);
+
+        /**
+         * The context of the canvas element that the text is rendered to.
+         *
+         * @name Phaser.GameObjects.Text#context
+         * @type {CanvasRenderingContext2D}
+         * @since 3.0.0
+         */
+        this.context = this.canvas.getContext('2d');
+
+        /**
+         * The Text Style object.
+         *
+         * Manages the style of this Text object.
+         *
+         * @name Phaser.GameObjects.Text#style
+         * @type {Phaser.GameObjects.Text.TextStyle}
+         * @since 3.0.0
