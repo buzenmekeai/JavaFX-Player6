@@ -33439,3 +33439,229 @@ var TileSprite = new Class({
 
         return this;
     },
+
+    /**
+     * Sets {@link Phaser.GameObjects.TileSprite#tilePositionX} and {@link Phaser.GameObjects.TileSprite#tilePositionY}.
+     *
+     * @method Phaser.GameObjects.TileSprite#setTilePosition
+     * @since 3.3.0
+     *
+     * @param {number} [x] - The x position of this sprite's tiling texture.
+     * @param {number} [y] - The y position of this sprite's tiling texture.
+     *
+     * @return {this} This Tile Sprite instance.
+     */
+    setTilePosition: function (x, y)
+    {
+        if (x !== undefined)
+        {
+            this.tilePositionX = x;
+        }
+
+        if (y !== undefined)
+        {
+            this.tilePositionY = y;
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets {@link Phaser.GameObjects.TileSprite#tileScaleX} and {@link Phaser.GameObjects.TileSprite#tileScaleY}.
+     *
+     * @method Phaser.GameObjects.TileSprite#setTileScale
+     * @since 3.12.0
+     *
+     * @param {number} [x] - The horizontal scale of the tiling texture.
+     * @param {number} [y] - The vertical scale of the tiling texture.
+     *
+     * @return {this} This Tile Sprite instance.
+     */
+    setTileScale: function (x, y)
+    {
+        if (x !== undefined)
+        {
+            this.tileScaleX = x;
+        }
+
+        if (y !== undefined)
+        {
+            this.tileScaleY = y;
+        }
+
+        return this;
+    },
+
+    /**
+     * Render the tile texture if it is dirty, or if the frame has changed.
+     *
+     * @method Phaser.GameObjects.TileSprite#updateTileTexture
+     * @private
+     * @since 3.0.0
+     */
+    updateTileTexture: function ()
+    {
+        if (!this.dirty)
+        {
+            return;
+        }
+
+        //  Draw the displayTexture to our fillCanvas
+
+        var frame = this.displayFrame;
+
+        var ctx = this.fillContext;
+        var canvas = this.fillCanvas;
+
+        var fw = this.potWidth;
+        var fh = this.potHeight;
+
+        if (!this.renderer.gl)
+        {
+            fw = frame.cutWidth;
+            fh = frame.cutHeight;
+        }
+
+        ctx.clearRect(0, 0, fw, fh);
+
+        canvas.width = fw;
+        canvas.height = fh;
+
+        ctx.drawImage(
+            frame.source.image,
+            frame.cutX, frame.cutY,
+            frame.cutWidth, frame.cutHeight,
+            0, 0,
+            fw, fh
+        );
+
+        if (this.renderer.gl)
+        {
+            this.fillPattern = this.renderer.canvasToTexture(canvas, this.fillPattern);
+        }
+        else
+        {
+            this.fillPattern = ctx.createPattern(canvas, 'repeat');
+        }
+
+        this.updateCanvas();
+
+        this.dirty = false;
+    },
+
+    /**
+     * Draw the fill pattern to the internal canvas.
+     *
+     * @method Phaser.GameObjects.TileSprite#updateCanvas
+     * @private
+     * @since 3.12.0
+     */
+    updateCanvas: function ()
+    {
+        var canvas = this.canvas;
+
+        if (canvas.width !== this.width || canvas.height !== this.height)
+        {
+            canvas.width = this.width;
+            canvas.height = this.height;
+
+            this.frame.setSize(this.width, this.height);
+        }
+
+        if (!this.dirty || this.renderer && this.renderer.gl)
+        {
+            this.dirty = false;
+            return;
+        }
+
+        var ctx = this.context;
+
+        if (!this.scene.sys.game.config.antialias)
+        {
+            Smoothing.disable(ctx);
+        }
+
+        var scaleX = this._tileScale.x;
+        var scaleY = this._tileScale.y;
+
+        var positionX = this._tilePosition.x;
+        var positionY = this._tilePosition.y;
+
+        ctx.clearRect(0, 0, this.width, this.height);
+
+        ctx.save();
+
+        ctx.scale(scaleX, scaleY);
+
+        ctx.translate(-positionX, -positionY);
+
+        ctx.fillStyle = this.fillPattern;
+
+        ctx.fillRect(positionX, positionY, this.width / scaleX, this.height / scaleY);
+
+        ctx.restore();
+
+        this.dirty = false;
+    },
+
+    /**
+     * Internal destroy handler, called as part of the destroy process.
+     *
+     * @method Phaser.GameObjects.TileSprite#preDestroy
+     * @protected
+     * @since 3.9.0
+     */
+    preDestroy: function ()
+    {
+        if (this.renderer && this.renderer.gl)
+        {
+            this.renderer.deleteTexture(this.fillPattern);
+        }
+
+        CanvasPool.remove(this.canvas);
+        CanvasPool.remove(this.fillCanvas);
+
+        this.fillPattern = null;
+        this.fillContext = null;
+        this.fillCanvas = null;
+
+        this.displayTexture = null;
+        this.displayFrame = null;
+
+        this.texture.destroy();
+
+        this.renderer = null;
+    },
+
+    /**
+     * The horizontal scroll position of the Tile Sprite.
+     *
+     * @name Phaser.GameObjects.TileSprite#tilePositionX
+     * @type {number}
+     * @default 0
+     * @since 3.0.0
+     */
+    tilePositionX: {
+
+        get: function ()
+        {
+            return this._tilePosition.x;
+        },
+
+        set: function (value)
+        {
+            this._tilePosition.x = value;
+            this.dirty = true;
+        }
+
+    },
+
+    /**
+     * The vertical scroll position of the Tile Sprite.
+     *
+     * @name Phaser.GameObjects.TileSprite#tilePositionY
+     * @type {number}
+     * @default 0
+     * @since 3.0.0
+     */
+    tilePositionY: {
