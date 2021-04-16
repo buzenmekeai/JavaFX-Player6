@@ -33876,3 +33876,229 @@ var Text = new Class({
          * @name Phaser.GameObjects.Text#style
          * @type {Phaser.GameObjects.Text.TextStyle}
          * @since 3.0.0
+         */
+        this.style = new TextStyle(this, style);
+
+        /**
+         * Whether to automatically round line positions.
+         *
+         * @name Phaser.GameObjects.Text#autoRound
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.autoRound = true;
+
+        /**
+         * The Regular Expression that is used to split the text up into lines, in
+         * multi-line text. By default this is `/(?:\r\n|\r|\n)/`.
+         * You can change this RegExp to be anything else that you may need.
+         *
+         * @name Phaser.GameObjects.Text#splitRegExp
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.splitRegExp = /(?:\r\n|\r|\n)/;
+
+        /**
+         * The text to display.
+         *
+         * @name Phaser.GameObjects.Text#_text
+         * @type {string}
+         * @private
+         * @since 3.12.0
+         */
+        this._text = '';
+
+        /**
+         * Specify a padding value which is added to the line width and height when calculating the Text size.
+         * Allows you to add extra spacing if the browser is unable to accurately determine the true font dimensions.
+         *
+         * @name Phaser.GameObjects.Text#padding
+         * @type {{left:number,right:number,top:number,bottom:number}}
+         * @since 3.0.0
+         */
+        this.padding = { left: 0, right: 0, top: 0, bottom: 0 };
+
+        /**
+         * The width of this Text object.
+         *
+         * @name Phaser.GameObjects.Text#width
+         * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.width = 1;
+
+        /**
+         * The height of this Text object.
+         *
+         * @name Phaser.GameObjects.Text#height
+         * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.height = 1;
+
+        /**
+         * The line spacing value.
+         * This value is added to the font height to calculate the overall line height.
+         * Only has an effect if this Text object contains multiple lines of text.
+         * 
+         * If you update this property directly, instead of using the `setLineSpacing` method, then
+         * be sure to call `updateText` after, or you won't see the change reflected in the Text object.
+         *
+         * @name Phaser.GameObjects.Text#lineSpacing
+         * @type {number}
+         * @since 3.13.0
+         */
+        this.lineSpacing = 0;
+
+        /**
+         * Whether the text or its settings have changed and need updating.
+         *
+         * @name Phaser.GameObjects.Text#dirty
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.dirty = false;
+
+        //  If resolution wasn't set, then we get it from the game config
+        if (this.style.resolution === 0)
+        {
+            this.style.resolution = scene.sys.game.config.resolution;
+        }
+
+        /**
+         * The internal crop data object, as used by `setCrop` and passed to the `Frame.setCropUVs` method.
+         *
+         * @name Phaser.GameObjects.Text#_crop
+         * @type {object}
+         * @private
+         * @since 3.12.0
+         */
+        this._crop = this.resetCropObject();
+
+        //  Create a Texture for this Text object
+        this.texture = scene.sys.textures.addCanvas(null, this.canvas, true);
+
+        //  Get the frame
+        this.frame = this.texture.get();
+
+        //  Set the resolution
+        this.frame.source.resolution = this.style.resolution;
+
+        if (this.renderer && this.renderer.gl)
+        {
+            //  Clear the default 1x1 glTexture, as we override it later
+            this.renderer.deleteTexture(this.frame.source.glTexture);
+
+            this.frame.source.glTexture = null;
+        }
+
+        this.initRTL();
+
+        if (style && style.padding)
+        {
+            this.setPadding(style.padding);
+        }
+
+        if (style && style.lineSpacing)
+        {
+            this.lineSpacing = style.lineSpacing;
+        }
+
+        this.setText(text);
+
+        if (scene.sys.game.config.renderType === CONST.WEBGL)
+        {
+            scene.sys.game.renderer.onContextRestored(function ()
+            {
+                this.dirty = true;
+            }, this);
+        }
+    },
+
+    /**
+     * Initialize right to left text.
+     *
+     * @method Phaser.GameObjects.Text#initRTL
+     * @since 3.0.0
+     */
+    initRTL: function ()
+    {
+        if (!this.style.rtl)
+        {
+            return;
+        }
+
+        //  Here is where the crazy starts.
+        //
+        //  Due to browser implementation issues, you cannot fillText BiDi text to a canvas
+        //  that is not part of the DOM. It just completely ignores the direction property.
+
+        this.canvas.dir = 'rtl';
+
+        //  Experimental atm, but one day ...
+        this.context.direction = 'rtl';
+
+        //  Add it to the DOM, but hidden within the parent canvas.
+        this.canvas.style.display = 'none';
+
+        AddToDOM(this.canvas, this.scene.sys.canvas);
+
+        //  And finally we set the x origin
+        this.originX = 1;
+    },
+
+    /**
+     * Greedy wrapping algorithm that will wrap words as the line grows longer than its horizontal
+     * bounds.
+     *
+     * @method Phaser.GameObjects.Text#runWordWrap
+     * @since 3.0.0
+     *
+     * @param {string} text - The text to perform word wrap detection against.
+     *
+     * @return {string} The text after wrapping has been applied.
+     */
+    runWordWrap: function (text)
+    {
+        var style = this.style;
+
+        if (style.wordWrapCallback)
+        {
+            var wrappedLines = style.wordWrapCallback.call(style.wordWrapCallbackScope, text, this);
+
+            if (Array.isArray(wrappedLines))
+            {
+                wrappedLines = wrappedLines.join('\n');
+            }
+
+            return wrappedLines;
+        }
+        else if (style.wordWrapWidth)
+        {
+            if (style.wordWrapUseAdvanced)
+            {
+                return this.advancedWordWrap(text, this.context, this.style.wordWrapWidth);
+            }
+            else
+            {
+                return this.basicWordWrap(text, this.context, this.style.wordWrapWidth);
+            }
+        }
+        else
+        {
+            return text;
+        }
+    },
+
+    /**
+     * Advanced wrapping algorithm that will wrap words as the line grows longer than its horizontal
+     * bounds. Consecutive spaces will be collapsed and replaced with a single space. Lines will be
+     * trimmed of white space before processing. Throws an error if wordWrapWidth is less than a
+     * single character.
+     *
+     * @method Phaser.GameObjects.Text#advancedWordWrap
