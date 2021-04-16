@@ -34102,3 +34102,224 @@ var Text = new Class({
      * single character.
      *
      * @method Phaser.GameObjects.Text#advancedWordWrap
+     * @since 3.0.0
+     *
+     * @param {string} text - The text to perform word wrap detection against.
+     * @param {CanvasRenderingContext2D} context - The Canvas Rendering Context.
+     * @param {number} wordWrapWidth - The word wrap width.
+     *
+     * @return {string} The wrapped text.
+     */
+    advancedWordWrap: function (text, context, wordWrapWidth)
+    {
+        var output = '';
+
+        // Condense consecutive spaces and split into lines
+        var lines = text
+            .replace(/ +/gi, ' ')
+            .split(this.splitRegExp);
+
+        var linesCount = lines.length;
+
+        for (var i = 0; i < linesCount; i++)
+        {
+            var line = lines[i];
+            var out = '';
+
+            // Trim whitespace
+            line = line.replace(/^ *|\s*$/gi, '');
+
+            // If entire line is less than wordWrapWidth append the entire line and exit early
+            var lineWidth = context.measureText(line).width;
+
+            if (lineWidth < wordWrapWidth)
+            {
+                output += line + '\n';
+                continue;
+            }
+
+            // Otherwise, calculate new lines
+            var currentLineWidth = wordWrapWidth;
+
+            // Split into words
+            var words = line.split(' ');
+
+            for (var j = 0; j < words.length; j++)
+            {
+                var word = words[j];
+                var wordWithSpace = word + ' ';
+                var wordWidth = context.measureText(wordWithSpace).width;
+
+                if (wordWidth > currentLineWidth)
+                {
+                    // Break word
+                    if (j === 0)
+                    {
+                        // Shave off letters from word until it's small enough
+                        var newWord = wordWithSpace;
+
+                        while (newWord.length)
+                        {
+                            newWord = newWord.slice(0, -1);
+                            wordWidth = context.measureText(newWord).width;
+
+                            if (wordWidth <= currentLineWidth)
+                            {
+                                break;
+                            }
+                        }
+
+                        // If wordWrapWidth is too small for even a single letter, shame user
+                        // failure with a fatal error
+                        if (!newWord.length)
+                        {
+                            throw new Error('This text\'s wordWrapWidth setting is less than a single character!');
+                        }
+
+                        // Replace current word in array with remainder
+                        var secondPart = word.substr(newWord.length);
+
+                        words[j] = secondPart;
+
+                        // Append first piece to output
+                        out += newWord;
+                    }
+
+                    // If existing word length is 0, don't include it
+                    var offset = (words[j].length) ? j : j + 1;
+
+                    // Collapse rest of sentence and remove any trailing white space
+                    var remainder = words.slice(offset).join(' ')
+                        .replace(/[ \n]*$/gi, '');
+
+                    // Prepend remainder to next line
+                    lines[i + 1] = remainder + ' ' + (lines[i + 1] || '');
+                    linesCount = lines.length;
+
+                    break; // Processing on this line
+
+                    // Append word with space to output
+                }
+                else
+                {
+                    out += wordWithSpace;
+                    currentLineWidth -= wordWidth;
+                }
+            }
+
+            // Append processed line to output
+            output += out.replace(/[ \n]*$/gi, '') + '\n';
+        }
+
+        // Trim the end of the string
+        output = output.replace(/[\s|\n]*$/gi, '');
+
+        return output;
+    },
+
+    /**
+     * Greedy wrapping algorithm that will wrap words as the line grows longer than its horizontal
+     * bounds. Spaces are not collapsed and whitespace is not trimmed.
+     *
+     * @method Phaser.GameObjects.Text#basicWordWrap
+     * @since 3.0.0
+     *
+     * @param {string} text - The text to perform word wrap detection against.
+     * @param {CanvasRenderingContext2D} context - The Canvas Rendering Context.
+     * @param {number} wordWrapWidth - The word wrap width.
+     *
+     * @return {string} The wrapped text.
+     */
+    basicWordWrap: function (text, context, wordWrapWidth)
+    {
+        var result = '';
+        var lines = text.split(this.splitRegExp);
+
+        for (var i = 0; i < lines.length; i++)
+        {
+            var spaceLeft = wordWrapWidth;
+            var words = lines[i].split(' ');
+
+            for (var j = 0; j < words.length; j++)
+            {
+                var wordWidth = context.measureText(words[j]).width;
+                var wordWidthWithSpace = wordWidth + context.measureText(' ').width;
+
+                if (wordWidthWithSpace > spaceLeft)
+                {
+                    // Skip printing the newline if it's the first word of the line that is greater
+                    // than the word wrap width.
+                    if (j > 0)
+                    {
+                        result += '\n';
+                    }
+
+                    result += words[j] + ' ';
+                    spaceLeft = wordWrapWidth - wordWidth;
+                }
+                else
+                {
+                    spaceLeft -= wordWidthWithSpace;
+                    result += words[j];
+
+                    if (j < (words.length - 1))
+                    {
+                        result += ' ';
+                    }
+                }
+            }
+
+            if (i < lines.length - 1)
+            {
+                result += '\n';
+            }
+        }
+
+        return result;
+    },
+
+    /**
+     * Runs the given text through this Text objects word wrapping and returns the results as an
+     * array, where each element of the array corresponds to a wrapped line of text.
+     *
+     * @method Phaser.GameObjects.Text#getWrappedText
+     * @since 3.0.0
+     *
+     * @param {string} text - The text for which the wrapping will be calculated. If unspecified, the Text objects current text will be used.
+     *
+     * @return {string[]} An array of strings with the pieces of wrapped text.
+     */
+    getWrappedText: function (text)
+    {
+        if (text === undefined) { text = this._text; }
+
+        this.style.syncFont(this.canvas, this.context);
+
+        var wrappedLines = this.runWordWrap(text);
+
+        return wrappedLines.split(this.splitRegExp);
+    },
+
+    /**
+     * Set the text to display.
+     *
+     * An array of strings will be joined with `\n` line breaks.
+     *
+     * @method Phaser.GameObjects.Text#setText
+     * @since 3.0.0
+     *
+     * @param {(string|string[])} value - The string, or array of strings, to be set as the content of this Text object.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setText: function (value)
+    {
+        if (!value && value !== 0)
+        {
+            value = '';
+        }
+
+        if (Array.isArray(value))
+        {
+            value = value.join('\n');
+        }
