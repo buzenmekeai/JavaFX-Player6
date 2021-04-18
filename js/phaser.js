@@ -34323,3 +34323,230 @@ var Text = new Class({
         {
             value = value.join('\n');
         }
+
+        if (value !== this._text)
+        {
+            this._text = value.toString();
+
+            this.updateText();
+        }
+
+        return this;
+    },
+
+    /**
+     * Set the text style.
+     *
+     * @example
+     * text.setStyle({
+     *     fontSize: '64px',
+     *     fontFamily: 'Arial',
+     *     color: '#ffffff',
+     *     align: 'center',
+     *     backgroundColor: '#ff00ff'
+     * });
+     *
+     * @method Phaser.GameObjects.Text#setStyle
+     * @since 3.0.0
+     *
+     * @param {object} style - The style settings to set.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setStyle: function (style)
+    {
+        return this.style.setStyle(style);
+    },
+
+    /**
+     * Set the font.
+     *
+     * If a string is given, the font family is set.
+     *
+     * If an object is given, the `fontFamily`, `fontSize` and `fontStyle`
+     * properties of that object are set.
+     *
+     * @method Phaser.GameObjects.Text#setFont
+     * @since 3.0.0
+     *
+     * @param {string} font - The font family or font settings to set.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setFont: function (font)
+    {
+        return this.style.setFont(font);
+    },
+
+    /**
+     * Set the font family.
+     *
+     * @method Phaser.GameObjects.Text#setFontFamily
+     * @since 3.0.0
+     *
+     * @param {string} family - The font family.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setFontFamily: function (family)
+    {
+        return this.style.setFontFamily(family);
+    },
+
+    /**
+     * Set the font size.
+     *
+     * @method Phaser.GameObjects.Text#setFontSize
+     * @since 3.0.0
+     *
+     * @param {number} size - The font size.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setFontSize: function (size)
+    {
+        return this.style.setFontSize(size);
+    },
+
+    /**
+     * Set the font style.
+     *
+     * @method Phaser.GameObjects.Text#setFontStyle
+     * @since 3.0.0
+     *
+     * @param {string} style - The font style.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setFontStyle: function (style)
+    {
+        return this.style.setFontStyle(style);
+    },
+
+    /**
+     * Set a fixed width and height for the text.
+     *
+     * Pass in `0` for either of these parameters to disable fixed width or height respectively.
+     *
+     * @method Phaser.GameObjects.Text#setFixedSize
+     * @since 3.0.0
+     *
+     * @param {number} width - The fixed width to set. `0` disables fixed width.
+     * @param {number} height - The fixed height to set. `0` disables fixed height.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setFixedSize: function (width, height)
+    {
+        return this.style.setFixedSize(width, height);
+    },
+
+    /**
+     * Set the background color.
+     *
+     * @method Phaser.GameObjects.Text#setBackgroundColor
+     * @since 3.0.0
+     *
+     * @param {string} color - The background color.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setBackgroundColor: function (color)
+    {
+        return this.style.setBackgroundColor(color);
+    },
+
+    /**
+     * Set the text fill color.
+     *
+     * @method Phaser.GameObjects.Text#setFill
+     * @since 3.0.0
+     *
+     * @param {string} color - The text fill color.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setFill: function (color)
+    {
+        return this.style.setFill(color);
+    },
+
+    /**
+     * Set the text fill color.
+     *
+     * @method Phaser.GameObjects.Text#setColor
+     * @since 3.0.0
+     *
+     * @param {string} color - The text fill color.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setColor: function (color)
+    {
+        return this.style.setColor(color);
+    },
+
+    /**
+     * Set the stroke settings.
+     *
+     * @method Phaser.GameObjects.Text#setStroke
+     * @since 3.0.0
+     *
+     * @param {string} color - The stroke color.
+     * @param {number} thickness - The stroke thickness.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setStroke: function (color, thickness)
+    {
+        return this.style.setStroke(color, thickness);
+    },
+
+    /**
+     * Set the shadow settings.
+     *
+     * @method Phaser.GameObjects.Text#setShadow
+     * @since 3.0.0
+     *
+     * @param {number} [x=0] - The horizontal shadow offset.
+     * @param {number} [y=0] - The vertical shadow offset.
+     * @param {string} [color='#000'] - The shadow color.
+     * @param {number} [blur=0] - The shadow blur radius.
+     * @param {boolean} [shadowStroke=false] - Whether to stroke the shadow.
+     * @param {boolean} [shadowFill=true] - Whether to fill the shadow.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setShadow: function (x, y, color, blur, shadowStroke, shadowFill)
+    {
+        return this.style.setShadow(x, y, color, blur, shadowStroke, shadowFill);
+    },
+
+    /**
+     * Set the shadow offset.
+     *
+     * @method Phaser.GameObjects.Text#setShadowOffset
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal shadow offset.
+     * @param {number} y - The vertical shadow offset.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setShadowOffset: function (x, y)
+    {
+        return this.style.setShadowOffset(x, y);
+    },
+
+    /**
+     * Set the shadow color.
+     *
+     * @method Phaser.GameObjects.Text#setShadowColor
+     * @since 3.0.0
+     *
+     * @param {string} color - The shadow color.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setShadowColor: function (color)
+    {
