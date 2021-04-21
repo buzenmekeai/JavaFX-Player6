@@ -34550,3 +34550,230 @@ var Text = new Class({
      */
     setShadowColor: function (color)
     {
+        return this.style.setShadowColor(color);
+    },
+
+    /**
+     * Set the shadow blur radius.
+     *
+     * @method Phaser.GameObjects.Text#setShadowBlur
+     * @since 3.0.0
+     *
+     * @param {number} blur - The shadow blur radius.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setShadowBlur: function (blur)
+    {
+        return this.style.setShadowBlur(blur);
+    },
+
+    /**
+     * Enable or disable shadow stroke.
+     *
+     * @method Phaser.GameObjects.Text#setShadowStroke
+     * @since 3.0.0
+     *
+     * @param {boolean} enabled - Whether shadow stroke is enabled or not.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setShadowStroke: function (enabled)
+    {
+        return this.style.setShadowStroke(enabled);
+    },
+
+    /**
+     * Enable or disable shadow fill.
+     *
+     * @method Phaser.GameObjects.Text#setShadowFill
+     * @since 3.0.0
+     *
+     * @param {boolean} enabled - Whether shadow fill is enabled or not.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setShadowFill: function (enabled)
+    {
+        return this.style.setShadowFill(enabled);
+    },
+
+    /**
+     * Set the width (in pixels) to use for wrapping lines. Pass in null to remove wrapping by width.
+     *
+     * @method Phaser.GameObjects.Text#setWordWrapWidth
+     * @since 3.0.0
+     *
+     * @param {?number} width - The maximum width of a line in pixels. Set to null to remove wrapping.
+     * @param {boolean} [useAdvancedWrap=false] - Whether or not to use the advanced wrapping
+     * algorithm. If true, spaces are collapsed and whitespace is trimmed from lines. If false,
+     * spaces and whitespace are left as is.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setWordWrapWidth: function (width, useAdvancedWrap)
+    {
+        return this.style.setWordWrapWidth(width, useAdvancedWrap);
+    },
+
+    /**
+     * Set a custom callback for wrapping lines. Pass in null to remove wrapping by callback.
+     *
+     * @method Phaser.GameObjects.Text#setWordWrapCallback
+     * @since 3.0.0
+     *
+     * @param {TextStyleWordWrapCallback} callback - A custom function that will be responsible for wrapping the
+     * text. It will receive two arguments: text (the string to wrap), textObject (this Text
+     * instance). It should return the wrapped lines either as an array of lines or as a string with
+     * newline characters in place to indicate where breaks should happen.
+     * @param {object} [scope=null] - The scope that will be applied when the callback is invoked.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setWordWrapCallback: function (callback, scope)
+    {
+        return this.style.setWordWrapCallback(callback, scope);
+    },
+
+    /**
+     * Set the text alignment.
+     *
+     * Expects values like `'left'`, `'right'`, `'center'` or `'justified'`.
+     *
+     * @method Phaser.GameObjects.Text#setAlign
+     * @since 3.0.0
+     *
+     * @param {string} align - The text alignment.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setAlign: function (align)
+    {
+        return this.style.setAlign(align);
+    },
+
+    /**
+     * Set the resolution used by this Text object.
+     *
+     * By default it will be set to match the resolution set in the Game Config,
+     * but you can override it via this method, or by specifying it in the Text style configuration object.
+     * 
+     * It allows for much clearer text on High DPI devices, at the cost of memory because it uses larger
+     * internal Canvas textures for the Text.
+     * 
+     * Therefore, please use with caution, as the more high res Text you have, the more memory it uses.
+     *
+     * @method Phaser.GameObjects.Text#setResolution
+     * @since 3.12.0
+     *
+     * @param {number} value - The resolution for this Text object to use.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setResolution: function (value)
+    {
+        return this.style.setResolution(value);
+    },
+
+    /**
+     * Sets the line spacing value.
+     *
+     * This value is _added_ to the height of the font when calculating the overall line height.
+     * This only has an effect if this Text object consists of multiple lines of text.
+     *
+     * @method Phaser.GameObjects.Text#setLineSpacing
+     * @since 3.13.0
+     *
+     * @param {number} value - The amount to add to the font height to achieve the overall line height.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setLineSpacing: function (value)
+    {
+        this.lineSpacing = value;
+
+        return this.updateText();
+    },
+
+    /**
+     * Set the text padding.
+     *
+     * 'left' can be an object.
+     *
+     * If only 'left' and 'top' are given they are treated as 'x' and 'y'.
+     *
+     * @method Phaser.GameObjects.Text#setPadding
+     * @since 3.0.0
+     *
+     * @param {(number|object)} left - The left padding value, or a padding config object.
+     * @param {number} top - The top padding value.
+     * @param {number} right - The right padding value.
+     * @param {number} bottom - The bottom padding value.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setPadding: function (left, top, right, bottom)
+    {
+        if (typeof left === 'object')
+        {
+            var config = left;
+
+            //  If they specify x and/or y this applies to all
+            var x = GetValue(config, 'x', null);
+
+            if (x !== null)
+            {
+                left = x;
+                right = x;
+            }
+            else
+            {
+                left = GetValue(config, 'left', 0);
+                right = GetValue(config, 'right', left);
+            }
+
+            var y = GetValue(config, 'y', null);
+
+            if (y !== null)
+            {
+                top = y;
+                bottom = y;
+            }
+            else
+            {
+                top = GetValue(config, 'top', 0);
+                bottom = GetValue(config, 'bottom', top);
+            }
+        }
+        else
+        {
+            if (left === undefined) { left = 0; }
+            if (top === undefined) { top = left; }
+            if (right === undefined) { right = left; }
+            if (bottom === undefined) { bottom = top; }
+        }
+
+        this.padding.left = left;
+        this.padding.top = top;
+        this.padding.right = right;
+        this.padding.bottom = bottom;
+
+        return this.updateText();
+    },
+
+    /**
+     * Set the maximum number of lines to draw.
+     *
+     * @method Phaser.GameObjects.Text#setMaxLines
+     * @since 3.0.0
+     *
+     * @param {integer} [max=0] - The maximum number of lines to draw.
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    setMaxLines: function (max)
+    {
+        return this.style.setMaxLines(max);
+    },
+
+    /**
