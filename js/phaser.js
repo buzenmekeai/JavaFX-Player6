@@ -34777,3 +34777,233 @@ var Text = new Class({
     },
 
     /**
+     * Update the displayed text.
+     *
+     * @method Phaser.GameObjects.Text#updateText
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Text} This Text object.
+     */
+    updateText: function ()
+    {
+        var canvas = this.canvas;
+        var context = this.context;
+        var style = this.style;
+        var resolution = style.resolution;
+        var size = style.metrics;
+
+        style.syncFont(canvas, context);
+
+        var outputText = this._text;
+
+        if (style.wordWrapWidth || style.wordWrapCallback)
+        {
+            outputText = this.runWordWrap(this._text);
+        }
+
+        //  Split text into lines
+        var lines = outputText.split(this.splitRegExp);
+
+        var textSize = GetTextSize(this, size, lines);
+
+        var padding = this.padding;
+
+        var w = textSize.width + padding.left + padding.right;
+        var h = textSize.height + padding.top + padding.bottom;
+
+        if (style.fixedWidth === 0)
+        {
+            this.width = w;
+        }
+
+        if (style.fixedHeight === 0)
+        {
+            this.height = h;
+        }
+
+        this.updateDisplayOrigin();
+
+        w *= resolution;
+        h *= resolution;
+
+        w = Math.max(w, 1);
+        h = Math.max(h, 1);
+
+        if (canvas.width !== w || canvas.height !== h)
+        {
+            canvas.width = w;
+            canvas.height = h;
+
+            this.frame.setSize(w, h);
+
+            style.syncFont(canvas, context); // Resizing resets the context
+        }
+        else
+        {
+            context.clearRect(0, 0, w, h);
+        }
+
+        context.save();
+
+        context.scale(resolution, resolution);
+
+        if (style.backgroundColor)
+        {
+            context.fillStyle = style.backgroundColor;
+            context.fillRect(0, 0, w, h);
+        }
+
+        style.syncStyle(canvas, context);
+
+        context.textBaseline = 'alphabetic';
+
+        //  Apply padding
+        context.translate(padding.left, padding.top);
+
+        var linePositionX;
+        var linePositionY;
+
+        //  Draw text line by line
+        for (var i = 0; i < textSize.lines; i++)
+        {
+            linePositionX = style.strokeThickness / 2;
+            linePositionY = (style.strokeThickness / 2 + i * textSize.lineHeight) + size.ascent;
+
+            if (i > 0)
+            {
+                linePositionY += (textSize.lineSpacing * i);
+            }
+
+            if (style.rtl)
+            {
+                linePositionX = w - linePositionX;
+            }
+            else if (style.align === 'right')
+            {
+                linePositionX += textSize.width - textSize.lineWidths[i];
+            }
+            else if (style.align === 'center')
+            {
+                linePositionX += (textSize.width - textSize.lineWidths[i]) / 2;
+            }
+
+            if (this.autoRound)
+            {
+                linePositionX = Math.round(linePositionX);
+                linePositionY = Math.round(linePositionY);
+            }
+
+            if (style.strokeThickness)
+            {
+                this.style.syncShadow(context, style.shadowStroke);
+
+                context.strokeText(lines[i], linePositionX, linePositionY);
+            }
+
+            if (style.color)
+            {
+                this.style.syncShadow(context, style.shadowFill);
+
+                context.fillText(lines[i], linePositionX, linePositionY);
+            }
+        }
+
+        context.restore();
+
+        if (this.renderer.gl)
+        {
+            this.frame.source.glTexture = this.renderer.canvasToTexture(canvas, this.frame.source.glTexture, true);
+
+            this.frame.glTexture = this.frame.source.glTexture;
+        }
+
+        this.dirty = true;
+
+        return this;
+    },
+
+    /**
+     * Get the current text metrics.
+     *
+     * @method Phaser.GameObjects.Text#getTextMetrics
+     * @since 3.0.0
+     *
+     * @return {object} The text metrics.
+     */
+    getTextMetrics: function ()
+    {
+        return this.style.getTextMetrics();
+    },
+
+    /**
+     * The text string being rendered by this Text Game Object.
+     *
+     * @name Phaser.GameObjects.Text#text
+     * @type {string}
+     * @since 3.0.0
+     */
+    text: {
+
+        get: function ()
+        {
+            return this._text;
+        },
+
+        set: function (value)
+        {
+            this.setText(value);
+        }
+
+    },
+
+    /**
+     * Build a JSON representation of the Text object.
+     *
+     * @method Phaser.GameObjects.Text#toJSON
+     * @since 3.0.0
+     *
+     * @return {JSONGameObject} A JSON representation of the Text object.
+     */
+    toJSON: function ()
+    {
+        var out = Components.ToJSON(this);
+
+        //  Extra Text data is added here
+
+        var data = {
+            autoRound: this.autoRound,
+            text: this._text,
+            style: this.style.toJSON(),
+            padding: {
+                left: this.padding.left,
+                right: this.padding.right,
+                top: this.padding.top,
+                bottom: this.padding.bottom
+            }
+        };
+
+        out.data = data;
+
+        return out;
+    },
+
+    /**
+     * Internal destroy handler, called as part of the destroy process.
+     *
+     * @method Phaser.GameObjects.Text#preDestroy
+     * @protected
+     * @since 3.0.0
+     */
+    preDestroy: function ()
+    {
+        if (this.style.rtl)
+        {
+            RemoveFromDOM(this.canvas);
+        }
+
+        CanvasPool.remove(this.canvas);
+
+        this.texture.destroy();
+    }
+
+});
