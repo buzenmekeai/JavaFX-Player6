@@ -35238,3 +35238,199 @@ var RenderTexture = new Class({
         var renderer = this.renderer;
 
         if (renderer.type === CONST.WEBGL)
+        {
+            var gl = renderer.gl;
+
+            this.gl = gl;
+            this.drawGameObject = this.batchGameObjectWebGL;
+            this.framebuffer = renderer.createFramebuffer(width, height, this.frame.source.glTexture, false);
+        }
+        else if (renderer.type === CONST.CANVAS)
+        {
+            this.drawGameObject = this.batchGameObjectCanvas;
+        }
+
+        this.camera.setScene(scene);
+
+        this.setPosition(x, y);
+        this.setSize(width, height);
+        this.setOrigin(0, 0);
+        this.initPipeline();
+    },
+
+    /**
+     * Sets the size of this Game Object.
+     * 
+     * @method Phaser.GameObjects.Components.Size#setSize
+     * @since 3.0.0
+     *
+     * @param {number} width - The width of this Game Object.
+     * @param {number} height - The height of this Game Object.
+     * 
+     * @return {this} This Game Object instance.
+     */
+    setSize: function (width, height)
+    {
+        return this.resize(width, height);
+    },
+
+    /**
+     * Resizes the Render Texture to the new dimensions given.
+     *
+     * In WebGL it will destroy and then re-create the frame buffer being used by the Render Texture.
+     * In Canvas it will resize the underlying canvas element.
+     * Both approaches will erase everything currently drawn to the Render Texture.
+     *
+     * If the dimensions given are the same as those already being used, calling this method will do nothing.
+     *
+     * @method Phaser.GameObjects.RenderTexture#resize
+     * @since 3.10.0
+     *
+     * @param {number} width - The new width of the Render Texture.
+     * @param {number} [height] - The new height of the Render Texture. If not specified, will be set the same as the `width`.
+     *
+     * @return {this} This Render Texture.
+     */
+    resize: function (width, height)
+    {
+        if (height === undefined) { height = width; }
+
+        if (width !== this.width || height !== this.height)
+        {
+            this.canvas.width = width;
+            this.canvas.height = height;
+
+            if (this.gl)
+            {
+                var gl = this.gl;
+
+                this.renderer.deleteTexture(this.frame.source.glTexture);
+                this.renderer.deleteFramebuffer(this.framebuffer);
+
+                this.frame.source.glTexture = this.renderer.createTexture2D(0, gl.NEAREST, gl.NEAREST, gl.CLAMP_TO_EDGE, gl.CLAMP_TO_EDGE, gl.RGBA, null, width, height, false);
+                this.framebuffer = this.renderer.createFramebuffer(width, height, this.frame.source.glTexture, false);
+
+                this.frame.glTexture = this.frame.source.glTexture;
+            }
+
+            this.frame.source.width = width;
+            this.frame.source.height = height;
+
+            this.camera.setSize(width, height);
+
+            this.frame.setSize(width, height);
+
+            this.width = width;
+            this.height = height;
+        }
+
+        return this;
+    },
+
+    /**
+     * Set the tint to use when rendering this Render Texture.
+     *
+     * @method Phaser.GameObjects.RenderTexture#setGlobalTint
+     * @since 3.2.0
+     *
+     * @param {integer} tint - The tint value.
+     *
+     * @return {this} This Render Texture.
+     */
+    setGlobalTint: function (tint)
+    {
+        this.globalTint = tint;
+
+        return this;
+    },
+
+    /**
+     * Set the alpha to use when rendering this Render Texture.
+     *
+     * @method Phaser.GameObjects.RenderTexture#setGlobalAlpha
+     * @since 3.2.0
+     *
+     * @param {number} alpha - The alpha value.
+     *
+     * @return {this} This Render Texture.
+     */
+    setGlobalAlpha: function (alpha)
+    {
+        this.globalAlpha = alpha;
+
+        return this;
+    },
+
+    /**
+     * Stores a copy of this Render Texture in the Texture Manager using the given key.
+     * 
+     * After doing this, any texture based Game Object, such as a Sprite, can use the contents of this
+     * Render Texture by using the texture key:
+     * 
+     * ```javascript
+     * var rt = this.add.renderTexture(0, 0, 128, 128);
+     * 
+     * // Draw something to the Render Texture
+     * 
+     * rt.saveTexture('doodle');
+     * 
+     * this.add.image(400, 300, 'doodle');
+     * ```
+     * 
+     * Updating the contents of this Render Texture will automatically update _any_ Game Object
+     * that is using it as a texture. Calling `saveTexture` again will not save another copy
+     * of the same texture, it will just rename the key of the existing copy.
+     * 
+     * By default it will create a single base texture. You can add frames to the texture
+     * by using the `Texture.add` method. After doing this, you can then allow Game Objects
+     * to use a specific frame from a Render Texture.
+     *
+     * @method Phaser.GameObjects.RenderTexture#saveTexture
+     * @since 3.12.0
+     *
+     * @param {string} key - The unique key to store the texture as within the global Texture Manager.
+     *
+     * @return {Phaser.Textures.Texture} The Texture that was saved.
+     */
+    saveTexture: function (key)
+    {
+        this.textureManager.renameTexture(this.texture.key, key);
+        
+        this._saved = true;
+
+        return this.texture;
+    },
+
+    /**
+     * Fills the Render Texture with the given color.
+     *
+     * @method Phaser.GameObjects.RenderTexture#fill
+     * @since 3.2.0
+     *
+     * @param {number} rgb - The color to fill the Render Texture with.
+     * @param {number} [alpha=1] - The alpha value used by the fill.
+     *
+     * @return {this} This Render Texture instance.
+     */
+    fill: function (rgb, alpha)
+    {
+        if (alpha === undefined) { alpha = 1; }
+
+        var ur = ((rgb >> 16)|0) & 0xff;
+        var ug = ((rgb >> 8)|0) & 0xff;
+        var ub = (rgb|0) & 0xff;
+
+        if (this.gl)
+        {
+            this.renderer.setFramebuffer(this.framebuffer);
+
+            var gl = this.gl;
+    
+            gl.clearColor(ur / 255.0, ug / 255.0, ub / 255.0, alpha);
+    
+            gl.clear(gl.COLOR_BUFFER_BIT);
+    
+            this.renderer.setFramebuffer(null);
+        }
+        else
+        {
