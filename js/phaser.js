@@ -35007,3 +35007,234 @@ var Text = new Class({
     }
 
 });
+
+module.exports = Text;
+
+
+/***/ }),
+/* 154 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Camera = __webpack_require__(121);
+var CanvasPool = __webpack_require__(24);
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(14);
+var CONST = __webpack_require__(26);
+var Frame = __webpack_require__(113);
+var GameObject = __webpack_require__(19);
+var Render = __webpack_require__(817);
+var UUID = __webpack_require__(295);
+
+/**
+ * @classdesc
+ * A Render Texture.
+ * 
+ * A Render Texture is a special texture that allows any number of Game Objects to be drawn to it. You can take many complex objects and
+ * draw them all to this one texture, which can they be used as the texture for other Game Object's. It's a way to generate dynamic
+ * textures at run-time that are WebGL friendly and don't invoke expensive GPU uploads.
+ *
+ * @class RenderTexture
+ * @extends Phaser.GameObjects.GameObject
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @since 3.2.0
+ *
+ * @extends Phaser.GameObjects.Components.Alpha
+ * @extends Phaser.GameObjects.Components.BlendMode
+ * @extends Phaser.GameObjects.Components.ComputedSize
+ * @extends Phaser.GameObjects.Components.Depth
+ * @extends Phaser.GameObjects.Components.Flip
+ * @extends Phaser.GameObjects.Components.GetBounds
+ * @extends Phaser.GameObjects.Components.Mask
+ * @extends Phaser.GameObjects.Components.Origin
+ * @extends Phaser.GameObjects.Components.Pipeline
+ * @extends Phaser.GameObjects.Components.ScaleMode
+ * @extends Phaser.GameObjects.Components.ScrollFactor
+ * @extends Phaser.GameObjects.Components.Tint
+ * @extends Phaser.GameObjects.Components.Transform
+ * @extends Phaser.GameObjects.Components.Visible
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Game Object belongs. A Game Object can only belong to one Scene at a time.
+ * @param {number} [x=0] - The horizontal position of this Game Object in the world.
+ * @param {number} [y=0] - The vertical position of this Game Object in the world.
+ * @param {integer} [width=32] - The width of the Render Texture.
+ * @param {integer} [height=32] - The height of the Render Texture.
+ */
+var RenderTexture = new Class({
+
+    Extends: GameObject,
+
+    Mixins: [
+        Components.Alpha,
+        Components.BlendMode,
+        Components.ComputedSize,
+        Components.Crop,
+        Components.Depth,
+        Components.Flip,
+        Components.GetBounds,
+        Components.Mask,
+        Components.Origin,
+        Components.Pipeline,
+        Components.ScaleMode,
+        Components.ScrollFactor,
+        Components.Tint,
+        Components.Transform,
+        Components.Visible,
+        Render
+    ],
+
+    initialize:
+
+    function RenderTexture (scene, x, y, width, height)
+    {
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = 0; }
+        if (width === undefined) { width = 32; }
+        if (height === undefined) { height = 32; }
+
+        GameObject.call(this, scene, 'RenderTexture');
+
+        /**
+         * A reference to either the Canvas or WebGL Renderer that the Game instance is using.
+         *
+         * @name Phaser.GameObjects.RenderTexture#renderer
+         * @type {(Phaser.Renderer.Canvas.CanvasRenderer|Phaser.Renderer.WebGL.WebGLRenderer)}
+         * @since 3.2.0
+         */
+        this.renderer = scene.sys.game.renderer;
+
+        /**
+         * A reference to the Texture Manager.
+         *
+         * @name Phaser.GameObjects.RenderTexture#textureManager
+         * @type {Phaser.Textures.TextureManager}
+         * @since 3.12.0
+         */
+        this.textureManager = scene.sys.textures;
+
+        /**
+         * The tint of the Render Texture when rendered.
+         *
+         * @name Phaser.GameObjects.RenderTexture#globalTint
+         * @type {number}
+         * @default 0xffffff
+         * @since 3.2.0
+         */
+        this.globalTint = 0xffffff;
+
+        /**
+         * The alpha of the Render Texture when rendered.
+         *
+         * @name Phaser.GameObjects.RenderTexture#globalAlpha
+         * @type {number}
+         * @default 1
+         * @since 3.2.0
+         */
+        this.globalAlpha = 1;
+
+        /**
+         * The HTML Canvas Element that the Render Texture is drawing to.
+         * This is only populated if Phaser is running with the Canvas Renderer.
+         *
+         * @name Phaser.GameObjects.RenderTexture#canvas
+         * @type {HTMLCanvasElement}
+         * @since 3.2.0
+         */
+        this.canvas = CanvasPool.create2D(this, width, height);
+
+        /**
+         * A reference to the Rendering Context belonging to the Canvas Element this Render Texture is drawing to.
+         *
+         * @name Phaser.GameObjects.RenderTexture#context
+         * @type {CanvasRenderingContext2D}
+         * @since 3.2.0
+         */
+        this.context = this.canvas.getContext('2d');
+
+        /**
+         * A reference to the GL Frame Buffer this Render Texture is drawing to.
+         * This is only set if Phaser is running with the WebGL Renderer.
+         *
+         * @name Phaser.GameObjects.RenderTexture#framebuffer
+         * @type {?WebGLFramebuffer}
+         * @since 3.2.0
+         */
+        this.framebuffer = null;
+
+        /**
+         * The internal crop data object, as used by `setCrop` and passed to the `Frame.setCropUVs` method.
+         *
+         * @name Phaser.GameObjects.RenderTexture#_crop
+         * @type {object}
+         * @private
+         * @since 3.12.0
+         */
+        this._crop = this.resetCropObject();
+
+        /**
+         * The Texture corresponding to this Render Texture.
+         *
+         * @name Phaser.GameObjects.RenderTexture#texture
+         * @type {Phaser.Textures.Texture}
+         * @since 3.12.0
+         */
+        this.texture = scene.sys.textures.addCanvas(UUID(), this.canvas);
+
+        /**
+         * The Frame corresponding to this Render Texture.
+         *
+         * @name Phaser.GameObjects.RenderTexture#frame
+         * @type {Phaser.Textures.Frame}
+         * @since 3.12.0
+         */
+        this.frame = this.texture.get();
+        
+        /**
+         * Internal saved texture flag.
+         *
+         * @name Phaser.GameObjects.RenderTexture#_saved
+         * @type {boolean}
+         * @private
+         * @since 3.12.0
+         */
+        this._saved = false;
+
+        /**
+         * An internal Camera that can be used to move around the Render Texture.
+         * Control it just like you would any Scene Camera. The difference is that it only impacts the placement of what
+         * is drawn to the Render Texture. You can scroll, zoom and rotate this Camera.
+         *
+         * @name Phaser.GameObjects.RenderTexture#camera
+         * @type {Phaser.Cameras.Scene2D.BaseCamera}
+         * @since 3.12.0
+         */
+        this.camera = new Camera(0, 0, width, height);
+
+        /**
+         * Is this Render Texture dirty or not? If not it won't spend time clearing or filling itself.
+         *
+         * @name Phaser.GameObjects.RenderTexture#dirty
+         * @type {boolean}
+         * @since 3.12.0
+         */
+        this.dirty = false;
+
+        /**
+         * A reference to the WebGL Rendering Context.
+         *
+         * @name Phaser.GameObjects.RenderTexture#gl
+         * @type {WebGLRenderingContext}
+         * @default null
+         * @since 3.0.0
+         */
+        this.gl = null;
+
+        var renderer = this.renderer;
+
+        if (renderer.type === CONST.WEBGL)
