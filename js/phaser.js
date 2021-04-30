@@ -35656,3 +35656,231 @@ var RenderTexture = new Class({
             else
             {
                 this.batchTextureFrame(textureFrame, x, y, alpha, tint);
+            }
+
+            this.dirty = true;
+        }
+
+        return this;
+    },
+
+    /**
+     * Internal method that handles the drawing of an array of children.
+     *
+     * @method Phaser.GameObjects.RenderTexture#batchList
+     * @private
+     * @since 3.12.0
+     *
+     * @param {array} children - The array of Game Objects to draw.
+     * @param {number} x - The x position to offset the Game Object by.
+     * @param {number} y - The y position to offset the Game Object by.
+     * @param {number} [alpha] - The alpha to use. If not specified it uses the `globalAlpha` property.
+     * @param {number} [tint] - The tint color to use. If not specified it uses the `globalTint` property.
+     */
+    batchList: function (children, x, y, alpha, tint)
+    {
+        for (var i = 0; i < children.length; i++)
+        {
+            var entry = children[i];
+
+            if (!entry || entry === this)
+            {
+                continue;
+            }
+
+            if (entry.renderWebGL || entry.renderCanvas)
+            {
+                //  Game Objects
+                this.drawGameObject(entry, x, y);
+            }
+            else if (entry.isParent || entry.list)
+            {
+                //  Groups / Display Lists
+                this.batchGroup(entry.getChildren(), x, y);
+            }
+            else if (typeof entry === 'string')
+            {
+                //  Texture key
+                this.batchTextureFrameKey(entry, null, x, y, alpha, tint);
+            }
+            else if (entry instanceof Frame)
+            {
+                //  Texture Frame instance
+                this.batchTextureFrame(entry, x, y, alpha, tint);
+            }
+            else if (Array.isArray(entry))
+            {
+                //  Another Array
+                this.batchList(entry, x, y, alpha, tint);
+            }
+        }
+    },
+
+    /**
+     * Internal method that handles the drawing a Phaser Group contents.
+     *
+     * @method Phaser.GameObjects.RenderTexture#batchGroup
+     * @private
+     * @since 3.12.0
+     *
+     * @param {array} children - The array of Game Objects to draw.
+     * @param {number} x - The x position to offset the Game Object by.
+     * @param {number} y - The y position to offset the Game Object by.
+     */
+    batchGroup: function (children, x, y)
+    {
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = 0; }
+
+        for (var i = 0; i < children.length; i++)
+        {
+            var entry = children[i];
+
+            if (entry.willRender())
+            {
+                var tx = entry.x + x;
+                var ty = entry.y + y;
+
+                this.drawGameObject(entry, tx, ty);
+            }
+        }
+    },
+
+    /**
+     * Internal method that handles drawing a single Phaser Game Object to this Render Texture using WebGL.
+     *
+     * @method Phaser.GameObjects.RenderTexture#batchGameObjectWebGL
+     * @private
+     * @since 3.12.0
+     *
+     * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object to draw.
+     * @param {number} x - The x position to draw the Game Object at.
+     * @param {number} y - The y position to draw the Game Object at.
+     */
+    batchGameObjectWebGL: function (gameObject, x, y)
+    {
+        if (x === undefined) { x = gameObject.x; }
+        if (y === undefined) { y = gameObject.y; }
+
+        var prevX = gameObject.x;
+        var prevY = gameObject.y;
+
+        this.renderer.setBlendMode(gameObject.blendMode);
+
+        gameObject.setPosition(x, y);
+
+        gameObject.renderWebGL(this.renderer, gameObject, 0, this.camera, null);
+
+        gameObject.setPosition(prevX, prevY);
+    },
+
+    /**
+     * Internal method that handles drawing a single Phaser Game Object to this Render Texture using Canvas.
+     *
+     * @method Phaser.GameObjects.RenderTexture#batchGameObjectCanvas
+     * @private
+     * @since 3.12.0
+     *
+     * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object to draw.
+     * @param {number} x - The x position to draw the Game Object at.
+     * @param {number} y - The y position to draw the Game Object at.
+     */
+    batchGameObjectCanvas: function (gameObject, x, y)
+    {
+        if (x === undefined) { x = gameObject.x; }
+        if (y === undefined) { y = gameObject.y; }
+
+        var prevX = gameObject.x;
+        var prevY = gameObject.y;
+
+        gameObject.setPosition(x, y);
+
+        gameObject.renderCanvas(this.renderer, gameObject, 0, this.camera, null);
+
+        gameObject.setPosition(prevX, prevY);
+    },
+
+    /**
+     * Internal method that handles the drawing of an array of children.
+     *
+     * @method Phaser.GameObjects.RenderTexture#batchTextureFrameKey
+     * @private
+     * @since 3.12.0
+     *
+     * @param {string} key - The key of the texture to be used, as stored in the Texture Manager.
+     * @param {(string|integer)} [frame] - The name or index of the frame within the Texture.
+     * @param {number} x - The x position to offset the Game Object by.
+     * @param {number} y - The y position to offset the Game Object by.
+     * @param {number} [alpha] - The alpha to use. If not specified it uses the `globalAlpha` property.
+     * @param {number} [tint] - The tint color to use. If not specified it uses the `globalTint` property.
+     * 
+     * @return {boolean} `true` if the frame was found and drawn, otherwise `false`.
+     */
+    batchTextureFrameKey: function (key, frame, x, y, alpha, tint)
+    {
+        var textureFrame = this.textureManager.getFrame(key, frame);
+
+        if (textureFrame)
+        {
+            this.batchTextureFrame(textureFrame, x, y, alpha, tint);
+        }
+    },
+
+    /**
+     * Internal method that handles the drawing of a Texture Frame to this Render Texture.
+     *
+     * @method Phaser.GameObjects.RenderTexture#batchTextureFrame
+     * @private
+     * @since 3.12.0
+     *
+     * @param {Phaser.Textures.Frame} textureFrame - The Texture Frame to draw.
+     * @param {number} x - The x position to draw the Frame at.
+     * @param {number} y - The y position to draw the Frame at.
+     * @param {number} [tint] - A tint color to be applied to the frame drawn to the Render Texture.
+     */
+    batchTextureFrame: function (textureFrame, x, y, alpha, tint)
+    {
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = 0; }
+
+        if (this.gl)
+        {
+            this.pipeline.batchTextureFrame(textureFrame, x, y, tint, alpha, this.camera.matrix, null);
+        }
+        else
+        {
+            var ctx = this.context;
+            var cd = textureFrame.canvasData;
+            var source = textureFrame.source.image;
+    
+            var matrix = this.camera.matrix;
+    
+            ctx.globalAlpha = this.globalAlpha;
+
+            ctx.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
+
+            ctx.drawImage(source, cd.x, cd.y, cd.width, cd.height, x, y, cd.width, cd.height);
+        }
+    },
+
+    /**
+     * Internal destroy handler, called as part of the destroy process.
+     *
+     * @method Phaser.GameObjects.RenderTexture#preDestroy
+     * @protected
+     * @since 3.9.0
+     */
+    preDestroy: function ()
+    {
+        if (!this._saved)
+        {
+            CanvasPool.remove(this.canvas);
+
+            if (this.gl)
+            {
+                this.renderer.deleteFramebuffer(this.framebuffer);
+            }
+
+            this.texture.destroy();
+        }
+    }
