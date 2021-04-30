@@ -35434,3 +35434,225 @@ var RenderTexture = new Class({
         }
         else
         {
+            this.context.fillStyle = 'rgb(' + ur + ',' + ug + ',' + ub + ')';
+            this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+
+        return this;
+    },
+
+    /**
+     * Clears the Render Texture.
+     *
+     * @method Phaser.GameObjects.RenderTexture#clear
+     * @since 3.2.0
+     *
+     * @return {this} This Render Texture instance.
+     */
+    clear: function ()
+    {
+        if (this.dirty)
+        {
+            if (this.gl)
+            {
+                this.renderer.setFramebuffer(this.framebuffer);
+
+                var gl = this.gl;
+        
+                gl.clearColor(0, 0, 0, 0);
+        
+                gl.clear(gl.COLOR_BUFFER_BIT);
+        
+                this.renderer.setFramebuffer(null);
+            }
+            else
+            {
+                var ctx = this.context;
+
+                ctx.save();
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                ctx.restore();
+            }
+
+            this.dirty = false;
+        }
+
+        return this;
+    },
+
+    /**
+     * Draws the given object, or an array of objects, to this Render Texture.
+     * 
+     * It can accept any of the following:
+     * 
+     * * Any renderable Game Object, such as a Sprite, Text, Graphics or TileSprite.
+     * * Dynamic and Static Tilemap Layers.
+     * * A Group. The contents of which will be iterated and drawn in turn.
+     * * A Container. The contents of which will be iterated fully, and drawn in turn.
+     * * A Scene's Display List. Pass in `Scene.children` to draw the whole list.
+     * * Another Render Texture.
+     * * A Texture Frame instance.
+     * * A string. This is used to look-up a texture from the Texture Manager.
+     * 
+     * Note: You cannot draw a Render Texture to itself.
+     * 
+     * If passing in a Group or Container it will only draw children that return `true`
+     * when their `willRender()` method is called. I.e. a Container with 10 children,
+     * 5 of which have `visible=false` will only draw the 5 visible ones.
+     * 
+     * If passing in an array of Game Objects it will draw them all, regardless if
+     * they pass a `willRender` check or not.
+     * 
+     * You can pass in a string in which case it will look for a texture in the Texture
+     * Manager matching that string, and draw the base frame. If you need to specify
+     * exactly which frame to draw then use the method `drawFrame` instead.
+     * 
+     * You can pass in the `x` and `y` coordinates to draw the objects at. The use of
+     * the coordinates differ based on what objects are being drawn. If the object is
+     * a Group, Container or Display List, the coordinates are _added_ to the positions
+     * of the children. For all other types of object, the coordinates are exact.
+     * 
+     * The `alpha` and `tint` values are only used by Texture Frames.
+     * Game Objects use their own alpha and tint values when being drawn.
+     * 
+     * Calling this method causes the WebGL batch to flush, so it can write the texture
+     * data to the framebuffer being used internally. The batch is flushed at the end,
+     * after the entries have been iterated. So if you've a bunch of objects to draw,
+     * try and pass them in an array in one single call, rather than making lots of
+     * separate calls.
+     *
+     * @method Phaser.GameObjects.RenderTexture#draw
+     * @since 3.2.0
+     *
+     * @param {any} entries - Any renderable Game Object, or Group, Container, Display List, other Render Texture, Texture Frame or an array of any of these.
+     * @param {number} [x] - The x position to draw the Frame at, or the offset applied to the object.
+     * @param {number} [y] - The y position to draw the Frame at, or the offset applied to the object.
+     * @param {number} [alpha] -  The alpha value. Only used for Texture Frames and if not specified defaults to the `globalAlpha` property. Game Objects use their own current alpha value.
+     * @param {number} [tint] -  WebGL only. The tint color value. Only used for Texture Frames and if not specified defaults to the `globalTint` property. Game Objects use their own current tint value.
+     *
+     * @return {this} This Render Texture instance.
+     */
+    draw: function (entries, x, y, alpha, tint)
+    {
+        if (alpha === undefined) { alpha = this.globalAlpha; }
+
+        if (tint === undefined)
+        {
+            tint = (this.globalTint >> 16) + (this.globalTint & 0xff00) + ((this.globalTint & 0xff) << 16);
+        }
+        else
+        {
+            tint = (tint >> 16) + (tint & 0xff00) + ((tint & 0xff) << 16);
+        }
+
+        if (!Array.isArray(entries))
+        {
+            entries = [ entries ];
+        }
+
+        var gl = this.gl;
+
+        this.camera.preRender(1, 1, 1);
+
+        if (gl)
+        {
+            this.renderer.setFramebuffer(this.framebuffer);
+
+            var pipeline = this.pipeline;
+    
+            pipeline.projOrtho(0, this.width, 0, this.height, -1000.0, 1000.0);
+
+            this.batchList(entries, x, y, alpha, tint);
+
+            pipeline.flush();
+
+            this.renderer.setFramebuffer(null);
+
+            pipeline.projOrtho(0, pipeline.width, pipeline.height, 0, -1000.0, 1000.0);
+        }
+        else
+        {
+            this.renderer.setContext(this.context);
+
+            this.batchList(entries, x, y, alpha, tint);
+
+            this.renderer.setContext();
+        }
+
+        this.dirty = true;
+
+        return this;
+    },
+
+    /**
+     * Draws the Texture Frame to the Render Texture at the given position.
+     * 
+     * Textures are referenced by their string-based keys, as stored in the Texture Manager.
+     * 
+     * ```javascript
+     * var rt = this.add.renderTexture(0, 0, 800, 600);
+     * rt.drawFrame(key, frame);
+     * ```
+     * 
+     * You can optionally provide a position, alpha and tint value to apply to the frame
+     * before it is drawn.
+     * 
+     * Calling this method will cause a batch flush, so if you've got a stack of things to draw
+     * in a tight loop, try using the `draw` method instead.
+     * 
+     * If you need to draw a Sprite to this Render Texture, use the `draw` method instead.
+     *
+     * @method Phaser.GameObjects.RenderTexture#drawFrame
+     * @since 3.12.0
+     *
+     * @param {string} key - The key of the texture to be used, as stored in the Texture Manager.
+     * @param {(string|integer)} [frame] - The name or index of the frame within the Texture.
+     * @param {number} [x=0] - The x position to draw the frame at.
+     * @param {number} [y=0] - The y position to draw the frame at.
+     * @param {number} [alpha] - The alpha to use. If not specified it uses the `globalAlpha` property.
+     * @param {number} [tint] - WebGL only. The tint color to use. If not specified it uses the `globalTint` property.
+     *
+     * @return {this} This Render Texture instance.
+     */
+    drawFrame: function (key, frame, x, y, alpha, tint)
+    {
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = 0; }
+        if (alpha === undefined) { alpha = this.globalAlpha; }
+
+        if (tint === undefined)
+        {
+            tint = (this.globalTint >> 16) + (this.globalTint & 0xff00) + ((this.globalTint & 0xff) << 16);
+        }
+        else
+        {
+            tint = (tint >> 16) + (tint & 0xff00) + ((tint & 0xff) << 16);
+        }
+
+        var gl = this.gl;
+        var textureFrame = this.textureManager.getFrame(key, frame);
+
+        if (textureFrame)
+        {
+            this.camera.preRender(1, 1, 1);
+
+            if (gl)
+            {
+                this.renderer.setFramebuffer(this.framebuffer);
+    
+                var pipeline = this.pipeline;
+        
+                pipeline.projOrtho(0, this.width, 0, this.height, -1000.0, 1000.0);
+        
+                pipeline.batchTextureFrame(textureFrame, x, y, tint, alpha, this.camera.matrix, null);
+            
+                pipeline.flush();
+        
+                this.renderer.setFramebuffer(null);
+        
+                pipeline.projOrtho(0, pipeline.width, pipeline.height, 0, -1000.0, 1000.0);
+            }
+            else
+            {
+                this.batchTextureFrame(textureFrame, x, y, alpha, tint);
