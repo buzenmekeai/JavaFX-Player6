@@ -35884,3 +35884,208 @@ var RenderTexture = new Class({
             this.texture.destroy();
         }
     }
+
+});
+
+module.exports = RenderTexture;
+
+
+/***/ }),
+/* 155 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(14);
+var GameObject = __webpack_require__(19);
+var GravityWell = __webpack_require__(304);
+var List = __webpack_require__(112);
+var ParticleEmitter = __webpack_require__(302);
+var Render = __webpack_require__(821);
+
+/**
+ * @classdesc
+ * A Particle Emitter Manager creates and controls {@link Phaser.GameObjects.Particles.ParticleEmitter Particle Emitters} and {@link Phaser.GameObjects.Particles.GravityWell Gravity Wells}.
+ *
+ * @class ParticleEmitterManager
+ * @extends Phaser.GameObjects.GameObject
+ * @memberof Phaser.GameObjects.Particles
+ * @constructor
+ * @since 3.0.0
+ *
+ * @extends Phaser.GameObjects.Components.Depth
+ * @extends Phaser.GameObjects.Components.Pipeline
+ * @extends Phaser.GameObjects.Components.Transform
+ * @extends Phaser.GameObjects.Components.Visible
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Emitter Manager belongs.
+ * @param {string} texture - The key of the Texture this Emitter Manager will use to render particles, as stored in the Texture Manager.
+ * @param {(string|integer)} [frame] - An optional frame from the Texture this Emitter Manager will use to render particles.
+ * @param {ParticleEmitterConfig|ParticleEmitterConfig[]} [emitters] - Configuration settings for one or more emitters to create.
+ */
+var ParticleEmitterManager = new Class({
+
+    Extends: GameObject,
+
+    Mixins: [
+        Components.Depth,
+        Components.Pipeline,
+        Components.Transform,
+        Components.Visible,
+        Render
+    ],
+
+    initialize:
+
+    //  frame is optional and can contain the emitters array or object if skipped
+    function ParticleEmitterManager (scene, texture, frame, emitters)
+    {
+        GameObject.call(this, scene, 'ParticleEmitterManager');
+
+        /**
+         * The blend mode applied to all emitters and particles.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitterManager#blendMode
+         * @type {integer}
+         * @default -1
+         * @private
+         * @since 3.0.0
+         */
+        this.blendMode = -1;
+
+        /**
+         * The time scale applied to all emitters and particles, affecting flow rate, lifespan, and movement.
+         * Values larger than 1 are faster than normal.
+         * This is multiplied with any timeScale set on each individual emitter.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitterManager#timeScale
+         * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.timeScale = 1;
+
+        /**
+         * The texture used to render this Emitter Manager's particles.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitterManager#texture
+         * @type {Phaser.Textures.Texture}
+         * @default null
+         * @since 3.0.0
+         */
+        this.texture = null;
+
+        /**
+         * The texture frame used to render this Emitter Manager's particles.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitterManager#frame
+         * @type {Phaser.Textures.Frame}
+         * @default null
+         * @since 3.0.0
+         */
+        this.frame = null;
+
+        /**
+         * Names of this Emitter Manager's texture frames.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitterManager#frameNames
+         * @type {string[]}
+         * @since 3.0.0
+         */
+        this.frameNames = [];
+
+        //  frame is optional and can contain the emitters array or object if skipped
+        if (frame !== null && (typeof frame === 'object' || Array.isArray(frame)))
+        {
+            emitters = frame;
+            frame = null;
+        }
+
+        this.setTexture(texture, frame);
+
+        this.initPipeline();
+
+        /**
+         * A list of Emitters being managed by this Emitter Manager.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitterManager#emitters
+         * @type {Phaser.Structs.List.<Phaser.GameObjects.Particles.ParticleEmitter>}
+         * @since 3.0.0
+         */
+        this.emitters = new List(this);
+
+        /**
+         * A list of Gravity Wells being managed by this Emitter Manager.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitterManager#wells
+         * @type {Phaser.Structs.List.<Phaser.GameObjects.Particles.GravityWell>}
+         * @since 3.0.0
+         */
+        this.wells = new List(this);
+
+        if (emitters)
+        {
+            //  An array of emitter configs?
+            if (!Array.isArray(emitters))
+            {
+                emitters = [ emitters ];
+            }
+
+            for (var i = 0; i < emitters.length; i++)
+            {
+                this.createEmitter(emitters[i]);
+            }
+        }
+    },
+
+    /**
+     * Sets the texture and frame this Emitter Manager will use to render with.
+     *
+     * Textures are referenced by their string-based keys, as stored in the Texture Manager.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitterManager#setTexture
+     * @since 3.0.0
+     *
+     * @param {string} key - The key of the texture to be used, as stored in the Texture Manager.
+     * @param {(string|integer)} [frame] - The name or index of the frame within the Texture.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitterManager} This Emitter Manager.
+     */
+    setTexture: function (key, frame)
+    {
+        this.texture = this.scene.sys.textures.get(key);
+
+        return this.setFrame(frame);
+    },
+
+    /**
+     * Sets the frame this Emitter Manager will use to render with.
+     *
+     * The Frame has to belong to the current Texture being used.
+     *
+     * It can be either a string or an index.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitterManager#setFrame
+     * @since 3.0.0
+     *
+     * @param {(string|integer)} [frame] - The name or index of the frame within the Texture.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitterManager} This Emitter Manager.
+     */
+    setFrame: function (frame)
+    {
+        this.frame = this.texture.get(frame);
+
+        var frames = this.texture.getFramesFromTextureSource(this.frame.sourceIndex);
+
+        var names = [];
+
+        frames.forEach(function (sourceFrame)
+        {
+            names.push(sourceFrame.name);
+        });
