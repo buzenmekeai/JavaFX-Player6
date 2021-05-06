@@ -36581,3 +36581,210 @@ var Graphics = new Class({
         ComponentsAlpha,
         ComponentsBlendMode,
         ComponentsDepth,
+        ComponentsMask,
+        ComponentsPipeline,
+        ComponentsTransform,
+        ComponentsVisible,
+        ComponentsScrollFactor,
+        Render
+    ],
+
+    initialize:
+
+    function Graphics (scene, options)
+    {
+        var x = GetValue(options, 'x', 0);
+        var y = GetValue(options, 'y', 0);
+
+        GameObject.call(this, scene, 'Graphics');
+
+        this.setPosition(x, y);
+        this.initPipeline();
+
+        /**
+         * The horizontal display origin of the Graphics.
+         *
+         * @name Phaser.GameObjects.Graphics#displayOriginX
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.displayOriginX = 0;
+
+        /**
+         * The vertical display origin of the Graphics.
+         *
+         * @name Phaser.GameObjects.Graphics#displayOriginY
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.displayOriginY = 0;
+
+        /**
+         * The array of commands used to render the Graphics.
+         *
+         * @name Phaser.GameObjects.Graphics#commandBuffer
+         * @type {array}
+         * @default []
+         * @since 3.0.0
+         */
+        this.commandBuffer = [];
+
+        /**
+         * The default fill color for shapes rendered by this Graphics object.
+         *
+         * @name Phaser.GameObjects.Graphics#defaultFillColor
+         * @type {number}
+         * @default -1
+         * @since 3.0.0
+         */
+        this.defaultFillColor = -1;
+
+        /**
+         * The default fill alpha for shapes rendered by this Graphics object.
+         *
+         * @name Phaser.GameObjects.Graphics#defaultFillAlpha
+         * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.defaultFillAlpha = 1;
+
+        /**
+         * The default stroke width for shapes rendered by this Graphics object.
+         *
+         * @name Phaser.GameObjects.Graphics#defaultStrokeWidth
+         * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.defaultStrokeWidth = 1;
+
+        /**
+         * The default stroke color for shapes rendered by this Graphics object.
+         *
+         * @name Phaser.GameObjects.Graphics#defaultStrokeColor
+         * @type {number}
+         * @default -1
+         * @since 3.0.0
+         */
+        this.defaultStrokeColor = -1;
+
+        /**
+         * The default stroke alpha for shapes rendered by this Graphics object.
+         *
+         * @name Phaser.GameObjects.Graphics#defaultStrokeAlpha
+         * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.defaultStrokeAlpha = 1;
+
+        /**
+         * Internal property that keeps track of the line width style setting.
+         *
+         * @name Phaser.GameObjects.Graphics#_lineWidth
+         * @type {number}
+         * @private
+         * @since 3.0.0
+         */
+        this._lineWidth = 1.0;
+
+        this.setDefaultStyles(options);
+    },
+
+    /**
+     * Set the default style settings for this Graphics object.
+     *
+     * @method Phaser.GameObjects.Graphics#setDefaultStyles
+     * @since 3.0.0
+     *
+     * @param {GraphicsStyles} options - The styles to set as defaults.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    setDefaultStyles: function (options)
+    {
+        if (GetValue(options, 'lineStyle', null))
+        {
+            this.defaultStrokeWidth = GetValue(options, 'lineStyle.width', 1);
+            this.defaultStrokeColor = GetValue(options, 'lineStyle.color', 0xffffff);
+            this.defaultStrokeAlpha = GetValue(options, 'lineStyle.alpha', 1);
+
+            this.lineStyle(this.defaultStrokeWidth, this.defaultStrokeColor, this.defaultStrokeAlpha);
+        }
+
+        if (GetValue(options, 'fillStyle', null))
+        {
+            this.defaultFillColor = GetValue(options, 'fillStyle.color', 0xffffff);
+            this.defaultFillAlpha = GetValue(options, 'fillStyle.alpha', 1);
+
+            this.fillStyle(this.defaultFillColor, this.defaultFillAlpha);
+        }
+
+        return this;
+    },
+
+    /**
+     * Set the current line style.
+     *
+     * @method Phaser.GameObjects.Graphics#lineStyle
+     * @since 3.0.0
+     *
+     * @param {number} lineWidth - The stroke width.
+     * @param {number} color - The stroke color.
+     * @param {number} [alpha=1] - The stroke alpha.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    lineStyle: function (lineWidth, color, alpha)
+    {
+        if (alpha === undefined) { alpha = 1; }
+
+        this.commandBuffer.push(
+            Commands.LINE_STYLE,
+            lineWidth, color, alpha
+        );
+
+        this._lineWidth = lineWidth;
+
+        return this;
+    },
+
+    /**
+     * Set the current fill style.
+     *
+     * @method Phaser.GameObjects.Graphics#fillStyle
+     * @since 3.0.0
+     *
+     * @param {number} color - The fill color.
+     * @param {number} [alpha=1] - The fill alpha.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    fillStyle: function (color, alpha)
+    {
+        if (alpha === undefined) { alpha = 1; }
+
+        this.commandBuffer.push(
+            Commands.FILL_STYLE,
+            color, alpha
+        );
+
+        return this;
+    },
+
+    /**
+     * Sets a gradient fill style. This is a WebGL only feature.
+     *
+     * The gradient color values represent the 4 corners of an untransformed rectangle.
+     * The gradient is used to color all filled shapes and paths drawn after calling this method.
+     * If you wish to turn a gradient off, call `fillStyle` and provide a new single fill color.
+     *
+     * When filling a triangle only the first 3 color values provided are used for the 3 points of a triangle.
+     *
+     * This feature is best used only on rectangles and triangles. All other shapes will give strange results.
+     *
+     * Note that for objects such as arcs or ellipses, or anything which is made out of triangles, each triangle used
+     * will be filled with a gradient on its own. There is no ability to gradient fill a shape or path as a single
