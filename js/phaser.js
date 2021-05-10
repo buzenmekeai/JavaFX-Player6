@@ -37017,3 +37017,219 @@ var Graphics = new Class({
      * @param {number} radius - The radius of the circle.
      *
      * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    fillCircle: function (x, y, radius)
+    {
+        this.beginPath();
+        this.arc(x, y, radius, 0, MATH_CONST.PI2);
+        this.fillPath();
+
+        return this;
+    },
+
+    /**
+     * Stroke a circle with the given position and radius.
+     *
+     * @method Phaser.GameObjects.Graphics#strokeCircle
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate of the center of the circle.
+     * @param {number} y - The y coordinate of the center of the circle.
+     * @param {number} radius - The radius of the circle.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    strokeCircle: function (x, y, radius)
+    {
+        this.beginPath();
+        this.arc(x, y, radius, 0, MATH_CONST.PI2);
+        this.strokePath();
+
+        return this;
+    },
+
+    /**
+     * Fill the given rectangle.
+     *
+     * @method Phaser.GameObjects.Graphics#fillRectShape
+     * @since 3.0.0
+     *
+     * @param {Phaser.Geom.Rectangle} rect - The rectangle to fill.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    fillRectShape: function (rect)
+    {
+        return this.fillRect(rect.x, rect.y, rect.width, rect.height);
+    },
+
+    /**
+     * Stroke the given rectangle.
+     *
+     * @method Phaser.GameObjects.Graphics#strokeRectShape
+     * @since 3.0.0
+     *
+     * @param {Phaser.Geom.Rectangle} rect - The rectangle to stroke.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    strokeRectShape: function (rect)
+    {
+        return this.strokeRect(rect.x, rect.y, rect.width, rect.height);
+    },
+
+    /**
+     * Fill a rectangle with the given position and size.
+     *
+     * @method Phaser.GameObjects.Graphics#fillRect
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate of the top-left of the rectangle.
+     * @param {number} y - The y coordinate of the top-left of the rectangle.
+     * @param {number} width - The width of the rectangle.
+     * @param {number} height - The height of the rectangle.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    fillRect: function (x, y, width, height)
+    {
+        this.commandBuffer.push(
+            Commands.FILL_RECT,
+            x, y, width, height
+        );
+
+        return this;
+    },
+
+    /**
+     * Stroke a rectangle with the given position and size.
+     *
+     * @method Phaser.GameObjects.Graphics#strokeRect
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate of the top-left of the rectangle.
+     * @param {number} y - The y coordinate of the top-left of the rectangle.
+     * @param {number} width - The width of the rectangle.
+     * @param {number} height - The height of the rectangle.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    strokeRect: function (x, y, width, height)
+    {
+        var lineWidthHalf = this._lineWidth / 2;
+        var minx = x - lineWidthHalf;
+        var maxx = x + lineWidthHalf;
+
+        this.beginPath();
+        this.moveTo(x, y);
+        this.lineTo(x, y + height);
+        this.strokePath();
+
+        this.beginPath();
+        this.moveTo(x + width, y);
+        this.lineTo(x + width, y + height);
+        this.strokePath();
+
+        this.beginPath();
+        this.moveTo(minx, y);
+        this.lineTo(maxx + width, y);
+        this.strokePath();
+
+        this.beginPath();
+        this.moveTo(minx, y + height);
+        this.lineTo(maxx + width, y + height);
+        this.strokePath();
+
+        return this;
+    },
+
+    /**
+     * Fill a rounded rectangle with the given position, size and radius.
+     *
+     * @method Phaser.GameObjects.Graphics#fillRoundedRect
+     * @since 3.11.0
+     *
+     * @param {number} x - The x coordinate of the top-left of the rectangle.
+     * @param {number} y - The y coordinate of the top-left of the rectangle.
+     * @param {number} width - The width of the rectangle.
+     * @param {number} height - The height of the rectangle.
+     * @param {number} [radius = 20] - The corner radius; It can also be an object to specify different radii for corners
+     * @param {number} [radius.tl = 20] Top left
+     * @param {number} [radius.tr = 20] Top right
+     * @param {number} [radius.br = 20] Bottom right
+     * @param {number} [radius.bl = 20] Bottom left
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    fillRoundedRect: function (x, y, width, height, radius)
+    {
+        if (radius === undefined) { radius = 20; }
+
+        var tl = radius;
+        var tr = radius;
+        var bl = radius;
+        var br = radius;
+
+        if (typeof radius !== 'number')
+        {
+            tl = GetFastValue(radius, 'tl', 20);
+            tr = GetFastValue(radius, 'tr', 20);
+            bl = GetFastValue(radius, 'bl', 20);
+            br = GetFastValue(radius, 'br', 20);
+        }
+
+        this.beginPath();
+        this.moveTo(x + tl, y);
+        this.lineTo(x + width - tr, y);
+        this.arc(x + width - tr, y + tr, tr, -MATH_CONST.TAU, 0);
+        this.lineTo(x + width, y + height - br);
+        this.arc(x + width - br, y + height - br, br, 0, MATH_CONST.TAU);
+        this.lineTo(x + bl, y + height);
+        this.arc(x + bl, y + height - bl, bl, MATH_CONST.TAU, Math.PI);
+        this.lineTo(x, y + tl);
+        this.arc(x + tl, y + tl, tl, -Math.PI, -MATH_CONST.TAU);
+        this.fillPath();
+
+        return this;
+    },
+
+    /**
+     * Stroke a rounded rectangle with the given position, size and radius.
+     *
+     * @method Phaser.GameObjects.Graphics#strokeRoundedRect
+     * @since 3.11.0
+     *
+     * @param {number} x - The x coordinate of the top-left of the rectangle.
+     * @param {number} y - The y coordinate of the top-left of the rectangle.
+     * @param {number} width - The width of the rectangle.
+     * @param {number} height - The height of the rectangle.
+     * @param {number} [radius = 20] - The corner radius; It can also be an object to specify different radii for corners
+     * @param {number} [radius.tl = 20] Top left
+     * @param {number} [radius.tr = 20] Top right
+     * @param {number} [radius.br = 20] Bottom right
+     * @param {number} [radius.bl = 20] Bottom left
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    strokeRoundedRect: function (x, y, width, height, radius)
+    {
+        if (radius === undefined) { radius = 20; }
+
+        var tl = radius;
+        var tr = radius;
+        var bl = radius;
+        var br = radius;
+
+        if (typeof radius !== 'number')
+        {
+            tl = GetFastValue(radius, 'tl', 20);
+            tr = GetFastValue(radius, 'tr', 20);
+            bl = GetFastValue(radius, 'bl', 20);
+            br = GetFastValue(radius, 'br', 20);
+        }
+
+        this.beginPath();
+        this.moveTo(x + tl, y);
+        this.lineTo(x + width - tr, y);
+        this.arc(x + width - tr, y + tr, tr, -MATH_CONST.TAU, 0);
+        this.lineTo(x + width, y + height - br);
