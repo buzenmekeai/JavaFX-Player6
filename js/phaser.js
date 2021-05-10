@@ -36788,3 +36788,232 @@ var Graphics = new Class({
      *
      * Note that for objects such as arcs or ellipses, or anything which is made out of triangles, each triangle used
      * will be filled with a gradient on its own. There is no ability to gradient fill a shape or path as a single
+     * entity at this time.
+     *
+     * @method Phaser.GameObjects.Graphics#fillGradientStyle
+     * @webglOnly
+     * @since 3.12.0
+     *
+     * @param {integer} topLeft - The tint being applied to the top-left of the Game Object.
+     * @param {integer} topRight - The tint being applied to the top-right of the Game Object.
+     * @param {integer} bottomLeft - The tint being applied to the bottom-left of the Game Object.
+     * @param {integer} bottomRight - The tint being applied to the bottom-right of the Game Object.
+     * @param {number} [alpha=1] - The fill alpha.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    fillGradientStyle: function (topLeft, topRight, bottomLeft, bottomRight, alpha)
+    {
+        if (alpha === undefined) { alpha = 1; }
+
+        this.commandBuffer.push(
+            Commands.GRADIENT_FILL_STYLE,
+            alpha, topLeft, topRight, bottomLeft, bottomRight
+        );
+
+        return this;
+    },
+
+    /**
+     * Sets a gradient line style. This is a WebGL only feature.
+     *
+     * The gradient color values represent the 4 corners of an untransformed rectangle.
+     * The gradient is used to color all stroked shapes and paths drawn after calling this method.
+     * If you wish to turn a gradient off, call `lineStyle` and provide a new single line color.
+     *
+     * This feature is best used only on single lines. All other shapes will give strange results.
+     *
+     * Note that for objects such as arcs or ellipses, or anything which is made out of triangles, each triangle used
+     * will be filled with a gradient on its own. There is no ability to gradient stroke a shape or path as a single
+     * entity at this time.
+     *
+     * @method Phaser.GameObjects.Graphics#lineGradientStyle
+     * @webglOnly
+     * @since 3.12.0
+     *
+     * @param {number} lineWidth - The stroke width.
+     * @param {integer} topLeft - The tint being applied to the top-left of the Game Object.
+     * @param {integer} topRight - The tint being applied to the top-right of the Game Object.
+     * @param {integer} bottomLeft - The tint being applied to the bottom-left of the Game Object.
+     * @param {integer} bottomRight - The tint being applied to the bottom-right of the Game Object.
+     * @param {number} [alpha=1] - The fill alpha.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    lineGradientStyle: function (lineWidth, topLeft, topRight, bottomLeft, bottomRight, alpha)
+    {
+        if (alpha === undefined) { alpha = 1; }
+
+        this.commandBuffer.push(
+            Commands.GRADIENT_LINE_STYLE,
+            lineWidth, alpha, topLeft, topRight, bottomLeft, bottomRight
+        );
+
+        return this;
+    },
+
+    /**
+     * Sets the texture frame this Graphics Object will use when drawing all shapes defined after calling this.
+     *
+     * Textures are referenced by their string-based keys, as stored in the Texture Manager.
+     *
+     * Once set, all shapes will use this texture. Call this method with no arguments to clear it.
+     *
+     * The textures are not tiled. They are stretched to the dimensions of the shapes being rendered. For this reason,
+     * it works best with seamless / tileable textures.
+     *
+     * The mode argument controls how the textures are combined with the fill colors. The default value (0) will
+     * multiply the texture by the fill color. A value of 1 will use just the fill color, but the alpha data from the texture,
+     * and a value of 2 will use just the texture and no fill color at all.
+     *
+     * @method Phaser.GameObjects.Graphics#setTexture
+     * @since 3.12.0
+     * @webglOnly
+     *
+     * @param {string} [key] - The key of the texture to be used, as stored in the Texture Manager. Leave blank to clear a previously set texture.
+     * @param {(string|integer)} [frame] - The name or index of the frame within the Texture.
+     * @param {number} [mode=0] - The texture tint mode. 0 is multiply, 1 is alpha only and 2 is texture only.
+     *
+     * @return {this} This Game Object.
+     */
+    setTexture: function (key, frame, mode)
+    {
+        if (mode === undefined) { mode = 0; }
+
+        if (key === undefined)
+        {
+            this.commandBuffer.push(
+                Commands.CLEAR_TEXTURE
+            );
+        }
+        else
+        {
+            var textureFrame = this.scene.sys.textures.getFrame(key, frame);
+
+            if (textureFrame)
+            {
+                if (mode === 2)
+                {
+                    mode = 3;
+                }
+
+                this.commandBuffer.push(
+                    Commands.SET_TEXTURE,
+                    textureFrame,
+                    mode
+                );
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Start a new shape path.
+     *
+     * @method Phaser.GameObjects.Graphics#beginPath
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    beginPath: function ()
+    {
+        this.commandBuffer.push(
+            Commands.BEGIN_PATH
+        );
+
+        return this;
+    },
+
+    /**
+     * Close the current path.
+     *
+     * @method Phaser.GameObjects.Graphics#closePath
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    closePath: function ()
+    {
+        this.commandBuffer.push(
+            Commands.CLOSE_PATH
+        );
+
+        return this;
+    },
+
+    /**
+     * Fill the current path.
+     *
+     * @method Phaser.GameObjects.Graphics#fillPath
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    fillPath: function ()
+    {
+        this.commandBuffer.push(
+            Commands.FILL_PATH
+        );
+
+        return this;
+    },
+
+    /**
+     * Stroke the current path.
+     *
+     * @method Phaser.GameObjects.Graphics#strokePath
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    strokePath: function ()
+    {
+        this.commandBuffer.push(
+            Commands.STROKE_PATH
+        );
+
+        return this;
+    },
+
+    /**
+     * Fill the given circle.
+     *
+     * @method Phaser.GameObjects.Graphics#fillCircleShape
+     * @since 3.0.0
+     *
+     * @param {Phaser.Geom.Circle} circle - The circle to fill.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    fillCircleShape: function (circle)
+    {
+        return this.fillCircle(circle.x, circle.y, circle.radius);
+    },
+
+    /**
+     * Stroke the given circle.
+     *
+     * @method Phaser.GameObjects.Graphics#strokeCircleShape
+     * @since 3.0.0
+     *
+     * @param {Phaser.Geom.Circle} circle - The circle to stroke.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    strokeCircleShape: function (circle)
+    {
+        return this.strokeCircle(circle.x, circle.y, circle.radius);
+    },
+
+    /**
+     * Fill a circle with the given position and radius.
+     *
+     * @method Phaser.GameObjects.Graphics#fillCircle
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate of the center of the circle.
+     * @param {number} y - The y coordinate of the center of the circle.
+     * @param {number} radius - The radius of the circle.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
