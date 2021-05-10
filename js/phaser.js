@@ -37233,3 +37233,236 @@ var Graphics = new Class({
         this.lineTo(x + width - tr, y);
         this.arc(x + width - tr, y + tr, tr, -MATH_CONST.TAU, 0);
         this.lineTo(x + width, y + height - br);
+        this.arc(x + width - br, y + height - br, br, 0, MATH_CONST.TAU);
+        this.lineTo(x + bl, y + height);
+        this.arc(x + bl, y + height - bl, bl, MATH_CONST.TAU, Math.PI);
+        this.lineTo(x, y + tl);
+        this.arc(x + tl, y + tl, tl, -Math.PI, -MATH_CONST.TAU);
+        this.strokePath();
+
+        return this;
+    },
+
+    /**
+     * Fill the given point.
+     *
+     * Draws a square at the given position, 1 pixel in size by default.
+     *
+     * @method Phaser.GameObjects.Graphics#fillPointShape
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Geom.Point|Phaser.Math.Vector2|object)} point - The point to fill.
+     * @param {number} [size=1] - The size of the square to draw.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    fillPointShape: function (point, size)
+    {
+        return this.fillPoint(point.x, point.y, size);
+    },
+
+    /**
+     * Fill a point at the given position.
+     *
+     * Draws a square at the given position, 1 pixel in size by default.
+     *
+     * @method Phaser.GameObjects.Graphics#fillPoint
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate of the point.
+     * @param {number} y - The y coordinate of the point.
+     * @param {number} [size=1] - The size of the square to draw.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    fillPoint: function (x, y, size)
+    {
+        if (!size || size < 1)
+        {
+            size = 1;
+        }
+        else
+        {
+            x -= (size / 2);
+            y -= (size / 2);
+        }
+
+        this.commandBuffer.push(
+            Commands.FILL_RECT,
+            x, y, size, size
+        );
+
+        return this;
+    },
+
+    /**
+     * Fill the given triangle.
+     *
+     * @method Phaser.GameObjects.Graphics#fillTriangleShape
+     * @since 3.0.0
+     *
+     * @param {Phaser.Geom.Triangle} triangle - The triangle to fill.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    fillTriangleShape: function (triangle)
+    {
+        return this.fillTriangle(triangle.x1, triangle.y1, triangle.x2, triangle.y2, triangle.x3, triangle.y3);
+    },
+
+    /**
+     * Stroke the given triangle.
+     *
+     * @method Phaser.GameObjects.Graphics#strokeTriangleShape
+     * @since 3.0.0
+     *
+     * @param {Phaser.Geom.Triangle} triangle - The triangle to stroke.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    strokeTriangleShape: function (triangle)
+    {
+        return this.strokeTriangle(triangle.x1, triangle.y1, triangle.x2, triangle.y2, triangle.x3, triangle.y3);
+    },
+
+    /**
+     * Fill a triangle with the given points.
+     *
+     * @method Phaser.GameObjects.Graphics#fillTriangle
+     * @since 3.0.0
+     *
+     * @param {number} x0 - The x coordinate of the first point.
+     * @param {number} y0 - The y coordinate of the first point.
+     * @param {number} x1 - The x coordinate of the second point.
+     * @param {number} y1 - The y coordinate of the second point.
+     * @param {number} x2 - The x coordinate of the third point.
+     * @param {number} y2 - The y coordinate of the third point.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    fillTriangle: function (x0, y0, x1, y1, x2, y2)
+    {
+        this.commandBuffer.push(
+            Commands.FILL_TRIANGLE,
+            x0, y0, x1, y1, x2, y2
+        );
+
+        return this;
+    },
+
+    /**
+     * Stroke a triangle with the given points.
+     *
+     * @method Phaser.GameObjects.Graphics#strokeTriangle
+     * @since 3.0.0
+     *
+     * @param {number} x0 - The x coordinate of the first point.
+     * @param {number} y0 - The y coordinate of the first point.
+     * @param {number} x1 - The x coordinate of the second point.
+     * @param {number} y1 - The y coordinate of the second point.
+     * @param {number} x2 - The x coordinate of the third point.
+     * @param {number} y2 - The y coordinate of the third point.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    strokeTriangle: function (x0, y0, x1, y1, x2, y2)
+    {
+        this.commandBuffer.push(
+            Commands.STROKE_TRIANGLE,
+            x0, y0, x1, y1, x2, y2
+        );
+
+        return this;
+    },
+
+    /**
+     * Draw the given line.
+     *
+     * @method Phaser.GameObjects.Graphics#strokeLineShape
+     * @since 3.0.0
+     *
+     * @param {Phaser.Geom.Line} line - The line to stroke.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    strokeLineShape: function (line)
+    {
+        return this.lineBetween(line.x1, line.y1, line.x2, line.y2);
+    },
+
+    /**
+     * Draw a line between the given points.
+     *
+     * @method Phaser.GameObjects.Graphics#lineBetween
+     * @since 3.0.0
+     *
+     * @param {number} x1 - The x coordinate of the start point of the line.
+     * @param {number} y1 - The y coordinate of the start point of the line.
+     * @param {number} x2 - The x coordinate of the end point of the line.
+     * @param {number} y2 - The y coordinate of the end point of the line.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    lineBetween: function (x1, y1, x2, y2)
+    {
+        this.beginPath();
+        this.moveTo(x1, y1);
+        this.lineTo(x2, y2);
+        this.strokePath();
+
+        return this;
+    },
+
+    /**
+     * Draw a line from the current drawing position to the given position.
+     *
+     * Moves the current drawing position to the given position.
+     *
+     * @method Phaser.GameObjects.Graphics#lineTo
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate to draw the line to.
+     * @param {number} y - The y coordinate to draw the line to.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    lineTo: function (x, y)
+    {
+        this.commandBuffer.push(
+            Commands.LINE_TO,
+            x, y
+        );
+
+        return this;
+    },
+
+    /**
+     * Move the current drawing position to the given position.
+     *
+     * @method Phaser.GameObjects.Graphics#moveTo
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate to move to.
+     * @param {number} y - The y coordinate to move to.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    moveTo: function (x, y)
+    {
+        this.commandBuffer.push(
+            Commands.MOVE_TO,
+            x, y
+        );
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.GameObjects.Graphics#lineFxTo
+     * @since 3.0.0
+     *
+     * @param {number} x - [description]
+     * @param {number} y - [description]
+     * @param {number} width - [description]
