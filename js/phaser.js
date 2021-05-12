@@ -37466,3 +37466,216 @@ var Graphics = new Class({
      * @param {number} x - [description]
      * @param {number} y - [description]
      * @param {number} width - [description]
+     * @param {number} rgb - [description]
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    lineFxTo: function (x, y, width, rgb)
+    {
+        this.commandBuffer.push(
+            Commands.LINE_FX_TO,
+            x, y, width, rgb, 1
+        );
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.GameObjects.Graphics#moveFxTo
+     * @since 3.0.0
+     *
+     * @param {number} x - [description]
+     * @param {number} y - [description]
+     * @param {number} width - [description]
+     * @param {number} rgb - [description]
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    moveFxTo: function (x, y, width, rgb)
+    {
+        this.commandBuffer.push(
+            Commands.MOVE_FX_TO,
+            x, y, width, rgb, 1
+        );
+
+        return this;
+    },
+
+    /**
+     * Stroke the shape represented by the given array of points.
+     *
+     * Pass `true` to `autoClose` to close the shape automatically.
+     *
+     * @method Phaser.GameObjects.Graphics#strokePoints
+     * @since 3.0.0
+     *
+     * @param {(array|Phaser.Geom.Point[])} points - The points to stroke.
+     * @param {boolean} [autoClose=false] - When `true`, the shape is closed by joining the last point to the first point.
+     * @param {integer} [endIndex] - The index of `points` to stop drawing at. Defaults to `points.length`.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    strokePoints: function (points, autoClose, endIndex)
+    {
+        if (autoClose === undefined) { autoClose = false; }
+        if (endIndex === undefined) { endIndex = points.length; }
+
+        this.beginPath();
+
+        this.moveTo(points[0].x, points[0].y);
+
+        for (var i = 1; i < endIndex; i++)
+        {
+            this.lineTo(points[i].x, points[i].y);
+        }
+
+        if (autoClose)
+        {
+            this.lineTo(points[0].x, points[0].y);
+        }
+
+        this.strokePath();
+
+        return this;
+    },
+
+    /**
+     * Fill the shape represented by the given array of points.
+     *
+     * Pass `true` to `autoClose` to close the shape automatically.
+     *
+     * @method Phaser.GameObjects.Graphics#fillPoints
+     * @since 3.0.0
+     *
+     * @param {(array|Phaser.Geom.Point[])} points - The points to fill.
+     * @param {boolean} [autoClose=false] - Whether to automatically close the polygon.
+     * @param {integer} [endIndex] - The index of `points` to stop at. Defaults to `points.length`.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    fillPoints: function (points, autoClose, endIndex)
+    {
+        if (autoClose === undefined) { autoClose = false; }
+        if (endIndex === undefined) { endIndex = points.length; }
+
+        this.beginPath();
+
+        this.moveTo(points[0].x, points[0].y);
+
+        for (var i = 1; i < endIndex; i++)
+        {
+            this.lineTo(points[i].x, points[i].y);
+        }
+
+        if (autoClose)
+        {
+            this.lineTo(points[0].x, points[0].y);
+        }
+
+        this.fillPath();
+
+        return this;
+    },
+
+    /**
+     * Stroke the given ellipse.
+     *
+     * @method Phaser.GameObjects.Graphics#strokeEllipseShape
+     * @since 3.0.0
+     *
+     * @param {Phaser.Geom.Ellipse} ellipse - The ellipse to stroke.
+     * @param {integer} [smoothness=32] - The number of points to draw the ellipse with.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    strokeEllipseShape: function (ellipse, smoothness)
+    {
+        if (smoothness === undefined) { smoothness = 32; }
+
+        var points = ellipse.getPoints(smoothness);
+
+        return this.strokePoints(points, true);
+    },
+
+    /**
+     * Stroke an ellipse with the given position and size.
+     *
+     * @method Phaser.GameObjects.Graphics#strokeEllipse
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate of the center of the ellipse.
+     * @param {number} y - The y coordinate of the center of the ellipse.
+     * @param {number} width - The width of the ellipse.
+     * @param {number} height - The height of the ellipse.
+     * @param {integer} [smoothness=32] - The number of points to draw the ellipse with.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    strokeEllipse: function (x, y, width, height, smoothness)
+    {
+        if (smoothness === undefined) { smoothness = 32; }
+
+        var ellipse = new Ellipse(x, y, width, height);
+
+        var points = ellipse.getPoints(smoothness);
+
+        return this.strokePoints(points, true);
+    },
+
+    /**
+     * Fill the given ellipse.
+     *
+     * @method Phaser.GameObjects.Graphics#fillEllipseShape
+     * @since 3.0.0
+     *
+     * @param {Phaser.Geom.Ellipse} ellipse - The ellipse to fill.
+     * @param {integer} [smoothness=32] - The number of points to draw the ellipse with.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    fillEllipseShape: function (ellipse, smoothness)
+    {
+        if (smoothness === undefined) { smoothness = 32; }
+
+        var points = ellipse.getPoints(smoothness);
+
+        return this.fillPoints(points, true);
+    },
+
+    /**
+     * Fill an ellipse with the given position and size.
+     *
+     * @method Phaser.GameObjects.Graphics#fillEllipse
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate of the center of the ellipse.
+     * @param {number} y - The y coordinate of the center of the ellipse.
+     * @param {number} width - The width of the ellipse.
+     * @param {number} height - The height of the ellipse.
+     * @param {integer} [smoothness=32] - The number of points to draw the ellipse with.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    fillEllipse: function (x, y, width, height, smoothness)
+    {
+        if (smoothness === undefined) { smoothness = 32; }
+
+        var ellipse = new Ellipse(x, y, width, height);
+
+        var points = ellipse.getPoints(smoothness);
+
+        return this.fillPoints(points, true);
+    },
+
+    /**
+     * Draw an arc.
+     *
+     * This method can be used to create circles, or parts of circles.
+     * 
+     * Make sure you call `beginPath` before starting the arc unless you wish for the arc to automatically
+     * close when filled or stroked.
+     *
+     * Use the optional `overshoot` argument increase the number of iterations that take place when
+     * the arc is rendered in WebGL. This is useful if you're drawing an arc with an especially thick line,
