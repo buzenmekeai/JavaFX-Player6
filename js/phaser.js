@@ -37917,3 +37917,204 @@ var Graphics = new Class({
                 //  Key is a string, it DOES exist in the Texture Manager AND is a canvas, so draw to it
 
                 texture = sys.textures.get(key);
+
+                var src = texture.getSourceImage();
+
+                if (src instanceof HTMLCanvasElement)
+                {
+                    ctx = src.getContext('2d');
+                }
+            }
+            else
+            {
+                //  Key is a string and doesn't exist in the Texture Manager, so generate and save it
+
+                texture = sys.textures.createCanvas(key, width, height);
+
+                ctx = texture.getSourceImage().getContext('2d');
+            }
+        }
+        else if (key instanceof HTMLCanvasElement)
+        {
+            //  Key is a Canvas, so draw to it
+
+            ctx = key.getContext('2d');
+        }
+
+        if (ctx)
+        {
+            // var GraphicsCanvasRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix, renderTargetCtx, allowClip)
+            this.renderCanvas(renderer, this, 0, Graphics.TargetCamera, null, ctx, false);
+
+            if (texture)
+            {
+                texture.refresh();
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Internal destroy handler, called as part of the destroy process.
+     *
+     * @method Phaser.GameObjects.Graphics#preDestroy
+     * @protected
+     * @since 3.9.0
+     */
+    preDestroy: function ()
+    {
+        this.commandBuffer = [];
+    }
+
+});
+
+/**
+ * A Camera used specifically by the Graphics system for rendering to textures.
+ *
+ * @name Phaser.GameObjects.Graphics.TargetCamera
+ * @type {Phaser.Cameras.Scene2D.Camera}
+ * @since 3.1.0
+ */
+Graphics.TargetCamera = new BaseCamera();
+
+module.exports = Graphics;
+
+
+/***/ }),
+/* 159 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var BitmapText = __webpack_require__(109);
+var Class = __webpack_require__(0);
+var Render = __webpack_require__(834);
+
+/**
+ * @typedef {object} DisplayCallbackConfig
+ * 
+ * @property {{topLeft:number, topRight:number, bottomLeft:number, bottomRight:number}} tint - The tint of the character being rendered.
+ * @property {number} index - The index of the character being rendered.
+ * @property {number} charCode - The character code of the character being rendered.
+ * @property {number} x - The x position of the character being rendered.
+ * @property {number} y - The y position of the character being rendered.
+ * @property {number} scale - The scale of the character being rendered.
+ * @property {number} rotation - The rotation of the character being rendered.
+ * @property {any} data - Custom data stored with the character being rendered.
+ */
+
+/**
+ * @callback DisplayCallback
+ *
+ * @param {DisplayCallbackConfig} display - Settings of the character that is about to be rendered.
+ *
+ * @return {{x:number, y:number, scale:number, rotation:number}} Altered position, scale and rotation values for the character that is about to be rendered.
+ */
+
+/**
+ * @classdesc
+ * BitmapText objects work by taking a texture file and an XML or JSON file that describes the font structure.
+ * 
+ * During rendering for each letter of the text is rendered to the display, proportionally spaced out and aligned to
+ * match the font structure.
+ * 
+ * Dynamic Bitmap Text objects are different from Static Bitmap Text in that they invoke a callback for each
+ * letter being rendered during the render pass. This callback allows you to manipulate the properties of
+ * each letter being rendered, such as its position, scale or tint, allowing you to create interesting effects
+ * like jiggling text, which can't be done with Static text. This means that Dynamic Text takes more processing
+ * time, so only use them if you require the callback ability they have.
+ *
+ * BitmapText objects are less flexible than Text objects, in that they have less features such as shadows, fills and the ability
+ * to use Web Fonts, however you trade this flexibility for rendering speed. You can also create visually compelling BitmapTexts by
+ * processing the font texture in an image editor, applying fills and any other effects required.
+ *
+ * To create multi-line text insert \r, \n or \r\n escape codes into the text string.
+ *
+ * To create a BitmapText data files you need a 3rd party app such as:
+ *
+ * BMFont (Windows, free): http://www.angelcode.com/products/bmfont/
+ * Glyph Designer (OS X, commercial): http://www.71squared.com/en/glyphdesigner
+ * Littera (Web-based, free): http://kvazars.com/littera/
+ *
+ * For most use cases it is recommended to use XML. If you wish to use JSON, the formatting should be equal to the result of
+ * converting a valid XML file through the popular X2JS library. An online tool for conversion can be found here: http://codebeautify.org/xmltojson
+ *
+ * @class DynamicBitmapText
+ * @extends Phaser.GameObjects.BitmapText
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Game Object belongs. It can only belong to one Scene at any given time.
+ * @param {number} x - The x coordinate of this Game Object in world space.
+ * @param {number} y - The y coordinate of this Game Object in world space.
+ * @param {string} font - The key of the font to use from the Bitmap Font cache.
+ * @param {(string|string[])} [text] - The string, or array of strings, to be set as the content of this Bitmap Text.
+ * @param {number} [size] - The font size of this Bitmap Text.
+ * @param {integer} [align=0] - The alignment of the text in a multi-line BitmapText object.
+ */
+var DynamicBitmapText = new Class({
+
+    Extends: BitmapText,
+
+    Mixins: [
+        Render
+    ],
+
+    initialize:
+
+    function DynamicBitmapText (scene, x, y, font, text, size, align)
+    {
+        BitmapText.call(this, scene, x, y, font, text, size, align);
+
+        this.type = 'DynamicBitmapText';
+
+        /**
+         * The horizontal scroll position of the Bitmap Text.
+         *
+         * @name Phaser.GameObjects.DynamicBitmapText#scrollX
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.scrollX = 0;
+
+        /**
+         * The vertical scroll position of the Bitmap Text.
+         *
+         * @name Phaser.GameObjects.DynamicBitmapText#scrollY
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.scrollY = 0;
+
+        /**
+         * The crop width of the Bitmap Text.
+         *
+         * @name Phaser.GameObjects.DynamicBitmapText#cropWidth
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.cropWidth = 0;
+
+        /**
+         * The crop height of the Bitmap Text.
+         *
+         * @name Phaser.GameObjects.DynamicBitmapText#cropHeight
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.cropHeight = 0;
+
+        /**
+         * A callback that alters how each character of the Bitmap Text is rendered.
+         *
+         * @name Phaser.GameObjects.DynamicBitmapText#displayCallback
