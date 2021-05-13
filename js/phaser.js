@@ -37679,3 +37679,241 @@ var Graphics = new Class({
      *
      * Use the optional `overshoot` argument increase the number of iterations that take place when
      * the arc is rendered in WebGL. This is useful if you're drawing an arc with an especially thick line,
+     * as it will allow the arc to fully join-up. Try small values at first, i.e. 0.01.
+     *
+     * Call {@link Phaser.GameObjects.Graphics#fillPath} or {@link Phaser.GameObjects.Graphics#strokePath} after calling
+     * this method to draw the arc.
+     *
+     * @method Phaser.GameObjects.Graphics#arc
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate of the center of the circle.
+     * @param {number} y - The y coordinate of the center of the circle.
+     * @param {number} radius - The radius of the circle.
+     * @param {number} startAngle - The starting angle, in radians.
+     * @param {number} endAngle - The ending angle, in radians.
+     * @param {boolean} [anticlockwise=false] - Whether the drawing should be anticlockwise or clockwise.
+     * @param {number} [overshoot=0] - This value allows you to increase the segment iterations in WebGL rendering. Useful if the arc has a thick stroke and needs to overshoot to join-up cleanly. Use small numbers such as 0.01 to start with and increase as needed.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    arc: function (x, y, radius, startAngle, endAngle, anticlockwise, overshoot)
+    {
+        if (anticlockwise === undefined) { anticlockwise = false; }
+        if (overshoot === undefined) { overshoot = 0; }
+
+        this.commandBuffer.push(
+            Commands.ARC,
+            x, y, radius, startAngle, endAngle, anticlockwise, overshoot
+        );
+
+        return this;
+    },
+
+    /**
+     * Creates a pie-chart slice shape centered at `x`, `y` with the given radius.
+     * You must define the start and end angle of the slice.
+     *
+     * Setting the `anticlockwise` argument to `true` creates a shape similar to Pacman.
+     * Setting it to `false` creates a shape like a slice of pie.
+     *
+     * This method will begin a new path and close the path at the end of it.
+     * To display the actual slice you need to call either `strokePath` or `fillPath` after it.
+     *
+     * @method Phaser.GameObjects.Graphics#slice
+     * @since 3.4.0
+     *
+     * @param {number} x - The horizontal center of the slice.
+     * @param {number} y - The vertical center of the slice.
+     * @param {number} radius - The radius of the slice.
+     * @param {number} startAngle - The start angle of the slice, given in radians.
+     * @param {number} endAngle - The end angle of the slice, given in radians.
+     * @param {boolean} [anticlockwise=false] - Whether the drawing should be anticlockwise or clockwise.
+     * @param {number} [overshoot=0] - This value allows you to overshoot the endAngle by this amount. Useful if the arc has a thick stroke and needs to overshoot to join-up cleanly.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    slice: function (x, y, radius, startAngle, endAngle, anticlockwise, overshoot)
+    {
+        if (anticlockwise === undefined) { anticlockwise = false; }
+        if (overshoot === undefined) { overshoot = 0; }
+
+        this.commandBuffer.push(Commands.BEGIN_PATH);
+
+        this.commandBuffer.push(Commands.MOVE_TO, x, y);
+
+        this.commandBuffer.push(Commands.ARC, x, y, radius, startAngle, endAngle, anticlockwise, overshoot);
+
+        this.commandBuffer.push(Commands.CLOSE_PATH);
+
+        return this;
+    },
+
+    /**
+     * Saves the state of the Graphics by pushing the current state onto a stack.
+     *
+     * The most recently saved state can then be restored with {@link Phaser.GameObjects.Graphics#restore}.
+     *
+     * @method Phaser.GameObjects.Graphics#save
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    save: function ()
+    {
+        this.commandBuffer.push(
+            Commands.SAVE
+        );
+
+        return this;
+    },
+
+    /**
+     * Restores the most recently saved state of the Graphics by popping from the state stack.
+     *
+     * Use {@link Phaser.GameObjects.Graphics#save} to save the current state, and call this afterwards to restore that state.
+     *
+     * If there is no saved state, this command does nothing.
+     *
+     * @method Phaser.GameObjects.Graphics#restore
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    restore: function ()
+    {
+        this.commandBuffer.push(
+            Commands.RESTORE
+        );
+
+        return this;
+    },
+
+    /**
+     * Translate the graphics.
+     *
+     * @method Phaser.GameObjects.Graphics#translate
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal translation to apply.
+     * @param {number} y - The vertical translation to apply.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    translate: function (x, y)
+    {
+        this.commandBuffer.push(
+            Commands.TRANSLATE,
+            x, y
+        );
+
+        return this;
+    },
+
+    /**
+     * Scale the graphics.
+     *
+     * @method Phaser.GameObjects.Graphics#scale
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal scale to apply.
+     * @param {number} y - The vertical scale to apply.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    scale: function (x, y)
+    {
+        this.commandBuffer.push(
+            Commands.SCALE,
+            x, y
+        );
+
+        return this;
+    },
+
+    /**
+     * Rotate the graphics.
+     *
+     * @method Phaser.GameObjects.Graphics#rotate
+     * @since 3.0.0
+     *
+     * @param {number} radians - The rotation angle, in radians.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    rotate: function (radians)
+    {
+        this.commandBuffer.push(
+            Commands.ROTATE,
+            radians
+        );
+
+        return this;
+    },
+
+    /**
+     * Clear the command buffer and reset the fill style and line style to their defaults.
+     *
+     * @method Phaser.GameObjects.Graphics#clear
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    clear: function ()
+    {
+        this.commandBuffer.length = 0;
+
+        if (this.defaultFillColor > -1)
+        {
+            this.fillStyle(this.defaultFillColor, this.defaultFillAlpha);
+        }
+
+        if (this.defaultStrokeColor > -1)
+        {
+            this.lineStyle(this.defaultStrokeWidth, this.defaultStrokeColor, this.defaultStrokeAlpha);
+        }
+
+        return this;
+    },
+
+    /**
+     * Generate a texture from this Graphics object.
+     *
+     * If `key` is a string it'll generate a new texture using it and add it into the
+     * Texture Manager (assuming no key conflict happens).
+     *
+     * If `key` is a Canvas it will draw the texture to that canvas context. Note that it will NOT
+     * automatically upload it to the GPU in WebGL mode.
+     *
+     * @method Phaser.GameObjects.Graphics#generateTexture
+     * @since 3.0.0
+     *
+     * @param {(string|HTMLCanvasElement)} key - The key to store the texture with in the Texture Manager, or a Canvas to draw to.
+     * @param {integer} [width] - The width of the graphics to generate.
+     * @param {integer} [height] - The height of the graphics to generate.
+     *
+     * @return {Phaser.GameObjects.Graphics} This Game Object.
+     */
+    generateTexture: function (key, width, height)
+    {
+        var sys = this.scene.sys;
+        var renderer = sys.game.renderer;
+
+        if (width === undefined) { width = sys.game.config.width; }
+        if (height === undefined) { height = sys.game.config.height; }
+
+        Graphics.TargetCamera.setScene(this.scene);
+        Graphics.TargetCamera.setViewport(0, 0, width, height);
+        Graphics.TargetCamera.scrollX = this.x;
+        Graphics.TargetCamera.scrollY = this.y;
+
+        var texture;
+        var ctx;
+
+        if (typeof key === 'string')
+        {
+            if (sys.textures.exists(key))
+            {
+                //  Key is a string, it DOES exist in the Texture Manager AND is a canvas, so draw to it
+
+                texture = sys.textures.get(key);
