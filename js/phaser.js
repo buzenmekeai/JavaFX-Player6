@@ -38551,3 +38551,244 @@ var Container = new Class({
      * It does not factor in if the children render or not, all are included.
      *
      * Some children are unable to return their bounds, such as Graphics objects, in which case
+     * they are skipped.
+     *
+     * Depending on the quantity of children in this Container it could be a really expensive call,
+     * so cache it and only poll it as needed.
+     *
+     * The values are stored and returned in a Rectangle object.
+     *
+     * @method Phaser.GameObjects.Container#getBounds
+     * @since 3.4.0
+     *
+     * @param {Phaser.Geom.Rectangle} [output] - A Geom.Rectangle object to store the values in. If not provided a new Rectangle will be created.
+     *
+     * @return {Phaser.Geom.Rectangle} The values stored in the output object.
+     */
+    getBounds: function (output)
+    {
+        if (output === undefined) { output = new Rectangle(); }
+
+        output.setTo(this.x, this.y, 0, 0);
+
+        if (this.list.length > 0)
+        {
+            var children = this.list;
+            var tempRect = new Rectangle();
+
+            for (var i = 0; i < children.length; i++)
+            {
+                var entry = children[i];
+
+                if (entry.getBounds)
+                {
+                    entry.getBounds(tempRect);
+
+                    Union(tempRect, output, output);
+                }
+            }
+        }
+
+        return output;
+    },
+
+    /**
+     * Internal add handler.
+     *
+     * @method Phaser.GameObjects.Container#addHandler
+     * @private
+     * @since 3.4.0
+     *
+     * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object that was just added to this Container.
+     */
+    addHandler: function (gameObject)
+    {
+        gameObject.once('destroy', this.remove, this);
+
+        if (this.exclusive)
+        {
+            this._displayList.remove(gameObject);
+
+            if (gameObject.parentContainer)
+            {
+                gameObject.parentContainer.remove(gameObject);
+            }
+
+            gameObject.parentContainer = this;
+        }
+    },
+
+    /**
+     * Internal remove handler.
+     *
+     * @method Phaser.GameObjects.Container#removeHandler
+     * @private
+     * @since 3.4.0
+     *
+     * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object that was just removed from this Container.
+     */
+    removeHandler: function (gameObject)
+    {
+        gameObject.off('destroy', this.remove);
+
+        if (this.exclusive)
+        {
+            gameObject.parentContainer = null;
+        }
+    },
+
+    /**
+     * Takes a Point-like object, such as a Vector2, Geom.Point or object with public x and y properties,
+     * and transforms it into the space of this Container, then returns it in the output object.
+     *
+     * @method Phaser.GameObjects.Container#pointToContainer
+     * @since 3.4.0
+     *
+     * @param {(object|Phaser.Geom.Point|Phaser.Math.Vector2)} source - The Source Point to be transformed.
+     * @param {(object|Phaser.Geom.Point|Phaser.Math.Vector2)} [output] - A destination object to store the transformed point in. If none given a Vector2 will be created and returned.
+     *
+     * @return {(object|Phaser.Geom.Point|Phaser.Math.Vector2)} The transformed point.
+     */
+    pointToContainer: function (source, output)
+    {
+        if (output === undefined) { output = new Vector2(); }
+
+        if (this.parentContainer)
+        {
+            return this.parentContainer.pointToContainer(source, output);
+        }
+
+        var tempMatrix = this.tempTransformMatrix;
+
+        //  No need to loadIdentity because applyITRS overwrites every value anyway
+        tempMatrix.applyITRS(this.x, this.y, this.rotation, this.scaleX, this.scaleY);
+
+        tempMatrix.invert();
+
+        tempMatrix.transformPoint(source.x, source.y, output);
+
+        return output;
+    },
+
+    /**
+     * Returns the world transform matrix as used for Bounds checks.
+     * 
+     * The returned matrix is temporal and shouldn't be stored.
+     *
+     * @method Phaser.GameObjects.Container#getBoundsTransformMatrix
+     * @since 3.4.0
+     *
+     * @return {Phaser.GameObjects.Components.TransformMatrix} The world transform matrix.
+     */
+    getBoundsTransformMatrix: function ()
+    {
+        return this.getWorldTransformMatrix(this.tempTransformMatrix, this.localTransform);
+    },
+
+    /**
+     * Adds the given Game Object, or array of Game Objects, to this Container.
+     *
+     * Each Game Object must be unique within the Container.
+     *
+     * @method Phaser.GameObjects.Container#add
+     * @since 3.4.0
+     *
+     * @param {Phaser.GameObjects.GameObject|Phaser.GameObjects.GameObject[]} child - The Game Object, or array of Game Objects, to add to the Container.
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    add: function (child)
+    {
+        ArrayUtils.Add(this.list, child, this.maxSize, this.addHandler, this);
+
+        return this;
+    },
+
+    /**
+     * Adds the given Game Object, or array of Game Objects, to this Container at the specified position.
+     *
+     * Existing Game Objects in the Container are shifted up.
+     *
+     * Each Game Object must be unique within the Container.
+     *
+     * @method Phaser.GameObjects.Container#addAt
+     * @since 3.4.0
+     *
+     * @param {Phaser.GameObjects.GameObject|Phaser.GameObjects.GameObject[]} child - The Game Object, or array of Game Objects, to add to the Container.
+     * @param {integer} [index=0] - The position to insert the Game Object/s at.
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    addAt: function (child, index)
+    {
+        ArrayUtils.AddAt(this.list, child, index, this.maxSize, this.addHandler, this);
+
+        return this;
+    },
+
+    /**
+     * Returns the Game Object at the given position in this Container.
+     *
+     * @method Phaser.GameObjects.Container#getAt
+     * @since 3.4.0
+     *
+     * @param {integer} index - The position to get the Game Object from.
+     *
+     * @return {?Phaser.GameObjects.GameObject} The Game Object at the specified index, or `null` if none found.
+     */
+    getAt: function (index)
+    {
+        return this.list[index];
+    },
+
+    /**
+     * Returns the index of the given Game Object in this Container.
+     *
+     * @method Phaser.GameObjects.Container#getIndex
+     * @since 3.4.0
+     *
+     * @param {Phaser.GameObjects.GameObject} child - The Game Object to search for in this Container.
+     *
+     * @return {integer} The index of the Game Object in this Container, or -1 if not found.
+     */
+    getIndex: function (child)
+    {
+        return this.list.indexOf(child);
+    },
+
+    /**
+     * Sort the contents of this Container so the items are in order based on the given property.
+     * For example: `sort('alpha')` would sort the elements based on the value of their `alpha` property.
+     *
+     * @method Phaser.GameObjects.Container#sort
+     * @since 3.4.0
+     *
+     * @param {string} property - The property to lexically sort by.
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    sort: function (property)
+    {
+        if (property)
+        {
+            this._sortKey = property;
+
+            ArrayUtils.StableSort.inplace(this.list, this.sortHandler);
+        }
+
+        return this;
+    },
+
+    /**
+     * Internal sort handler method.
+     *
+     * @method Phaser.GameObjects.Container#sortHandler
+     * @private
+     * @since 3.4.0
+     *
+     * @param {Phaser.GameObjects.GameObject} childA - The first child to sort.
+     * @param {Phaser.GameObjects.GameObject} childB - The second child to sort.
+     *
+     * @return {integer} The sort results.
+     */
+    sortHandler: function (childA, childB)
