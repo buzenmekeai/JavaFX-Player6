@@ -38317,3 +38317,237 @@ var Container = new Class({
 
     Mixins: [
         Components.Alpha,
+        Components.BlendMode,
+        Components.ComputedSize,
+        Components.Depth,
+        Components.Mask,
+        Components.ScrollFactor,
+        Components.Transform,
+        Components.Visible,
+        Render
+    ],
+
+    initialize:
+
+    function Container (scene, x, y, children)
+    {
+        GameObject.call(this, scene, 'Container');
+
+        /**
+         * An array holding the children of this Container.
+         *
+         * @name Phaser.GameObjects.Container#list
+         * @type {Phaser.GameObjects.GameObject[]}
+         * @since 3.4.0
+         */
+        this.list = [];
+
+        /**
+         * Does this Container exclusively manage its children?
+         *
+         * The default is `true` which means a child added to this Container cannot
+         * belong in another Container, which includes the Scene display list.
+         *
+         * If you disable this then this Container will no longer exclusively manage its children.
+         * This allows you to create all kinds of interesting graphical effects, such as replicating
+         * Game Objects without reparenting them all over the Scene.
+         * However, doing so will prevent children from receiving any kind of input event or have
+         * their physics bodies work by default, as they're no longer a single entity on the
+         * display list, but are being replicated where-ever this Container is.
+         *
+         * @name Phaser.GameObjects.Container#exclusive
+         * @type {boolean}
+         * @default true
+         * @since 3.4.0
+         */
+        this.exclusive = true;
+
+        /**
+         * Containers can have an optional maximum size. If set to anything above 0 it
+         * will constrict the addition of new Game Objects into the Container, capping off
+         * the maximum limit the Container can grow in size to.
+         *
+         * @name Phaser.GameObjects.Container#maxSize
+         * @type {integer}
+         * @default -1
+         * @since 3.4.0
+         */
+        this.maxSize = -1;
+
+        /**
+         * The cursor position.
+         *
+         * @name Phaser.GameObjects.Container#position
+         * @type {integer}
+         * @since 3.4.0
+         */
+        this.position = 0;
+
+        /**
+         * Internal Transform Matrix used for local space conversion.
+         *
+         * @name Phaser.GameObjects.Container#localTransform
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @since 3.4.0
+         */
+        this.localTransform = new Components.TransformMatrix();
+
+        /**
+         * Internal temporary Transform Matrix used to avoid object creation.
+         *
+         * @name Phaser.GameObjects.Container#tempTransformMatrix
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @private
+         * @since 3.4.0
+         */
+        this.tempTransformMatrix = new Components.TransformMatrix();
+
+        /**
+         * A reference to the Scene Display List.
+         *
+         * @name Phaser.GameObjects.Container#_displayList
+         * @type {Phaser.GameObjects.DisplayList}
+         * @private
+         * @since 3.4.0
+         */
+        this._displayList = scene.sys.displayList;
+
+        /**
+         * The property key to sort by.
+         *
+         * @name Phaser.GameObjects.Container#_sortKey
+         * @type {string}
+         * @private
+         * @since 3.4.0
+         */
+        this._sortKey = '';
+
+        /**
+         * A reference to the Scene Systems Event Emitter.
+         *
+         * @name Phaser.GameObjects.Container#_sysEvents
+         * @type {Phaser.Events.EventEmitter}
+         * @private
+         * @since 3.9.0
+         */
+        this._sysEvents = scene.sys.events;
+
+        this.setPosition(x, y);
+
+        this.clearAlpha();
+
+        this.setBlendMode(BlendModes.SKIP_CHECK);
+
+        if (children)
+        {
+            this.add(children);
+        }
+    },
+
+    /**
+     * Internal value to allow Containers to be used for input and physics.
+     * Do not change this value. It has no effect other than to break things.
+     *
+     * @name Phaser.GameObjects.Container#originX
+     * @type {number}
+     * @readonly
+     * @since 3.4.0
+     */
+    originX: {
+
+        get: function ()
+        {
+            return 0.5;
+        }
+
+    },
+
+    /**
+     * Internal value to allow Containers to be used for input and physics.
+     * Do not change this value. It has no effect other than to break things.
+     *
+     * @name Phaser.GameObjects.Container#originY
+     * @type {number}
+     * @readonly
+     * @since 3.4.0
+     */
+    originY: {
+
+        get: function ()
+        {
+            return 0.5;
+        }
+
+    },
+
+    /**
+     * Internal value to allow Containers to be used for input and physics.
+     * Do not change this value. It has no effect other than to break things.
+     *
+     * @name Phaser.GameObjects.Container#displayOriginX
+     * @type {number}
+     * @readonly
+     * @since 3.4.0
+     */
+    displayOriginX: {
+
+        get: function ()
+        {
+            return this.width * 0.5;
+        }
+
+    },
+
+    /**
+     * Internal value to allow Containers to be used for input and physics.
+     * Do not change this value. It has no effect other than to break things.
+     *
+     * @name Phaser.GameObjects.Container#displayOriginY
+     * @type {number}
+     * @readonly
+     * @since 3.4.0
+     */
+    displayOriginY: {
+
+        get: function ()
+        {
+            return this.height * 0.5;
+        }
+
+    },
+
+    /**
+     * Does this Container exclusively manage its children?
+     *
+     * The default is `true` which means a child added to this Container cannot
+     * belong in another Container, which includes the Scene display list.
+     *
+     * If you disable this then this Container will no longer exclusively manage its children.
+     * This allows you to create all kinds of interesting graphical effects, such as replicating
+     * Game Objects without reparenting them all over the Scene.
+     * However, doing so will prevent children from receiving any kind of input event or have
+     * their physics bodies work by default, as they're no longer a single entity on the
+     * display list, but are being replicated where-ever this Container is.
+     *
+     * @method Phaser.GameObjects.Container#setExclusive
+     * @since 3.4.0
+     *
+     * @param {boolean} [value=true] - The exclusive state of this Container.
+     *
+     * @return {Phaser.GameObjects.Container} This Container.
+     */
+    setExclusive: function (value)
+    {
+        if (value === undefined) { value = true; }
+
+        this.exclusive = value;
+
+        return this;
+    },
+
+    /**
+     * Gets the bounds of this Container. It works by iterating all children of the Container,
+     * getting their respective bounds, and then working out a min-max rectangle from that.
+     * It does not factor in if the children render or not, all are included.
+     *
+     * Some children are unable to return their bounds, such as Graphics objects, in which case
