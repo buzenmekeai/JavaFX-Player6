@@ -38792,3 +38792,222 @@ var Container = new Class({
      * @return {integer} The sort results.
      */
     sortHandler: function (childA, childB)
+    {
+        return childA[this._sortKey] - childB[this._sortKey];
+    },
+
+    /**
+     * Searches for the first instance of a child with its `name` property matching the given argument.
+     * Should more than one child have the same name only the first is returned.
+     *
+     * @method Phaser.GameObjects.Container#getByName
+     * @since 3.4.0
+     *
+     * @param {string} name - The name to search for.
+     *
+     * @return {?Phaser.GameObjects.GameObject} The first child with a matching name, or `null` if none were found.
+     */
+    getByName: function (name)
+    {
+        return ArrayUtils.GetFirst(this.list, 'name', name);
+    },
+
+    /**
+     * Returns a random Game Object from this Container.
+     *
+     * @method Phaser.GameObjects.Container#getRandom
+     * @since 3.4.0
+     *
+     * @param {integer} [startIndex=0] - An optional start index.
+     * @param {integer} [length] - An optional length, the total number of elements (from the startIndex) to choose from.
+     *
+     * @return {?Phaser.GameObjects.GameObject} A random child from the Container, or `null` if the Container is empty.
+     */
+    getRandom: function (startIndex, length)
+    {
+        return ArrayUtils.GetRandom(this.list, startIndex, length);
+    },
+
+    /**
+     * Gets the first Game Object in this Container.
+     *
+     * You can also specify a property and value to search for, in which case it will return the first
+     * Game Object in this Container with a matching property and / or value.
+     *
+     * For example: `getFirst('visible', true)` would return the first Game Object that had its `visible` property set.
+     *
+     * You can limit the search to the `startIndex` - `endIndex` range.
+     *
+     * @method Phaser.GameObjects.Container#getFirst
+     * @since 3.4.0
+     *
+     * @param {string} [property] - The property to test on each Game Object in the Container.
+     * @param {*} [value] - The value to test the property against. Must pass a strict (`===`) comparison check.
+     * @param {integer} [startIndex=0] - An optional start index to search from.
+     * @param {integer} [endIndex=Container.length] - An optional end index to search up to (but not included)
+     *
+     * @return {?Phaser.GameObjects.GameObject} The first matching Game Object, or `null` if none was found.
+     */
+    getFirst: function (property, value, startIndex, endIndex)
+    {
+        return ArrayUtils.GetFirstElement(this.list, property, value, startIndex, endIndex);
+    },
+
+    /**
+     * Returns all Game Objects in this Container.
+     *
+     * You can optionally specify a matching criteria using the `property` and `value` arguments.
+     *
+     * For example: `getAll('body')` would return only Game Objects that have a body property.
+     *
+     * You can also specify a value to compare the property to:
+     *
+     * `getAll('visible', true)` would return only Game Objects that have their visible property set to `true`.
+     *
+     * Optionally you can specify a start and end index. For example if this Container had 100 Game Objects,
+     * and you set `startIndex` to 0 and `endIndex` to 50, it would return matches from only
+     * the first 50 Game Objects.
+     *
+     * @method Phaser.GameObjects.Container#getAll
+     * @since 3.4.0
+     *
+     * @param {string} [property] - The property to test on each Game Object in the Container.
+     * @param {any} [value] - If property is set then the `property` must strictly equal this value to be included in the results.
+     * @param {integer} [startIndex=0] - An optional start index to search from.
+     * @param {integer} [endIndex=Container.length] - An optional end index to search up to (but not included)
+     *
+     * @return {Phaser.GameObjects.GameObject[]} An array of matching Game Objects from this Container.
+     */
+    getAll: function (property, value, startIndex, endIndex)
+    {
+        return ArrayUtils.GetAll(this.list, property, value, startIndex, endIndex);
+    },
+
+    /**
+     * Returns the total number of Game Objects in this Container that have a property
+     * matching the given value.
+     *
+     * For example: `count('visible', true)` would count all the elements that have their visible property set.
+     *
+     * You can optionally limit the operation to the `startIndex` - `endIndex` range.
+     *
+     * @method Phaser.GameObjects.Container#count
+     * @since 3.4.0
+     *
+     * @param {string} property - The property to check.
+     * @param {any} value - The value to check.
+     * @param {integer} [startIndex=0] - An optional start index to search from.
+     * @param {integer} [endIndex=Container.length] - An optional end index to search up to (but not included)
+     *
+     * @return {integer} The total number of Game Objects in this Container with a property matching the given value.
+     */
+    count: function (property, value, startIndex, endIndex)
+    {
+        return ArrayUtils.CountAllMatching(this.list, property, value, startIndex, endIndex);
+    },
+
+    /**
+     * Swaps the position of two Game Objects in this Container.
+     * Both Game Objects must belong to this Container.
+     *
+     * @method Phaser.GameObjects.Container#swap
+     * @since 3.4.0
+     *
+     * @param {Phaser.GameObjects.GameObject} child1 - The first Game Object to swap.
+     * @param {Phaser.GameObjects.GameObject} child2 - The second Game Object to swap.
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    swap: function (child1, child2)
+    {
+        ArrayUtils.Swap(this.list, child1, child2);
+
+        return this;
+    },
+
+    /**
+     * Moves a Game Object to a new position within this Container.
+     *
+     * The Game Object must already be a child of this Container.
+     *
+     * The Game Object is removed from its old position and inserted into the new one.
+     * Therefore the Container size does not change. Other children will change position accordingly.
+     *
+     * @method Phaser.GameObjects.Container#moveTo
+     * @since 3.4.0
+     *
+     * @param {Phaser.GameObjects.GameObject} child - The Game Object to move.
+     * @param {integer} index - The new position of the Game Object in this Container.
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    moveTo: function (child, index)
+    {
+        ArrayUtils.MoveTo(this.list, child, index);
+
+        return this;
+    },
+
+    /**
+     * Removes the given Game Object, or array of Game Objects, from this Container.
+     *
+     * The Game Objects must already be children of this Container.
+     *
+     * You can also optionally call `destroy` on each Game Object that is removed from the Container.
+     *
+     * @method Phaser.GameObjects.Container#remove
+     * @since 3.4.0
+     *
+     * @param {Phaser.GameObjects.GameObject|Phaser.GameObjects.GameObject[]} child - The Game Object, or array of Game Objects, to be removed from the Container.
+     * @param {boolean} [destroyChild=false] - Optionally call `destroy` on each child successfully removed from this Container.
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    remove: function (child, destroyChild)
+    {
+        var removed = ArrayUtils.Remove(this.list, child, this.removeHandler, this);
+
+        if (destroyChild && removed)
+        {
+            if (!Array.isArray(removed))
+            {
+                removed = [ removed ];
+            }
+
+            for (var i = 0; i < removed.length; i++)
+            {
+                removed[i].destroy();
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Removes the Game Object at the given position in this Container.
+     *
+     * You can also optionally call `destroy` on the Game Object, if one is found.
+     *
+     * @method Phaser.GameObjects.Container#removeAt
+     * @since 3.4.0
+     *
+     * @param {integer} index - The index of the Game Object to be removed.
+     * @param {boolean} [destroyChild=false] - Optionally call `destroy` on the Game Object if successfully removed from this Container.
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    removeAt: function (index, destroyChild)
+    {
+        var removed = ArrayUtils.RemoveAt(this.list, index, this.removeHandler, this);
+
+        if (destroyChild && removed)
+        {
+            removed.destroy();
+        }
+
+        return this;
+    },
+
+    /**
+     * Removes the Game Objects between the given positions in this Container.
+     *
