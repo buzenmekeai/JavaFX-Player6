@@ -39011,3 +39011,230 @@ var Container = new Class({
     /**
      * Removes the Game Objects between the given positions in this Container.
      *
+     * You can also optionally call `destroy` on each Game Object that is removed from the Container.
+     *
+     * @method Phaser.GameObjects.Container#removeBetween
+     * @since 3.4.0
+     *
+     * @param {integer} [startIndex=0] - An optional start index to search from.
+     * @param {integer} [endIndex=Container.length] - An optional end index to search up to (but not included)
+     * @param {boolean} [destroyChild=false] - Optionally call `destroy` on each Game Object successfully removed from this Container.
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    removeBetween: function (startIndex, endIndex, destroyChild)
+    {
+        var removed = ArrayUtils.RemoveBetween(this.list, startIndex, endIndex, this.removeHandler, this);
+
+        if (destroyChild)
+        {
+            for (var i = 0; i < removed.length; i++)
+            {
+                removed[i].destroy();
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Removes all Game Objects from this Container.
+     *
+     * You can also optionally call `destroy` on each Game Object that is removed from the Container.
+     *
+     * @method Phaser.GameObjects.Container#removeAll
+     * @since 3.4.0
+     *
+     * @param {boolean} [destroyChild=false] - Optionally call `destroy` on each Game Object successfully removed from this Container.
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    removeAll: function (destroyChild)
+    {
+        var removed = ArrayUtils.RemoveBetween(this.list, 0, this.list.length, this.removeHandler, this);
+
+        if (destroyChild)
+        {
+            for (var i = 0; i < removed.length; i++)
+            {
+                removed[i].destroy();
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Brings the given Game Object to the top of this Container.
+     * This will cause it to render on-top of any other objects in the Container.
+     *
+     * @method Phaser.GameObjects.Container#bringToTop
+     * @since 3.4.0
+     *
+     * @param {Phaser.GameObjects.GameObject} child - The Game Object to bring to the top of the Container.
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    bringToTop: function (child)
+    {
+        ArrayUtils.BringToTop(this.list, child);
+
+        return this;
+    },
+
+    /**
+     * Sends the given Game Object to the bottom of this Container.
+     * This will cause it to render below any other objects in the Container.
+     *
+     * @method Phaser.GameObjects.Container#sendToBack
+     * @since 3.4.0
+     *
+     * @param {Phaser.GameObjects.GameObject} child - The Game Object to send to the bottom of the Container.
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    sendToBack: function (child)
+    {
+        ArrayUtils.SendToBack(this.list, child);
+
+        return this;
+    },
+
+    /**
+     * Moves the given Game Object up one place in this Container, unless it's already at the top.
+     *
+     * @method Phaser.GameObjects.Container#moveUp
+     * @since 3.4.0
+     *
+     * @param {Phaser.GameObjects.GameObject} child - The Game Object to be moved in the Container.
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    moveUp: function (child)
+    {
+        ArrayUtils.MoveUp(this.list, child);
+
+        return this;
+    },
+
+    /**
+     * Moves the given Game Object down one place in this Container, unless it's already at the bottom.
+     *
+     * @method Phaser.GameObjects.Container#moveDown
+     * @since 3.4.0
+     *
+     * @param {Phaser.GameObjects.GameObject} child - The Game Object to be moved in the Container.
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    moveDown: function (child)
+    {
+        ArrayUtils.MoveDown(this.list, child);
+
+        return this;
+    },
+
+    /**
+     * Reverses the order of all Game Objects in this Container.
+     *
+     * @method Phaser.GameObjects.Container#reverse
+     * @since 3.4.0
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    reverse: function ()
+    {
+        this.list.reverse();
+
+        return this;
+    },
+
+    /**
+     * Shuffles the all Game Objects in this Container using the Fisher-Yates implementation.
+     *
+     * @method Phaser.GameObjects.Container#shuffle
+     * @since 3.4.0
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    shuffle: function ()
+    {
+        ArrayUtils.Shuffle(this.list);
+
+        return this;
+    },
+
+    /**
+     * Replaces a Game Object in this Container with the new Game Object.
+     * The new Game Object cannot already be a child of this Container.
+     *
+     * @method Phaser.GameObjects.Container#replace
+     * @since 3.4.0
+     *
+     * @param {Phaser.GameObjects.GameObject} oldChild - The Game Object in this Container that will be replaced.
+     * @param {Phaser.GameObjects.GameObject} newChild - The Game Object to be added to this Container.
+     * @param {boolean} [destroyChild=false] - Optionally call `destroy` on the Game Object if successfully removed from this Container.
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    replace: function (oldChild, newChild, destroyChild)
+    {
+        var moved = ArrayUtils.Replace(this.list, oldChild, newChild);
+
+        if (moved)
+        {
+            this.addHandler(newChild);
+            this.removeHandler(oldChild);
+
+            if (destroyChild)
+            {
+                oldChild.destroy();
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Returns `true` if the given Game Object is a direct child of this Container.
+     *
+     * This check does not scan nested Containers.
+     *
+     * @method Phaser.GameObjects.Container#exists
+     * @since 3.4.0
+     *
+     * @param {Phaser.GameObjects.GameObject} child - The Game Object to check for within this Container.
+     *
+     * @return {boolean} True if the Game Object is an immediate child of this Container, otherwise false.
+     */
+    exists: function (child)
+    {
+        return (this.list.indexOf(child) > -1);
+    },
+
+    /**
+     * Sets the property to the given value on all Game Objects in this Container.
+     *
+     * Optionally you can specify a start and end index. For example if this Container had 100 Game Objects,
+     * and you set `startIndex` to 0 and `endIndex` to 50, it would return matches from only
+     * the first 50 Game Objects.
+     *
+     * @method Phaser.GameObjects.Container#setAll
+     * @since 3.4.0
+     *
+     * @param {string} property - The property that must exist on the Game Object.
+     * @param {any} value - The value to get the property to.
+     * @param {integer} [startIndex=0] - An optional start index to search from.
+     * @param {integer} [endIndex=Container.length] - An optional end index to search up to (but not included)
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    setAll: function (property, value, startIndex, endIndex)
+    {
+        ArrayUtils.SetAll(this.list, property, value, startIndex, endIndex);
+
+        return this;
+    },
+
+    /**
+     * @callback EachContainerCallback
