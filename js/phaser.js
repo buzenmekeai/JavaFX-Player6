@@ -39238,3 +39238,212 @@ var Container = new Class({
 
     /**
      * @callback EachContainerCallback
+     * @generic I - [item]
+     *
+     * @param {*} item - The child Game Object of the Container.
+     * @param {...*} [args] - Additional arguments that will be passed to the callback, after the child.
+     */
+
+    /**
+     * Passes all Game Objects in this Container to the given callback.
+     *
+     * A copy of the Container is made before passing each entry to your callback.
+     * This protects against the callback itself modifying the Container.
+     *
+     * If you know for sure that the callback will not change the size of this Container
+     * then you can use the more performant `Container.iterate` method instead.
+     *
+     * @method Phaser.GameObjects.Container#each
+     * @since 3.4.0
+     *
+     * @param {function} callback - The function to call.
+     * @param {object} [context] - Value to use as `this` when executing callback.
+     * @param {...*} [args] - Additional arguments that will be passed to the callback, after the child.
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    each: function (callback, context)
+    {
+        var args = [ null ];
+        var i;
+        var temp = this.list.slice();
+        var len = temp.length;
+
+        for (i = 2; i < arguments.length; i++)
+        {
+            args.push(arguments[i]);
+        }
+
+        for (i = 0; i < len; i++)
+        {
+            args[0] = temp[i];
+
+            callback.apply(context, args);
+        }
+
+        return this;
+    },
+
+    /**
+     * Passes all Game Objects in this Container to the given callback.
+     *
+     * Only use this method when you absolutely know that the Container will not be modified during
+     * the iteration, i.e. by removing or adding to its contents.
+     *
+     * @method Phaser.GameObjects.Container#iterate
+     * @since 3.4.0
+     *
+     * @param {function} callback - The function to call.
+     * @param {object} [context] - Value to use as `this` when executing callback.
+     * @param {...*} [args] - Additional arguments that will be passed to the callback, after the child.
+     *
+     * @return {Phaser.GameObjects.Container} This Container instance.
+     */
+    iterate: function (callback, context)
+    {
+        var args = [ null ];
+        var i;
+
+        for (i = 2; i < arguments.length; i++)
+        {
+            args.push(arguments[i]);
+        }
+
+        for (i = 0; i < this.list.length; i++)
+        {
+            args[0] = this.list[i];
+
+            callback.apply(context, args);
+        }
+
+        return this;
+    },
+
+    /**
+     * The number of Game Objects inside this Container.
+     *
+     * @name Phaser.GameObjects.Container#length
+     * @type {integer}
+     * @readonly
+     * @since 3.4.0
+     */
+    length: {
+
+        get: function ()
+        {
+            return this.list.length;
+        }
+
+    },
+
+    /**
+     * Returns the first Game Object within the Container, or `null` if it is empty.
+     *
+     * You can move the cursor by calling `Container.next` and `Container.previous`.
+     *
+     * @name Phaser.GameObjects.Container#first
+     * @type {?Phaser.GameObjects.GameObject}
+     * @readonly
+     * @since 3.4.0
+     */
+    first: {
+
+        get: function ()
+        {
+            this.position = 0;
+
+            if (this.list.length > 0)
+            {
+                return this.list[0];
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+    },
+
+    /**
+     * Returns the last Game Object within the Container, or `null` if it is empty.
+     *
+     * You can move the cursor by calling `Container.next` and `Container.previous`.
+     *
+     * @name Phaser.GameObjects.Container#last
+     * @type {?Phaser.GameObjects.GameObject}
+     * @readonly
+     * @since 3.4.0
+     */
+    last: {
+
+        get: function ()
+        {
+            if (this.list.length > 0)
+            {
+                this.position = this.list.length - 1;
+
+                return this.list[this.position];
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+    },
+
+    /**
+     * Returns the next Game Object within the Container, or `null` if it is empty.
+     *
+     * You can move the cursor by calling `Container.next` and `Container.previous`.
+     *
+     * @name Phaser.GameObjects.Container#next
+     * @type {?Phaser.GameObjects.GameObject}
+     * @readonly
+     * @since 3.4.0
+     */
+    next: {
+
+        get: function ()
+        {
+            if (this.position < this.list.length)
+            {
+                this.position++;
+
+                return this.list[this.position];
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+    },
+
+    /**
+     * Returns the previous Game Object within the Container, or `null` if it is empty.
+     *
+     * You can move the cursor by calling `Container.next` and `Container.previous`.
+     *
+     * @name Phaser.GameObjects.Container#previous
+     * @type {?Phaser.GameObjects.GameObject}
+     * @readonly
+     * @since 3.4.0
+     */
+    previous: {
+
+        get: function ()
+        {
+            if (this.position > 0)
+            {
+                this.position--;
+
+                return this.list[this.position];
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+    },
