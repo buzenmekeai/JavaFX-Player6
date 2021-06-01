@@ -39672,3 +39672,245 @@ var Blitter = new Class({
      *
      * If the quantity is set to 10 and you provide 2 frames, then 20 Bobs will be created. 10 with the first
      * frame and 10 with the second.
+     *
+     * @method Phaser.GameObjects.Blitter#createMultiple
+     * @since 3.0.0
+     *
+     * @param {integer} quantity - The quantity of Bob objects to create.
+     * @param {(string|integer|Phaser.Textures.Frame|string[]|integer[]|Phaser.Textures.Frame[])} [frame] - The Frame the Bobs will use. It must be part of the Blitter Texture.
+     * @param {boolean} [visible=true] - Should the created Bob render or not?
+     *
+     * @return {Phaser.GameObjects.Blitter.Bob[]} An array of Bob objects that were created.
+     */
+    createMultiple: function (quantity, frame, visible)
+    {
+        if (frame === undefined) { frame = this.frame.name; }
+        if (visible === undefined) { visible = true; }
+
+        if (!Array.isArray(frame))
+        {
+            frame = [ frame ];
+        }
+
+        var bobs = [];
+        var _this = this;
+
+        frame.forEach(function (singleFrame)
+        {
+            for (var i = 0; i < quantity; i++)
+            {
+                bobs.push(_this.create(0, 0, singleFrame, visible));
+            }
+        });
+
+        return bobs;
+    },
+
+    /**
+     * Checks if the given child can render or not, by checking its `visible` and `alpha` values.
+     *
+     * @method Phaser.GameObjects.Blitter#childCanRender
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Blitter.Bob} child - The Bob to check for rendering.
+     *
+     * @return {boolean} Returns `true` if the given child can render, otherwise `false`.
+     */
+    childCanRender: function (child)
+    {
+        return (child.visible && child.alpha > 0);
+    },
+
+    /**
+     * Returns an array of Bobs to be rendered.
+     * If the Blitter is dirty then a new list is generated and stored in `renderList`.
+     *
+     * @method Phaser.GameObjects.Blitter#getRenderList
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Blitter.Bob[]} An array of Bob objects that will be rendered this frame.
+     */
+    getRenderList: function ()
+    {
+        if (this.dirty)
+        {
+            this.renderList = this.children.list.filter(this.childCanRender, this);
+            this.dirty = false;
+        }
+
+        return this.renderList;
+    },
+
+    /**
+     * Removes all Bobs from the children List and clears the dirty flag.
+     *
+     * @method Phaser.GameObjects.Blitter#clear
+     * @since 3.0.0
+     */
+    clear: function ()
+    {
+        this.children.removeAll();
+        this.dirty = true;
+    },
+
+    /**
+     * Internal destroy handler, called as part of the destroy process.
+     *
+     * @method Phaser.GameObjects.Blitter#preDestroy
+     * @protected
+     * @since 3.9.0
+     */
+    preDestroy: function ()
+    {
+        this.children.destroy();
+
+        this.renderList = [];
+    }
+
+});
+
+module.exports = Blitter;
+
+
+/***/ }),
+/* 162 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Returns a Random element from the array.
+ *
+ * @function Phaser.Utils.Array.GetRandom
+ * @since 3.0.0
+ *
+ * @param {array} array - The array to select the random entry from.
+ * @param {integer} [startIndex=0] - An optional start index.
+ * @param {integer} [length=array.length] - An optional length, the total number of elements (from the startIndex) to choose from.
+ *
+ * @return {*} A random element from the array, or `null` if no element could be found in the range given.
+ */
+var GetRandom = function (array, startIndex, length)
+{
+    if (startIndex === undefined) { startIndex = 0; }
+    if (length === undefined) { length = array.length; }
+
+    var randomIndex = startIndex + Math.floor(Math.random() * length);
+
+    return (array[randomIndex] === undefined) ? null : array[randomIndex];
+};
+
+module.exports = GetRandom;
+
+
+/***/ }),
+/* 163 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+* A Matrix is simply an array of arrays, where each sub-array (the rows) have the same length:
+*
+* let matrix2 = [
+*    [ 1, 1, 1, 1, 1, 1 ],
+*    [ 2, 0, 0, 0, 0, 4 ],
+*    [ 2, 0, 1, 2, 0, 4 ],
+*    [ 2, 0, 3, 4, 0, 4 ],
+*    [ 2, 0, 0, 0, 0, 4 ],
+*    [ 3, 3, 3, 3, 3, 3 ]
+*];
+*/
+
+/**
+ * [description]
+ *
+ * @function Phaser.Utils.Array.Matrix.CheckMatrix
+ * @since 3.0.0
+ *
+ * @param {array} matrix - [description]
+ *
+ * @return {boolean} [description]
+ */
+var CheckMatrix = function (matrix)
+{
+    if (!Array.isArray(matrix) || matrix.length < 2 || !Array.isArray(matrix[0]))
+    {
+        return false;
+    }
+
+    //  How long is the first row?
+    var size = matrix[0].length;
+
+    //  Validate the rest of the rows are the same length
+    for (var i = 1; i < matrix.length; i++)
+    {
+        if (matrix[i].length !== size)
+        {
+            return false;
+        }
+    }
+
+    return true;
+};
+
+module.exports = CheckMatrix;
+
+
+/***/ }),
+/* 164 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Utils.Array
+ */
+
+module.exports = {
+
+    Matrix: __webpack_require__(874),
+
+    Add: __webpack_require__(867),
+    AddAt: __webpack_require__(866),
+    BringToTop: __webpack_require__(865),
+    CountAllMatching: __webpack_require__(864),
+    Each: __webpack_require__(863),
+    EachInRange: __webpack_require__(862),
+    FindClosestInSorted: __webpack_require__(383),
+    GetAll: __webpack_require__(861),
+    GetFirst: __webpack_require__(860),
+    GetRandom: __webpack_require__(162),
+    MoveDown: __webpack_require__(859),
+    MoveTo: __webpack_require__(858),
+    MoveUp: __webpack_require__(857),
+    NumberArray: __webpack_require__(856),
+    NumberArrayStep: __webpack_require__(855),
+    QuickSelect: __webpack_require__(313),
+    Range: __webpack_require__(312),
+    Remove: __webpack_require__(330),
+    RemoveAt: __webpack_require__(854),
+    RemoveBetween: __webpack_require__(853),
+    RemoveRandomElement: __webpack_require__(852),
+    Replace: __webpack_require__(851),
+    RotateLeft: __webpack_require__(387),
+    RotateRight: __webpack_require__(386),
+    SafeRange: __webpack_require__(62),
+    SendToBack: __webpack_require__(850),
+    SetAll: __webpack_require__(849),
+    Shuffle: __webpack_require__(122),
+    SpliceOne: __webpack_require__(91),
+    StableSort: __webpack_require__(110),
+    Swap: __webpack_require__(848)
