@@ -40374,3 +40374,229 @@ var Texture = new Class({
         {
             this.dataSource[i].destroy();
         }
+
+        for (var frameName in this.frames)
+        {
+            var frame = this.frames[frameName];
+
+            frame.destroy();
+        }
+
+        this.source = [];
+        this.dataSource = [];
+        this.frames = {};
+        this.manager = null;
+    }
+
+});
+
+module.exports = Texture;
+
+
+/***/ }),
+/* 166 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var CONST = __webpack_require__(116);
+var DefaultPlugins = __webpack_require__(167);
+var GetPhysicsPlugins = __webpack_require__(890);
+var GetScenePlugins = __webpack_require__(889);
+var NOOP = __webpack_require__(1);
+var Settings = __webpack_require__(326);
+
+/**
+ * @classdesc
+ * The Scene Systems class.
+ *
+ * This class is available from within a Scene under the property `sys`.
+ * It is responsible for managing all of the plugins a Scene has running, including the display list, and
+ * handling the update step and renderer. It also contains references to global systems belonging to Game.
+ *
+ * @class Systems
+ * @memberof Phaser.Scenes
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - The Scene that owns this Systems instance.
+ * @param {(string|Phaser.Scenes.Settings.Config)} config - Scene specific configuration settings.
+ */
+var Systems = new Class({
+
+    initialize:
+
+    function Systems (scene, config)
+    {
+        /**
+         * A reference to the Scene that these Systems belong to.
+         *
+         * @name Phaser.Scenes.Systems#scene
+         * @type {Phaser.Scene}
+         * @since 3.0.0
+         */
+        this.scene = scene;
+
+        /**
+         * A reference to the Phaser Game instance.
+         *
+         * @name Phaser.Scenes.Systems#game
+         * @type {Phaser.Game}
+         * @since 3.0.0
+         */
+        this.game;
+
+        if (false)
+        {}
+
+        /**
+         * The Scene Configuration object, as passed in when creating the Scene.
+         *
+         * @name Phaser.Scenes.Systems#config
+         * @type {(string|Phaser.Scenes.Settings.Config)}
+         * @since 3.0.0
+         */
+        this.config = config;
+
+        /**
+         * The Scene Settings. This is the parsed output based on the Scene configuration.
+         *
+         * @name Phaser.Scenes.Systems#settings
+         * @type {Phaser.Scenes.Settings.Object}
+         * @since 3.0.0
+         */
+        this.settings = Settings.create(config);
+
+        /**
+         * A handy reference to the Scene canvas / context.
+         *
+         * @name Phaser.Scenes.Systems#canvas
+         * @type {HTMLCanvasElement}
+         * @since 3.0.0
+         */
+        this.canvas;
+
+        /**
+         * A reference to the Canvas Rendering Context being used by the renderer.
+         *
+         * @name Phaser.Scenes.Systems#context
+         * @type {CanvasRenderingContext2D}
+         * @since 3.0.0
+         */
+        this.context;
+
+        //  Global Systems - these are single-instance global managers that belong to Game
+
+        /**
+         * A reference to the global Animations Manager.
+         * 
+         * In the default set-up you can access this from within a Scene via the `this.anims` property.
+         *
+         * @name Phaser.Scenes.Systems#anims
+         * @type {Phaser.Animations.AnimationManager}
+         * @since 3.0.0
+         */
+        this.anims;
+
+        /**
+         * A reference to the global Cache. The Cache stores all files bought in to Phaser via
+         * the Loader, with the exception of images. Images are stored in the Texture Manager.
+         * 
+         * In the default set-up you can access this from within a Scene via the `this.cache` property.
+         *
+         * @name Phaser.Scenes.Systems#cache
+         * @type {Phaser.Cache.CacheManager}
+         * @since 3.0.0
+         */
+        this.cache;
+
+        /**
+         * A reference to the global Plugins Manager.
+         * 
+         * In the default set-up you can access this from within a Scene via the `this.plugins` property.
+         *
+         * @name Phaser.Scenes.Systems#plugins
+         * @type {Phaser.Plugins.PluginManager}
+         * @since 3.0.0
+         */
+        this.plugins;
+
+        /**
+         * A reference to the global registry. This is a game-wide instance of the Data Manager, allowing
+         * you to exchange data between Scenes via a universal and shared point.
+         * 
+         * In the default set-up you can access this from within a Scene via the `this.registry` property.
+         *
+         * @name Phaser.Scenes.Systems#registry
+         * @type {Phaser.Data.DataManager}
+         * @since 3.0.0
+         */
+        this.registry;
+
+        /**
+         * A reference to the global Sound Manager.
+         * 
+         * In the default set-up you can access this from within a Scene via the `this.sound` property.
+         *
+         * @name Phaser.Scenes.Systems#sound
+         * @type {Phaser.Sound.BaseSoundManager}
+         * @since 3.0.0
+         */
+        this.sound;
+
+        /**
+         * A reference to the global Texture Manager.
+         * 
+         * In the default set-up you can access this from within a Scene via the `this.textures` property.
+         *
+         * @name Phaser.Scenes.Systems#textures
+         * @type {Phaser.Textures.TextureManager}
+         * @since 3.0.0
+         */
+        this.textures;
+
+        //  Core Plugins - these are non-optional Scene plugins, needed by lots of the other systems
+
+        /**
+         * A reference to the Scene's Game Object Factory.
+         * 
+         * Use this to quickly and easily create new Game Object's.
+         * 
+         * In the default set-up you can access this from within a Scene via the `this.add` property.
+         *
+         * @name Phaser.Scenes.Systems#add
+         * @type {Phaser.GameObjects.GameObjectFactory}
+         * @since 3.0.0
+         */
+        this.add;
+
+        /**
+         * A reference to the Scene's Camera Manager.
+         * 
+         * Use this to manipulate and create Cameras for this specific Scene.
+         * 
+         * In the default set-up you can access this from within a Scene via the `this.cameras` property.
+         *
+         * @name Phaser.Scenes.Systems#cameras
+         * @type {Phaser.Cameras.Scene2D.CameraManager}
+         * @since 3.0.0
+         */
+        this.cameras;
+
+        /**
+         * A reference to the Scene's Display List.
+         * 
+         * Use this to organize the children contained in the display list.
+         * 
+         * In the default set-up you can access this from within a Scene via the `this.children` property.
+         *
+         * @name Phaser.Scenes.Systems#displayList
+         * @type {Phaser.GameObjects.DisplayList}
+         * @since 3.0.0
+         */
+        this.displayList;
