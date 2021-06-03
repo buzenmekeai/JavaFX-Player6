@@ -40151,3 +40151,226 @@ var Texture = new Class({
      * @return {integer} The index of the TextureSource within this Texture, or -1 if not in this Texture.
      */
     getTextureSourceIndex: function (source)
+    {
+        for (var i = 0; i < this.source.length; i++)
+        {
+            if (this.source[i] === source)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    },
+
+    /**
+     * Returns an array of all the Frames in the given TextureSource.
+     *
+     * @method Phaser.Textures.Texture#getFramesFromTextureSource
+     * @since 3.0.0
+     *
+     * @param {integer} sourceIndex - The index of the TextureSource to get the Frames from.
+     * @param {boolean} [includeBase=false] - Include the `__BASE` Frame in the output array?
+     *
+     * @return {Phaser.Textures.Frame[]} An array of Texture Frames.
+     */
+    getFramesFromTextureSource: function (sourceIndex, includeBase)
+    {
+        if (includeBase === undefined) { includeBase = false; }
+
+        var out = [];
+
+        for (var frameName in this.frames)
+        {
+            if (frameName === '__BASE' && !includeBase)
+            {
+                continue;
+            }
+
+            var frame = this.frames[frameName];
+
+            if (frame.sourceIndex === sourceIndex)
+            {
+                out.push(frame);
+            }
+        }
+
+        return out;
+    },
+
+    /**
+     * Returns an array with all of the names of the Frames in this Texture.
+     *
+     * Useful if you want to randomly assign a Frame to a Game Object, as you can
+     * pick a random element from the returned array.
+     *
+     * @method Phaser.Textures.Texture#getFrameNames
+     * @since 3.0.0
+     *
+     * @param {boolean} [includeBase=false] - Include the `__BASE` Frame in the output array?
+     *
+     * @return {string[]} An array of all Frame names in this Texture.
+     */
+    getFrameNames: function (includeBase)
+    {
+        if (includeBase === undefined) { includeBase = false; }
+
+        var out = Object.keys(this.frames);
+
+        if (!includeBase)
+        {
+            var idx = out.indexOf('__BASE');
+
+            if (idx !== -1)
+            {
+                out.splice(idx, 1);
+            }
+        }
+
+        return out;
+    },
+
+    /**
+     * Given a Frame name, return the source image it uses to render with.
+     *
+     * This will return the actual DOM Image or Canvas element.
+     *
+     * @method Phaser.Textures.Texture#getSourceImage
+     * @since 3.0.0
+     *
+     * @param {(string|integer)} [name] - The string-based name, or integer based index, of the Frame to get from this Texture.
+     *
+     * @return {(HTMLImageElement|HTMLCanvasElement|Phaser.GameObjects.RenderTexture)} The DOM Image, Canvas Element or Render Texture.
+     */
+    getSourceImage: function (name)
+    {
+        if (name === undefined || name === null || this.frameTotal === 1)
+        {
+            name = '__BASE';
+        }
+
+        var frame = this.frames[name];
+
+        if (frame)
+        {
+            return frame.source.image;
+        }
+        else
+        {
+            console.warn(TEXTURE_MISSING_ERROR + name);
+
+            return this.frames['__BASE'].source.image;
+        }
+    },
+
+    /**
+     * Given a Frame name, return the data source image it uses to render with.
+     * You can use this to get the normal map for an image for example.
+     *
+     * This will return the actual DOM Image.
+     *
+     * @method Phaser.Textures.Texture#getDataSourceImage
+     * @since 3.7.0
+     *
+     * @param {(string|integer)} [name] - The string-based name, or integer based index, of the Frame to get from this Texture.
+     *
+     * @return {(HTMLImageElement|HTMLCanvasElement)} The DOM Image or Canvas Element.
+     */
+    getDataSourceImage: function (name)
+    {
+        if (name === undefined || name === null || this.frameTotal === 1)
+        {
+            name = '__BASE';
+        }
+
+        var frame = this.frames[name];
+        var idx;
+
+        if (!frame)
+        {
+            console.warn(TEXTURE_MISSING_ERROR + name);
+
+            idx = this.frames['__BASE'].sourceIndex;
+        }
+        else
+        {
+            idx = frame.sourceIndex;
+        }
+
+        return this.dataSource[idx].image;
+    },
+
+    /**
+     * Adds a data source image to this Texture.
+     *
+     * An example of a data source image would be a normal map, where all of the Frames for this Texture
+     * equally apply to the normal map.
+     *
+     * @method Phaser.Textures.Texture#setDataSource
+     * @since 3.0.0
+     *
+     * @param {(HTMLImageElement|HTMLCanvasElement)} data - The source image.
+     */
+    setDataSource: function (data)
+    {
+        if (!Array.isArray(data))
+        {
+            data = [ data ];
+        }
+        
+        for (var i = 0; i < data.length; i++)
+        {
+            var source = this.source[i];
+
+            this.dataSource.push(new TextureSource(this, data[i], source.width, source.height));
+        }
+    },
+
+    /**
+     * Sets the Filter Mode for this Texture.
+     *
+     * The mode can be either Linear, the default, or Nearest.
+     *
+     * For pixel-art you should use Nearest.
+     *
+     * The mode applies to the entire Texture, not just a specific Frame of it.
+     *
+     * @method Phaser.Textures.Texture#setFilter
+     * @since 3.0.0
+     *
+     * @param {Phaser.Textures.FilterMode} filterMode - The Filter Mode.
+     */
+    setFilter: function (filterMode)
+    {
+        var i;
+
+        for (i = 0; i < this.source.length; i++)
+        {
+            this.source[i].setFilter(filterMode);
+        }
+
+        for (i = 0; i < this.dataSource.length; i++)
+        {
+            this.dataSource[i].setFilter(filterMode);
+        }
+    },
+
+    /**
+     * Destroys this Texture and releases references to its sources and frames.
+     *
+     * @method Phaser.Textures.Texture#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        var i;
+
+        for (i = 0; i < this.source.length; i++)
+        {
+            this.source[i].destroy();
+        }
+
+        for (i = 0; i < this.dataSource.length; i++)
+        {
+            this.dataSource[i].destroy();
+        }
