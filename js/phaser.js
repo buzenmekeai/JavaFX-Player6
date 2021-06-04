@@ -40834,3 +40834,210 @@ var Systems = new Class({
 
             this.events.emit('resume', this, data);
         }
+
+        return this;
+    },
+
+    /**
+     * Send this Scene to sleep.
+     *
+     * A sleeping Scene doesn't run it's update step or render anything, but it also isn't shut down
+     * or have any of its systems or children removed, meaning it can be re-activated at any point and
+     * will carry on from where it left off. It also keeps everything in memory and events and callbacks
+     * from other Scenes may still invoke changes within it, so be careful what is left active.
+     *
+     * @method Phaser.Scenes.Systems#sleep
+     * @since 3.0.0
+     * 
+     * @param {object} [data] - A data object that will be passed in the 'sleep' event.
+     *
+     * @return {Phaser.Scenes.Systems} This Systems object.
+     */
+    sleep: function (data)
+    {
+        this.settings.status = CONST.SLEEPING;
+
+        this.settings.active = false;
+        this.settings.visible = false;
+
+        this.events.emit('sleep', this, data);
+
+        return this;
+    },
+
+    /**
+     * Wake-up this Scene if it was previously asleep.
+     *
+     * @method Phaser.Scenes.Systems#wake
+     * @since 3.0.0
+     *
+     * @param {object} [data] - A data object that will be passed in the 'wake' event.
+     *
+     * @return {Phaser.Scenes.Systems} This Systems object.
+     */
+    wake: function (data)
+    {
+        var settings = this.settings;
+
+        settings.status = CONST.RUNNING;
+
+        settings.active = true;
+        settings.visible = true;
+
+        this.events.emit('wake', this, data);
+
+        if (settings.isTransition)
+        {
+            this.events.emit('transitionwake', settings.transitionFrom, settings.transitionDuration);
+        }
+
+        return this;
+    },
+
+    /**
+     * Is this Scene sleeping?
+     *
+     * @method Phaser.Scenes.Systems#isSleeping
+     * @since 3.0.0
+     *
+     * @return {boolean} `true` if this Scene is asleep, otherwise `false`.
+     */
+    isSleeping: function ()
+    {
+        return (this.settings.status === CONST.SLEEPING);
+    },
+
+    /**
+     * Is this Scene active?
+     *
+     * @method Phaser.Scenes.Systems#isActive
+     * @since 3.0.0
+     *
+     * @return {boolean} `true` if this Scene is active, otherwise `false`.
+     */
+    isActive: function ()
+    {
+        return (this.settings.status === CONST.RUNNING);
+    },
+
+    /**
+     * Is this Scene paused?
+     *
+     * @method Phaser.Scenes.Systems#isPaused
+     * @since 3.13.0
+     *
+     * @return {boolean} `true` if this Scene is paused, otherwise `false`.
+     */
+    isPaused: function ()
+    {
+        return (this.settings.status === CONST.PAUSED);
+    },
+
+    /**
+     * Is this Scene currently transitioning out to, or in from another Scene?
+     *
+     * @method Phaser.Scenes.Systems#isTransitioning
+     * @since 3.5.0
+     *
+     * @return {boolean} `true` if this Scene is currently transitioning, otherwise `false`.
+     */
+    isTransitioning: function ()
+    {
+        return (this.settings.isTransition || this.scenePlugin._target !== null);
+    },
+
+    /**
+     * Is this Scene currently transitioning out from itself to another Scene?
+     *
+     * @method Phaser.Scenes.Systems#isTransitionOut
+     * @since 3.5.0
+     *
+     * @return {boolean} `true` if this Scene is in transition to another Scene, otherwise `false`.
+     */
+    isTransitionOut: function ()
+    {
+        return (this.scenePlugin._target !== null && this.scenePlugin._duration > 0);
+    },
+
+    /**
+     * Is this Scene currently transitioning in from another Scene?
+     *
+     * @method Phaser.Scenes.Systems#isTransitionIn
+     * @since 3.5.0
+     *
+     * @return {boolean} `true` if this Scene is transitioning in from another Scene, otherwise `false`.
+     */
+    isTransitionIn: function ()
+    {
+        return (this.settings.isTransition);
+    },
+
+    /**
+     * Is this Scene visible and rendering?
+     *
+     * @method Phaser.Scenes.Systems#isVisible
+     * @since 3.0.0
+     *
+     * @return {boolean} `true` if this Scene is visible, otherwise `false`.
+     */
+    isVisible: function ()
+    {
+        return this.settings.visible;
+    },
+
+    /**
+     * Sets the visible state of this Scene.
+     * An invisible Scene will not render, but will still process updates.
+     *
+     * @method Phaser.Scenes.Systems#setVisible
+     * @since 3.0.0
+     *
+     * @param {boolean} value - `true` to render this Scene, otherwise `false`.
+     *
+     * @return {Phaser.Scenes.Systems} This Systems object.
+     */
+    setVisible: function (value)
+    {
+        this.settings.visible = value;
+
+        return this;
+    },
+
+    /**
+     * Set the active state of this Scene.
+     * 
+     * An active Scene will run its core update loop.
+     *
+     * @method Phaser.Scenes.Systems#setActive
+     * @since 3.0.0
+     *
+     * @param {boolean} value - If `true` the Scene will be resumed, if previously paused. If `false` it will be paused.
+     * @param {object} [data] - A data object that will be passed in the 'resume' or 'pause' events.
+     *
+     * @return {Phaser.Scenes.Systems} This Systems object.
+     */
+    setActive: function (value, data)
+    {
+        if (value)
+        {
+            return this.resume(data);
+        }
+        else
+        {
+            return this.pause(data);
+        }
+    },
+
+    /**
+     * Start this Scene running and rendering.
+     * Called automatically by the SceneManager.
+     *
+     * @method Phaser.Scenes.Systems#start
+     * @since 3.0.0
+     *
+     * @param {object} data - Optional data object that may have been passed to this Scene from another.
+     */
+    start: function (data)
+    {
+        if (data)
+        {
