@@ -41041,3 +41041,206 @@ var Systems = new Class({
     {
         if (data)
         {
+            this.settings.data = data;
+        }
+
+        this.settings.status = CONST.START;
+
+        this.settings.active = true;
+        this.settings.visible = true;
+
+        //  For plugins to listen out for
+        this.events.emit('start', this);
+
+        //  For user-land code to listen out for
+        this.events.emit('ready', this, data);
+    },
+
+    /**
+     * Called automatically by the SceneManager if the Game resizes.
+     * Dispatches an event you can respond to in your game code.
+     *
+     * @method Phaser.Scenes.Systems#resize
+     * @since 3.2.0
+     *
+     * @param {number} width - The new width of the game.
+     * @param {number} height - The new height of the game.
+     */
+    resize: function (width, height)
+    {
+        this.events.emit('resize', width, height);
+    },
+
+    /**
+     * Shutdown this Scene and send a shutdown event to all of its systems.
+     * A Scene that has been shutdown will not run its update loop or render, but it does
+     * not destroy any of its plugins or references. It is put into hibernation for later use.
+     * If you don't ever plan to use this Scene again, then it should be destroyed instead
+     * to free-up resources.
+     *
+     * @method Phaser.Scenes.Systems#shutdown
+     * @since 3.0.0
+     * 
+     * @param {object} [data] - A data object that will be passed in the 'shutdown' event.
+     */
+    shutdown: function (data)
+    {
+        this.events.off('transitioninit');
+        this.events.off('transitionstart');
+        this.events.off('transitioncomplete');
+        this.events.off('transitionout');
+
+        this.settings.status = CONST.SHUTDOWN;
+
+        this.settings.active = false;
+        this.settings.visible = false;
+
+        this.events.emit('shutdown', this, data);
+    },
+
+    /**
+     * Destroy this Scene and send a destroy event all of its systems.
+     * A destroyed Scene cannot be restarted.
+     * You should not call this directly, instead use `SceneManager.remove`.
+     *
+     * @method Phaser.Scenes.Systems#destroy
+     * @private
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.settings.status = CONST.DESTROYED;
+
+        this.settings.active = false;
+        this.settings.visible = false;
+
+        this.events.emit('destroy', this);
+
+        this.events.removeAllListeners();
+
+        var props = [ 'scene', 'game', 'anims', 'cache', 'plugins', 'registry', 'sound', 'textures', 'add', 'camera', 'displayList', 'events', 'make', 'scenePlugin', 'updateList' ];
+
+        for (var i = 0; i < props.length; i++)
+        {
+            this[props[i]] = null;
+        }
+    }
+
+});
+
+module.exports = Systems;
+
+
+/***/ }),
+/* 167 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @typedef {object} Phaser.Plugins.DefaultPlugins
+ * 
+ * @property {array} Global - These are the Global Managers that are created by the Phaser.Game instance.
+ * @property {array} CoreScene - These are the core plugins that are installed into every Scene.Systems instance, no matter what.
+ * @property {array} DefaultScene - These plugins are created in Scene.Systems in addition to the CoreScenePlugins.
+ */
+
+var DefaultPlugins = {
+
+    /**
+     * These are the Global Managers that are created by the Phaser.Game instance.
+     * They are referenced from Scene.Systems so that plugins can use them.
+     * 
+     * @name Phaser.Plugins.Global
+     * @type {array}
+     * @since 3.0.0
+     */
+    Global: [
+
+        'game',
+        'anims',
+        'cache',
+        'plugins',
+        'registry',
+        'scale',
+        'sound',
+        'textures'
+
+    ],
+
+    /**
+     * These are the core plugins that are installed into every Scene.Systems instance, no matter what.
+     * They are optionally exposed in the Scene as well (see the InjectionMap for details)
+     * 
+     * They are created in the order in which they appear in this array and EventEmitter is always first.
+     * 
+     * @name Phaser.Plugins.CoreScene
+     * @type {array}
+     * @since 3.0.0
+     */
+    CoreScene: [
+
+        'EventEmitter',
+
+        'CameraManager',
+        'GameObjectCreator',
+        'GameObjectFactory',
+        'ScenePlugin',
+        'DisplayList',
+        'UpdateList'
+
+    ],
+
+    /**
+     * These plugins are created in Scene.Systems in addition to the CoreScenePlugins.
+     * 
+     * You can elect not to have these plugins by either creating a DefaultPlugins object as part
+     * of the Game Config, by creating a Plugins object as part of a Scene Config, or by modifying this array
+     * and building your own bundle.
+     * 
+     * They are optionally exposed in the Scene as well (see the InjectionMap for details)
+     * 
+     * They are always created in the order in which they appear in the array.
+     * 
+     * @name Phaser.Plugins.DefaultScene
+     * @type {array}
+     * @since 3.0.0
+     */
+    DefaultScene: [
+
+        'Clock',
+        'DataManagerPlugin',
+        'InputPlugin',
+        'Loader',
+        'TweenManager',
+        'LightsPlugin'
+
+    ]
+
+};
+
+if (false)
+{}
+
+if (false)
+{}
+
+module.exports = DefaultPlugins;
+
+
+/***/ }),
+/* 168 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var OS = __webpack_require__(92);
+var Browser = __webpack_require__(118);
