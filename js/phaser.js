@@ -41457,3 +41457,197 @@ var AddToDOM = function (element, parent, overflowHidden)
     if (overflowHidden === undefined) { overflowHidden = true; }
 
     var target;
+
+    if (parent)
+    {
+        if (typeof parent === 'string')
+        {
+            //  Hopefully an element ID
+            target = document.getElementById(parent);
+        }
+        else if (typeof parent === 'object' && parent.nodeType === 1)
+        {
+            //  Quick test for a HTMLElement
+            target = parent;
+        }
+    }
+    else if (element.parentElement)
+    {
+        return element;
+    }
+
+    //  Fallback, covers an invalid ID and a non HTMLElement object
+    if (!target)
+    {
+        target = document.body;
+    }
+
+    if (overflowHidden && target.style)
+    {
+        target.style.overflow = 'hidden';
+    }
+
+    target.appendChild(element);
+
+    return element;
+};
+
+module.exports = AddToDOM;
+
+
+/***/ }),
+/* 170 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Compute a random integer between the `min` and `max` values, inclusive.
+ *
+ * @function Phaser.Math.Between
+ * @since 3.0.0
+ *
+ * @param {integer} min - The minimum value.
+ * @param {integer} max - The maximum value.
+ *
+ * @return {integer} The random integer.
+ */
+var Between = function (min, max)
+{
+    return Math.floor(Math.random() * (max - min + 1) + min);
+};
+
+module.exports = Between;
+
+
+/***/ }),
+/* 171 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculates a Catmull-Rom value.
+ *
+ * @function Phaser.Math.CatmullRom
+ * @since 3.0.0
+ *
+ * @param {number} t - [description]
+ * @param {number} p0 - [description]
+ * @param {number} p1 - [description]
+ * @param {number} p2 - [description]
+ * @param {number} p3 - [description]
+ *
+ * @return {number} The Catmull-Rom value.
+ */
+var CatmullRom = function (t, p0, p1, p2, p3)
+{
+    var v0 = (p2 - p0) * 0.5;
+    var v1 = (p3 - p1) * 0.5;
+    var t2 = t * t;
+    var t3 = t * t2;
+
+    return (2 * p1 - 2 * p2 + v0 + v1) * t3 + (-3 * p1 + 3 * p2 - 2 * v0 - v1) * t2 + v0 * t + p1;
+};
+
+module.exports = CatmullRom;
+
+
+/***/ }),
+/* 172 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CONST = __webpack_require__(16);
+
+/**
+ * Convert the given angle in radians, to the equivalent angle in degrees.
+ *
+ * @function Phaser.Math.RadToDeg
+ * @since 3.0.0
+ *
+ * @param {number} radians - The angle in radians to convert ot degrees.
+ *
+ * @return {integer} The given angle converted to degrees.
+ */
+var RadToDeg = function (radians)
+{
+    return radians * CONST.RAD_TO_DEG;
+};
+
+module.exports = RadToDeg;
+
+
+/***/ }),
+/* 173 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Rectangle = __webpack_require__(9);
+
+//  points is an array of Point-like objects,
+//  either 2 dimensional arrays, or objects with public x/y properties:
+//  var points = [
+//      [100, 200],
+//      [200, 400],
+//      { x: 30, y: 60 }
+//  ]
+
+/**
+ * Constructs new Rectangle or repositions and resizes an existing Rectangle so that all of the given points are on or within its bounds.
+ *
+ * @function Phaser.Geom.Rectangle.FromPoints
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [out,$return]
+ *
+ * @param {array} points - An array of points (either arrays with two elements corresponding to the X and Y coordinate or an object with public `x` and `y` properties) which should be surrounded by the Rectangle.
+ * @param {Phaser.Geom.Rectangle} [out] - Optional Rectangle to adjust.
+ *
+ * @return {Phaser.Geom.Rectangle} The adjusted `out` Rectangle, or a new Rectangle if none was provided.
+ */
+var FromPoints = function (points, out)
+{
+    if (out === undefined) { out = new Rectangle(); }
+
+    if (points.length === 0)
+    {
+        return out;
+    }
+
+    var minX = Number.MAX_VALUE;
+    var minY = Number.MAX_VALUE;
+
+    var maxX = Number.MIN_SAFE_INTEGER;
+    var maxY = Number.MIN_SAFE_INTEGER;
+
+    var p;
+    var px;
+    var py;
+
+    for (var i = 0; i < points.length; i++)
+    {
+        p = points[i];
+
+        if (Array.isArray(p))
+        {
+            px = p[0];
+            py = p[1];
