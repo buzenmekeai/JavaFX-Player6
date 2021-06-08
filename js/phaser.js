@@ -41871,3 +41871,184 @@ var HSVToRGB = function (h, s, v, out)
     {
         g = p;
         b = q;
+    }
+
+    if (!out)
+    {
+        return { r: r, g: g, b: b, color: GetColor(r, g, b) };
+    }
+    else if (out.setTo)
+    {
+        return out.setTo(r, g, b, out.alpha, false);
+    }
+    else
+    {
+        out.r = r;
+        out.g = g;
+        out.b = b;
+        out.color = GetColor(r, g, b);
+
+        return out;
+    }
+};
+
+module.exports = HSVToRGB;
+
+
+/***/ }),
+/* 177 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Given 3 separate color values this will return an integer representation of it.
+ *
+ * @function Phaser.Display.Color.GetColor
+ * @since 3.0.0
+ *
+ * @param {integer} red - The red color value. A number between 0 and 255.
+ * @param {integer} green - The green color value. A number between 0 and 255.
+ * @param {integer} blue - The blue color value. A number between 0 and 255.
+ *
+ * @return {number} The combined color value.
+ */
+var GetColor = function (red, green, blue)
+{
+    return red << 16 | green << 8 | blue;
+};
+
+module.exports = GetColor;
+
+
+/***/ }),
+/* 178 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var HexStringToColor = __webpack_require__(377);
+var IntegerToColor = __webpack_require__(374);
+var ObjectToColor = __webpack_require__(372);
+var RGBStringToColor = __webpack_require__(371);
+
+/**
+ * Converts the given source color value into an instance of a Color class.
+ * The value can be either a string, prefixed with `rgb` or a hex string, a number or an Object.
+ *
+ * @function Phaser.Display.Color.ValueToColor
+ * @since 3.0.0
+ *
+ * @param {(string|number|InputColorObject)} input - The source color value to convert.
+ *
+ * @return {Phaser.Display.Color} A Color object.
+ */
+var ValueToColor = function (input)
+{
+    var t = typeof input;
+
+    switch (t)
+    {
+        case 'string':
+
+            if (input.substr(0, 3).toLowerCase() === 'rgb')
+            {
+                return RGBStringToColor(input);
+            }
+            else
+            {
+                return HexStringToColor(input);
+            }
+
+        case 'number':
+
+            return IntegerToColor(input);
+
+        case 'object':
+
+            return ObjectToColor(input);
+    }
+};
+
+module.exports = ValueToColor;
+
+
+/***/ }),
+/* 179 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Takes the given string and pads it out, to the length required, using the character
+ * specified. For example if you need a string to be 6 characters long, you can call:
+ *
+ * `pad('bob', 6, '-', 2)`
+ *
+ * This would return: `bob---` as it has padded it out to 6 characters, using the `-` on the right.
+ *
+ * You can also use it to pad numbers (they are always returned as strings):
+ * 
+ * `pad(512, 6, '0', 1)`
+ *
+ * Would return: `000512` with the string padded to the left.
+ *
+ * If you don't specify a direction it'll pad to both sides:
+ * 
+ * `pad('c64', 7, '*')`
+ *
+ * Would return: `**c64**`
+ *
+ * @function Phaser.Utils.String.Pad
+ * @since 3.0.0
+ *
+ * @param {string} str - The target string. `toString()` will be called on the string, which means you can also pass in common data types like numbers.
+ * @param {integer} [len=0] - The number of characters to be added.
+ * @param {string} [pad=" "] - The string to pad it out with (defaults to a space).
+ * @param {integer} [dir=3] - The direction dir = 1 (left), 2 (right), 3 (both).
+ * 
+ * @return {string} The padded string.
+ */
+var Pad = function (str, len, pad, dir)
+{
+    if (len === undefined) { len = 0; }
+    if (pad === undefined) { pad = ' '; }
+    if (dir === undefined) { dir = 3; }
+
+    str = str.toString();
+
+    var padlen = 0;
+
+    if (len + 1 >= str.length)
+    {
+        switch (dir)
+        {
+            case 1:
+                str = new Array(len + 1 - str.length).join(pad) + str;
+                break;
+
+            case 3:
+                var right = Math.ceil((padlen = len - str.length) / 2);
+                var left = padlen - right;
+                str = new Array(left + 1).join(pad) + str + new Array(right + 1).join(pad);
+                break;
+
+            default:
+                str = str + new Array(len + 1 - str.length).join(pad);
+                break;
+        }
+    }
+
+    return str;
