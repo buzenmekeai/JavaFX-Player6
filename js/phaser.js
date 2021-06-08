@@ -42253,3 +42253,228 @@ var Map = new Class({
     /**
      * Delete all entries from this Map.
      *
+     * @method Phaser.Structs.Map#clear
+     * @since 3.0.0
+     *
+     * @genericUse {Phaser.Structs.Map.<K, V>} - [$return]
+     *
+     * @return {Phaser.Structs.Map} This Map object.
+     */
+    clear: function ()
+    {
+        Object.keys(this.entries).forEach(function (prop)
+        {
+            delete this.entries[prop];
+
+        }, this);
+
+        this.size = 0;
+
+        return this;
+    },
+
+    /**
+     * Returns all entries keys in this Map.
+     *
+     * @method Phaser.Structs.Map#keys
+     * @since 3.0.0
+     *
+     * @genericUse {K[]} - [$return]
+     *
+     * @return {string[]} Array containing entries' keys.
+     */
+    keys: function ()
+    {
+        return Object.keys(this.entries);
+    },
+
+    /**
+     * Returns an `Array` of all entries.
+     *
+     * @method Phaser.Structs.Map#values
+     * @since 3.0.0
+     *
+     * @genericUse {V[]} - [$return]
+     *
+     * @return {Array.<*>} An `Array` of entries.
+     */
+    values: function ()
+    {
+        var output = [];
+        var entries = this.entries;
+
+        for (var key in entries)
+        {
+            output.push(entries[key]);
+        }
+
+        return output;
+    },
+
+    /**
+     * Dumps the contents of this Map to the console via `console.group`.
+     *
+     * @method Phaser.Structs.Map#dump
+     * @since 3.0.0
+     */
+    dump: function ()
+    {
+        var entries = this.entries;
+
+        // eslint-disable-next-line no-console
+        console.group('Map');
+
+        for (var key in entries)
+        {
+            console.log(key, entries[key]);
+        }
+
+        // eslint-disable-next-line no-console
+        console.groupEnd();
+    },
+
+    /**
+     * Passes all entries in this Map to the given callback.
+     *
+     * @method Phaser.Structs.Map#each
+     * @since 3.0.0
+     *
+     * @genericUse {EachMapCallback.<V>} - [callback]
+     * @genericUse {Phaser.Structs.Map.<K, V>} - [$return]
+     *
+     * @param {EachMapCallback} callback - The callback which will receive the keys and entries held in this Map.
+     *
+     * @return {Phaser.Structs.Map} This Map object.
+     */
+    each: function (callback)
+    {
+        var entries = this.entries;
+
+        for (var key in entries)
+        {
+            if (callback(key, entries[key]) === false)
+            {
+                break;
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Returns `true` if the value exists within this Map. Otherwise, returns `false`.
+     *
+     * @method Phaser.Structs.Map#contains
+     * @since 3.0.0
+     *
+     * @genericUse {V} - [value]
+     *
+     * @param {*} value - The value to search for.
+     *
+     * @return {boolean} `true` if the value is found, otherwise `false`.
+     */
+    contains: function (value)
+    {
+        var entries = this.entries;
+
+        for (var key in entries)
+        {
+            if (entries[key] === value)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    },
+
+    /**
+     * Merges all new keys from the given Map into this one.
+     * If it encounters a key that already exists it will be skipped unless override is set to `true`.
+     *
+     * @method Phaser.Structs.Map#merge
+     * @since 3.0.0
+     *
+     * @genericUse {Phaser.Structs.Map.<K, V>} - [map,$return]
+     *
+     * @param {Phaser.Structs.Map} map - The Map to merge in to this Map.
+     * @param {boolean} [override=false] - Set to `true` to replace values in this Map with those from the source map, or `false` to skip them.
+     *
+     * @return {Phaser.Structs.Map} This Map object.
+     */
+    merge: function (map, override)
+    {
+        if (override === undefined) { override = false; }
+
+        var local = this.entries;
+        var source = map.entries;
+
+        for (var key in source)
+        {
+            if (local.hasOwnProperty(key) && override)
+            {
+                local[key] = source[key];
+            }
+            else
+            {
+                this.set(key, source[key]);
+            }
+        }
+
+        return this;
+    }
+
+});
+
+module.exports = Map;
+
+
+/***/ }),
+/* 181 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculate a smooth interpolation percentage of `x` between `min` and `max`.
+ *
+ * The function receives the number `x` as an argument and returns 0 if `x` is less than or equal to the left edge,
+ * 1 if `x` is greater than or equal to the right edge, and smoothly interpolates, using a Hermite polynomial,
+ * between 0 and 1 otherwise.
+ *
+ * @function Phaser.Math.SmoothStep
+ * @since 3.0.0
+ * @see {@link https://en.wikipedia.org/wiki/Smoothstep}
+ *
+ * @param {number} x - The input value.
+ * @param {number} min - The minimum value, also known as the 'left edge', assumed smaller than the 'right edge'.
+ * @param {number} max - The maximum value, also known as the 'right edge', assumed greater than the 'left edge'.
+ *
+ * @return {number} The percentage of interpolation, between 0 and 1.
+ */
+var SmoothStep = function (x, min, max)
+{
+    if (x <= min)
+    {
+        return 0;
+    }
+
+    if (x >= max)
+    {
+        return 1;
+    }
+
+    x = (x - min) / (max - min);
+
+    return x * x * (3 - 2 * x);
+};
+
+module.exports = SmoothStep;
+
+
+/***/ }),
+/* 182 */
