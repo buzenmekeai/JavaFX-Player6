@@ -42701,3 +42701,213 @@ var Pipeline = {
      *
      * @param {string} [pipelineName=TextureTintPipeline] - The name of the pipeline to set on this Game Object. Defaults to the Texture Tint Pipeline.
      *
+     * @return {boolean} `true` if the pipeline was set successfully, otherwise `false`.
+     */
+    initPipeline: function (pipelineName)
+    {
+        if (pipelineName === undefined) { pipelineName = 'TextureTintPipeline'; }
+
+        var renderer = this.scene.sys.game.renderer;
+
+        if (renderer && renderer.gl && renderer.hasPipeline(pipelineName))
+        {
+            this.defaultPipeline = renderer.getPipeline(pipelineName);
+            this.pipeline = this.defaultPipeline;
+
+            return true;
+        }
+
+        return false;
+    },
+
+    /**
+     * Sets the active WebGL Pipeline of this Game Object.
+     *
+     * @method Phaser.GameObjects.Components.Pipeline#setPipeline
+     * @webglOnly
+     * @since 3.0.0
+     *
+     * @param {string} pipelineName - The name of the pipeline to set on this Game Object.
+     *
+     * @return {this} This Game Object instance.
+     */
+    setPipeline: function (pipelineName)
+    {
+        var renderer = this.scene.sys.game.renderer;
+
+        if (renderer && renderer.gl && renderer.hasPipeline(pipelineName))
+        {
+            this.pipeline = renderer.getPipeline(pipelineName);
+        }
+
+        return this;
+    },
+
+    /**
+     * Resets the WebGL Pipeline of this Game Object back to the default it was created with.
+     *
+     * @method Phaser.GameObjects.Components.Pipeline#resetPipeline
+     * @webglOnly
+     * @since 3.0.0
+     *
+     * @return {boolean} `true` if the pipeline was set successfully, otherwise `false`.
+     */
+    resetPipeline: function ()
+    {
+        this.pipeline = this.defaultPipeline;
+
+        return (this.pipeline !== null);
+    },
+
+    /**
+     * Gets the name of the WebGL Pipeline this Game Object is currently using.
+     *
+     * @method Phaser.GameObjects.Components.Pipeline#getPipelineName
+     * @webglOnly
+     * @since 3.0.0
+     *
+     * @return {string} The string-based name of the pipeline being used by this Game Object.
+     */
+    getPipelineName: function ()
+    {
+        return this.pipeline.name;
+    }
+
+};
+
+module.exports = Pipeline;
+
+
+/***/ }),
+/* 187 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+/**
+ * Returns a random point within a Rectangle.
+ *
+ * @function Phaser.Geom.Rectangle.Random
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rect - The Rectangle to return a point from.
+ * @param {Phaser.Geom.Point} out - The object to update with the point's coordinates.
+ *
+ * @return {Phaser.Geom.Point} The modified `out` object, or a new Point if none was provided.
+ */
+var Random = function (rect, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    out.x = rect.x + (Math.random() * rect.width);
+    out.y = rect.y + (Math.random() * rect.height);
+
+    return out;
+};
+
+module.exports = Random;
+
+
+/***/ }),
+/* 188 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+/**
+ * Returns a random point on a given Line.
+ *
+ * @function Phaser.Geom.Line.Random
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Line} line - The Line to calculate the random Point on.
+ * @param {(Phaser.Geom.Point|object)} [out] - An instance of a Point to be modified.
+ *
+ * @return {(Phaser.Geom.Point|object)} A random Point on the Line.
+ */
+var Random = function (line, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    var t = Math.random();
+
+    out.x = line.x1 + t * (line.x2 - line.x1);
+    out.y = line.y1 + t * (line.y2 - line.y1);
+
+    return out;
+};
+
+module.exports = Random;
+
+
+/***/ }),
+/* 189 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Length = __webpack_require__(65);
+var Point = __webpack_require__(6);
+
+/**
+ * Get a number of points along a line's length.
+ *
+ * Provide a `quantity` to get an exact number of points along the line.
+ *
+ * Provide a `stepRate` to ensure a specific distance between each point on the line. Set `quantity` to `0` when
+ * providing a `stepRate`.
+ *
+ * @function Phaser.Geom.Line.GetPoints
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point[]} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Line} line - The line.
+ * @param {integer} quantity - The number of points to place on the line. Set to `0` to use `stepRate` instead.
+ * @param {number} [stepRate] - The distance between each point on the line. When set, `quantity` is implied and should be set to `0`.
+ * @param {(array|Phaser.Geom.Point[])} [out] - An optional array of Points, or point-like objects, to store the coordinates of the points on the line.
+ *
+ * @return {(array|Phaser.Geom.Point[])} An array of Points, or point-like objects, containing the coordinates of the points on the line.
+ */
+var GetPoints = function (line, quantity, stepRate, out)
+{
+    if (out === undefined) { out = []; }
+
+    //  If quantity is a falsey value (false, null, 0, undefined, etc) then we calculate it based on the stepRate instead.
+    if (!quantity)
+    {
+        quantity = Length(line) / stepRate;
+    }
+
+    var x1 = line.x1;
+    var y1 = line.y1;
+
+    var x2 = line.x2;
+    var y2 = line.y2;
+
+    for (var i = 0; i < quantity; i++)
+    {
+        var position = i / quantity;
+
+        var x = x1 + (x2 - x1) * position;
+        var y = y1 + (y2 - y1) * position;
