@@ -42478,3 +42478,226 @@ module.exports = SmoothStep;
 
 /***/ }),
 /* 182 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculate a smoother interpolation percentage of `x` between `min` and `max`.
+ *
+ * The function receives the number `x` as an argument and returns 0 if `x` is less than or equal to the left edge,
+ * 1 if `x` is greater than or equal to the right edge, and smoothly interpolates, using a Hermite polynomial,
+ * between 0 and 1 otherwise.
+ *
+ * Produces an even smoother interpolation than {@link Phaser.Math.SmoothStep}.
+ *
+ * @function Phaser.Math.SmootherStep
+ * @since 3.0.0
+ * @see {@link https://en.wikipedia.org/wiki/Smoothstep#Variations}
+ *
+ * @param {number} x - The input value.
+ * @param {number} min - The minimum value, also known as the 'left edge', assumed smaller than the 'right edge'.
+ * @param {number} max - The maximum value, also known as the 'right edge', assumed greater than the 'left edge'.
+ *
+ * @return {number} The percentage of interpolation, between 0 and 1.
+ */
+var SmootherStep = function (x, min, max)
+{
+    x = Math.max(0, Math.min(1, (x - min) / (max - min)));
+
+    return x * x * x * (x * (x * 6 - 15) + 10);
+};
+
+module.exports = SmootherStep;
+
+
+/***/ }),
+/* 183 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Math.RotateAroundDistance
+ * @since 3.0.0
+ *
+ * @param {(Phaser.Geom.Point|object)} point - The point to be rotated.
+ * @param {number} x - The horizontal coordinate to rotate around.
+ * @param {number} y - The vertical coordinate to rotate around.
+ * @param {number} angle - The angle of rotation in radians.
+ * @param {number} distance - [description]
+ *
+ * @return {Phaser.Geom.Point} The given point.
+ */
+var RotateAroundDistance = function (point, x, y, angle, distance)
+{
+    var t = angle + Math.atan2(point.y - y, point.x - x);
+
+    point.x = x + (distance * Math.cos(t));
+    point.y = y + (distance * Math.sin(t));
+
+    return point;
+};
+
+module.exports = RotateAroundDistance;
+
+
+/***/ }),
+/* 184 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Triangle.Random
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ * @param {Phaser.Geom.Point} [out] - [description]
+ *
+ * @return {Phaser.Geom.Point} [description]
+ */
+var Random = function (triangle, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    //  Basis vectors
+    var ux = triangle.x2 - triangle.x1;
+    var uy = triangle.y2 - triangle.y1;
+
+    var vx = triangle.x3 - triangle.x1;
+    var vy = triangle.y3 - triangle.y1;
+
+    //  Random point within the unit square
+    var r = Math.random();
+    var s = Math.random();
+
+    //  Point outside the triangle? Remap it.
+    if (r + s >= 1)
+    {
+        r = 1 - r;
+        s = 1 - s;
+    }
+
+    out.x = triangle.x1 + ((ux * r) + (vx * s));
+    out.y = triangle.y1 + ((uy * r) + (vy * s));
+
+    return out;
+};
+
+module.exports = Random;
+
+
+/***/ }),
+/* 185 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+/**
+ * Returns a uniformly distributed random point from anywhere within the given Ellipse.
+ *
+ * @function Phaser.Geom.Ellipse.Random
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Ellipse} ellipse - The Ellipse to get a random point from.
+ * @param {(Phaser.Geom.Point|object)} [out] - A Point or point-like object to set the random `x` and `y` values in.
+ *
+ * @return {(Phaser.Geom.Point|object)} A Point object with the random values set in the `x` and `y` properties.
+ */
+var Random = function (ellipse, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    var p = Math.random() * Math.PI * 2;
+    var s = Math.sqrt(Math.random());
+
+    out.x = ellipse.x + ((s * Math.cos(p)) * ellipse.width / 2);
+    out.y = ellipse.y + ((s * Math.sin(p)) * ellipse.height / 2);
+
+    return out;
+};
+
+module.exports = Random;
+
+
+/***/ }),
+/* 186 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Provides methods used for setting the WebGL rendering pipeline of a Game Object.
+ *
+ * @name Phaser.GameObjects.Components.Pipeline
+ * @webglOnly
+ * @since 3.0.0
+ */
+
+var Pipeline = {
+
+    /**
+     * The initial WebGL pipeline of this Game Object.
+     *
+     * @name Phaser.GameObjects.Components.Pipeline#defaultPipeline
+     * @type {Phaser.Renderer.WebGL.WebGLPipeline}
+     * @default null
+     * @webglOnly
+     * @since 3.0.0
+     */
+    defaultPipeline: null,
+
+    /**
+     * The current WebGL pipeline of this Game Object.
+     *
+     * @name Phaser.GameObjects.Components.Pipeline#pipeline
+     * @type {Phaser.Renderer.WebGL.WebGLPipeline}
+     * @default null
+     * @webglOnly
+     * @since 3.0.0
+     */
+    pipeline: null,
+
+    /**
+     * Sets the initial WebGL Pipeline of this Game Object.
+     * This should only be called during the instantiation of the Game Object.
+     *
+     * @method Phaser.GameObjects.Components.Pipeline#initPipeline
+     * @webglOnly
+     * @since 3.0.0
+     *
+     * @param {string} [pipelineName=TextureTintPipeline] - The name of the pipeline to set on this Game Object. Defaults to the Texture Tint Pipeline.
+     *
