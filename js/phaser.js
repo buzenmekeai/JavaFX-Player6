@@ -43126,3 +43126,221 @@ var ALIGN_CONST = {
     * @name Phaser.Display.Align.LEFT_TOP
     * @since 3.0.0
     * @type {integer}
+    */
+    LEFT_TOP: 3,
+
+    /**
+    * A constant representing a left-center alignment or position.
+    * @constant
+    * @name Phaser.Display.Align.LEFT_CENTER
+    * @since 3.0.0
+    * @type {integer}
+    */
+    LEFT_CENTER: 4,
+
+    /**
+    * A constant representing a left-bottom alignment or position.
+    * @constant
+    * @name Phaser.Display.Align.LEFT_BOTTOM
+    * @since 3.0.0
+    * @type {integer}
+    */
+    LEFT_BOTTOM: 5,
+
+    /**
+    * A constant representing a center alignment or position.
+    * @constant
+    * @name Phaser.Display.Align.CENTER
+    * @since 3.0.0
+    * @type {integer}
+    */
+    CENTER: 6,
+
+    /**
+    * A constant representing a right-top alignment or position.
+    * @constant
+    * @name Phaser.Display.Align.RIGHT_TOP
+    * @since 3.0.0
+    * @type {integer}
+    */
+    RIGHT_TOP: 7,
+
+    /**
+    * A constant representing a right-center alignment or position.
+    * @constant
+    * @name Phaser.Display.Align.RIGHT_CENTER
+    * @since 3.0.0
+    * @type {integer}
+    */
+    RIGHT_CENTER: 8,
+
+    /**
+    * A constant representing a right-bottom alignment or position.
+    * @constant
+    * @name Phaser.Display.Align.RIGHT_BOTTOM
+    * @since 3.0.0
+    * @type {integer}
+    */
+    RIGHT_BOTTOM: 9,
+
+    /**
+    * A constant representing a bottom-left alignment or position.
+    * @constant
+    * @name Phaser.Display.Align.BOTTOM_LEFT
+    * @since 3.0.0
+    * @type {integer}
+    */
+    BOTTOM_LEFT: 10,
+
+    /**
+    * A constant representing a bottom-center alignment or position.
+    * @constant
+    * @name Phaser.Display.Align.BOTTOM_CENTER
+    * @since 3.0.0
+    * @type {integer}
+    */
+    BOTTOM_CENTER: 11,
+
+    /**
+    * A constant representing a bottom-right alignment or position.
+    * @constant
+    * @name Phaser.Display.Align.BOTTOM_RIGHT
+    * @since 3.0.0
+    * @type {integer}
+    */
+    BOTTOM_RIGHT: 12
+
+};
+
+module.exports = ALIGN_CONST;
+
+
+/***/ }),
+/* 194 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+* The `Matter.Constraint` module contains methods for creating and manipulating constraints.
+* Constraints are used for specifying that a fixed distance must be maintained between two bodies (or a body and a fixed world-space position).
+* The stiffness of constraints can be modified to create springs or elastic.
+*
+* See the included usage [examples](https://github.com/liabru/matter-js/tree/master/examples).
+*
+* @class Constraint
+*/
+
+var Constraint = {};
+
+module.exports = Constraint;
+
+var Vertices = __webpack_require__(76);
+var Vector = __webpack_require__(81);
+var Sleeping = __webpack_require__(222);
+var Bounds = __webpack_require__(80);
+var Axes = __webpack_require__(505);
+var Common = __webpack_require__(33);
+
+(function() {
+
+    Constraint._warming = 0.4;
+    Constraint._torqueDampen = 1;
+    Constraint._minLength = 0.000001;
+
+    /**
+     * Creates a new constraint.
+     * All properties have default values, and many are pre-calculated automatically based on other properties.
+     * To simulate a revolute constraint (or pin joint) set `length: 0` and a high `stiffness` value (e.g. `0.7` or above).
+     * If the constraint is unstable, try lowering the `stiffness` value and / or increasing `engine.constraintIterations`.
+     * For compound bodies, constraints must be applied to the parent body (not one of its parts).
+     * See the properties section below for detailed information on what you can pass via the `options` object.
+     * @method create
+     * @param {} options
+     * @return {constraint} constraint
+     */
+    Constraint.create = function(options) {
+        var constraint = options;
+
+        // if bodies defined but no points, use body centre
+        if (constraint.bodyA && !constraint.pointA)
+            constraint.pointA = { x: 0, y: 0 };
+        if (constraint.bodyB && !constraint.pointB)
+            constraint.pointB = { x: 0, y: 0 };
+
+        // calculate static length using initial world space points
+        var initialPointA = constraint.bodyA ? Vector.add(constraint.bodyA.position, constraint.pointA) : constraint.pointA,
+            initialPointB = constraint.bodyB ? Vector.add(constraint.bodyB.position, constraint.pointB) : constraint.pointB,
+            length = Vector.magnitude(Vector.sub(initialPointA, initialPointB));
+    
+        constraint.length = typeof constraint.length !== 'undefined' ? constraint.length : length;
+
+        // option defaults
+        constraint.id = constraint.id || Common.nextId();
+        constraint.label = constraint.label || 'Constraint';
+        constraint.type = 'constraint';
+        constraint.stiffness = constraint.stiffness || (constraint.length > 0 ? 1 : 0.7);
+        constraint.damping = constraint.damping || 0;
+        constraint.angularStiffness = constraint.angularStiffness || 0;
+        constraint.angleA = constraint.bodyA ? constraint.bodyA.angle : constraint.angleA;
+        constraint.angleB = constraint.bodyB ? constraint.bodyB.angle : constraint.angleB;
+        constraint.plugin = {};
+
+        // render
+        var render = {
+            visible: true,
+            lineWidth: 2,
+            strokeStyle: '#ffffff',
+            type: 'line',
+            anchors: true
+        };
+
+        if (constraint.length === 0 && constraint.stiffness > 0.1) {
+            render.type = 'pin';
+            render.anchors = false;
+        } else if (constraint.stiffness < 0.9) {
+            render.type = 'spring';
+        }
+
+        constraint.render = Common.extend(render, constraint.render);
+
+        return constraint;
+    };
+
+    /**
+     * Prepares for solving by constraint warming.
+     * @private
+     * @method preSolveAll
+     * @param {body[]} bodies
+     */
+    Constraint.preSolveAll = function(bodies) {
+        for (var i = 0; i < bodies.length; i += 1) {
+            var body = bodies[i],
+                impulse = body.constraintImpulse;
+
+            if (body.isStatic || (impulse.x === 0 && impulse.y === 0 && impulse.angle === 0)) {
+                continue;
+            }
+
+            body.position.x += impulse.x;
+            body.position.y += impulse.y;
+            body.angle += impulse.angle;
+        }
+    };
+
+    /**
+     * Solves all constraints in a list of collisions.
+     * @private
+     * @method solveAll
+     * @param {constraint[]} constraints
+     * @param {number} timeScale
+     */
+    Constraint.solveAll = function(constraints, timeScale) {
+        // Solve fixed constraints first.
+        for (var i = 0; i < constraints.length; i += 1) {
+            var constraint = constraints[i],
+                fixedA = !constraint.bodyA || (constraint.bodyA && constraint.bodyA.isStatic),
+                fixedB = !constraint.bodyB || (constraint.bodyB && constraint.bodyB.isStatic);
+
+            if (fixedA || fixedB) {
+                Constraint.solve(constraints[i], timeScale);
+            }
+        }
