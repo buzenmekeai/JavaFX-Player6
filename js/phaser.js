@@ -42911,3 +42911,218 @@ var GetPoints = function (line, quantity, stepRate, out)
 
         var x = x1 + (x2 - x1) * position;
         var y = y1 + (y2 - y1) * position;
+
+        out.push(new Point(x, y));
+    }
+
+    return out;
+};
+
+module.exports = GetPoints;
+
+
+/***/ }),
+/* 190 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Perimeter = __webpack_require__(124);
+var Point = __webpack_require__(6);
+
+/**
+ * Position is a value between 0 and 1 where 0 = the top-left of the rectangle and 0.5 = the bottom right.
+ *
+ * @function Phaser.Geom.Rectangle.GetPoint
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rectangle - [description]
+ * @param {number} position - [description]
+ * @param {(Phaser.Geom.Point|object)} [out] - [description]
+ *
+ * @return {Phaser.Geom.Point} [description]
+ */
+var GetPoint = function (rectangle, position, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    if (position <= 0 || position >= 1)
+    {
+        out.x = rectangle.x;
+        out.y = rectangle.y;
+
+        return out;
+    }
+
+    var p = Perimeter(rectangle) * position;
+
+    if (position > 0.5)
+    {
+        p -= (rectangle.width + rectangle.height);
+
+        if (p <= rectangle.width)
+        {
+            //  Face 3
+            out.x = rectangle.right - p;
+            out.y = rectangle.bottom;
+        }
+        else
+        {
+            //  Face 4
+            out.x = rectangle.x;
+            out.y = rectangle.bottom - (p - rectangle.width);
+        }
+    }
+    else if (p <= rectangle.width)
+    {
+        //  Face 1
+        out.x = rectangle.x + p;
+        out.y = rectangle.y;
+    }
+    else
+    {
+        //  Face 2
+        out.x = rectangle.right;
+        out.y = rectangle.y + (p - rectangle.width);
+    }
+
+    return out;
+};
+
+module.exports = GetPoint;
+
+
+/***/ }),
+/* 191 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+/**
+ * Returns a uniformly distributed random point from anywhere within the given Circle.
+ *
+ * @function Phaser.Geom.Circle.Random
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Circle} circle - The Circle to get a random point from.
+ * @param {(Phaser.Geom.Point|object)} [out] - A Point or point-like object to set the random `x` and `y` values in.
+ *
+ * @return {(Phaser.Geom.Point|object)} A Point object with the random values set in the `x` and `y` properties.
+ */
+var Random = function (circle, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    var t = 2 * Math.PI * Math.random();
+    var u = Math.random() + Math.random();
+    var r = (u > 1) ? 2 - u : u;
+    var x = r * Math.cos(t);
+    var y = r * Math.sin(t);
+
+    out.x = circle.x + (x * circle.radius);
+    out.y = circle.y + (y * circle.radius);
+
+    return out;
+};
+
+module.exports = Random;
+
+
+/***/ }),
+/* 192 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+/**
+ * Returns a Point object containing the coordinates of a point on the circumference of the Circle based on the given angle.
+ *
+ * @function Phaser.Geom.Circle.CircumferencePoint
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Circle} circle - The Circle to get the circumference point on.
+ * @param {number} angle - The angle from the center of the Circle to the circumference to return the point from. Given in radians.
+ * @param {(Phaser.Geom.Point|object)} [out] - A Point, or point-like object, to store the results in. If not given a Point will be created.
+ *
+ * @return {(Phaser.Geom.Point|object)} A Point object where the `x` and `y` properties are the point on the circumference.
+ */
+var CircumferencePoint = function (circle, angle, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    out.x = circle.x + (circle.radius * Math.cos(angle));
+    out.y = circle.y + (circle.radius * Math.sin(angle));
+
+    return out;
+};
+
+module.exports = CircumferencePoint;
+
+
+/***/ }),
+/* 193 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var ALIGN_CONST = {
+
+    /**
+    * A constant representing a top-left alignment or position.
+    * @constant
+    * @name Phaser.Display.Align.TOP_LEFT
+    * @since 3.0.0
+    * @type {integer}
+    */
+    TOP_LEFT: 0,
+
+    /**
+    * A constant representing a top-center alignment or position.
+    * @constant
+    * @name Phaser.Display.Align.TOP_CENTER
+    * @since 3.0.0
+    * @type {integer}
+    */
+    TOP_CENTER: 1,
+
+    /**
+    * A constant representing a top-right alignment or position.
+    * @constant
+    * @name Phaser.Display.Align.TOP_RIGHT
+    * @since 3.0.0
+    * @type {integer}
+    */
+    TOP_RIGHT: 2,
+
+    /**
+    * A constant representing a left-top alignment or position.
+    * @constant
+    * @name Phaser.Display.Align.LEFT_TOP
+    * @since 3.0.0
+    * @type {integer}
