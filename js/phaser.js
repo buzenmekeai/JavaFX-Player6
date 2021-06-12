@@ -43547,3 +43547,205 @@ var Common = __webpack_require__(33);
      * An arbitrary `String` name to help the user identify and manage bodies.
      *
      * @property label
+     * @type string
+     * @default "Constraint"
+     */
+
+    /**
+     * An `Object` that defines the rendering properties to be consumed by the module `Matter.Render`.
+     *
+     * @property render
+     * @type object
+     */
+
+    /**
+     * A flag that indicates if the constraint should be rendered.
+     *
+     * @property render.visible
+     * @type boolean
+     * @default true
+     */
+
+    /**
+     * A `Number` that defines the line width to use when rendering the constraint outline.
+     * A value of `0` means no outline will be rendered.
+     *
+     * @property render.lineWidth
+     * @type number
+     * @default 2
+     */
+
+    /**
+     * A `String` that defines the stroke style to use when rendering the constraint outline.
+     * It is the same as when using a canvas, so it accepts CSS style property values.
+     *
+     * @property render.strokeStyle
+     * @type string
+     * @default a random colour
+     */
+
+    /**
+     * A `String` that defines the constraint rendering type. 
+     * The possible values are 'line', 'pin', 'spring'.
+     * An appropriate render type will be automatically chosen unless one is given in options.
+     *
+     * @property render.type
+     * @type string
+     * @default 'line'
+     */
+
+    /**
+     * A `Boolean` that defines if the constraint's anchor points should be rendered.
+     *
+     * @property render.anchors
+     * @type boolean
+     * @default true
+     */
+
+    /**
+     * The first possible `Body` that this constraint is attached to.
+     *
+     * @property bodyA
+     * @type body
+     * @default null
+     */
+
+    /**
+     * The second possible `Body` that this constraint is attached to.
+     *
+     * @property bodyB
+     * @type body
+     * @default null
+     */
+
+    /**
+     * A `Vector` that specifies the offset of the constraint from center of the `constraint.bodyA` if defined, otherwise a world-space position.
+     *
+     * @property pointA
+     * @type vector
+     * @default { x: 0, y: 0 }
+     */
+
+    /**
+     * A `Vector` that specifies the offset of the constraint from center of the `constraint.bodyB` if defined, otherwise a world-space position.
+     *
+     * @property pointB
+     * @type vector
+     * @default { x: 0, y: 0 }
+     */
+
+    /**
+     * A `Number` that specifies the stiffness of the constraint, i.e. the rate at which it returns to its resting `constraint.length`.
+     * A value of `1` means the constraint should be very stiff.
+     * A value of `0.2` means the constraint acts like a soft spring.
+     *
+     * @property stiffness
+     * @type number
+     * @default 1
+     */
+
+    /**
+     * A `Number` that specifies the damping of the constraint, 
+     * i.e. the amount of resistance applied to each body based on their velocities to limit the amount of oscillation.
+     * Damping will only be apparent when the constraint also has a very low `stiffness`.
+     * A value of `0.1` means the constraint will apply heavy damping, resulting in little to no oscillation.
+     * A value of `0` means the constraint will apply no damping.
+     *
+     * @property damping
+     * @type number
+     * @default 0
+     */
+
+    /**
+     * A `Number` that specifies the target resting length of the constraint. 
+     * It is calculated automatically in `Constraint.create` from initial positions of the `constraint.bodyA` and `constraint.bodyB`.
+     *
+     * @property length
+     * @type number
+     */
+
+    /**
+     * An object reserved for storing plugin-specific properties.
+     *
+     * @property plugin
+     * @type {}
+     */
+
+})();
+
+
+/***/ }),
+/* 195 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+* The `Matter.Events` module contains methods to fire and listen to events on other objects.
+*
+* See the included usage [examples](https://github.com/liabru/matter-js/tree/master/examples).
+*
+* @class Events
+*/
+
+var Events = {};
+
+module.exports = Events;
+
+var Common = __webpack_require__(33);
+
+(function() {
+
+    /**
+     * Subscribes a callback function to the given object's `eventName`.
+     * @method on
+     * @param {} object
+     * @param {string} eventNames
+     * @param {function} callback
+     */
+    Events.on = function(object, eventNames, callback) {
+        var names = eventNames.split(' '),
+            name;
+
+        for (var i = 0; i < names.length; i++) {
+            name = names[i];
+            object.events = object.events || {};
+            object.events[name] = object.events[name] || [];
+            object.events[name].push(callback);
+        }
+
+        return callback;
+    };
+
+    /**
+     * Removes the given event callback. If no callback, clears all callbacks in `eventNames`. If no `eventNames`, clears all events.
+     * @method off
+     * @param {} object
+     * @param {string} eventNames
+     * @param {function} callback
+     */
+    Events.off = function(object, eventNames, callback) {
+        if (!eventNames) {
+            object.events = {};
+            return;
+        }
+
+        // handle Events.off(object, callback)
+        if (typeof eventNames === 'function') {
+            callback = eventNames;
+            eventNames = Common.keys(object.events).join(' ');
+        }
+
+        var names = eventNames.split(' ');
+
+        for (var i = 0; i < names.length; i++) {
+            var callbacks = object.events[names[i]],
+                newCallbacks = [];
+
+            if (callback && callbacks) {
+                for (var j = 0; j < callbacks.length; j++) {
+                    if (callbacks[j] !== callback)
+                        newCallbacks.push(callbacks[j]);
+                }
+            }
+
+            object.events[names[i]] = newCallbacks;
+        }
