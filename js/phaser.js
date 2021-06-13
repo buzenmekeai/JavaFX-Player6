@@ -43749,3 +43749,229 @@ var Common = __webpack_require__(33);
 
             object.events[names[i]] = newCallbacks;
         }
+    };
+
+    /**
+     * Fires all the callbacks subscribed to the given object's `eventName`, in the order they subscribed, if any.
+     * @method trigger
+     * @param {} object
+     * @param {string} eventNames
+     * @param {} event
+     */
+    Events.trigger = function(object, eventNames, event) {
+        var names,
+            name,
+            callbacks,
+            eventClone;
+
+        var events = object.events;
+        
+        if (events && Common.keys(events).length > 0) {
+            if (!event)
+                event = {};
+
+            names = eventNames.split(' ');
+
+            for (var i = 0; i < names.length; i++) {
+                name = names[i];
+                callbacks = events[name];
+
+                if (callbacks) {
+                    eventClone = Common.clone(event, false);
+                    eventClone.name = name;
+                    eventClone.source = object;
+
+                    for (var j = 0; j < callbacks.length; j++) {
+                        callbacks[j].apply(object, [eventClone]);
+                    }
+                }
+            }
+        }
+    };
+
+})();
+
+
+/***/ }),
+/* 196 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Felipe Alfonso <@bitnenfer>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Earcut = __webpack_require__(64);
+var GetFastValue = __webpack_require__(2);
+var ModelViewProjection = __webpack_require__(894);
+var ShaderSourceFS = __webpack_require__(893);
+var ShaderSourceVS = __webpack_require__(892);
+var TransformMatrix = __webpack_require__(38);
+var Utils = __webpack_require__(10);
+var WebGLPipeline = __webpack_require__(197);
+
+/**
+ * @classdesc
+ * TextureTintPipeline implements the rendering infrastructure
+ * for displaying textured objects
+ * The config properties are:
+ * - game: Current game instance.
+ * - renderer: Current WebGL renderer.
+ * - topology: This indicates how the primitives are rendered. The default value is GL_TRIANGLES.
+ *              Here is the full list of rendering primitives (https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Constants).
+ * - vertShader: Source for vertex shader as a string.
+ * - fragShader: Source for fragment shader as a string.
+ * - vertexCapacity: The amount of vertices that shall be allocated
+ * - vertexSize: The size of a single vertex in bytes.
+ *
+ * @class TextureTintPipeline
+ * @extends Phaser.Renderer.WebGL.WebGLPipeline
+ * @memberof Phaser.Renderer.WebGL.Pipelines
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {object} config - [description]
+ */
+var TextureTintPipeline = new Class({
+
+    Extends: WebGLPipeline,
+
+    Mixins: [
+        ModelViewProjection
+    ],
+
+    initialize:
+
+    function TextureTintPipeline (config)
+    {
+        var rendererConfig = config.renderer.config;
+
+        //  Vertex Size = attribute size added together (2 + 2 + 1 + 4)
+
+        WebGLPipeline.call(this, {
+            game: config.game,
+            renderer: config.renderer,
+            gl: config.renderer.gl,
+            topology: GetFastValue(config, 'topology', config.renderer.gl.TRIANGLES),
+            vertShader: GetFastValue(config, 'vertShader', ShaderSourceVS),
+            fragShader: GetFastValue(config, 'fragShader', ShaderSourceFS),
+            vertexCapacity: GetFastValue(config, 'vertexCapacity', 6 * rendererConfig.batchSize),
+            vertexSize: GetFastValue(config, 'vertexSize', Float32Array.BYTES_PER_ELEMENT * 5 + Uint8Array.BYTES_PER_ELEMENT * 4),
+            attributes: [
+                {
+                    name: 'inPosition',
+                    size: 2,
+                    type: config.renderer.gl.FLOAT,
+                    normalized: false,
+                    offset: 0
+                },
+                {
+                    name: 'inTexCoord',
+                    size: 2,
+                    type: config.renderer.gl.FLOAT,
+                    normalized: false,
+                    offset: Float32Array.BYTES_PER_ELEMENT * 2
+                },
+                {
+                    name: 'inTintEffect',
+                    size: 1,
+                    type: config.renderer.gl.FLOAT,
+                    normalized: false,
+                    offset: Float32Array.BYTES_PER_ELEMENT * 4
+                },
+                {
+                    name: 'inTint',
+                    size: 4,
+                    type: config.renderer.gl.UNSIGNED_BYTE,
+                    normalized: true,
+                    offset: Float32Array.BYTES_PER_ELEMENT * 5
+                }
+            ]
+        });
+
+        /**
+         * Float32 view of the array buffer containing the pipeline's vertices.
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#vertexViewF32
+         * @type {Float32Array}
+         * @since 3.0.0
+         */
+        this.vertexViewF32 = new Float32Array(this.vertexData);
+
+        /**
+         * Uint32 view of the array buffer containing the pipeline's vertices.
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#vertexViewU32
+         * @type {Uint32Array}
+         * @since 3.0.0
+         */
+        this.vertexViewU32 = new Uint32Array(this.vertexData);
+
+        /**
+         * Size of the batch.
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#maxQuads
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.maxQuads = rendererConfig.batchSize;
+
+        /**
+         * Collection of batch information
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#batches
+         * @type {array}
+         * @since 3.1.0
+         */
+        this.batches = [];
+
+        /**
+         * A temporary Transform Matrix, re-used internally during batching.
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#_tempMatrix1
+         * @private
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @since 3.11.0
+         */
+        this._tempMatrix1 = new TransformMatrix();
+
+        /**
+         * A temporary Transform Matrix, re-used internally during batching.
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#_tempMatrix2
+         * @private
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @since 3.11.0
+         */
+        this._tempMatrix2 = new TransformMatrix();
+
+        /**
+         * A temporary Transform Matrix, re-used internally during batching.
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#_tempMatrix3
+         * @private
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @since 3.11.0
+         */
+        this._tempMatrix3 = new TransformMatrix();
+
+        /**
+         * A temporary Transform Matrix, re-used internally during batching.
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#_tempMatrix4
+         * @private
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @since 3.11.0
+         */
+        this._tempMatrix4 = new TransformMatrix();
+
+        /**
+         * Used internally to draw stroked triangles.
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#tempTriangle
+         * @type {array}
+         * @private
+         * @since 3.12.0
