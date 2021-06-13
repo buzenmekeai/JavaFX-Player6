@@ -44212,3 +44212,207 @@ var TextureTintPipeline = new Class({
         if (batchCount === 0 || vertexCount === 0)
         {
             this.flushLocked = false;
+
+            return this;
+        }
+
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.bytes.subarray(0, vertexCount * vertexSize));
+
+        for (var index = 0; index < batches.length - 1; index++)
+        {
+            batch = batches[index];
+            batchNext = batches[index + 1];
+
+            if (batch.textures.length > 0)
+            {
+                for (textureIndex = 0; textureIndex < batch.textures.length; ++textureIndex)
+                {
+                    nTexture = batch.textures[textureIndex];
+
+                    if (nTexture)
+                    {
+                        renderer.setTexture2D(nTexture, 1 + textureIndex);
+                    }
+                }
+
+                gl.activeTexture(gl.TEXTURE0);
+            }
+
+            batchVertexCount = batchNext.first - batch.first;
+
+            if (batch.texture === null || batchVertexCount <= 0)
+            {
+                continue;
+            }
+
+            renderer.setTexture2D(batch.texture, 0);
+
+            gl.drawArrays(topology, batch.first, batchVertexCount);
+        }
+
+        // Left over data
+        batch = batches[batches.length - 1];
+
+        if (batch.textures.length > 0)
+        {
+            for (textureIndex = 0; textureIndex < batch.textures.length; ++textureIndex)
+            {
+                nTexture = batch.textures[textureIndex];
+
+                if (nTexture)
+                {
+                    renderer.setTexture2D(nTexture, 1 + textureIndex);
+                }
+            }
+
+            gl.activeTexture(gl.TEXTURE0);
+        }
+
+        batchVertexCount = vertexCount - batch.first;
+
+        if (batch.texture && batchVertexCount > 0)
+        {
+            renderer.setTexture2D(batch.texture, 0);
+
+            gl.drawArrays(topology, batch.first, batchVertexCount);
+        }
+
+        this.vertexCount = 0;
+
+        batches.length = 0;
+
+        this.pushBatch();
+
+        this.flushLocked = false;
+
+        return this;
+    },
+
+    /**
+     * Takes a Sprite Game Object, or any object that extends it, and adds it to the batch.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#batchSprite
+     * @since 3.0.0
+     *
+     * @param {(Phaser.GameObjects.Image|Phaser.GameObjects.Sprite)} sprite - The texture based Game Object to add to the batch.
+     * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera to use for the rendering transform.
+     * @param {Phaser.GameObjects.Components.TransformMatrix} [parentTransformMatrix] - The transform matrix of the parent container, if set.
+     */
+    batchSprite: function (sprite, camera, parentTransformMatrix)
+    {
+        this.renderer.setPipeline(this);
+
+        var camMatrix = this._tempMatrix1;
+        var spriteMatrix = this._tempMatrix2;
+        var calcMatrix = this._tempMatrix3;
+
+        var frame = sprite.frame;
+        var texture = frame.glTexture;
+
+        var u0 = frame.u0;
+        var v0 = frame.v0;
+        var u1 = frame.u1;
+        var v1 = frame.v1;
+        var frameX = frame.x;
+        var frameY = frame.y;
+        var frameWidth = frame.cutWidth;
+        var frameHeight = frame.cutHeight;
+
+        var x = -sprite.displayOriginX + frameX;
+        var y = -sprite.displayOriginY + frameY;
+
+        if (sprite.isCropped)
+        {
+            var crop = sprite._crop;
+
+            if (crop.flipX !== sprite.flipX || crop.flipY !== sprite.flipY)
+            {
+                frame.updateCropUVs(crop, sprite.flipX, sprite.flipY);
+            }
+
+            u0 = crop.u0;
+            v0 = crop.v0;
+            u1 = crop.u1;
+            v1 = crop.v1;
+
+            frameWidth = crop.width;
+            frameHeight = crop.height;
+
+            frameX = crop.x;
+            frameY = crop.y;
+
+            x = -sprite.displayOriginX + frameX;
+            y = -sprite.displayOriginY + frameY;
+        }
+
+        if (sprite.flipX)
+        {
+            x += frameWidth;
+            frameWidth *= -1;
+        }
+
+        if (sprite.flipY)
+        {
+            y += frameHeight;
+            frameHeight *= -1;
+        }
+
+        var xw = x + frameWidth;
+        var yh = y + frameHeight;
+
+        spriteMatrix.applyITRS(sprite.x, sprite.y, sprite.rotation, sprite.scaleX, sprite.scaleY);
+
+        camMatrix.copyFrom(camera.matrix);
+
+        if (parentTransformMatrix)
+        {
+            //  Multiply the camera by the parent matrix
+            camMatrix.multiplyWithOffset(parentTransformMatrix, -camera.scrollX * sprite.scrollFactorX, -camera.scrollY * sprite.scrollFactorY);
+
+            //  Undo the camera scroll
+            spriteMatrix.e = sprite.x;
+            spriteMatrix.f = sprite.y;
+
+            //  Multiply by the Sprite matrix, store result in calcMatrix
+            camMatrix.multiply(spriteMatrix, calcMatrix);
+        }
+        else
+        {
+            spriteMatrix.e -= camera.scrollX * sprite.scrollFactorX;
+            spriteMatrix.f -= camera.scrollY * sprite.scrollFactorY;
+    
+            //  Multiply by the Sprite matrix, store result in calcMatrix
+            camMatrix.multiply(spriteMatrix, calcMatrix);
+        }
+
+        var tx0 = calcMatrix.getX(x, y);
+        var ty0 = calcMatrix.getY(x, y);
+
+        var tx1 = calcMatrix.getX(x, yh);
+        var ty1 = calcMatrix.getY(x, yh);
+
+        var tx2 = calcMatrix.getX(xw, yh);
+        var ty2 = calcMatrix.getY(xw, yh);
+
+        var tx3 = calcMatrix.getX(xw, y);
+        var ty3 = calcMatrix.getY(xw, y);
+
+        var tintTL = Utils.getTintAppendFloatAlpha(sprite._tintTL, camera.alpha * sprite._alphaTL);
+        var tintTR = Utils.getTintAppendFloatAlpha(sprite._tintTR, camera.alpha * sprite._alphaTR);
+        var tintBL = Utils.getTintAppendFloatAlpha(sprite._tintBL, camera.alpha * sprite._alphaBL);
+        var tintBR = Utils.getTintAppendFloatAlpha(sprite._tintBR, camera.alpha * sprite._alphaBR);
+
+        if (camera.roundPixels)
+        {
+            tx0 |= 0;
+            ty0 |= 0;
+
+            tx1 |= 0;
+            ty1 |= 0;
+
+            tx2 |= 0;
+            ty2 |= 0;
+
+            tx3 |= 0;
+            ty3 |= 0;
+        }
