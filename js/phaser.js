@@ -43975,3 +43975,240 @@ var TextureTintPipeline = new Class({
          * @type {array}
          * @private
          * @since 3.12.0
+         */
+        this.tempTriangle = [
+            { x: 0, y: 0, width: 0 },
+            { x: 0, y: 0, width: 0 },
+            { x: 0, y: 0, width: 0 },
+            { x: 0, y: 0, width: 0 }
+        ];
+
+        /**
+         * The tint effect to be applied by the shader in the next geometry draw:
+         * 
+         * 0 = texture multiplied by color
+         * 1 = solid color + texture alpha
+         * 2 = solid color, no texture
+         * 3 = solid texture, no color
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#tintEffect
+         * @type {number}
+         * @private
+         * @since 3.12.0
+         */
+        this.tintEffect = 2;
+
+        /**
+         * Cached stroke tint.
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#strokeTint
+         * @type {object}
+         * @private
+         * @since 3.12.0
+         */
+        this.strokeTint = { TL: 0, TR: 0, BL: 0, BR: 0 };
+
+        /**
+         * Cached fill tint.
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#fillTint
+         * @type {object}
+         * @private
+         * @since 3.12.0
+         */
+        this.fillTint = { TL: 0, TR: 0, BL: 0, BR: 0 };
+
+        /**
+         * Internal texture frame reference.
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#currentFrame
+         * @type {Phaser.Textures.Frame}
+         * @private
+         * @since 3.12.0
+         */
+        this.currentFrame = { u0: 0, v0: 0, u1: 1, v1: 1 };
+
+        /**
+         * Internal path quad cache.
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#firstQuad
+         * @type {array}
+         * @private
+         * @since 3.12.0
+         */
+        this.firstQuad = [ 0, 0, 0, 0, 0 ];
+
+        /**
+         * Internal path quad cache.
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#prevQuad
+         * @type {array}
+         * @private
+         * @since 3.12.0
+         */
+        this.prevQuad = [ 0, 0, 0, 0, 0 ];
+
+        /**
+         * Used internally for triangulating a polygon.
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#polygonCache
+         * @type {array}
+         * @private
+         * @since 3.12.0
+         */
+        this.polygonCache = [];
+
+        this.mvpInit();
+    },
+
+    /**
+     * Called every time the pipeline needs to be used.
+     * It binds all necessary resources.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#onBind
+     * @since 3.0.0
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    onBind: function ()
+    {
+        WebGLPipeline.prototype.onBind.call(this);
+
+        this.mvpUpdate();
+
+        if (this.batches.length === 0)
+        {
+            this.pushBatch();
+        }
+
+        return this;
+    },
+
+    /**
+     * Resizes this pipeline and updates the projection.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#resize
+     * @since 3.0.0
+     *
+     * @param {number} width - The new width.
+     * @param {number} height - The new height.
+     * @param {number} resolution - The resolution.
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    resize: function (width, height, resolution)
+    {
+        WebGLPipeline.prototype.resize.call(this, width, height, resolution);
+
+        this.projOrtho(0, this.width, this.height, 0, -1000.0, 1000.0);
+
+        return this;
+    },
+
+    /**
+     * Assigns a texture to the current batch. If a texture is already set it creates
+     * a new batch object.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#setTexture2D
+     * @since 3.1.0
+     *
+     * @param {WebGLTexture} texture - WebGLTexture that will be assigned to the current batch.
+     * @param {integer} textureUnit - Texture unit to which the texture needs to be bound.
+     *
+     * @return {Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline} This pipeline instance.
+     */
+    setTexture2D: function (texture, unit)
+    {
+        if (!texture)
+        {
+            texture = this.renderer.blankTexture.glTexture;
+            unit = 0;
+        }
+
+        var batches = this.batches;
+
+        if (batches.length === 0)
+        {
+            this.pushBatch();
+        }
+
+        var batch = batches[batches.length - 1];
+
+        if (unit > 0)
+        {
+            if (batch.textures[unit - 1] &&
+                batch.textures[unit - 1] !== texture)
+            {
+                this.pushBatch();
+            }
+
+            batches[batches.length - 1].textures[unit - 1] = texture;
+        }
+        else
+        {
+            if (batch.texture !== null &&
+                batch.texture !== texture)
+            {
+                this.pushBatch();
+            }
+
+            batches[batches.length - 1].texture = texture;
+        }
+
+        return this;
+    },
+
+    /**
+     * Creates a new batch object and pushes it to a batch array.
+     * The batch object contains information relevant to the current 
+     * vertex batch like the offset in the vertex buffer, vertex count and 
+     * the textures used by that batch.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#pushBatch
+     * @since 3.1.0
+     */
+    pushBatch: function ()
+    {
+        var batch = {
+            first: this.vertexCount,
+            texture: null,
+            textures: []
+        };
+
+        this.batches.push(batch);
+    },
+
+    /**
+     * Uploads the vertex data and emits a draw call for the current batch of vertices.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#flush
+     * @since 3.0.0
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    flush: function ()
+    {
+        if (this.flushLocked)
+        {
+            return this;
+        }
+
+        this.flushLocked = true;
+
+        var gl = this.gl;
+        var vertexCount = this.vertexCount;
+        var topology = this.topology;
+        var vertexSize = this.vertexSize;
+        var renderer = this.renderer;
+
+        var batches = this.batches;
+        var batchCount = batches.length;
+        var batchVertexCount = 0;
+        var batch = null;
+        var batchNext;
+        var textureIndex;
+        var nTexture;
+
+        if (batchCount === 0 || vertexCount === 0)
+        {
+            this.flushLocked = false;
