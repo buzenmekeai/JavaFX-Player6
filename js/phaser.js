@@ -44841,3 +44841,248 @@ var TextureTintPipeline = new Class({
         this.setTexture2D(frame.glTexture, 0);
 
         tint = Utils.getTintAppendFloatAlpha(tint, alpha);
+
+        this.batchQuad(tx0, ty0, tx1, ty1, tx2, ty2, tx3, ty3, frame.u0, frame.v0, frame.u1, frame.v1, tint, tint, tint, tint, 0);
+    },
+
+    /**
+     * Pushes a filled rectangle into the vertex batch.
+     * Rectangle has no transform values and isn't transformed into the local space.
+     * Used for directly batching untransformed rectangles, such as Camera background colors.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#drawFillRect
+     * @since 3.12.0
+     *
+     * @param {number} x - Horizontal top left coordinate of the rectangle.
+     * @param {number} y - Vertical top left coordinate of the rectangle.
+     * @param {number} width - Width of the rectangle.
+     * @param {number} height - Height of the rectangle.
+     * @param {number} color - Color of the rectangle to draw.
+     * @param {number} alpha - Alpha value of the rectangle to draw.
+     */
+    drawFillRect: function (x, y, width, height, color, alpha)
+    {
+        var xw = x + width;
+        var yh = y + height;
+
+        var tint = Utils.getTintAppendFloatAlphaAndSwap(color, alpha);
+
+        this.batchQuad(x, y, x, yh, xw, yh, xw, y, 0, 0, 1, 1, tint, tint, tint, tint, 2);
+    },
+
+    /**
+     * Pushes a filled rectangle into the vertex batch.
+     * Rectangle factors in the given transform matrices before adding to the batch.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#batchFillRect
+     * @since 3.12.0
+     *
+     * @param {number} x - Horizontal top left coordinate of the rectangle.
+     * @param {number} y - Vertical top left coordinate of the rectangle.
+     * @param {number} width - Width of the rectangle.
+     * @param {number} height - Height of the rectangle.
+     * @param {Phaser.GameObjects.Components.TransformMatrix} currentMatrix - The current transform.
+     * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - The parent transform.
+     */
+    batchFillRect: function (x, y, width, height, currentMatrix, parentMatrix)
+    {
+        this.renderer.setPipeline(this);
+
+        var calcMatrix = this._tempMatrix3;
+
+        //  Multiply and store result in calcMatrix, only if the parentMatrix is set, otherwise we'll use whatever values are already in the calcMatrix
+        if (parentMatrix)
+        {
+            parentMatrix.multiply(currentMatrix, calcMatrix);
+        }
+        
+        var xw = x + width;
+        var yh = y + height;
+
+        var x0 = calcMatrix.getX(x, y);
+        var y0 = calcMatrix.getY(x, y);
+
+        var x1 = calcMatrix.getX(x, yh);
+        var y1 = calcMatrix.getY(x, yh);
+
+        var x2 = calcMatrix.getX(xw, yh);
+        var y2 = calcMatrix.getY(xw, yh);
+
+        var x3 = calcMatrix.getX(xw, y);
+        var y3 = calcMatrix.getY(xw, y);
+
+        var frame = this.currentFrame;
+
+        var u0 = frame.u0;
+        var v0 = frame.v0;
+        var u1 = frame.u1;
+        var v1 = frame.v1;
+
+        this.batchQuad(x0, y0, x1, y1, x2, y2, x3, y3, u0, v0, u1, v1, this.fillTint.TL, this.fillTint.TR, this.fillTint.BL, this.fillTint.BR, this.tintEffect);
+    },
+
+    /**
+     * Pushes a filled triangle into the vertex batch.
+     * Triangle factors in the given transform matrices before adding to the batch.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#batchFillTriangle
+     * @since 3.12.0
+     *
+     * @param {number} x0 - Point 0 x coordinate.
+     * @param {number} y0 - Point 0 y coordinate.
+     * @param {number} x1 - Point 1 x coordinate.
+     * @param {number} y1 - Point 1 y coordinate.
+     * @param {number} x2 - Point 2 x coordinate.
+     * @param {number} y2 - Point 2 y coordinate.
+     * @param {Phaser.GameObjects.Components.TransformMatrix} currentMatrix - The current transform.
+     * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - The parent transform.
+     */
+    batchFillTriangle: function (x0, y0, x1, y1, x2, y2, currentMatrix, parentMatrix)
+    {
+        this.renderer.setPipeline(this);
+
+        var calcMatrix = this._tempMatrix3;
+
+        //  Multiply and store result in calcMatrix, only if the parentMatrix is set, otherwise we'll use whatever values are already in the calcMatrix
+        if (parentMatrix)
+        {
+            parentMatrix.multiply(currentMatrix, calcMatrix);
+        }
+        
+        var tx0 = calcMatrix.getX(x0, y0);
+        var ty0 = calcMatrix.getY(x0, y0);
+
+        var tx1 = calcMatrix.getX(x1, y1);
+        var ty1 = calcMatrix.getY(x1, y1);
+
+        var tx2 = calcMatrix.getX(x2, y2);
+        var ty2 = calcMatrix.getY(x2, y2);
+
+        var frame = this.currentFrame;
+
+        var u0 = frame.u0;
+        var v0 = frame.v0;
+        var u1 = frame.u1;
+        var v1 = frame.v1;
+
+        this.batchTri(tx0, ty0, tx1, ty1, tx2, ty2, u0, v0, u1, v1, this.fillTint.TL, this.fillTint.TR, this.fillTint.BL, this.tintEffect);
+    },
+
+    /**
+     * Pushes a stroked triangle into the vertex batch.
+     * Triangle factors in the given transform matrices before adding to the batch.
+     * The triangle is created from 3 lines and drawn using the `batchStrokePath` method.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#batchStrokeTriangle
+     * @since 3.12.0
+     *
+     * @param {number} x0 - Point 0 x coordinate.
+     * @param {number} y0 - Point 0 y coordinate.
+     * @param {number} x1 - Point 1 x coordinate.
+     * @param {number} y1 - Point 1 y coordinate.
+     * @param {number} x2 - Point 2 x coordinate.
+     * @param {number} y2 - Point 2 y coordinate.
+     * @param {number} lineWidth - The width of the line in pixels.
+     * @param {Phaser.GameObjects.Components.TransformMatrix} currentMatrix - The current transform.
+     * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - The parent transform.
+     */
+    batchStrokeTriangle: function (x0, y0, x1, y1, x2, y2, lineWidth, currentMatrix, parentMatrix)
+    {
+        var tempTriangle = this.tempTriangle;
+
+        tempTriangle[0].x = x0;
+        tempTriangle[0].y = y0;
+        tempTriangle[0].width = lineWidth;
+
+        tempTriangle[1].x = x1;
+        tempTriangle[1].y = y1;
+        tempTriangle[1].width = lineWidth;
+
+        tempTriangle[2].x = x2;
+        tempTriangle[2].y = y2;
+        tempTriangle[2].width = lineWidth;
+
+        tempTriangle[3].x = x0;
+        tempTriangle[3].y = y0;
+        tempTriangle[3].width = lineWidth;
+
+        this.batchStrokePath(tempTriangle, lineWidth, false, currentMatrix, parentMatrix);
+    },
+
+    /**
+     * Adds the given path to the vertex batch for rendering.
+     * 
+     * It works by taking the array of path data and then passing it through Earcut, which
+     * creates a list of polygons. Each polygon is then added to the batch.
+     * 
+     * The path is always automatically closed because it's filled.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#batchFillPath
+     * @since 3.12.0
+     *
+     * @param {array} path - Collection of points that represent the path.
+     * @param {Phaser.GameObjects.Components.TransformMatrix} currentMatrix - The current transform.
+     * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - The parent transform.
+     */
+    batchFillPath: function (path, currentMatrix, parentMatrix)
+    {
+        this.renderer.setPipeline(this);
+
+        var calcMatrix = this._tempMatrix3;
+
+        //  Multiply and store result in calcMatrix, only if the parentMatrix is set, otherwise we'll use whatever values are already in the calcMatrix
+        if (parentMatrix)
+        {
+            parentMatrix.multiply(currentMatrix, calcMatrix);
+        }
+
+        var length = path.length;
+        var polygonCache = this.polygonCache;
+        var polygonIndexArray;
+        var point;
+
+        var tintTL = this.fillTint.TL;
+        var tintTR = this.fillTint.TR;
+        var tintBL = this.fillTint.BL;
+        var tintEffect = this.tintEffect;
+
+        for (var pathIndex = 0; pathIndex < length; ++pathIndex)
+        {
+            point = path[pathIndex];
+            polygonCache.push(point.x, point.y);
+        }
+
+        polygonIndexArray = Earcut(polygonCache);
+        length = polygonIndexArray.length;
+
+        var frame = this.currentFrame;
+
+        for (var index = 0; index < length; index += 3)
+        {
+            var p0 = polygonIndexArray[index + 0] * 2;
+            var p1 = polygonIndexArray[index + 1] * 2;
+            var p2 = polygonIndexArray[index + 2] * 2;
+
+            var x0 = polygonCache[p0 + 0];
+            var y0 = polygonCache[p0 + 1];
+            var x1 = polygonCache[p1 + 0];
+            var y1 = polygonCache[p1 + 1];
+            var x2 = polygonCache[p2 + 0];
+            var y2 = polygonCache[p2 + 1];
+
+            var tx0 = calcMatrix.getX(x0, y0);
+            var ty0 = calcMatrix.getY(x0, y0);
+    
+            var tx1 = calcMatrix.getX(x1, y1);
+            var ty1 = calcMatrix.getY(x1, y1);
+    
+            var tx2 = calcMatrix.getX(x2, y2);
+            var ty2 = calcMatrix.getY(x2, y2);
+
+            var u0 = frame.u0;
+            var v0 = frame.v0;
+            var u1 = frame.u1;
+            var v1 = frame.v1;
+        
+            this.batchTri(tx0, ty0, tx1, ty1, tx2, ty2, u0, v0, u1, v1, tintTL, tintTR, tintBL, tintEffect);
+        }
