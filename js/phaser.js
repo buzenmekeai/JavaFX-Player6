@@ -45524,3 +45524,225 @@ var WebGLPipeline = new Class({
      * @since 3.2.0
      *
      * @param {string} name - Name of the vertex attribute
+     * @param {integer} size - Vertex component size
+     * @param {integer} type - Type of the attribute
+     * @param {boolean} normalized - Is the value normalized to a range
+     * @param {integer} offset - Byte offset to the beginning of the first element in the vertex
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    addAttribute: function (name, size, type, normalized, offset)
+    {
+        this.attributes.push({
+            name: name,
+            size: size,
+            type: this.renderer.glFormats[type],
+            normalized: normalized,
+            offset: offset
+        });
+
+        return this;
+    },
+
+    /**
+     * Check if the current batch of vertices is full.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#shouldFlush
+     * @since 3.0.0
+     *
+     * @return {boolean} [description]
+     */
+    shouldFlush: function ()
+    {
+        return (this.vertexCount >= this.vertexCapacity);
+    },
+
+    /**
+     * Resizes the properties used to describe the viewport
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#resize
+     * @since 3.0.0
+     *
+     * @param {number} width - [description]
+     * @param {number} height - [description]
+     * @param {number} resolution - [description]
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    resize: function (width, height, resolution)
+    {
+        this.width = width * resolution;
+        this.height = height * resolution;
+
+        return this;
+    },
+
+    /**
+     * Binds the pipeline resources, including programs, vertex buffers and binds attributes
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#bind
+     * @since 3.0.0
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    bind: function ()
+    {
+        var gl = this.gl;
+        var vertexBuffer = this.vertexBuffer;
+        var attributes = this.attributes;
+        var program = this.program;
+        var renderer = this.renderer;
+        var vertexSize = this.vertexSize;
+
+        renderer.setProgram(program);
+        renderer.setVertexBuffer(vertexBuffer);
+
+        for (var index = 0; index < attributes.length; ++index)
+        {
+            var element = attributes[index];
+            var location = gl.getAttribLocation(program, element.name);
+
+            if (location >= 0)
+            {
+                gl.enableVertexAttribArray(location);
+                gl.vertexAttribPointer(location, element.size, element.type, element.normalized, vertexSize, element.offset);
+            }
+            else
+            {
+                gl.disableVertexAttribArray(location);
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#onBind
+     * @since 3.0.0
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    onBind: function ()
+    {
+        // This is for updating uniform data it's called on each bind attempt.
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#onPreRender
+     * @since 3.0.0
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    onPreRender: function ()
+    {
+        // called once every frame
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#onRender
+     * @since 3.0.0
+     *
+     * @param {Phaser.Scene} scene - [description]
+     * @param {Phaser.Cameras.Scene2D.Camera} camera - [description]
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    onRender: function ()
+    {
+        // called for each camera
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#onPostRender
+     * @since 3.0.0
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    onPostRender: function ()
+    {
+        // called once every frame
+        return this;
+    },
+
+    /**
+     * Uploads the vertex data and emits a draw call
+     * for the current batch of vertices.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#flush
+     * @since 3.0.0
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    flush: function ()
+    {
+        if (this.flushLocked) { return this; }
+
+        this.flushLocked = true;
+
+        var gl = this.gl;
+        var vertexCount = this.vertexCount;
+        var topology = this.topology;
+        var vertexSize = this.vertexSize;
+
+        if (vertexCount === 0)
+        {
+            this.flushLocked = false;
+            return;
+        }
+
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.bytes.subarray(0, vertexCount * vertexSize));
+        gl.drawArrays(topology, 0, vertexCount);
+
+        this.vertexCount = 0;
+        this.flushLocked = false;
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#destroy
+     * @since 3.0.0
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    destroy: function ()
+    {
+        var gl = this.gl;
+
+        gl.deleteProgram(this.program);
+        gl.deleteBuffer(this.vertexBuffer);
+
+        delete this.program;
+        delete this.vertexBuffer;
+        delete this.gl;
+
+        return this;
+    },
+
+    /**
+     * Set a uniform value of the current pipeline program.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#setFloat1
+     * @since 3.2.0
+     *
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {number} x - [description]
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    setFloat1: function (name, x)
+    {
+        this.renderer.setFloat1(this.program, name, x);
