@@ -45086,3 +45086,219 @@ var TextureTintPipeline = new Class({
         
             this.batchTri(tx0, ty0, tx1, ty1, tx2, ty2, u0, v0, u1, v1, tintTL, tintTR, tintBL, tintEffect);
         }
+
+        polygonCache.length = 0;
+    },
+
+    /**
+     * Adds the given path to the vertex batch for rendering.
+     * 
+     * It works by taking the array of path data and calling `batchLine` for each section
+     * of the path.
+     * 
+     * The path is optionally closed at the end.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#batchStrokePath
+     * @since 3.12.0
+     *
+     * @param {array} path - Collection of points that represent the path.
+     * @param {number} lineWidth - The width of the line segments in pixels.
+     * @param {boolean} pathOpen - Indicates if the path should be closed or left open.
+     * @param {Phaser.GameObjects.Components.TransformMatrix} currentMatrix - The current transform.
+     * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - The parent transform.
+     */
+    batchStrokePath: function (path, lineWidth, pathOpen, currentMatrix, parentMatrix)
+    {
+        this.renderer.setPipeline(this);
+
+        //  Reset the closePath booleans
+        this.prevQuad[4] = 0;
+        this.firstQuad[4] = 0;
+
+        var pathLength = path.length - 1;
+
+        for (var pathIndex = 0; pathIndex < pathLength; pathIndex++)
+        {
+            var point0 = path[pathIndex];
+            var point1 = path[pathIndex + 1];
+
+            this.batchLine(
+                point0.x,
+                point0.y,
+                point1.x,
+                point1.y,
+                point0.width / 2,
+                point1.width / 2,
+                lineWidth,
+                pathIndex,
+                !pathOpen && (pathIndex === pathLength - 1),
+                currentMatrix,
+                parentMatrix
+            );
+        }
+    },
+
+    /**
+     * Creates a quad and adds it to the vertex batch based on the given line values.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#batchLine
+     * @since 3.12.0
+     *
+     * @param {number} ax - X coordinate to the start of the line
+     * @param {number} ay - Y coordinate to the start of the line
+     * @param {number} bx - X coordinate to the end of the line
+     * @param {number} by - Y coordinate to the end of the line
+     * @param {number} aLineWidth - Width of the start of the line
+     * @param {number} bLineWidth - Width of the end of the line
+     * @param {Float32Array} currentMatrix - Parent matrix, generally used by containers
+     */
+    batchLine: function (ax, ay, bx, by, aLineWidth, bLineWidth, lineWidth, index, closePath, currentMatrix, parentMatrix)
+    {
+        this.renderer.setPipeline(this);
+
+        var calcMatrix = this._tempMatrix3;
+
+        //  Multiply and store result in calcMatrix, only if the parentMatrix is set, otherwise we'll use whatever values are already in the calcMatrix
+        if (parentMatrix)
+        {
+            parentMatrix.multiply(currentMatrix, calcMatrix);
+        }
+
+        var dx = bx - ax;
+        var dy = by - ay;
+
+        var len = Math.sqrt(dx * dx + dy * dy);
+        var al0 = aLineWidth * (by - ay) / len;
+        var al1 = aLineWidth * (ax - bx) / len;
+        var bl0 = bLineWidth * (by - ay) / len;
+        var bl1 = bLineWidth * (ax - bx) / len;
+
+        var lx0 = bx - bl0;
+        var ly0 = by - bl1;
+        var lx1 = ax - al0;
+        var ly1 = ay - al1;
+        var lx2 = bx + bl0;
+        var ly2 = by + bl1;
+        var lx3 = ax + al0;
+        var ly3 = ay + al1;
+
+        //  tx0 = bottom right
+        var brX = calcMatrix.getX(lx0, ly0);
+        var brY = calcMatrix.getY(lx0, ly0);
+
+        //  tx1 = bottom left
+        var blX = calcMatrix.getX(lx1, ly1);
+        var blY = calcMatrix.getY(lx1, ly1);
+
+        //  tx2 = top right
+        var trX = calcMatrix.getX(lx2, ly2);
+        var trY = calcMatrix.getY(lx2, ly2);
+
+        //  tx3 = top left
+        var tlX = calcMatrix.getX(lx3, ly3);
+        var tlY = calcMatrix.getY(lx3, ly3);
+
+        var tint = this.strokeTint;
+        var tintEffect = this.tintEffect;
+
+        var tintTL = tint.TL;
+        var tintTR = tint.TR;
+        var tintBL = tint.BL;
+        var tintBR = tint.BR;
+
+        var frame = this.currentFrame;
+
+        var u0 = frame.u0;
+        var v0 = frame.v0;
+        var u1 = frame.u1;
+        var v1 = frame.v1;
+
+        //  TL, BL, BR, TR
+        this.batchQuad(tlX, tlY, blX, blY, brX, brY, trX, trY, u0, v0, u1, v1, tintTL, tintTR, tintBL, tintBR, tintEffect);
+
+        if (lineWidth <= 2)
+        {
+            //  No point doing a linejoin if the line isn't thick enough
+            return;
+        }
+
+        var prev = this.prevQuad;
+        var first = this.firstQuad;
+
+        if (index > 0 && prev[4])
+        {
+            this.batchQuad(tlX, tlY, blX, blY, prev[0], prev[1], prev[2], prev[3], u0, v0, u1, v1, tintTL, tintTR, tintBL, tintBR, tintEffect);
+        }
+        else
+        {
+            first[0] = tlX;
+            first[1] = tlY;
+            first[2] = blX;
+            first[3] = blY;
+            first[4] = 1;
+        }
+
+        if (closePath && first[4])
+        {
+            //  Add a join for the final path segment
+            this.batchQuad(brX, brY, trX, trY, first[0], first[1], first[2], first[3], u0, v0, u1, v1, tintTL, tintTR, tintBL, tintBR, tintEffect);
+        }
+        else
+        {
+            //  Store it
+
+            prev[0] = brX;
+            prev[1] = brY;
+            prev[2] = trX;
+            prev[3] = trY;
+            prev[4] = 1;
+        }
+    }
+
+});
+
+module.exports = TextureTintPipeline;
+
+
+/***/ }),
+/* 197 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Felipe Alfonso <@bitnenfer>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Utils = __webpack_require__(10);
+
+/**
+ * @classdesc
+ * WebGLPipeline is a class that describes the way elements will be rendererd
+ * in WebGL, specially focused on batching vertices (batching is not provided).
+ * Pipelines are mostly used for describing 2D rendering passes but it's
+ * flexible enough to be used for any type of rendering including 3D.
+ * Internally WebGLPipeline will handle things like compiling shaders,
+ * creating vertex buffers, assigning primitive topology and binding
+ * vertex attributes.
+ *
+ * The config properties are:
+ * - game: Current game instance.
+ * - renderer: Current WebGL renderer.
+ * - gl: Current WebGL context.
+ * - topology: This indicates how the primitives are rendered. The default value is GL_TRIANGLES.
+ *              Here is the full list of rendering primitives (https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Constants).
+ * - vertShader: Source for vertex shader as a string.
+ * - fragShader: Source for fragment shader as a string.
+ * - vertexCapacity: The amount of vertices that shall be allocated
+ * - vertexSize: The size of a single vertex in bytes.
+ * - vertices: An optional buffer of vertices
+ * - attributes: An array describing the vertex attributes
+ *
+ * The vertex attributes properties are:
+ * - name : String - Name of the attribute in the vertex shader
+ * - size : integer - How many components describe the attribute. For ex: vec3 = size of 3, float = size of 1
+ * - type : GLenum - WebGL type (gl.BYTE, gl.SHORT, gl.UNSIGNED_BYTE, gl.UNSIGNED_SHORT, gl.FLOAT)
+ * - normalized : boolean - Is the attribute normalized
