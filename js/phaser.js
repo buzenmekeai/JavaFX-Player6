@@ -45746,3 +45746,218 @@ var WebGLPipeline = new Class({
     setFloat1: function (name, x)
     {
         this.renderer.setFloat1(this.program, name, x);
+
+        return this;
+    },
+
+    /**
+     * Set a uniform value of the current pipeline program.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#setFloat2
+     * @since 3.2.0
+     *
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {number} x - [description]
+     * @param {number} y - [description]
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    setFloat2: function (name, x, y)
+    {
+        this.renderer.setFloat2(this.program, name, x, y);
+
+        return this;
+    },
+
+    /**
+     * Set a uniform value of the current pipeline program.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#setFloat3
+     * @since 3.2.0
+     *
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {number} x - [description]
+     * @param {number} y - [description]
+     * @param {number} z - [description]
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    setFloat3: function (name, x, y, z)
+    {
+        this.renderer.setFloat3(this.program, name, x, y, z);
+
+        return this;
+    },
+
+    /**
+     * Set a uniform value of the current pipeline program.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#setFloat4
+     * @since 3.2.0
+     *
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {number} x - X component of the uniform
+     * @param {number} y - Y component of the uniform
+     * @param {number} z - Z component of the uniform
+     * @param {number} w - W component of the uniform
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    setFloat4: function (name, x, y, z, w)
+    {
+        this.renderer.setFloat4(this.program, name, x, y, z, w);
+
+        return this;
+    },
+
+    /**
+     * Set a uniform value of the current pipeline program.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#setFloat1v
+     * @since 3.13.0
+     *
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {Float32Array} arr - The new value to be used for the uniform variable.
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    setFloat1v: function (name, arr)
+    {
+        this.renderer.setFloat1v(this.program, name, arr);
+
+        return this;
+    },
+
+    /**
+     * Set a uniform value of the current pipeline program.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#setFloat2v
+     * @since 3.13.0
+     *
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {Float32Array} arr - The new value to be used for the uniform variable.
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    setFloat2v: function (name, arr)
+    {
+        this.renderer.setFloat2v(this.program, name, arr);
+
+        return this;
+    },
+
+    /**
+     * Set a uniform value of the current pipeline program.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#setFloat3v
+     * @since 3.13.0
+     *
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {Float32Array} arr - The new value to be used for the uniform variable.
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    setFloat3v: function (name, arr)
+    {
+        this.renderer.setFloat3v(this.program, name, arr);
+
+        return this;
+    },
+
+    /**
+     * Set a uniform value of the current pipeline program.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#setFloat4v
+     * @since 3.13.0
+     *
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {Float32Array} arr - The new value to be used for the uniform variable.
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    setFloat4v: function (name, arr)
+    {
+        this.renderer.setFloat4v(this.program, name, arr);
+
+        return this;
+    },
+
+    /**
+     * Set a uniform value of the current pipeline program.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#setInt1
+     * @since 3.2.0
+     *
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {integer} x - [description]
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    setInt1: function (name, x)
+    {
+        this.renderer.setInt1(this.program, name, x);
+
+        return this;
+    },
+
+    /**
+     * Set a uniform value of the current pipeline program.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#setInt2
+     * @since 3.2.0
+     *
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {integer} x - [description]
+     * @param {integer} y - [description]
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    setInt2: function (name, x, y)
+    {
+        this.renderer.setInt2(this.program, name, x, y);
+
+        return this;
+    },
+
+    /**
+     * Set a uniform value of the current pipeline program.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#setInt3
+     * @since 3.2.0
+     *
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {integer} x - [description]
+     * @param {integer} y - [description]
+     * @param {integer} z - [description]
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    setInt3: function (name, x, y, z)
+    {
+        this.renderer.setInt3(this.program, name, x, y, z);
+
+        return this;
+    },
+
+    /**
+     * Set a uniform value of the current pipeline program.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#setInt4
+     * @since 3.2.0
+     *
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {integer} x - X component of the uniform
+     * @param {integer} y - Y component of the uniform
+     * @param {integer} z - Z component of the uniform
+     * @param {integer} w - W component of the uniform
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    setInt4: function (name, x, y, z, w)
+    {
+        this.renderer.setInt4(this.program, name, x, y, z, w);
+
+        return this;
+    },
+
+    /**
