@@ -46170,3 +46170,225 @@ var Timeline = new Class({
 
         /**
          * An array of Tween objects, each containing a unique property and target being tweened.
+         *
+         * @name Phaser.Tweens.Timeline#data
+         * @type {array}
+         * @default []
+         * @since 3.0.0
+         */
+        this.data = [];
+
+        /**
+         * data array doesn't usually change, so we can cache the length
+         *
+         * @name Phaser.Tweens.Timeline#totalData
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.totalData = 0;
+
+        /**
+         * If true then duration, delay, etc values are all frame totals.
+         *
+         * @name Phaser.Tweens.Timeline#useFrames
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.useFrames = false;
+
+        /**
+         * Scales the time applied to this Tween. A value of 1 runs in real-time. A value of 0.5 runs 50% slower, and so on.
+         * Value isn't used when calculating total duration of the tween, it's a run-time delta adjustment only.
+         *
+         * @name Phaser.Tweens.Timeline#timeScale
+         * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.timeScale = 1;
+
+        /**
+         * Loop this tween? Can be -1 for an infinite loop, or an integer.
+         * When enabled it will play through ALL TweenDatas again (use TweenData.repeat to loop a single TD)
+         *
+         * @name Phaser.Tweens.Timeline#loop
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.loop = 0;
+
+        /**
+         * Time in ms/frames before the tween loops.
+         *
+         * @name Phaser.Tweens.Timeline#loopDelay
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.loopDelay = 0;
+
+        /**
+         * How many loops are left to run?
+         *
+         * @name Phaser.Tweens.Timeline#loopCounter
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.loopCounter = 0;
+
+        /**
+         * Time in ms/frames before the 'onComplete' event fires. This never fires if loop = true (as it never completes)
+         *
+         * @name Phaser.Tweens.Timeline#completeDelay
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.completeDelay = 0;
+
+        /**
+         * Countdown timer (used by loopDelay and completeDelay)
+         *
+         * @name Phaser.Tweens.Timeline#countdown
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.countdown = 0;
+
+        /**
+         * The current state of the tween
+         *
+         * @name Phaser.Tweens.Timeline#state
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.state = TWEEN_CONST.PENDING_ADD;
+
+        /**
+         * The state of the tween when it was paused (used by Resume)
+         *
+         * @name Phaser.Tweens.Timeline#_pausedState
+         * @type {integer}
+         * @private
+         * @since 3.0.0
+         */
+        this._pausedState = TWEEN_CONST.PENDING_ADD;
+
+        /**
+         * Does the Tween start off paused? (if so it needs to be started with Tween.play)
+         *
+         * @name Phaser.Tweens.Timeline#paused
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.paused = false;
+
+        /**
+         * Elapsed time in ms/frames of this run through the Tween.
+         *
+         * @name Phaser.Tweens.Timeline#elapsed
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.elapsed = 0;
+
+        /**
+         * Total elapsed time in ms/frames of the entire Tween, including looping.
+         *
+         * @name Phaser.Tweens.Timeline#totalElapsed
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.totalElapsed = 0;
+
+        /**
+         * Time in ms/frames for the whole Tween to play through once, excluding loop amounts and loop delays.
+         *
+         * @name Phaser.Tweens.Timeline#duration
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.duration = 0;
+
+        /**
+         * Value between 0 and 1. The amount through the Tween, excluding loops.
+         *
+         * @name Phaser.Tweens.Timeline#progress
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.progress = 0;
+
+        /**
+         * Time in ms/frames for all Tweens to complete (including looping)
+         *
+         * @name Phaser.Tweens.Timeline#totalDuration
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.totalDuration = 0;
+
+        /**
+         * Value between 0 and 1. The amount through the entire Tween, including looping.
+         *
+         * @name Phaser.Tweens.Timeline#totalProgress
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.totalProgress = 0;
+
+        this.callbacks = {
+            onComplete: null,
+            onLoop: null,
+            onStart: null,
+            onUpdate: null,
+            onYoyo: null
+        };
+
+        this.callbackScope;
+    },
+
+    /**
+     * Sets the value of the time scale applied to this Timeline. A value of 1 runs in real-time. A value of 0.5 runs 50% slower, and so on.
+     * Value isn't used when calculating total duration of the tween, it's a run-time delta adjustment only.
+     *
+     * @method Phaser.Tweens.Timeline#setTimeScale
+     * @since 3.0.0
+     *
+     * @param {number} value - The time scale value to set.
+     *
+     * @return {Phaser.Tweens.Timeline} This Timeline object.
+     */
+    setTimeScale: function (value)
+    {
+        this.timeScale = value;
+
+        return this;
+    },
+
+    /**
+     * Gets the value of the time scale applied to this Timeline. A value of 1 runs in real-time. A value of 0.5 runs 50% slower, and so on. 
+     *
+     * @method Phaser.Tweens.Timeline#getTimeScale
+     * @since 3.0.0
+     *
+     * @return {number} The value of the time scale applied to this Tween.
+     */
+    getTimeScale: function ()
+    {
+        return this.timeScale;
+    },
+
+    /**
