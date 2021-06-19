@@ -45961,3 +45961,212 @@ var WebGLPipeline = new Class({
     },
 
     /**
+     * Set a uniform value of the current pipeline program.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#setMatrix2
+     * @since 3.2.0
+     *
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {boolean} transpose - [description]
+     * @param {Float32Array} matrix - [description]
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    setMatrix2: function (name, transpose, matrix)
+    {
+        this.renderer.setMatrix2(this.program, name, transpose, matrix);
+
+        return this;
+    },
+
+    /**
+     * Set a uniform value of the current pipeline program.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#setMatrix3
+     * @since 3.2.0
+     *
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {boolean} transpose - [description]
+     * @param {Float32Array} matrix - [description]
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    setMatrix3: function (name, transpose, matrix)
+    {
+        this.renderer.setMatrix3(this.program, name, transpose, matrix);
+
+        return this;
+    },
+
+    /**
+     * Set a uniform value of the current pipeline program.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLPipeline#setMatrix4
+     * @since 3.2.0
+     *
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {boolean} transpose - Should the matrix be transpose
+     * @param {Float32Array} matrix - Matrix data
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    setMatrix4: function (name, transpose, matrix)
+    {
+        this.renderer.setMatrix4(this.program, name, transpose, matrix);
+
+        return this;
+    }
+
+});
+
+module.exports = WebGLPipeline;
+
+
+/***/ }),
+/* 198 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Wrap = __webpack_require__(53);
+
+/**
+ * Wrap an angle in degrees.
+ *
+ * Wraps the angle to a value in the range of -180 to 180.
+ *
+ * @function Phaser.Math.Angle.WrapDegrees
+ * @since 3.0.0
+ *
+ * @param {number} angle - The angle to wrap, in degrees.
+ *
+ * @return {number} The wrapped angle, in degrees.
+ */
+var WrapDegrees = function (angle)
+{
+    return Wrap(angle, -180, 180);
+};
+
+module.exports = WrapDegrees;
+
+
+/***/ }),
+/* 199 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var MathWrap = __webpack_require__(53);
+
+/**
+ * Wrap an angle.
+ *
+ * Wraps the angle to a value in the range of -PI to PI.
+ *
+ * @function Phaser.Math.Angle.Wrap
+ * @since 3.0.0
+ *
+ * @param {number} angle - The angle to wrap, in radians.
+ *
+ * @return {number} The wrapped angle, in radians.
+ */
+var Wrap = function (angle)
+{
+    return MathWrap(angle, -Math.PI, Math.PI);
+};
+
+module.exports = Wrap;
+
+
+/***/ }),
+/* 200 */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1, eval)("this");
+} catch (e) {
+	// This works if the window reference is available
+	if (typeof window === "object") g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+/* 201 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var EventEmitter = __webpack_require__(11);
+var TweenBuilder = __webpack_require__(97);
+var TWEEN_CONST = __webpack_require__(83);
+
+/**
+ * @classdesc
+ * [description]
+ *
+ * @class Timeline
+ * @memberof Phaser.Tweens
+ * @extends Phaser.Events.EventEmitter
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Tweens.TweenManager} manager - [description]
+ */
+var Timeline = new Class({
+
+    Extends: EventEmitter,
+
+    initialize:
+
+    function Timeline (manager)
+    {
+        EventEmitter.call(this);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tweens.Timeline#manager
+         * @type {Phaser.Tweens.TweenManager}
+         * @since 3.0.0
+         */
+        this.manager = manager;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tweens.Timeline#isTimeline
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.isTimeline = true;
+
+        /**
+         * An array of Tween objects, each containing a unique property and target being tweened.
