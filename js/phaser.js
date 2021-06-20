@@ -46392,3 +46392,235 @@ var Timeline = new Class({
     },
 
     /**
+     * Check whether or not the Timeline is playing.
+     *
+     * @method Phaser.Tweens.Timeline#isPlaying
+     * @since 3.0.0
+     *
+     * @return {boolean} `true` if this Timeline is active, otherwise `false`.
+     */
+    isPlaying: function ()
+    {
+        return (this.state === TWEEN_CONST.ACTIVE);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Timeline#add
+     * @since 3.0.0
+     *
+     * @param {object} config - [description]
+     *
+     * @return {Phaser.Tweens.Timeline} This Timeline object.
+     */
+    add: function (config)
+    {
+        return this.queue(TweenBuilder(this, config));
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Timeline#queue
+     * @since 3.0.0
+     *
+     * @param {Phaser.Tweens.Tween} tween - [description]
+     *
+     * @return {Phaser.Tweens.Timeline} This Timeline object.
+     */
+    queue: function (tween)
+    {
+        if (!this.isPlaying())
+        {
+            tween.parent = this;
+            tween.parentIsTimeline = true;
+
+            this.data.push(tween);
+
+            this.totalData = this.data.length;
+        }
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Timeline#hasOffset
+     * @since 3.0.0
+     *
+     * @param {Phaser.Tweens.Tween} tween - [description]
+     *
+     * @return {boolean} [description]
+     */
+    hasOffset: function (tween)
+    {
+        return (tween.offset !== null);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Timeline#isOffsetAbsolute
+     * @since 3.0.0
+     *
+     * @param {number} value - [description]
+     *
+     * @return {boolean} [description]
+     */
+    isOffsetAbsolute: function (value)
+    {
+        return (typeof(value) === 'number');
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Timeline#isOffsetRelative
+     * @since 3.0.0
+     *
+     * @param {string} value - [description]
+     *
+     * @return {boolean} [description]
+     */
+    isOffsetRelative: function (value)
+    {
+        var t = typeof(value);
+
+        if (t === 'string')
+        {
+            var op = value[0];
+
+            if (op === '-' || op === '+')
+            {
+                return true;
+            }
+        }
+
+        return false;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Timeline#getRelativeOffset
+     * @since 3.0.0
+     *
+     * @param {string} value - [description]
+     * @param {number} base - [description]
+     *
+     * @return {number} [description]
+     */
+    getRelativeOffset: function (value, base)
+    {
+        var op = value[0];
+        var num = parseFloat(value.substr(2));
+        var result = base;
+
+        switch (op)
+        {
+            case '+':
+                result += num;
+                break;
+
+            case '-':
+                result -= num;
+                break;
+        }
+
+        //  Cannot ever be < 0
+        return Math.max(0, result);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Timeline#calcDuration
+     * @since 3.0.0
+     */
+    calcDuration: function ()
+    {
+        var prevEnd = 0;
+        var totalDuration = 0;
+        var offsetDuration = 0;
+
+        for (var i = 0; i < this.totalData; i++)
+        {
+            var tween = this.data[i];
+
+            tween.init();
+
+            if (this.hasOffset(tween))
+            {
+                if (this.isOffsetAbsolute(tween.offset))
+                {
+                    //  An actual number, so it defines the start point from the beginning of the timeline
+                    tween.calculatedOffset = tween.offset;
+
+                    if (tween.offset === 0)
+                    {
+                        offsetDuration = 0;
+                    }
+                }
+                else if (this.isOffsetRelative(tween.offset))
+                {
+                    //  A relative offset (i.e. '-=1000', so starts at 'offset' ms relative to the PREVIOUS Tweens ending time)
+                    tween.calculatedOffset = this.getRelativeOffset(tween.offset, prevEnd);
+                }
+            }
+            else
+            {
+                //  Sequential
+                tween.calculatedOffset = offsetDuration;
+            }
+
+            prevEnd = tween.totalDuration + tween.calculatedOffset;
+
+            totalDuration += tween.totalDuration;
+            offsetDuration += tween.totalDuration;
+        }
+
+        //  Excludes loop values
+        this.duration = totalDuration;
+
+        this.loopCounter = (this.loop === -1) ? 999999999999 : this.loop;
+
+        if (this.loopCounter > 0)
+        {
+            this.totalDuration = this.duration + this.completeDelay + ((this.duration + this.loopDelay) * this.loopCounter);
+        }
+        else
+        {
+            this.totalDuration = this.duration + this.completeDelay;
+        }
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Timeline#init
+     * @since 3.0.0
+     *
+     * @return {boolean} [description]
+     */
+    init: function ()
+    {
+        this.calcDuration();
+
+        this.progress = 0;
+        this.totalProgress = 0;
+
+        if (this.paused)
+        {
+            this.state = TWEEN_CONST.PAUSED;
+
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    },
+
+    /**
