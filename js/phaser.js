@@ -46624,3 +46624,216 @@ var Timeline = new Class({
     },
 
     /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Timeline#resetTweens
+     * @since 3.0.0
+     *
+     * @param {boolean} resetFromLoop - [description]
+     */
+    resetTweens: function (resetFromLoop)
+    {
+        for (var i = 0; i < this.totalData; i++)
+        {
+            var tween = this.data[i];
+
+            tween.play(resetFromLoop);
+        }
+    },
+
+    /**
+     * Sets a callback for the Tween Manager.
+     *
+     * @method Phaser.Tweens.Timeline#setCallback
+     * @since 3.0.0
+     *
+     * @param {string} type - [description]
+     * @param {function} callback - [description]
+     * @param {array} [params] - [description]
+     * @param {object} [scope] - [description]
+     *
+     * @return {Phaser.Tweens.Timeline} This Timeline object.
+     */
+    setCallback: function (type, callback, params, scope)
+    {
+        if (Timeline.TYPES.indexOf(type) !== -1)
+        {
+            this.callbacks[type] = { func: callback, scope: scope, params: params };
+        }
+
+        return this;
+    },
+
+    /**
+     * Delegates #makeActive to the Tween manager.
+     *
+     * @method Phaser.Tweens.Timeline#makeActive
+     * @since 3.3.0
+     *
+     * @param {Phaser.Tweens.Tween} tween - The tween object to make active.
+     *
+     * @return {Phaser.Tweens.TweenManager} The Timeline's Tween Manager object.
+     */
+    makeActive: function (tween)
+    {
+        return this.manager.makeActive(tween);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Timeline#play
+     * @since 3.0.0
+     */
+    play: function ()
+    {
+        if (this.state === TWEEN_CONST.ACTIVE)
+        {
+            return;
+        }
+
+        if (this.paused)
+        {
+            this.paused = false;
+
+            this.manager.makeActive(this);
+
+            return;
+        }
+        else
+        {
+            this.resetTweens(false);
+
+            this.state = TWEEN_CONST.ACTIVE;
+        }
+
+        var onStart = this.callbacks.onStart;
+
+        if (onStart)
+        {
+            onStart.func.apply(onStart.scope, onStart.params);
+        }
+
+        this.emit('start', this);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Timeline#nextState
+     * @since 3.0.0
+     */
+    nextState: function ()
+    {
+        if (this.loopCounter > 0)
+        {
+            //  Reset the elapsed time
+            //  TODO: Probably ought to be set to the remainder from elapsed - duration
+            //  as the tweens nearly always over-run by a few ms due to rAf
+
+            this.elapsed = 0;
+            this.progress = 0;
+
+            this.loopCounter--;
+
+            var onLoop = this.callbacks.onLoop;
+
+            if (onLoop)
+            {
+                onLoop.func.apply(onLoop.scope, onLoop.params);
+            }
+
+            this.emit('loop', this, this.loopCounter);
+
+            this.resetTweens(true);
+
+            if (this.loopDelay > 0)
+            {
+                this.countdown = this.loopDelay;
+                this.state = TWEEN_CONST.LOOP_DELAY;
+            }
+            else
+            {
+                this.state = TWEEN_CONST.ACTIVE;
+            }
+        }
+        else if (this.completeDelay > 0)
+        {
+            this.countdown = this.completeDelay;
+            this.state = TWEEN_CONST.COMPLETE_DELAY;
+        }
+        else
+        {
+            var onComplete = this.callbacks.onComplete;
+
+            if (onComplete)
+            {
+                onComplete.func.apply(onComplete.scope, onComplete.params);
+            }
+
+            this.emit('complete', this);
+
+            this.state = TWEEN_CONST.PENDING_REMOVE;
+        }
+    },
+
+    /**
+     * Returns 'true' if this Timeline has finished and should be removed from the Tween Manager.
+     * Otherwise, returns false.
+     *
+     * @method Phaser.Tweens.Timeline#update
+     * @since 3.0.0
+     *
+     * @param {number} timestamp - [description]
+     * @param {number} delta - The delta time in ms since the last frame. This is a smoothed and capped value based on the FPS rate.
+     *
+     * @return {boolean} Returns `true` if this Timeline has finished and should be removed from the Tween Manager.
+     */
+    update: function (timestamp, delta)
+    {
+        if (this.state === TWEEN_CONST.PAUSED)
+        {
+            return;
+        }
+
+        var rawDelta = delta;
+
+        if (this.useFrames)
+        {
+            delta = 1 * this.manager.timeScale;
+        }
+
+        delta *= this.timeScale;
+
+        this.elapsed += delta;
+        this.progress = Math.min(this.elapsed / this.duration, 1);
+
+        this.totalElapsed += delta;
+        this.totalProgress = Math.min(this.totalElapsed / this.totalDuration, 1);
+
+        switch (this.state)
+        {
+            case TWEEN_CONST.ACTIVE:
+
+                var stillRunning = this.totalData;
+
+                for (var i = 0; i < this.totalData; i++)
+                {
+                    var tween = this.data[i];
+
+                    if (tween.update(timestamp, rawDelta))
+                    {
+                        stillRunning--;
+                    }
+                }
+
+                var onUpdate = this.callbacks.onUpdate;
+
+                if (onUpdate)
+                {
+                    onUpdate.func.apply(onUpdate.scope, onUpdate.params);
+                }
+
+                this.emit('update', this);
+
+                //  Anything still running? If not, we're done
