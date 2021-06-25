@@ -47326,3 +47326,218 @@ var RESERVED = __webpack_require__(437);
  * @function Phaser.Tweens.Builders.GetProps
  * @since 3.0.0
  *
+ * @param {object} config - The configuration object of the tween to get the target(s) from.
+ *
+ * @return {array} An array of all the targets the tween is operating on.
+ */
+var GetProps = function (config)
+{
+    var key;
+    var keys = [];
+
+    //  First see if we have a props object
+
+    if (config.hasOwnProperty('props'))
+    {
+        for (key in config.props)
+        {
+            //  Skip any property that starts with an underscore
+            if (key.substr(0, 1) !== '_')
+            {
+                keys.push({ key: key, value: config.props[key] });
+            }
+        }
+    }
+    else
+    {
+        for (key in config)
+        {
+            //  Skip any property that is in the ReservedProps list or that starts with an underscore
+            if (RESERVED.indexOf(key) === -1 && key.substr(0, 1) !== '_')
+            {
+                keys.push({ key: key, value: config[key] });
+            }
+        }
+    }
+
+    return keys;
+};
+
+module.exports = GetProps;
+
+
+/***/ }),
+/* 206 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var GetFastValue = __webpack_require__(2);
+
+/**
+ * @typedef {object} TimerEventConfig
+ *
+ * @property {number} [delay=0] - [description]
+ * @property {number} [repeat=0] - [description]
+ * @property {boolean} [loop=false] - [description]
+ * @property {function} [callback] - [description]
+ * @property {*} [callbackScope] - [description]
+ * @property {Array.<*>} [args] - [description]
+ * @property {number} [timeScale=1] - [description]
+ * @property {number} [startAt=1] - [description]
+ * @property {boolean} [paused=false] - [description]
+ */
+
+/**
+ * @classdesc
+ * [description]
+ *
+ * @class TimerEvent
+ * @memberof Phaser.Time
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {TimerEventConfig} config - [description]
+ */
+var TimerEvent = new Class({
+
+    initialize:
+
+    function TimerEvent (config)
+    {
+        /**
+         * The delay in ms at which this TimerEvent fires.
+         *
+         * @name Phaser.Time.TimerEvent#delay
+         * @type {number}
+         * @default 0
+         * @readonly
+         * @since 3.0.0
+         */
+        this.delay = 0;
+
+        /**
+         * The total number of times this TimerEvent will repeat before finishing.
+         *
+         * @name Phaser.Time.TimerEvent#repeat
+         * @type {number}
+         * @default 0
+         * @readonly
+         * @since 3.0.0
+         */
+        this.repeat = 0;
+
+        /**
+         * If repeating this contains the current repeat count.
+         *
+         * @name Phaser.Time.TimerEvent#repeatCount
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.repeatCount = 0;
+
+        /**
+         * True if this TimerEvent loops, otherwise false.
+         *
+         * @name Phaser.Time.TimerEvent#loop
+         * @type {boolean}
+         * @default false
+         * @readonly
+         * @since 3.0.0
+         */
+        this.loop = false;
+
+        /**
+         * The callback that will be called when the TimerEvent occurs.
+         *
+         * @name Phaser.Time.TimerEvent#callback
+         * @type {function}
+         * @since 3.0.0
+         */
+        this.callback;
+
+        /**
+         * The scope in which the callback will be called.
+         *
+         * @name Phaser.Time.TimerEvent#callbackScope
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.callbackScope;
+
+        /**
+         * Additional arguments to be passed to the callback.
+         *
+         * @name Phaser.Time.TimerEvent#args
+         * @type {array}
+         * @since 3.0.0
+         */
+        this.args;
+
+        /**
+         * Scale the time causing this TimerEvent to update.
+         *
+         * @name Phaser.Time.TimerEvent#timeScale
+         * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.timeScale = 1;
+
+        /**
+         * Start this many MS into the elapsed (useful if you want a long duration with repeat, but for the first loop to fire quickly)
+         *
+         * @name Phaser.Time.TimerEvent#startAt
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.startAt = 0;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Time.TimerEvent#elapsed
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.elapsed = 0;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Time.TimerEvent#paused
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.paused = false;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Time.TimerEvent#hasDispatched
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.hasDispatched = false;
+
+        this.reset(config);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Time.TimerEvent#reset
+     * @since 3.0.0
+     *
+     * @param {TimerEventConfig} config - [description]
+     *
