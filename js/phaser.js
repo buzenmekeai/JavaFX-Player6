@@ -46837,3 +46837,246 @@ var Timeline = new Class({
                 this.emit('update', this);
 
                 //  Anything still running? If not, we're done
+                if (stillRunning === 0)
+                {
+                    this.nextState();
+                }
+
+                break;
+
+            case TWEEN_CONST.LOOP_DELAY:
+
+                this.countdown -= delta;
+
+                if (this.countdown <= 0)
+                {
+                    this.state = TWEEN_CONST.ACTIVE;
+                }
+
+                break;
+
+            case TWEEN_CONST.COMPLETE_DELAY:
+
+                this.countdown -= delta;
+
+                if (this.countdown <= 0)
+                {
+                    var onComplete = this.callbacks.onComplete;
+
+                    if (onComplete)
+                    {
+                        onComplete.func.apply(onComplete.scope, onComplete.params);
+                    }
+
+                    this.emit('complete', this);
+
+                    this.state = TWEEN_CONST.PENDING_REMOVE;
+                }
+
+                break;
+        }
+
+        return (this.state === TWEEN_CONST.PENDING_REMOVE);
+    },
+
+    /**
+     * Stops the Tween immediately, whatever stage of progress it is at and flags it for removal by the TweenManager.
+     *
+     * @method Phaser.Tweens.Timeline#stop
+     * @since 3.0.0
+     */
+    stop: function ()
+    {
+        this.state = TWEEN_CONST.PENDING_REMOVE;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Timeline#pause
+     * @since 3.0.0
+     *
+     * @return {Phaser.Tweens.Timeline} This Timeline object.
+     */
+    pause: function ()
+    {
+        if (this.state === TWEEN_CONST.PAUSED)
+        {
+            return;
+        }
+
+        this.paused = true;
+
+        this._pausedState = this.state;
+
+        this.state = TWEEN_CONST.PAUSED;
+
+        this.emit('pause', this);
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Timeline#resume
+     * @since 3.0.0
+     *
+     * @return {Phaser.Tweens.Timeline} This Timeline object.
+     */
+    resume: function ()
+    {
+        if (this.state === TWEEN_CONST.PAUSED)
+        {
+            this.paused = false;
+
+            this.state = this._pausedState;
+        }
+
+        this.emit('resume', this);
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.Timeline#hasTarget
+     * @since 3.0.0
+     *
+     * @param {object} target - [description]
+     *
+     * @return {boolean} [description]
+     */
+    hasTarget: function (target)
+    {
+        for (var i = 0; i < this.data.length; i++)
+        {
+            if (this.data[i].hasTarget(target))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    },
+
+    /**
+     * Stops all the Tweens in the Timeline immediately, whatever stage of progress they are at and flags them for removal by the TweenManager.
+     *
+     * @method Phaser.Tweens.Timeline#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        for (var i = 0; i < this.data.length; i++)
+        {
+            this.data[i].stop();
+        }
+
+    }
+});
+
+Timeline.TYPES = [ 'onStart', 'onUpdate', 'onLoop', 'onComplete', 'onYoyo' ];
+
+module.exports = Timeline;
+
+
+/***/ }),
+/* 202 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Clone = __webpack_require__(63);
+var Defaults = __webpack_require__(129);
+var GetAdvancedValue = __webpack_require__(12);
+var GetBoolean = __webpack_require__(84);
+var GetEaseFunction = __webpack_require__(86);
+var GetNewValue = __webpack_require__(98);
+var GetTargets = __webpack_require__(131);
+var GetTweens = __webpack_require__(204);
+var GetValue = __webpack_require__(4);
+var Timeline = __webpack_require__(201);
+var TweenBuilder = __webpack_require__(97);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Tweens.Builders.TimelineBuilder
+ * @since 3.0.0
+ *
+ * @param {Phaser.Tweens.TweenManager} manager - [description]
+ * @param {object} config - [description]
+ *
+ * @return {Phaser.Tweens.Timeline} [description]
+ */
+var TimelineBuilder = function (manager, config)
+{
+    var timeline = new Timeline(manager);
+
+    var tweens = GetTweens(config);
+
+    if (tweens.length === 0)
+    {
+        timeline.paused = true;
+
+        return timeline;
+    }
+
+    var defaults = Clone(Defaults);
+
+    defaults.targets = GetTargets(config);
+
+    //  totalDuration: If specified each tween in the Timeline is given an equal portion of the totalDuration
+
+    var totalDuration = GetAdvancedValue(config, 'totalDuration', 0);
+
+    if (totalDuration > 0)
+    {
+        defaults.duration = Math.floor(totalDuration / tweens.length);
+    }
+    else
+    {
+        defaults.duration = GetNewValue(config, 'duration', defaults.duration);
+    }
+
+    defaults.delay = GetNewValue(config, 'delay', defaults.delay);
+    defaults.easeParams = GetValue(config, 'easeParams', defaults.easeParams);
+    defaults.ease = GetEaseFunction(GetValue(config, 'ease', defaults.ease), defaults.easeParams);
+    defaults.hold = GetNewValue(config, 'hold', defaults.hold);
+    defaults.repeat = GetNewValue(config, 'repeat', defaults.repeat);
+    defaults.repeatDelay = GetNewValue(config, 'repeatDelay', defaults.repeatDelay);
+    defaults.yoyo = GetBoolean(config, 'yoyo', defaults.yoyo);
+    defaults.flipX = GetBoolean(config, 'flipX', defaults.flipX);
+    defaults.flipY = GetBoolean(config, 'flipY', defaults.flipY);
+
+    //  Create the Tweens
+    for (var i = 0; i < tweens.length; i++)
+    {
+        timeline.queue(TweenBuilder(timeline, tweens[i], defaults));
+    }
+
+    timeline.completeDelay = GetAdvancedValue(config, 'completeDelay', 0);
+    timeline.loop = Math.round(GetAdvancedValue(config, 'loop', 0));
+    timeline.loopDelay = Math.round(GetAdvancedValue(config, 'loopDelay', 0));
+    timeline.paused = GetBoolean(config, 'paused', false);
+    timeline.useFrames = GetBoolean(config, 'useFrames', false);
+
+    //  Callbacks
+
+    var scope = GetValue(config, 'callbackScope', timeline);
+
+    var timelineArray = [ timeline ];
+
+    var onStart = GetValue(config, 'onStart', false);
+
+    //  The Start of the Timeline
+    if (onStart)
+    {
+        var onStartScope = GetValue(config, 'onStartScope', scope);
+        var onStartParams = GetValue(config, 'onStartParams', []);
