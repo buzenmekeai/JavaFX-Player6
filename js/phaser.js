@@ -47541,3 +47541,237 @@ var TimerEvent = new Class({
      *
      * @param {TimerEventConfig} config - [description]
      *
+     * @return {Phaser.Time.TimerEvent} This TimerEvent object.
+     */
+    reset: function (config)
+    {
+        this.delay = GetFastValue(config, 'delay', 0);
+
+        //  Can also be set to -1 for an infinite loop (same as setting loop: true)
+        this.repeat = GetFastValue(config, 'repeat', 0);
+
+        this.loop = GetFastValue(config, 'loop', false);
+
+        this.callback = GetFastValue(config, 'callback', undefined);
+
+        this.callbackScope = GetFastValue(config, 'callbackScope', this.callback);
+
+        this.args = GetFastValue(config, 'args', []);
+
+        this.timeScale = GetFastValue(config, 'timeScale', 1);
+
+        this.startAt = GetFastValue(config, 'startAt', 0);
+
+        this.paused = GetFastValue(config, 'paused', false);
+
+        this.elapsed = this.startAt;
+        this.hasDispatched = false;
+        this.repeatCount = (this.repeat === -1 || this.loop) ? 999999999999 : this.repeat;
+
+        return this;
+    },
+
+    /**
+     * Gets the progress of the current iteration, not factoring in repeats.
+     *
+     * @method Phaser.Time.TimerEvent#getProgress
+     * @since 3.0.0
+     *
+     * @return {number} [description]
+     */
+    getProgress: function ()
+    {
+        return (this.elapsed / this.delay);
+    },
+
+    /**
+     * Gets the progress of the timer overall, factoring in repeats.
+     *
+     * @method Phaser.Time.TimerEvent#getOverallProgress
+     * @since 3.0.0
+     *
+     * @return {number} [description]
+     */
+    getOverallProgress: function ()
+    {
+        if (this.repeat > 0)
+        {
+            var totalDuration = this.delay + (this.delay * this.repeat);
+            var totalElapsed = this.elapsed + (this.delay * (this.repeat - this.repeatCount));
+
+            return (totalElapsed / totalDuration);
+        }
+        else
+        {
+            return this.getProgress();
+        }
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Time.TimerEvent#getRepeatCount
+     * @since 3.0.0
+     *
+     * @return {number} [description]
+     */
+    getRepeatCount: function ()
+    {
+        return this.repeatCount;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Time.TimerEvent#getElapsed
+     * @since 3.0.0
+     *
+     * @return {number} [description]
+     */
+    getElapsed: function ()
+    {
+        return this.elapsed;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Time.TimerEvent#getElapsedSeconds
+     * @since 3.0.0
+     *
+     * @return {number} [description]
+     */
+    getElapsedSeconds: function ()
+    {
+        return this.elapsed * 0.001;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Time.TimerEvent#remove
+     * @since 3.0.0
+     *
+     * @param {function} dispatchCallback - [description]
+     */
+    remove: function (dispatchCallback)
+    {
+        if (dispatchCallback === undefined) { dispatchCallback = false; }
+
+        this.elapsed = this.delay;
+
+        this.hasDispatched = !dispatchCallback;
+
+        this.repeatCount = 0;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Time.TimerEvent#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.callback = undefined;
+        this.callbackScope = undefined;
+        this.args = [];
+    }
+
+});
+
+module.exports = TimerEvent;
+
+
+/***/ }),
+/* 207 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(14);
+var CONST = __webpack_require__(26);
+var GameObject = __webpack_require__(19);
+var StaticTilemapLayerRender = __webpack_require__(446);
+var TilemapComponents = __webpack_require__(103);
+var TransformMatrix = __webpack_require__(38);
+var Utils = __webpack_require__(10);
+
+/**
+ * @classdesc
+ * A Static Tilemap Layer is a Game Object that renders LayerData from a Tilemap when used in combination
+ * with one, or more, Tilesets.
+ *
+ * A Static Tilemap Layer is optimized for rendering speed over flexibility. You cannot apply per-tile
+ * effects like tint or alpha, or change the tiles or tilesets the layer uses.
+ * 
+ * Use a Static Tilemap Layer instead of a Dynamic Tilemap Layer when you don't need tile manipulation features.
+ *
+ * @class StaticTilemapLayer
+ * @extends Phaser.GameObjects.GameObject
+ * @memberof Phaser.Tilemaps
+ * @constructor
+ * @since 3.0.0
+ *
+ * @extends Phaser.GameObjects.Components.Alpha
+ * @extends Phaser.GameObjects.Components.BlendMode
+ * @extends Phaser.GameObjects.Components.ComputedSize
+ * @extends Phaser.GameObjects.Components.Depth
+ * @extends Phaser.GameObjects.Components.Flip
+ * @extends Phaser.GameObjects.Components.GetBounds
+ * @extends Phaser.GameObjects.Components.Origin
+ * @extends Phaser.GameObjects.Components.Pipeline
+ * @extends Phaser.GameObjects.Components.ScaleMode
+ * @extends Phaser.GameObjects.Components.Transform
+ * @extends Phaser.GameObjects.Components.Visible
+ * @extends Phaser.GameObjects.Components.ScrollFactor
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Game Object belongs.
+ * @param {Phaser.Tilemaps.Tilemap} tilemap - The Tilemap this layer is a part of.
+ * @param {integer} layerIndex - The index of the LayerData associated with this layer.
+ * @param {(string|string[]|Phaser.Tilemaps.Tileset|Phaser.Tilemaps.Tileset[])} tileset - The tileset, or an array of tilesets, used to render this layer. Can be a string or a Tileset object.
+ * @param {number} [x=0] - The world x position where the top left of this layer will be placed.
+ * @param {number} [y=0] - The world y position where the top left of this layer will be placed.
+ */
+var StaticTilemapLayer = new Class({
+
+    Extends: GameObject,
+
+    Mixins: [
+        Components.Alpha,
+        Components.BlendMode,
+        Components.ComputedSize,
+        Components.Depth,
+        Components.Flip,
+        Components.GetBounds,
+        Components.Origin,
+        Components.Pipeline,
+        Components.ScaleMode,
+        Components.Transform,
+        Components.Visible,
+        Components.ScrollFactor,
+        StaticTilemapLayerRender
+    ],
+
+    initialize:
+
+    function StaticTilemapLayer (scene, tilemap, layerIndex, tileset, x, y)
+    {
+        GameObject.call(this, scene, 'StaticTilemapLayer');
+
+        /**
+         * Used internally by physics system to perform fast type checks.
+         *
+         * @name Phaser.Tilemaps.StaticTilemapLayer#isTilemap
+         * @type {boolean}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.isTilemap = true;
+
+        /**
