@@ -47775,3 +47775,213 @@ var StaticTilemapLayer = new Class({
         this.isTilemap = true;
 
         /**
+         * The Tilemap that this layer is a part of.
+         *
+         * @name Phaser.Tilemaps.StaticTilemapLayer#tilemap
+         * @type {Phaser.Tilemaps.Tilemap}
+         * @since 3.0.0
+         */
+        this.tilemap = tilemap;
+
+        /**
+         * The index of the LayerData associated with this layer.
+         *
+         * @name Phaser.Tilemaps.StaticTilemapLayer#layerIndex
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.layerIndex = layerIndex;
+
+        /**
+         * The LayerData associated with this layer. LayerData can only be associated with one
+         * tilemap layer.
+         *
+         * @name Phaser.Tilemaps.StaticTilemapLayer#layer
+         * @type {Phaser.Tilemaps.LayerData}
+         * @since 3.0.0
+         */
+        this.layer = tilemap.layers[layerIndex];
+
+        // Link the LayerData with this static tilemap layer
+        this.layer.tilemapLayer = this;
+
+        /**
+         * The Tileset/s associated with this layer.
+         * 
+         * As of Phaser 3.14 this property is now an array of Tileset objects, previously it was a single reference.
+         *
+         * @name Phaser.Tilemaps.StaticTilemapLayer#tileset
+         * @type {Phaser.Tilemaps.Tileset[]}
+         * @since 3.0.0
+         */
+        this.tileset = [];
+
+        /**
+         * Used internally by the Canvas renderer.
+         * This holds the tiles that are visible within the camera in the last frame.
+         *
+         * @name Phaser.Tilemaps.StaticTilemapLayer#culledTiles
+         * @type {array}
+         * @since 3.0.0
+         */
+        this.culledTiles = [];
+
+        /**
+         * Canvas only.
+         * 
+         * You can control if the Cameras should cull tiles before rendering them or not.
+         * By default the camera will try to cull the tiles in this layer, to avoid over-drawing to the renderer.
+         *
+         * However, there are some instances when you may wish to disable this, and toggling this flag allows
+         * you to do so. Also see `setSkipCull` for a chainable method that does the same thing.
+         *
+         * @name Phaser.Tilemaps.StaticTilemapLayer#skipCull
+         * @type {boolean}
+         * @since 3.12.0
+         */
+        this.skipCull = false;
+
+        /**
+         * Canvas only.
+         * 
+         * The total number of tiles drawn by the renderer in the last frame.
+         * 
+         * This only works when rending with Canvas.
+         *
+         * @name Phaser.Tilemaps.StaticTilemapLayer#tilesDrawn
+         * @type {integer}
+         * @readonly
+         * @since 3.12.0
+         */
+        this.tilesDrawn = 0;
+
+        /**
+         * Canvas only.
+         * 
+         * The total number of tiles in this layer. Updated every frame.
+         *
+         * @name Phaser.Tilemaps.StaticTilemapLayer#tilesTotal
+         * @type {integer}
+         * @readonly
+         * @since 3.12.0
+         */
+        this.tilesTotal = this.layer.width * this.layer.height;
+
+        /**
+         * Canvas only.
+         * 
+         * The amount of extra tiles to add into the cull rectangle when calculating its horizontal size.
+         *
+         * See the method `setCullPadding` for more details.
+         *
+         * @name Phaser.Tilemaps.StaticTilemapLayer#cullPaddingX
+         * @type {integer}
+         * @default 1
+         * @since 3.12.0
+         */
+        this.cullPaddingX = 1;
+
+        /**
+         * Canvas only.
+         * 
+         * The amount of extra tiles to add into the cull rectangle when calculating its vertical size.
+         *
+         * See the method `setCullPadding` for more details.
+         *
+         * @name Phaser.Tilemaps.StaticTilemapLayer#cullPaddingY
+         * @type {integer}
+         * @default 1
+         * @since 3.12.0
+         */
+        this.cullPaddingY = 1;
+
+        /**
+         * Canvas only.
+         * 
+         * The callback that is invoked when the tiles are culled.
+         *
+         * By default it will call `TilemapComponents.CullTiles` but you can override this to call any function you like.
+         *
+         * It will be sent 3 arguments:
+         *
+         * 1) The Phaser.Tilemaps.LayerData object for this Layer
+         * 2) The Camera that is culling the layer. You can check its `dirty` property to see if it has changed since the last cull.
+         * 3) A reference to the `culledTiles` array, which should be used to store the tiles you want rendered.
+         *
+         * See the `TilemapComponents.CullTiles` source code for details on implementing your own culling system.
+         *
+         * @name Phaser.Tilemaps.StaticTilemapLayer#cullCallback
+         * @type {function}
+         * @since 3.12.0
+         */
+        this.cullCallback = TilemapComponents.CullTiles;
+
+        /**
+         * A reference to the renderer.
+         * 
+         * @name Phaser.Tilemaps.StaticTilemapLayer#renderer
+         * @type {(Phaser.Renderer.Canvas.CanvasRenderer|Phaser.Renderer.WebGL.WebGLRenderer)}
+         * @private
+         * @since 3.0.0
+         */
+        this.renderer = scene.sys.game.renderer;
+
+        /**
+         * An array of vertex buffer objects, used by the WebGL renderer.
+         * 
+         * As of Phaser 3.14 this property is now an array, where each element maps to a Tileset instance. Previously it was a single instance.
+         * 
+         * @name Phaser.Tilemaps.StaticTilemapLayer#vertexBuffer
+         * @type {WebGLBuffer[]}
+         * @private
+         * @since 3.0.0
+         */
+        this.vertexBuffer = [];
+
+        /**
+         * An array of ArrayBuffer objects, used by the WebGL renderer.
+         * 
+         * As of Phaser 3.14 this property is now an array, where each element maps to a Tileset instance. Previously it was a single instance.
+         * 
+         * @name Phaser.Tilemaps.StaticTilemapLayer#bufferData
+         * @type {ArrayBuffer[]}
+         * @private
+         * @since 3.0.0
+         */
+        this.bufferData = [];
+
+        /**
+         * An array of Float32 Array objects, used by the WebGL renderer.
+         * 
+         * As of Phaser 3.14 this property is now an array, where each element maps to a Tileset instance. Previously it was a single instance.
+         * 
+         * @name Phaser.Tilemaps.StaticTilemapLayer#vertexViewF32
+         * @type {Float32Array[]}
+         * @private
+         * @since 3.0.0
+         */
+        this.vertexViewF32 = [];
+
+        /**
+         * An array of Uint32 Array objects, used by the WebGL renderer.
+         * 
+         * As of Phaser 3.14 this property is now an array, where each element maps to a Tileset instance. Previously it was a single instance.
+         * 
+         * @name Phaser.Tilemaps.StaticTilemapLayer#vertexViewU32
+         * @type {Uint32Array[]}
+         * @private
+         * @since 3.0.0
+         */
+        this.vertexViewU32 = [];
+
+        /**
+         * An array of booleans, used by the WebGL renderer.
+         * 
+         * As of Phaser 3.14 this property is now an array, where each element maps to a Tileset instance. Previously it was a single boolean.
+         * 
+         * @name Phaser.Tilemaps.StaticTilemapLayer#dirty
+         * @type {boolean[]}
+         * @private
+         * @since 3.0.0
+         */
+        this.dirty = [];
