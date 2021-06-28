@@ -48181,3 +48181,240 @@ var StaticTilemapLayer = new Class({
     
             if (renderOrder === 0)
             {
+                //  right-down
+        
+                for (row = 0; row < mapHeight; row++)
+                {
+                    for (col = 0; col < mapWidth; col++)
+                    {
+                        tile = mapData[row][col];
+        
+                        if (!tile || tile.index < minTileIndex || tile.index > maxTileIndex || !tile.visible)
+                        {
+                            continue;
+                        }
+    
+                        vOffset = this.batchTile(vOffset, tile, tileset, width, height, camera, tilesetIndex);
+                    }
+                }
+            }
+            else if (renderOrder === 1)
+            {
+                //  left-down
+        
+                for (row = 0; row < mapHeight; row++)
+                {
+                    for (col = mapWidth - 1; col >= 0; col--)
+                    {
+                        tile = mapData[row][col];
+        
+                        if (!tile || tile.index < minTileIndex || tile.index > maxTileIndex || !tile.visible)
+                        {
+                            continue;
+                        }
+    
+                        vOffset = this.batchTile(vOffset, tile, tileset, width, height, camera, tilesetIndex);
+                    }
+                }
+            }
+            else if (renderOrder === 2)
+            {
+                //  right-up
+        
+                for (row = mapHeight - 1; row >= 0; row--)
+                {
+                    for (col = 0; col < mapWidth; col++)
+                    {
+                        tile = mapData[row][col];
+        
+                        if (!tile || tile.index < minTileIndex || tile.index > maxTileIndex || !tile.visible)
+                        {
+                            continue;
+                        }
+    
+                        vOffset = this.batchTile(vOffset, tile, tileset, width, height, camera, tilesetIndex);
+                    }
+                }
+            }
+            else if (renderOrder === 3)
+            {
+                //  left-up
+        
+                for (row = mapHeight - 1; row >= 0; row--)
+                {
+                    for (col = mapWidth - 1; col >= 0; col--)
+                    {
+                        tile = mapData[row][col];
+        
+                        if (!tile || tile.index < minTileIndex || tile.index > maxTileIndex || !tile.visible)
+                        {
+                            continue;
+                        }
+    
+                        vOffset = this.batchTile(vOffset, tile, tileset, width, height, camera, tilesetIndex);
+                    }
+                }
+            }
+        
+            this.dirty[tilesetIndex] = false;
+    
+            if (vertexBuffer === null)
+            {
+                vertexBuffer = renderer.createVertexBuffer(bufferData, gl.STATIC_DRAW);
+    
+                this.vertexBuffer[tilesetIndex] = vertexBuffer;
+            }
+            else
+            {
+                renderer.setVertexBuffer(vertexBuffer);
+    
+                gl.bufferSubData(gl.ARRAY_BUFFER, 0, bufferData);
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Add a single tile into the batch.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#batchTile
+     * @private
+     * @since 3.12.0
+     *
+     * @param {integer} vOffset - The vertex offset.
+     * @param {any} tile - The tile being rendered.
+     * @param {any} tileset - The tileset being used for rendering.
+     * @param {integer} width - The width of the layer.
+     * @param {integer} height - The height of the layer.
+     * @param {Phaser.Cameras.Scene2D.Camera} camera - The camera the layer is being rendered with.
+     * @param {integer} tilesetIndex - The tileset index.
+     *
+     * @return {integer} The new vOffset value.
+     */
+    batchTile: function (vOffset, tile, tileset, width, height, camera, tilesetIndex)
+    {
+        var texCoords = tileset.getTileTextureCoordinates(tile.index);
+
+        if (!texCoords)
+        {
+            return vOffset;
+        }
+
+        var u0 = texCoords.x / width;
+        var v0 = texCoords.y / height;
+        var u1 = (texCoords.x + tile.width) / width;
+        var v1 = (texCoords.y + tile.height) / height;
+
+        var matrix = this._tempMatrix;
+
+        var tileWidth = tile.width;
+        var tileHeight = tile.height;
+
+        var halfTileWidth = tileWidth / 2;
+        var halfTileHeight = tileHeight / 2;
+
+        var x = -halfTileWidth;
+        var y = -halfTileHeight;
+
+        if (tile.flipX)
+        {
+            tileWidth *= -1;
+            x += tile.width;
+        }
+
+        if (tile.flipY)
+        {
+            tileHeight *= -1;
+            y += tile.height;
+        }
+
+        var xw = x + tileWidth;
+        var yh = y + tileHeight;
+
+        matrix.applyITRS(halfTileWidth + tile.pixelX, halfTileHeight + tile.pixelY, tile.rotation, 1, 1);
+
+        var tint = Utils.getTintAppendFloatAlpha(0xffffff, camera.alpha * this.alpha * tile.alpha);
+
+        var tx0 = matrix.getX(x, y);
+        var ty0 = matrix.getY(x, y);
+
+        var tx1 = matrix.getX(x, yh);
+        var ty1 = matrix.getY(x, yh);
+
+        var tx2 = matrix.getX(xw, yh);
+        var ty2 = matrix.getY(xw, yh);
+
+        var tx3 = matrix.getX(xw, y);
+        var ty3 = matrix.getY(xw, y);
+
+        if (camera.roundPixels)
+        {
+            tx0 |= 0;
+            ty0 |= 0;
+
+            tx1 |= 0;
+            ty1 |= 0;
+
+            tx2 |= 0;
+            ty2 |= 0;
+
+            tx3 |= 0;
+            ty3 |= 0;
+        }
+
+        var vertexViewF32 = this.vertexViewF32[tilesetIndex];
+        var vertexViewU32 = this.vertexViewU32[tilesetIndex];
+
+        vertexViewF32[++vOffset] = tx0;
+        vertexViewF32[++vOffset] = ty0;
+        vertexViewF32[++vOffset] = u0;
+        vertexViewF32[++vOffset] = v0;
+        vertexViewF32[++vOffset] = 0;
+        vertexViewU32[++vOffset] = tint;
+
+        vertexViewF32[++vOffset] = tx1;
+        vertexViewF32[++vOffset] = ty1;
+        vertexViewF32[++vOffset] = u0;
+        vertexViewF32[++vOffset] = v1;
+        vertexViewF32[++vOffset] = 0;
+        vertexViewU32[++vOffset] = tint;
+
+        vertexViewF32[++vOffset] = tx2;
+        vertexViewF32[++vOffset] = ty2;
+        vertexViewF32[++vOffset] = u1;
+        vertexViewF32[++vOffset] = v1;
+        vertexViewF32[++vOffset] = 0;
+        vertexViewU32[++vOffset] = tint;
+
+        vertexViewF32[++vOffset] = tx0;
+        vertexViewF32[++vOffset] = ty0;
+        vertexViewF32[++vOffset] = u0;
+        vertexViewF32[++vOffset] = v0;
+        vertexViewF32[++vOffset] = 0;
+        vertexViewU32[++vOffset] = tint;
+
+        vertexViewF32[++vOffset] = tx2;
+        vertexViewF32[++vOffset] = ty2;
+        vertexViewF32[++vOffset] = u1;
+        vertexViewF32[++vOffset] = v1;
+        vertexViewF32[++vOffset] = 0;
+        vertexViewU32[++vOffset] = tint;
+
+        vertexViewF32[++vOffset] = tx3;
+        vertexViewF32[++vOffset] = ty3;
+        vertexViewF32[++vOffset] = u1;
+        vertexViewF32[++vOffset] = v0;
+        vertexViewF32[++vOffset] = 0;
+        vertexViewU32[++vOffset] = tint;
+
+        this.vertexCount[tilesetIndex] += 6;
+
+        return vOffset;
+    },
+
+    /**
+     * Sets the rendering (draw) order of the tiles in this layer.
+     * 
+     * The default is 'right-down', meaning it will order the tiles starting from the top-left,
+     * drawing to the right and then moving down to the next row.
