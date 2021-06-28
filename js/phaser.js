@@ -47985,3 +47985,199 @@ var StaticTilemapLayer = new Class({
          * @since 3.0.0
          */
         this.dirty = [];
+
+        /**
+         * An array of integers, used by the WebGL renderer.
+         * 
+         * As of Phaser 3.14 this property is now an array, where each element maps to a Tileset instance. Previously it was a single integer.
+         * 
+         * @name Phaser.Tilemaps.StaticTilemapLayer#vertexCount
+         * @type {integer[]}
+         * @private
+         * @since 3.0.0
+         */
+        this.vertexCount = [];
+
+        /**
+         * The rendering (draw) order of the tiles in this layer.
+         * 
+         * The default is 0 which is 'right-down', meaning it will draw the tiles starting from the top-left,
+         * drawing to the right and then moving down to the next row.
+         * 
+         * The draw orders are:
+         * 
+         * 0 = right-down
+         * 1 = left-down
+         * 2 = right-up
+         * 3 = left-up
+         * 
+         * This can be changed via the `setRenderOrder` method.
+         *
+         * @name Phaser.Tilemaps.StaticTilemapLayer#_renderOrder
+         * @type {integer}
+         * @default 0
+         * @private
+         * @since 3.12.0
+         */
+        this._renderOrder = 0;
+
+        /**
+         * A temporary Transform Matrix, re-used internally during batching.
+         *
+         * @name Phaser.Tilemaps.StaticTilemapLayer#_tempMatrix
+         * @private
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @since 3.14.0
+         */
+        this._tempMatrix = new TransformMatrix();
+
+        /**
+         * An array holding the mapping between the tile indexes and the tileset they belong to.
+         *
+         * @name Phaser.Tilemaps.StaticTilemapLayer#gidMap
+         * @type {Phaser.Tilemaps.Tileset[]}
+         * @since 3.14.0
+         */
+        this.gidMap = [];
+
+        this.setTilesets(tileset);
+        this.setAlpha(this.layer.alpha);
+        this.setPosition(x, y);
+        this.setOrigin();
+        this.setSize(this.layer.tileWidth * this.layer.width, this.layer.tileHeight * this.layer.height);
+
+        this.updateVBOData();
+
+        this.initPipeline('TextureTintPipeline');
+
+        if (scene.sys.game.config.renderType === CONST.WEBGL)
+        {
+            scene.sys.game.renderer.onContextRestored(function ()
+            {
+                this.updateVBOData();
+            }, this);
+        }
+    },
+
+    /**
+     * Populates the internal `tileset` array with the Tileset references this Layer requires for rendering.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#setTilesets
+     * @private
+     * @since 3.14.0
+     * 
+     * @param {(string|string[]|Phaser.Tilemaps.Tileset|Phaser.Tilemaps.Tileset[])} tileset - The tileset, or an array of tilesets, used to render this layer. Can be a string or a Tileset object.
+     */
+    setTilesets: function (tilesets)
+    {
+        var gidMap = [];
+        var setList = [];
+        var map = this.tilemap;
+
+        if (!Array.isArray(tilesets))
+        {
+            tilesets = [ tilesets ];
+        }
+
+        for (var i = 0; i < tilesets.length; i++)
+        {
+            var tileset = tilesets[i];
+
+            if (typeof tileset === 'string')
+            {
+                tileset = map.getTileset(tileset);
+            }
+
+            if (tileset)
+            {
+                setList.push(tileset);
+
+                var s = tileset.firstgid;
+
+                for (var t = 0; t < tileset.total; t++)
+                {
+                    gidMap[s + t] = tileset;
+                }
+            }
+        }
+
+        this.gidMap = gidMap;
+        this.tileset = setList;
+    },
+
+    /**
+     * Prepares the VBO data arrays for population by the `upload` method.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#updateVBOData
+     * @private
+     * @since 3.14.0
+     *
+     * @return {this} This Tilemap Layer object.
+     */
+    updateVBOData: function ()
+    {
+        for (var i = 0; i < this.tileset.length; i++)
+        {
+            this.dirty[i] = true;
+            this.vertexCount[i] = 0;
+            this.vertexBuffer[i] = null;
+            this.bufferData[i] = null;
+            this.vertexViewF32[i] = null;
+            this.vertexViewU32[i] = null;
+        }
+
+        return this;
+    },
+
+    /**
+     * Upload the tile data to a VBO.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#upload
+     * @since 3.0.0
+     *
+     * @param {Phaser.Cameras.Scene2D.Camera} camera - The camera to render to.
+     * @param {integer} tilesetIndex - The tileset index.
+     *
+     * @return {Phaser.Tilemaps.StaticTilemapLayer} This Tilemap Layer object.
+     */
+    upload: function (camera, tilesetIndex)
+    {
+        var renderer = this.renderer;
+        var gl = renderer.gl;
+
+        var pipeline = renderer.pipelines.TextureTintPipeline;
+
+        if (this.dirty[tilesetIndex])
+        {
+            var tileset = this.tileset[tilesetIndex];
+            var mapWidth = this.layer.width;
+            var mapHeight = this.layer.height;
+            var width = tileset.image.source[0].width;
+            var height = tileset.image.source[0].height;
+            var mapData = this.layer.data;
+            var tile;
+            var row;
+            var col;
+            var renderOrder = this._renderOrder;
+            var minTileIndex = tileset.firstgid;
+            var maxTileIndex = tileset.firstgid + tileset.total;
+    
+            var vertexBuffer = this.vertexBuffer[tilesetIndex];
+            var bufferData = this.bufferData[tilesetIndex];
+            var vOffset = -1;
+            var bufferSize = (mapWidth * mapHeight) * pipeline.vertexSize * 6;
+
+            this.vertexCount[tilesetIndex] = 0;
+    
+            if (bufferData === null)
+            {
+                bufferData = new ArrayBuffer(bufferSize);
+
+                this.bufferData[tilesetIndex] = bufferData;
+
+                this.vertexViewF32[tilesetIndex] = new Float32Array(bufferData);
+                this.vertexViewU32[tilesetIndex] = new Uint32Array(bufferData);
+            }
+    
+            if (renderOrder === 0)
+            {
