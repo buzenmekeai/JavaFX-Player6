@@ -48623,3 +48623,199 @@ var StaticTilemapLayer = new Class({
      * true. Similar to Array.prototype.find in vanilla JS.
      *
      * @method Phaser.Tilemaps.StaticTilemapLayer#findTile
+     * @since 3.0.0
+     *
+     * @param {function} callback - The callback. Each tile in the given area will be passed to this
+     * callback as the first and only parameter.
+     * @param {object} [context] - The context under which the callback should be run.
+     * @param {integer} [tileX=0] - [description]
+     * @param {integer} [tileY=0] - [description]
+     * @param {integer} [width=max width based on tileX] - [description]
+     * @param {integer} [height=max height based on tileY] - [description]
+     * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have
+     * -1 for an index.
+     * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide
+     * on at least one side.
+     * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that
+     * have at least one interesting face.
+     *
+     * @return {?Phaser.Tilemaps.Tile}
+     */
+    findTile: function (callback, context, tileX, tileY, width, height, filteringOptions)
+    {
+        return TilemapComponents.FindTile(callback, context, tileX, tileY, width, height, filteringOptions, this.layer);
+    },
+
+    /**
+     * For each tile in the given rectangular area (in tile coordinates) of the layer, run the given
+     * filter callback function. Any tiles that pass the filter test (i.e. where the callback returns
+     * true) will returned as a new array. Similar to Array.prototype.Filter in vanilla JS.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#filterTiles
+     * @since 3.0.0
+     *
+     * @param {function} callback - The callback. Each tile in the given area will be passed to this
+     * callback as the first and only parameter. The callback should return true for tiles that pass the
+     * filter.
+     * @param {object} [context] - The context under which the callback should be run.
+     * @param {integer} [tileX=0] - [description]
+     * @param {integer} [tileY=0] - [description]
+     * @param {integer} [width=max width based on tileX] - [description]
+     * @param {integer} [height=max height based on tileY] - [description]
+     * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have
+     * -1 for an index.
+     * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide
+     * on at least one side.
+     * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that
+     * have at least one interesting face.
+     *
+     * @return {Phaser.Tilemaps.Tile[]} An array of Tile objects.
+     */
+    filterTiles: function (callback, context, tileX, tileY, width, height, filteringOptions)
+    {
+        return TilemapComponents.FilterTiles(callback, context, tileX, tileY, width, height, filteringOptions, this.layer);
+    },
+
+    /**
+     * For each tile in the given rectangular area (in tile coordinates) of the layer, run the given
+     * callback. Similar to Array.prototype.forEach in vanilla JS.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#forEachTile
+     * @since 3.0.0
+     *
+     * @param {function} callback - The callback. Each tile in the given area will be passed to this
+     * callback as the first and only parameter.
+     * @param {object} [context] - The context under which the callback should be run.
+     * @param {integer} [tileX=0] - [description]
+     * @param {integer} [tileY=0] - [description]
+     * @param {integer} [width=max width based on tileX] - [description]
+     * @param {integer} [height=max height based on tileY] - [description]
+     * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have
+     * -1 for an index.
+     * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide
+     * on at least one side.
+     * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that
+     * have at least one interesting face.
+     *
+     * @return {Phaser.Tilemaps.StaticTilemapLayer} This Tilemap Layer object.
+     */
+    forEachTile: function (callback, context, tileX, tileY, width, height, filteringOptions)
+    {
+        TilemapComponents.ForEachTile(callback, context, tileX, tileY, width, height, filteringOptions, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Gets a tile at the given tile coordinates from the given layer.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#getTileAt
+     * @since 3.0.0
+     *
+     * @param {integer} tileX - X position to get the tile from (given in tile units, not pixels).
+     * @param {integer} tileY - Y position to get the tile from (given in tile units, not pixels).
+     * @param {boolean} [nonNull=false] - If true getTile won't return null for empty tiles, but a Tile
+     * object with an index of -1.
+     *
+     * @return {Phaser.Tilemaps.Tile} The tile at the given coordinates or null if no tile was found or the coordinates were invalid.
+     */
+    getTileAt: function (tileX, tileY, nonNull)
+    {
+        return TilemapComponents.GetTileAt(tileX, tileY, nonNull, this.layer);
+    },
+
+    /**
+     * Gets a tile at the given world coordinates from the given layer.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#getTileAtWorldXY
+     * @since 3.0.0
+     *
+     * @param {number} worldX - X position to get the tile from (given in pixels)
+     * @param {number} worldY - Y position to get the tile from (given in pixels)
+     * @param {boolean} [nonNull=false] - If true, function won't return null for empty tiles, but a Tile
+     * object with an index of -1.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - [description]
+     *
+     * @return {Phaser.Tilemaps.Tile} The tile at the given coordinates or null if no tile was found or the coordinates
+     * were invalid.
+     */
+    getTileAtWorldXY: function (worldX, worldY, nonNull, camera)
+    {
+        return TilemapComponents.GetTileAtWorldXY(worldX, worldY, nonNull, camera, this.layer);
+    },
+
+    /**
+     * Gets the tiles in the given rectangular area (in tile coordinates) of the layer.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#getTilesWithin
+     * @since 3.0.0
+     *
+     * @param {integer} [tileX=0] - [description]
+     * @param {integer} [tileY=0] - [description]
+     * @param {integer} [width=max width based on tileX] - [description]
+     * @param {integer} [height=max height based on tileY] - [description]
+     * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have
+     * -1 for an index.
+     * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide on
+     * at least one side.
+     * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that
+     * have at least one interesting face.
+     *
+     * @return {Phaser.Tilemaps.Tile[]} An array of Tile objects.
+     */
+    getTilesWithin: function (tileX, tileY, width, height, filteringOptions)
+    {
+        return TilemapComponents.GetTilesWithin(tileX, tileY, width, height, filteringOptions, this.layer);
+    },
+
+    /**
+     * Gets the tiles in the given rectangular area (in world coordinates) of the layer.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#getTilesWithinWorldXY
+     * @since 3.0.0
+     *
+     * @param {number} worldX - [description]
+     * @param {number} worldY - [description]
+     * @param {number} width - [description]
+     * @param {number} height - [description]
+     * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have
+     * -1 for an index.
+     * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide on
+     * at least one side.
+     * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that
+     * have at least one interesting face.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - [description]
+     *
+     * @return {Phaser.Tilemaps.Tile[]} An array of Tile objects.
+     */
+    getTilesWithinWorldXY: function (worldX, worldY, width, height, filteringOptions, camera)
+    {
+        return TilemapComponents.GetTilesWithinWorldXY(worldX, worldY, width, height, filteringOptions, camera, this.layer);
+    },
+
+    /**
+     * Gets the tiles that overlap with the given shape in the given layer. The shape must be a Circle,
+     * Line, Rectangle or Triangle. The shape should be in world coordinates.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#getTilesWithinShape
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Geom.Circle|Phaser.Geom.Line|Phaser.Geom.Rectangle|Phaser.Geom.Triangle)} shape - A shape in world (pixel) coordinates
+     * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have
+     * -1 for an index.
+     * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide on
+     * at least one side.
+     * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that
+     * have at least one interesting face.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - [description]
+     *
+     * @return {Phaser.Tilemaps.Tile[]} An array of Tile objects.
+     */
+    getTilesWithinShape: function (shape, filteringOptions, camera)
+    {
