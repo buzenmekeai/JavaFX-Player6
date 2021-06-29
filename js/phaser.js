@@ -48418,3 +48418,208 @@ var StaticTilemapLayer = new Class({
      * 
      * The default is 'right-down', meaning it will order the tiles starting from the top-left,
      * drawing to the right and then moving down to the next row.
+     * 
+     * The draw orders are:
+     * 
+     * 0 = right-down
+     * 1 = left-down
+     * 2 = right-up
+     * 3 = left-up
+     * 
+     * Setting the render order does not change the tiles or how they are stored in the layer,
+     * it purely impacts the order in which they are rendered.
+     * 
+     * You can provide either an integer (0 to 3), or the string version of the order.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#setRenderOrder
+     * @since 3.12.0
+     *
+     * @param {(integer|string)} renderOrder - The render (draw) order value. Either an integer between 0 and 3, or a string: 'right-down', 'left-down', 'right-up' or 'left-up'.
+     *
+     * @return {this} This Tilemap Layer object.
+     */
+    setRenderOrder: function (renderOrder)
+    {
+        var orders = [ 'right-down', 'left-down', 'right-up', 'left-up' ];
+
+        if (typeof renderOrder === 'string')
+        {
+            renderOrder = orders.indexOf(renderOrder);
+        }
+
+        if (renderOrder >= 0 && renderOrder < 4)
+        {
+            this._renderOrder = renderOrder;
+
+            for (var i = 0; i < this.tileset.length; i++)
+            {
+                this.dirty[i] = true;
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Calculates interesting faces at the given tile coordinates of the specified layer. Interesting
+     * faces are used internally for optimizing collisions against tiles. This method is mostly used
+     * internally to optimize recalculating faces when only one tile has been changed.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#calculateFacesAt
+     * @since 3.0.0
+     *
+     * @param {integer} tileX - The x coordinate.
+     * @param {integer} tileY - The y coordinate.
+     *
+     * @return {Phaser.Tilemaps.StaticTilemapLayer} This Tilemap Layer object.
+     */
+    calculateFacesAt: function (tileX, tileY)
+    {
+        TilemapComponents.CalculateFacesAt(tileX, tileY, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Calculates interesting faces within the rectangular area specified (in tile coordinates) of the
+     * layer. Interesting faces are used internally for optimizing collisions against tiles. This method
+     * is mostly used internally.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#calculateFacesWithin
+     * @since 3.0.0
+     *
+     * @param {integer} [tileX=0] - [description]
+     * @param {integer} [tileY=0] - [description]
+     * @param {integer} [width=max width based on tileX] - [description]
+     * @param {integer} [height=max height based on tileY] - [description]
+     *
+     * @return {Phaser.Tilemaps.StaticTilemapLayer} This Tilemap Layer object.
+     */
+    calculateFacesWithin: function (tileX, tileY, width, height)
+    {
+        TilemapComponents.CalculateFacesWithin(tileX, tileY, width, height, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Creates a Sprite for every object matching the given tile indexes in the layer. You can
+     * optionally specify if each tile will be replaced with a new tile after the Sprite has been
+     * created. This is useful if you want to lay down special tiles in a level that are converted to
+     * Sprites, but want to replace the tile itself with a floor tile or similar once converted.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#createFromTiles
+     * @since 3.0.0
+     *
+     * @param {(integer|array)} indexes - The tile index, or array of indexes, to create Sprites from.
+     * @param {(integer|array)} replacements - The tile index, or array of indexes, to change a converted
+     * tile to. Set to `null` to leave the tiles unchanged. If an array is given, it is assumed to be a
+     * one-to-one mapping with the indexes array.
+     * @param {SpriteConfig} spriteConfig - The config object to pass into the Sprite creator (i.e.
+     * scene.make.sprite).
+     * @param {Phaser.Scene} [scene=scene the map is within] - The Scene to create the Sprites within.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when determining the world XY
+     *
+     * @return {Phaser.GameObjects.Sprite[]} An array of the Sprites that were created.
+     */
+    createFromTiles: function (indexes, replacements, spriteConfig, scene, camera)
+    {
+        return TilemapComponents.CreateFromTiles(indexes, replacements, spriteConfig, scene, camera, this.layer);
+    },
+
+    /**
+     * Returns the tiles in the given layer that are within the cameras viewport.
+     * This is used internally.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#cull
+     * @since 3.0.0
+     *
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera] - The Camera to run the cull check against.
+     *
+     * @return {Phaser.Tilemaps.Tile[]} An array of Tile objects.
+     */
+    cull: function (camera)
+    {
+        return this.cullCallback(this.layer, camera, this.culledTiles);
+    },
+
+    /**
+     * Canvas only.
+     * 
+     * You can control if the Cameras should cull tiles before rendering them or not.
+     * By default the camera will try to cull the tiles in this layer, to avoid over-drawing to the renderer.
+     *
+     * However, there are some instances when you may wish to disable this.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#setSkipCull
+     * @since 3.12.0
+     *
+     * @param {boolean} [value=true] - Set to `true` to stop culling tiles. Set to `false` to enable culling again.
+     *
+     * @return {this} This Tilemap Layer object.
+     */
+    setSkipCull: function (value)
+    {
+        if (value === undefined) { value = true; }
+
+        this.skipCull = value;
+
+        return this;
+    },
+
+    /**
+     * Canvas only.
+     * 
+     * When a Camera culls the tiles in this layer it does so using its view into the world, building up a
+     * rectangle inside which the tiles must exist or they will be culled. Sometimes you may need to expand the size
+     * of this 'cull rectangle', especially if you plan on rotating the Camera viewing the layer. Do so
+     * by providing the padding values. The values given are in tiles, not pixels. So if the tile width was 32px
+     * and you set `paddingX` to be 4, it would add 32px x 4 to the cull rectangle (adjusted for scale)
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#setCullPadding
+     * @since 3.12.0
+     *
+     * @param {integer} [paddingX=1] - The amount of extra horizontal tiles to add to the cull check padding.
+     * @param {integer} [paddingY=1] - The amount of extra vertical tiles to add to the cull check padding.
+     *
+     * @return {this} This Tilemap Layer object.
+     */
+    setCullPadding: function (paddingX, paddingY)
+    {
+        if (paddingX === undefined) { paddingX = 1; }
+        if (paddingY === undefined) { paddingY = 1; }
+
+        this.cullPaddingX = paddingX;
+        this.cullPaddingY = paddingY;
+
+        return this;
+    },
+
+    /**
+     * Searches the entire map layer for the first tile matching the given index, then returns that Tile
+     * object. If no match is found, it returns null. The search starts from the top-left tile and
+     * continues horizontally until it hits the end of the row, then it drops down to the next column.
+     * If the reverse boolean is true, it scans starting from the bottom-right corner traveling up to
+     * the top-left.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#findByIndex
+     * @since 3.0.0
+     *
+     * @param {integer} index - The tile index value to search for.
+     * @param {integer} [skip=0] - The number of times to skip a matching tile before returning.
+     * @param {boolean} [reverse=false] - If true it will scan the layer in reverse, starting at the
+     * bottom-right. Otherwise it scans from the top-left.
+     *
+     * @return {Phaser.Tilemaps.Tile} A Tile object.
+     */
+    findByIndex: function (findIndex, skip, reverse)
+    {
+        return TilemapComponents.FindByIndex(findIndex, skip, reverse, this.layer);
+    },
+
+    /**
+     * Find the first tile in the given rectangular area (in tile coordinates) of the layer that
+     * satisfies the provided testing function. I.e. finds the first tile for which `callback` returns
+     * true. Similar to Array.prototype.find in vanilla JS.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#findTile
