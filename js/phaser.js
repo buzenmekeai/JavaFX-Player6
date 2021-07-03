@@ -48819,3 +48819,205 @@ var StaticTilemapLayer = new Class({
      */
     getTilesWithinShape: function (shape, filteringOptions, camera)
     {
+        return TilemapComponents.GetTilesWithinShape(shape, filteringOptions, camera, this.layer);
+    },
+
+    /**
+     * Checks if there is a tile at the given location (in tile coordinates) in the given layer. Returns
+     * false if there is no tile or if the tile at that location has an index of -1.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#hasTileAt
+     * @since 3.0.0
+     *
+     * @param {integer} tileX - [description]
+     * @param {integer} tileY - [description]
+     *
+     * @return {boolean}
+     */
+    hasTileAt: function (tileX, tileY)
+    {
+        return TilemapComponents.HasTileAt(tileX, tileY, this.layer);
+    },
+
+    /**
+     * Checks if there is a tile at the given location (in world coordinates) in the given layer. Returns
+     * false if there is no tile or if the tile at that location has an index of -1.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#hasTileAtWorldXY
+     * @since 3.0.0
+     *
+     * @param {number} worldX - [description]
+     * @param {number} worldY - [description]
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - [description]
+     *
+     * @return {boolean}
+     */
+    hasTileAtWorldXY: function (worldX, worldY, camera)
+    {
+        return TilemapComponents.HasTileAtWorldXY(worldX, worldY, camera, this.layer);
+    },
+
+    /**
+     * Draws a debug representation of the layer to the given Graphics. This is helpful when you want to
+     * get a quick idea of which of your tiles are colliding and which have interesting faces. The tiles
+     * are drawn starting at (0, 0) in the Graphics, allowing you to place the debug representation
+     * wherever you want on the screen.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#renderDebug
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Graphics} graphics - The target Graphics object to draw upon.
+     * @param {object} styleConfig - An object specifying the colors to use for the debug drawing.
+     * @param {?Color} [styleConfig.tileColor=blue] - Color to use for drawing a filled rectangle at
+     * non-colliding tile locations. If set to null, non-colliding tiles will not be drawn.
+     * @param {?Color} [styleConfig.collidingTileColor=orange] - Color to use for drawing a filled
+     * rectangle at colliding tile locations. If set to null, colliding tiles will not be drawn.
+     * @param {?Color} [styleConfig.faceColor=grey] - Color to use for drawing a line at interesting
+     * tile faces. If set to null, interesting tile faces will not be drawn.
+     *
+     * @return {Phaser.Tilemaps.StaticTilemapLayer} This Tilemap Layer object.
+     */
+    renderDebug: function (graphics, styleConfig)
+    {
+        TilemapComponents.RenderDebug(graphics, styleConfig, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Sets collision on the given tile or tiles within a layer by index. You can pass in either a
+     * single numeric index or an array of indexes: [2, 3, 15, 20]. The `collides` parameter controls if
+     * collision will be enabled (true) or disabled (false).
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#setCollision
+     * @since 3.0.0
+     *
+     * @param {(integer|array)} indexes - Either a single tile index, or an array of tile indexes.
+     * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear
+     * collision.
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the
+     * update.
+     *
+     * @return {Phaser.Tilemaps.StaticTilemapLayer} This Tilemap Layer object.
+     */
+    setCollision: function (indexes, collides, recalculateFaces)
+    {
+        TilemapComponents.SetCollision(indexes, collides, recalculateFaces, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Sets collision on a range of tiles in a layer whose index is between the specified `start` and
+     * `stop` (inclusive). Calling this with a start value of 10 and a stop value of 14 would set
+     * collision for tiles 10, 11, 12, 13 and 14. The `collides` parameter controls if collision will be
+     * enabled (true) or disabled (false).
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#setCollisionBetween
+     * @since 3.0.0
+     *
+     * @param {integer} start - The first index of the tile to be set for collision.
+     * @param {integer} stop - The last index of the tile to be set for collision.
+     * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear
+     * collision.
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the
+     * update.
+     *
+     * @return {Phaser.Tilemaps.StaticTilemapLayer} This Tilemap Layer object.
+     */
+    setCollisionBetween: function (start, stop, collides, recalculateFaces)
+    {
+        TilemapComponents.SetCollisionBetween(start, stop, collides, recalculateFaces, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Sets collision on the tiles within a layer by checking tile properties. If a tile has a property
+     * that matches the given properties object, its collision flag will be set. The `collides`
+     * parameter controls if collision will be enabled (true) or disabled (false). Passing in
+     * `{ collides: true }` would update the collision flag on any tiles with a "collides" property that
+     * has a value of true. Any tile that doesn't have "collides" set to true will be ignored. You can
+     * also use an array of values, e.g. `{ types: ["stone", "lava", "sand" ] }`. If a tile has a
+     * "types" property that matches any of those values, its collision flag will be updated.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#setCollisionByProperty
+     * @since 3.0.0
+     *
+     * @param {object} properties - An object with tile properties and corresponding values that should
+     * be checked.
+     * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear
+     * collision.
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the
+     * update.
+     *
+     * @return {Phaser.Tilemaps.StaticTilemapLayer} This Tilemap Layer object.
+     */
+    setCollisionByProperty: function (properties, collides, recalculateFaces)
+    {
+        TilemapComponents.SetCollisionByProperty(properties, collides, recalculateFaces, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Sets collision on all tiles in the given layer, except for tiles that have an index specified in
+     * the given array. The `collides` parameter controls if collision will be enabled (true) or
+     * disabled (false).
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#setCollisionByExclusion
+     * @since 3.0.0
+     *
+     * @param {integer[]} indexes - An array of the tile indexes to not be counted for collision.
+     * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear
+     * collision.
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the
+     * update.
+     *
+     * @return {Phaser.Tilemaps.StaticTilemapLayer} This Tilemap Layer object.
+     */
+    setCollisionByExclusion: function (indexes, collides, recalculateFaces)
+    {
+        TilemapComponents.SetCollisionByExclusion(indexes, collides, recalculateFaces, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Sets a global collision callback for the given tile index within the layer. This will affect all
+     * tiles on this layer that have the same index. If a callback is already set for the tile index it
+     * will be replaced. Set the callback to null to remove it. If you want to set a callback for a tile
+     * at a specific location on the map then see setTileLocationCallback.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#setTileIndexCallback
+     * @since 3.0.0
+     *
+     * @param {(integer|array)} indexes - Either a single tile index, or an array of tile indexes to have a
+     * collision callback set for.
+     * @param {function} callback - The callback that will be invoked when the tile is collided with.
+     * @param {object} callbackContext - The context under which the callback is called.
+     *
+     * @return {Phaser.Tilemaps.StaticTilemapLayer} This Tilemap Layer object.
+     */
+    setTileIndexCallback: function (indexes, callback, callbackContext)
+    {
+        TilemapComponents.SetTileIndexCallback(indexes, callback, callbackContext, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Sets collision on the tiles within a layer by checking each tiles collision group data
+     * (typically defined in Tiled within the tileset collision editor). If any objects are found within
+     * a tiles collision group, the tile's colliding information will be set. The `collides` parameter
+     * controls if collision will be enabled (true) or disabled (false).
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#setCollisionFromCollisionGroup
+     * @since 3.0.0
+     *
+     * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear
+     * collision.
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the
+     * update.
+     *
+     * @return {Phaser.Tilemaps.StaticTilemapLayer} This Tilemap Layer object.
