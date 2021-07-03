@@ -49021,3 +49021,225 @@ var StaticTilemapLayer = new Class({
      * update.
      *
      * @return {Phaser.Tilemaps.StaticTilemapLayer} This Tilemap Layer object.
+     */
+    setCollisionFromCollisionGroup: function (collides, recalculateFaces)
+    {
+        TilemapComponents.SetCollisionFromCollisionGroup(collides, recalculateFaces, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Sets a collision callback for the given rectangular area (in tile coordinates) within the layer.
+     * If a callback is already set for the tile index it will be replaced. Set the callback to null to
+     * remove it.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#setTileLocationCallback
+     * @since 3.0.0
+     *
+     * @param {integer} tileX - [description]
+     * @param {integer} tileY - [description]
+     * @param {integer} width - [description]
+     * @param {integer} height - [description]
+     * @param {function} callback - The callback that will be invoked when the tile is collided with.
+     * @param {object} [callbackContext] - The context under which the callback is called.
+     *
+     * @return {Phaser.Tilemaps.StaticTilemapLayer} This Tilemap Layer object.
+     */
+    setTileLocationCallback: function (tileX, tileY, width, height, callback, callbackContext)
+    {
+        TilemapComponents.SetTileLocationCallback(tileX, tileY, width, height, callback, callbackContext, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Converts from tile X coordinates (tile units) to world X coordinates (pixels), factoring in the
+     * layers position, scale and scroll.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#tileToWorldX
+     * @since 3.0.0
+     *
+     * @param {integer} tileX - [description]
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - [description]
+     *
+     * @return {number}
+     */
+    tileToWorldX: function (tileX, camera)
+    {
+        return TilemapComponents.TileToWorldX(tileX, camera, this.layer);
+    },
+
+    /**
+     * Converts from tile Y coordinates (tile units) to world Y coordinates (pixels), factoring in the
+     * layers position, scale and scroll.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#tileToWorldY
+     * @since 3.0.0
+     *
+     * @param {integer} tileY - [description]
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - [description]
+     *
+     * @return {number}
+     */
+    tileToWorldY: function (tileY, camera)
+    {
+        return TilemapComponents.TileToWorldY(tileY, camera, this.layer);
+    },
+
+    /**
+     * Converts from tile XY coordinates (tile units) to world XY coordinates (pixels), factoring in the
+     * layers position, scale and scroll. This will return a new Vector2 object or update the given
+     * `point` object.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#tileToWorldXY
+     * @since 3.0.0
+     *
+     * @param {integer} tileX - [description]
+     * @param {integer} tileY - [description]
+     * @param {Phaser.Math.Vector2} [point] - [description]
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - [description]
+     *
+     * @return {Phaser.Math.Vector2}
+     */
+    tileToWorldXY: function (tileX, tileY, point, camera)
+    {
+        return TilemapComponents.TileToWorldXY(tileX, tileY, point, camera, this.layer);
+    },
+
+    /**
+     * Converts from world X coordinates (pixels) to tile X coordinates (tile units), factoring in the
+     * layers position, scale and scroll.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#worldToTileX
+     * @since 3.0.0
+     *
+     * @param {number} worldX - [description]
+     * @param {boolean} [snapToFloor=true] - Whether or not to round the tile coordinate down to the
+     * nearest integer.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - [description]
+     *
+     * @return {number}
+     */
+    worldToTileX: function (worldX, snapToFloor, camera)
+    {
+        return TilemapComponents.WorldToTileX(worldX, snapToFloor, camera, this.layer);
+    },
+
+    /**
+     * Converts from world Y coordinates (pixels) to tile Y coordinates (tile units), factoring in the
+     * layers position, scale and scroll.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#worldToTileY
+     * @since 3.0.0
+     *
+     * @param {number} worldY - [description]
+     * @param {boolean} [snapToFloor=true] - Whether or not to round the tile coordinate down to the
+     * nearest integer.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - [description]
+     *
+     * @return {number}
+     */
+    worldToTileY: function (worldY, snapToFloor, camera)
+    {
+        return TilemapComponents.WorldToTileY(worldY, snapToFloor, camera, this.layer);
+    },
+
+    /**
+     * Converts from world XY coordinates (pixels) to tile XY coordinates (tile units), factoring in the
+     * layers position, scale and scroll. This will return a new Vector2 object or update the given
+     * `point` object.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#worldToTileXY
+     * @since 3.0.0
+     *
+     * @param {number} worldX - [description]
+     * @param {number} worldY - [description]
+     * @param {boolean} [snapToFloor=true] - Whether or not to round the tile coordinate down to the
+     * nearest integer.
+     * @param {Phaser.Math.Vector2} [point] - [description]
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - [description]
+     *
+     * @return {Phaser.Math.Vector2}
+     */
+    worldToTileXY: function (worldX, worldY, snapToFloor, point, camera)
+    {
+        return TilemapComponents.WorldToTileXY(worldX, worldY, snapToFloor, point, camera, this.layer);
+    },
+
+    /**
+     * Destroys this StaticTilemapLayer and removes its link to the associated LayerData.
+     *
+     * @method Phaser.Tilemaps.StaticTilemapLayer#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        // Uninstall this layer only if it is still installed on the LayerData object
+        if (this.layer.tilemapLayer === this)
+        {
+            this.layer.tilemapLayer = undefined;
+        }
+
+        this.tilemap = undefined;
+        this.layer = undefined;
+        this.culledTiles.length = 0;
+        this.cullCallback = null;
+
+        for (var i = 0; i < this.tileset.length; i++)
+        {
+            this.dirty[i] = true;
+            this.vertexCount[i] = 0;
+            this.vertexBuffer[i] = null;
+            this.bufferData[i] = null;
+            this.vertexViewF32[i] = null;
+            this.vertexViewU32[i] = null;
+        }
+
+        this.gidMap = [];
+        this.tileset = [];
+
+        GameObject.prototype.destroy.call(this);
+    }
+
+});
+
+module.exports = StaticTilemapLayer;
+
+
+/***/ }),
+/* 208 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(14);
+var DynamicTilemapLayerRender = __webpack_require__(449);
+var GameObject = __webpack_require__(19);
+var TilemapComponents = __webpack_require__(103);
+
+/**
+ * @classdesc
+ * A Dynamic Tilemap Layer is a Game Object that renders LayerData from a Tilemap when used in combination
+ * with one, or more, Tilesets.
+ *
+ * A Dynamic Tilemap Layer trades some speed for being able to apply powerful effects. Unlike a
+ * Static Tilemap Layer, you can apply per-tile effects like tint or alpha, and you can change the
+ * tiles in a DynamicTilemapLayer.
+ * 
+ * Use this over a Static Tilemap Layer when you need those features.
+ *
+ * @class DynamicTilemapLayer
+ * @extends Phaser.GameObjects.GameObject
+ * @memberof Phaser.Tilemaps
+ * @constructor
+ * @since 3.0.0
+ *
+ * @extends Phaser.GameObjects.Components.Alpha
+ * @extends Phaser.GameObjects.Components.BlendMode
+ * @extends Phaser.GameObjects.Components.ComputedSize
