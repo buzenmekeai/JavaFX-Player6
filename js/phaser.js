@@ -49243,3 +49243,228 @@ var TilemapComponents = __webpack_require__(103);
  * @extends Phaser.GameObjects.Components.Alpha
  * @extends Phaser.GameObjects.Components.BlendMode
  * @extends Phaser.GameObjects.Components.ComputedSize
+ * @extends Phaser.GameObjects.Components.Depth
+ * @extends Phaser.GameObjects.Components.Flip
+ * @extends Phaser.GameObjects.Components.GetBounds
+ * @extends Phaser.GameObjects.Components.Origin
+ * @extends Phaser.GameObjects.Components.Pipeline
+ * @extends Phaser.GameObjects.Components.ScaleMode
+ * @extends Phaser.GameObjects.Components.ScrollFactor
+ * @extends Phaser.GameObjects.Components.Transform
+ * @extends Phaser.GameObjects.Components.Visible
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Game Object belongs.
+ * @param {Phaser.Tilemaps.Tilemap} tilemap - The Tilemap this layer is a part of.
+ * @param {integer} layerIndex - The index of the LayerData associated with this layer.
+ * @param {(string|string[]|Phaser.Tilemaps.Tileset|Phaser.Tilemaps.Tileset[])} tileset - The tileset, or an array of tilesets, used to render this layer. Can be a string or a Tileset object.
+ * @param {number} [x=0] - The world x position where the top left of this layer will be placed.
+ * @param {number} [y=0] - The world y position where the top left of this layer will be placed.
+ */
+var DynamicTilemapLayer = new Class({
+
+    Extends: GameObject,
+
+    Mixins: [
+        Components.Alpha,
+        Components.BlendMode,
+        Components.ComputedSize,
+        Components.Depth,
+        Components.Flip,
+        Components.GetBounds,
+        Components.Origin,
+        Components.Pipeline,
+        Components.ScaleMode,
+        Components.Transform,
+        Components.Visible,
+        Components.ScrollFactor,
+        DynamicTilemapLayerRender
+    ],
+
+    initialize:
+
+    function DynamicTilemapLayer (scene, tilemap, layerIndex, tileset, x, y)
+    {
+        GameObject.call(this, scene, 'DynamicTilemapLayer');
+
+        /**
+         * Used internally by physics system to perform fast type checks.
+         *
+         * @name Phaser.Tilemaps.DynamicTilemapLayer#isTilemap
+         * @type {boolean}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.isTilemap = true;
+
+        /**
+         * The Tilemap that this layer is a part of.
+         *
+         * @name Phaser.Tilemaps.DynamicTilemapLayer#tilemap
+         * @type {Phaser.Tilemaps.Tilemap}
+         * @since 3.0.0
+         */
+        this.tilemap = tilemap;
+
+        /**
+         * The index of the LayerData associated with this layer.
+         *
+         * @name Phaser.Tilemaps.DynamicTilemapLayer#layerIndex
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.layerIndex = layerIndex;
+
+        /**
+         * The LayerData associated with this layer. LayerData can only be associated with one
+         * tilemap layer.
+         *
+         * @name Phaser.Tilemaps.DynamicTilemapLayer#layer
+         * @type {Phaser.Tilemaps.LayerData}
+         * @since 3.0.0
+         */
+        this.layer = tilemap.layers[layerIndex];
+
+        // Link the LayerData with this static tilemap layer
+        this.layer.tilemapLayer = this;
+
+        /**
+         * The Tileset/s associated with this layer.
+         * 
+         * As of Phaser 3.14 this property is now an array of Tileset objects, previously it was a single reference.
+         *
+         * @name Phaser.Tilemaps.DynamicTilemapLayer#tileset
+         * @type {Phaser.Tilemaps.Tileset[]}
+         * @since 3.0.0
+         */
+        this.tileset = [];
+
+        /**
+         * Used internally with the canvas render. This holds the tiles that are visible within the
+         * camera.
+         *
+         * @name Phaser.Tilemaps.DynamicTilemapLayer#culledTiles
+         * @type {array}
+         * @since 3.0.0
+         */
+        this.culledTiles = [];
+
+        /**
+         * You can control if the Cameras should cull tiles before rendering them or not.
+         * By default the camera will try to cull the tiles in this layer, to avoid over-drawing to the renderer.
+         *
+         * However, there are some instances when you may wish to disable this, and toggling this flag allows
+         * you to do so. Also see `setSkipCull` for a chainable method that does the same thing.
+         *
+         * @name Phaser.Tilemaps.DynamicTilemapLayer#skipCull
+         * @type {boolean}
+         * @since 3.11.0
+         */
+        this.skipCull = false;
+
+        /**
+         * The total number of tiles drawn by the renderer in the last frame.
+         *
+         * @name Phaser.Tilemaps.DynamicTilemapLayer#tilesDrawn
+         * @type {integer}
+         * @readonly
+         * @since 3.11.0
+         */
+        this.tilesDrawn = 0;
+
+        /**
+         * The total number of tiles in this layer. Updated every frame.
+         *
+         * @name Phaser.Tilemaps.DynamicTilemapLayer#tilesTotal
+         * @type {integer}
+         * @readonly
+         * @since 3.11.0
+         */
+        this.tilesTotal = this.layer.width * this.layer.height;
+
+        /**
+         * The amount of extra tiles to add into the cull rectangle when calculating its horizontal size.
+         *
+         * See the method `setCullPadding` for more details.
+         *
+         * @name Phaser.Tilemaps.DynamicTilemapLayer#cullPaddingX
+         * @type {integer}
+         * @default 1
+         * @since 3.11.0
+         */
+        this.cullPaddingX = 1;
+
+        /**
+         * The amount of extra tiles to add into the cull rectangle when calculating its vertical size.
+         *
+         * See the method `setCullPadding` for more details.
+         *
+         * @name Phaser.Tilemaps.DynamicTilemapLayer#cullPaddingY
+         * @type {integer}
+         * @default 1
+         * @since 3.11.0
+         */
+        this.cullPaddingY = 1;
+
+        /**
+         * The callback that is invoked when the tiles are culled.
+         *
+         * By default it will call `TilemapComponents.CullTiles` but you can override this to call any function you like.
+         *
+         * It will be sent 3 arguments:
+         *
+         * 1) The Phaser.Tilemaps.LayerData object for this Layer
+         * 2) The Camera that is culling the layer. You can check its `dirty` property to see if it has changed since the last cull.
+         * 3) A reference to the `culledTiles` array, which should be used to store the tiles you want rendered.
+         *
+         * See the `TilemapComponents.CullTiles` source code for details on implementing your own culling system.
+         *
+         * @name Phaser.Tilemaps.DynamicTilemapLayer#cullCallback
+         * @type {function}
+         * @since 3.11.0
+         */
+        this.cullCallback = TilemapComponents.CullTiles;
+
+        /**
+         * The rendering (draw) order of the tiles in this layer.
+         * 
+         * The default is 0 which is 'right-down', meaning it will draw the tiles starting from the top-left,
+         * drawing to the right and then moving down to the next row.
+         * 
+         * The draw orders are:
+         * 
+         * 0 = right-down
+         * 1 = left-down
+         * 2 = right-up
+         * 3 = left-up
+         * 
+         * This can be changed via the `setRenderOrder` method.
+         *
+         * @name Phaser.Tilemaps.DynamicTilemapLayer#_renderOrder
+         * @type {integer}
+         * @default 0
+         * @private
+         * @since 3.12.0
+         */
+        this._renderOrder = 0;
+
+        /**
+         * An array holding the mapping between the tile indexes and the tileset they belong to.
+         *
+         * @name Phaser.Tilemaps.DynamicTilemapLayer#gidMap
+         * @type {Phaser.Tilemaps.Tileset[]}
+         * @since 3.14.0
+         */
+        this.gidMap = [];
+
+        this.setTilesets(tileset);
+        this.setAlpha(this.layer.alpha);
+        this.setPosition(x, y);
+        this.setOrigin();
+        this.setSize(this.layer.tileWidth * this.layer.width, this.layer.tileHeight * this.layer.height);
+
+        this.initPipeline('TextureTintPipeline');
+    },
+
+    /**
+     * Populates the internal `tileset` array with the Tileset references this Layer requires for rendering.
+     *
