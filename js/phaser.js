@@ -49468,3 +49468,228 @@ var DynamicTilemapLayer = new Class({
     /**
      * Populates the internal `tileset` array with the Tileset references this Layer requires for rendering.
      *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#setTilesets
+     * @private
+     * @since 3.14.0
+     * 
+     * @param {(string|string[]|Phaser.Tilemaps.Tileset|Phaser.Tilemaps.Tileset[])} tileset - The tileset, or an array of tilesets, used to render this layer. Can be a string or a Tileset object.
+     */
+    setTilesets: function (tilesets)
+    {
+        var gidMap = [];
+        var setList = [];
+        var map = this.tilemap;
+
+        if (!Array.isArray(tilesets))
+        {
+            tilesets = [ tilesets ];
+        }
+
+        for (var i = 0; i < tilesets.length; i++)
+        {
+            var tileset = tilesets[i];
+
+            if (typeof tileset === 'string')
+            {
+                tileset = map.getTileset(tileset);
+            }
+
+            if (tileset)
+            {
+                setList.push(tileset);
+
+                var s = tileset.firstgid;
+
+                for (var t = 0; t < tileset.total; t++)
+                {
+                    gidMap[s + t] = tileset;
+                }
+            }
+        }
+
+        this.gidMap = gidMap;
+        this.tileset = setList;
+    },
+
+    /**
+     * Sets the rendering (draw) order of the tiles in this layer.
+     * 
+     * The default is 'right-down', meaning it will order the tiles starting from the top-left,
+     * drawing to the right and then moving down to the next row.
+     * 
+     * The draw orders are:
+     * 
+     * 0 = right-down
+     * 1 = left-down
+     * 2 = right-up
+     * 3 = left-up
+     * 
+     * Setting the render order does not change the tiles or how they are stored in the layer,
+     * it purely impacts the order in which they are rendered.
+     * 
+     * You can provide either an integer (0 to 3), or the string version of the order.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#setRenderOrder
+     * @since 3.12.0
+     *
+     * @param {(integer|string)} renderOrder - The render (draw) order value. Either an integer between 0 and 3, or a string: 'right-down', 'left-down', 'right-up' or 'left-up'.
+     *
+     * @return {this} This Tilemap Layer object.
+     */
+    setRenderOrder: function (renderOrder)
+    {
+        var orders = [ 'right-down', 'left-down', 'right-up', 'left-up' ];
+
+        if (typeof renderOrder === 'string')
+        {
+            renderOrder = orders.indexOf(renderOrder);
+        }
+
+        if (renderOrder >= 0 && renderOrder < 4)
+        {
+            this._renderOrder = renderOrder;
+        }
+
+        return this;
+    },
+
+    /**
+     * Calculates interesting faces at the given tile coordinates of the specified layer. Interesting
+     * faces are used internally for optimizing collisions against tiles. This method is mostly used
+     * internally to optimize recalculating faces when only one tile has been changed.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#calculateFacesAt
+     * @since 3.0.0
+     *
+     * @param {integer} tileX - The x coordinate.
+     * @param {integer} tileY - The y coordinate.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    calculateFacesAt: function (tileX, tileY)
+    {
+        TilemapComponents.CalculateFacesAt(tileX, tileY, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Calculates interesting faces within the rectangular area specified (in tile coordinates) of the
+     * layer. Interesting faces are used internally for optimizing collisions against tiles. This method
+     * is mostly used internally.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#calculateFacesWithin
+     * @since 3.0.0
+     *
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    calculateFacesWithin: function (tileX, tileY, width, height)
+    {
+        TilemapComponents.CalculateFacesWithin(tileX, tileY, width, height, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Creates a Sprite for every object matching the given tile indexes in the layer. You can
+     * optionally specify if each tile will be replaced with a new tile after the Sprite has been
+     * created. This is useful if you want to lay down special tiles in a level that are converted to
+     * Sprites, but want to replace the tile itself with a floor tile or similar once converted.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#createFromTiles
+     * @since 3.0.0
+     *
+     * @param {(integer|array)} indexes - The tile index, or array of indexes, to create Sprites from.
+     * @param {(integer|array)} replacements - The tile index, or array of indexes, to change a converted
+     * tile to. Set to `null` to leave the tiles unchanged. If an array is given, it is assumed to be a
+     * one-to-one mapping with the indexes array.
+     * @param {SpriteConfig} spriteConfig - The config object to pass into the Sprite creator (i.e.
+     * scene.make.sprite).
+     * @param {Phaser.Scene} [scene=scene the map is within] - The Scene to create the Sprites within.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when determining the world XY
+     *
+     * @return {Phaser.GameObjects.Sprite[]} An array of the Sprites that were created.
+     */
+    createFromTiles: function (indexes, replacements, spriteConfig, scene, camera)
+    {
+        return TilemapComponents.CreateFromTiles(indexes, replacements, spriteConfig, scene, camera, this.layer);
+    },
+
+    /**
+     * Returns the tiles in the given layer that are within the cameras viewport.
+     * This is used internally.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#cull
+     * @since 3.0.0
+     *
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera] - The Camera to run the cull check against.
+     *
+     * @return {Phaser.Tilemaps.Tile[]} An array of Tile objects.
+     */
+    cull: function (camera)
+    {
+        return this.cullCallback(this.layer, camera, this.culledTiles, this._renderOrder);
+    },
+
+    /**
+     * Copies the tiles in the source rectangular area to a new destination (all specified in tile
+     * coordinates) within the layer. This copies all tile properties & recalculates collision
+     * information in the destination region.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#copy
+     * @since 3.0.0
+     *
+     * @param {integer} srcTileX - The x coordinate of the area to copy from, in tiles, not pixels.
+     * @param {integer} srcTileY - The y coordinate of the area to copy from, in tiles, not pixels.
+     * @param {integer} width - The width of the area to copy, in tiles, not pixels.
+     * @param {integer} height - The height of the area to copy, in tiles, not pixels.
+     * @param {integer} destTileX - The x coordinate of the area to copy to, in tiles, not pixels.
+     * @param {integer} destTileY - The y coordinate of the area to copy to, in tiles, not pixels.
+     * @param {boolean} [recalculateFaces=true] - `true` if the faces data should be recalculated.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    copy: function (srcTileX, srcTileY, width, height, destTileX, destTileY, recalculateFaces)
+    {
+        TilemapComponents.Copy(srcTileX, srcTileY, width, height, destTileX, destTileY, recalculateFaces, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Destroys this DynamicTilemapLayer and removes its link to the associated LayerData.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        // Uninstall this layer only if it is still installed on the LayerData object
+        if (this.layer.tilemapLayer === this)
+        {
+            this.layer.tilemapLayer = undefined;
+        }
+
+        this.tilemap = undefined;
+        this.layer = undefined;
+        this.culledTiles.length = 0;
+        this.cullCallback = null;
+
+        this.gidMap = [];
+        this.tileset = [];
+
+        GameObject.prototype.destroy.call(this);
+    },
+
+    /**
+     * Sets the tiles in the given rectangular area (in tile coordinates) of the layer with the
+     * specified index. Tiles will be set to collide if the given index is a colliding index.
+     * Collision information in the region will be recalculated.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#fill
+     * @since 3.0.0
