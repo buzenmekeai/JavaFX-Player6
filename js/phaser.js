@@ -49905,3 +49905,205 @@ var DynamicTilemapLayer = new Class({
      * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
      * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have -1 for an index.
      * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide on at least one side.
+     * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that have at least one interesting face.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when factoring in which tiles to return.
+     *
+     * @return {Phaser.Tilemaps.Tile[]} An array of Tile objects.
+     */
+    getTilesWithinWorldXY: function (worldX, worldY, width, height, filteringOptions, camera)
+    {
+        return TilemapComponents.GetTilesWithinWorldXY(worldX, worldY, width, height, filteringOptions, camera, this.layer);
+    },
+
+    /**
+     * Checks if there is a tile at the given location (in tile coordinates) in the given layer. Returns
+     * false if there is no tile or if the tile at that location has an index of -1.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#hasTileAt
+     * @since 3.0.0
+     *
+     * @param {integer} tileX - The x coordinate, in tiles, not pixels.
+     * @param {integer} tileY - The y coordinate, in tiles, not pixels.
+     *
+     * @return {boolean} `true` if a tile was found at the given location, otherwise `false`.
+     */
+    hasTileAt: function (tileX, tileY)
+    {
+        return TilemapComponents.HasTileAt(tileX, tileY, this.layer);
+    },
+
+    /**
+     * Checks if there is a tile at the given location (in world coordinates) in the given layer. Returns
+     * false if there is no tile or if the tile at that location has an index of -1.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#hasTileAtWorldXY
+     * @since 3.0.0
+     *
+     * @param {number} worldX - The x coordinate, in pixels.
+     * @param {number} worldY - The y coordinate, in pixels.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when factoring in which tiles to return.
+     *
+     * @return {boolean} `true` if a tile was found at the given location, otherwise `false`.
+     */
+    hasTileAtWorldXY: function (worldX, worldY, camera)
+    {
+        return TilemapComponents.HasTileAtWorldXY(worldX, worldY, camera, this.layer);
+    },
+
+    /**
+     * Puts a tile at the given tile coordinates in the specified layer. You can pass in either an index
+     * or a Tile object. If you pass in a Tile, all attributes will be copied over to the specified
+     * location. If you pass in an index, only the index at the specified location will be changed.
+     * Collision information will be recalculated at the specified location.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#putTileAt
+     * @since 3.0.0
+     *
+     * @param {(integer|Phaser.Tilemaps.Tile)} tile - The index of this tile to set or a Tile object.
+     * @param {integer} tileX - The x coordinate, in tiles, not pixels.
+     * @param {integer} tileY - The y coordinate, in tiles, not pixels.
+     * @param {boolean} [recalculateFaces=true] - `true` if the faces data should be recalculated.
+     *
+     * @return {Phaser.Tilemaps.Tile} A Tile object.
+     */
+    putTileAt: function (tile, tileX, tileY, recalculateFaces)
+    {
+        return TilemapComponents.PutTileAt(tile, tileX, tileY, recalculateFaces, this.layer);
+    },
+
+    /**
+     * Puts a tile at the given world coordinates (pixels) in the specified layer. You can pass in either
+     * an index or a Tile object. If you pass in a Tile, all attributes will be copied over to the
+     * specified location. If you pass in an index, only the index at the specified location will be
+     * changed. Collision information will be recalculated at the specified location.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#putTileAtWorldXY
+     * @since 3.0.0
+     *
+     * @param {(integer|Phaser.Tilemaps.Tile)} tile - The index of this tile to set or a Tile object.
+     * @param {number} worldX - The x coordinate, in pixels.
+     * @param {number} worldY - The y coordinate, in pixels.
+     * @param {boolean} [recalculateFaces=true] - `true` if the faces data should be recalculated.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     *
+     * @return {Phaser.Tilemaps.Tile} A Tile object.
+     */
+    putTileAtWorldXY: function (tile, worldX, worldY, recalculateFaces, camera)
+    {
+        return TilemapComponents.PutTileAtWorldXY(tile, worldX, worldY, recalculateFaces, camera, this.layer);
+    },
+
+    /**
+     * Puts an array of tiles or a 2D array of tiles at the given tile coordinates in the specified
+     * layer. The array can be composed of either tile indexes or Tile objects. If you pass in a Tile,
+     * all attributes will be copied over to the specified location. If you pass in an index, only the
+     * index at the specified location will be changed. Collision information will be recalculated
+     * within the region tiles were changed.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#putTilesAt
+     * @since 3.0.0
+     *
+     * @param {(integer[]|integer[][]|Phaser.Tilemaps.Tile[]|Phaser.Tilemaps.Tile[][])} tile - A row (array) or grid (2D array) of Tiles or tile indexes to place.
+     * @param {integer} tileX - The x coordinate, in tiles, not pixels.
+     * @param {integer} tileY - The y coordinate, in tiles, not pixels.
+     * @param {boolean} [recalculateFaces=true] - `true` if the faces data should be recalculated.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    putTilesAt: function (tilesArray, tileX, tileY, recalculateFaces)
+    {
+        TilemapComponents.PutTilesAt(tilesArray, tileX, tileY, recalculateFaces, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Randomizes the indexes of a rectangular region of tiles (in tile coordinates) within the
+     * specified layer. Each tile will receive a new index. If an array of indexes is passed in, then
+     * those will be used for randomly assigning new tile indexes. If an array is not provided, the
+     * indexes found within the region (excluding -1) will be used for randomly assigning new tile
+     * indexes. This method only modifies tile indexes and does not change collision information.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#randomize
+     * @since 3.0.0
+     *
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     * @param {integer[]} [indexes] - An array of indexes to randomly draw from during randomization.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    randomize: function (tileX, tileY, width, height, indexes)
+    {
+        TilemapComponents.Randomize(tileX, tileY, width, height, indexes, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Removes the tile at the given tile coordinates in the specified layer and updates the layer's
+     * collision information.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#removeTileAt
+     * @since 3.0.0
+     *
+     * @param {integer} tileX - The x coordinate, in tiles, not pixels.
+     * @param {integer} tileY - The y coordinate, in tiles, not pixels.
+     * @param {boolean} [replaceWithNull=true] - If true, this will replace the tile at the specified location with null instead of a Tile with an index of -1.
+     * @param {boolean} [recalculateFaces=true] - `true` if the faces data should be recalculated.
+     *
+     * @return {Phaser.Tilemaps.Tile} A Tile object.
+     */
+    removeTileAt: function (tileX, tileY, replaceWithNull, recalculateFaces)
+    {
+        return TilemapComponents.RemoveTileAt(tileX, tileY, replaceWithNull, recalculateFaces, this.layer);
+    },
+
+    /**
+     * Removes the tile at the given world coordinates in the specified layer and updates the layer's
+     * collision information.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#removeTileAtWorldXY
+     * @since 3.0.0
+     *
+     * @param {number} worldX - The x coordinate, in pixels.
+     * @param {number} worldY - The y coordinate, in pixels.
+     * @param {boolean} [replaceWithNull=true] - If true, this will replace the tile at the specified location with null instead of a Tile with an index of -1.
+     * @param {boolean} [recalculateFaces=true] - `true` if the faces data should be recalculated.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     *
+     * @return {Phaser.Tilemaps.Tile} A Tile object.
+     */
+    removeTileAtWorldXY: function (worldX, worldY, replaceWithNull, recalculateFaces, camera)
+    {
+        return TilemapComponents.RemoveTileAtWorldXY(worldX, worldY, replaceWithNull, recalculateFaces, camera, this.layer);
+    },
+
+    /**
+     * Draws a debug representation of the layer to the given Graphics. This is helpful when you want to
+     * get a quick idea of which of your tiles are colliding and which have interesting faces. The tiles
+     * are drawn starting at (0, 0) in the Graphics, allowing you to place the debug representation
+     * wherever you want on the screen.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#renderDebug
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Graphics} graphics - The target Graphics object to draw upon.
+     * @param {object} styleConfig - An object specifying the colors to use for the debug drawing.
+     * @param {?Color} [styleConfig.tileColor=blue] - Color to use for drawing a filled rectangle at
+     * non-colliding tile locations. If set to null, non-colliding tiles will not be drawn.
+     * @param {?Color} [styleConfig.collidingTileColor=orange] - Color to use for drawing a filled
+     * rectangle at colliding tile locations. If set to null, colliding tiles will not be drawn.
+     * @param {?Color} [styleConfig.faceColor=grey] - Color to use for drawing a line at interesting
+     * tile faces. If set to null, interesting tile faces will not be drawn.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    renderDebug: function (graphics, styleConfig)
+    {
+        TilemapComponents.RenderDebug(graphics, styleConfig, this.layer);
+
+        return this;
+    },
