@@ -50107,3 +50107,203 @@ var DynamicTilemapLayer = new Class({
 
         return this;
     },
+
+    /**
+     * Scans the given rectangular area (given in tile coordinates) for tiles with an index matching
+     * `findIndex` and updates their index to match `newIndex`. This only modifies the index and does
+     * not change collision information.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#replaceByIndex
+     * @since 3.0.0
+     *
+     * @param {integer} findIndex - The index of the tile to search for.
+     * @param {integer} newIndex - The index of the tile to replace it with.
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    replaceByIndex: function (findIndex, newIndex, tileX, tileY, width, height)
+    {
+        TilemapComponents.ReplaceByIndex(findIndex, newIndex, tileX, tileY, width, height, this.layer);
+
+        return this;
+    },
+
+    /**
+     * You can control if the Cameras should cull tiles before rendering them or not.
+     * By default the camera will try to cull the tiles in this layer, to avoid over-drawing to the renderer.
+     *
+     * However, there are some instances when you may wish to disable this.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#setSkipCull
+     * @since 3.11.0
+     *
+     * @param {boolean} [value=true] - Set to `true` to stop culling tiles. Set to `false` to enable culling again.
+     *
+     * @return {this} This Tilemap Layer object.
+     */
+    setSkipCull: function (value)
+    {
+        if (value === undefined) { value = true; }
+
+        this.skipCull = value;
+
+        return this;
+    },
+
+    /**
+     * When a Camera culls the tiles in this layer it does so using its view into the world, building up a
+     * rectangle inside which the tiles must exist or they will be culled. Sometimes you may need to expand the size
+     * of this 'cull rectangle', especially if you plan on rotating the Camera viewing the layer. Do so
+     * by providing the padding values. The values given are in tiles, not pixels. So if the tile width was 32px
+     * and you set `paddingX` to be 4, it would add 32px x 4 to the cull rectangle (adjusted for scale)
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#setCullPadding
+     * @since 3.11.0
+     *
+     * @param {integer} [paddingX=1] - The amount of extra horizontal tiles to add to the cull check padding.
+     * @param {integer} [paddingY=1] - The amount of extra vertical tiles to add to the cull check padding.
+     *
+     * @return {this} This Tilemap Layer object.
+     */
+    setCullPadding: function (paddingX, paddingY)
+    {
+        if (paddingX === undefined) { paddingX = 1; }
+        if (paddingY === undefined) { paddingY = 1; }
+
+        this.cullPaddingX = paddingX;
+        this.cullPaddingY = paddingY;
+
+        return this;
+    },
+
+    /**
+     * Sets collision on the given tile or tiles within a layer by index. You can pass in either a
+     * single numeric index or an array of indexes: [2, 3, 15, 20]. The `collides` parameter controls if
+     * collision will be enabled (true) or disabled (false).
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#setCollision
+     * @since 3.0.0
+     *
+     * @param {(integer|array)} indexes - Either a single tile index, or an array of tile indexes.
+     * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear
+     * collision.
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the
+     * update.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    setCollision: function (indexes, collides, recalculateFaces)
+    {
+        TilemapComponents.SetCollision(indexes, collides, recalculateFaces, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Sets collision on a range of tiles in a layer whose index is between the specified `start` and
+     * `stop` (inclusive). Calling this with a start value of 10 and a stop value of 14 would set
+     * collision for tiles 10, 11, 12, 13 and 14. The `collides` parameter controls if collision will be
+     * enabled (true) or disabled (false).
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#setCollisionBetween
+     * @since 3.0.0
+     *
+     * @param {integer} start - The first index of the tile to be set for collision.
+     * @param {integer} stop - The last index of the tile to be set for collision.
+     * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear
+     * collision.
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the
+     * update.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    setCollisionBetween: function (start, stop, collides, recalculateFaces)
+    {
+        TilemapComponents.SetCollisionBetween(start, stop, collides, recalculateFaces, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Sets collision on the tiles within a layer by checking tile properties. If a tile has a property
+     * that matches the given properties object, its collision flag will be set. The `collides`
+     * parameter controls if collision will be enabled (true) or disabled (false). Passing in
+     * `{ collides: true }` would update the collision flag on any tiles with a "collides" property that
+     * has a value of true. Any tile that doesn't have "collides" set to true will be ignored. You can
+     * also use an array of values, e.g. `{ types: ["stone", "lava", "sand" ] }`. If a tile has a
+     * "types" property that matches any of those values, its collision flag will be updated.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#setCollisionByProperty
+     * @since 3.0.0
+     *
+     * @param {object} properties - An object with tile properties and corresponding values that should
+     * be checked.
+     * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear
+     * collision.
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the
+     * update.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    setCollisionByProperty: function (properties, collides, recalculateFaces)
+    {
+        TilemapComponents.SetCollisionByProperty(properties, collides, recalculateFaces, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Sets collision on all tiles in the given layer, except for tiles that have an index specified in
+     * the given array. The `collides` parameter controls if collision will be enabled (true) or
+     * disabled (false).
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#setCollisionByExclusion
+     * @since 3.0.0
+     *
+     * @param {integer[]} indexes - An array of the tile indexes to not be counted for collision.
+     * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear
+     * collision.
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the
+     * update.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    setCollisionByExclusion: function (indexes, collides, recalculateFaces)
+    {
+        TilemapComponents.SetCollisionByExclusion(indexes, collides, recalculateFaces, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Sets collision on the tiles within a layer by checking each tiles collision group data
+     * (typically defined in Tiled within the tileset collision editor). If any objects are found within
+     * a tiles collision group, the tile's colliding information will be set. The `collides` parameter
+     * controls if collision will be enabled (true) or disabled (false).
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#setCollisionFromCollisionGroup
+     * @since 3.0.0
+     *
+     * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear
+     * collision.
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the
+     * update.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    setCollisionFromCollisionGroup: function (collides, recalculateFaces)
+    {
+        TilemapComponents.SetCollisionFromCollisionGroup(collides, recalculateFaces, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Sets a global collision callback for the given tile index within the layer. This will affect all
+     * tiles on this layer that have the same index. If a callback is already set for the tile index it
+     * will be replaced. Set the callback to null to remove it. If you want to set a callback for a tile
+     * at a specific location on the map then see setTileLocationCallback.
