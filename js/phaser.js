@@ -50307,3 +50307,235 @@ var DynamicTilemapLayer = new Class({
      * tiles on this layer that have the same index. If a callback is already set for the tile index it
      * will be replaced. Set the callback to null to remove it. If you want to set a callback for a tile
      * at a specific location on the map then see setTileLocationCallback.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#setTileIndexCallback
+     * @since 3.0.0
+     *
+     * @param {(integer|array)} indexes - Either a single tile index, or an array of tile indexes to have a
+     * collision callback set for.
+     * @param {function} callback - The callback that will be invoked when the tile is collided with.
+     * @param {object} callbackContext - The context under which the callback is called.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    setTileIndexCallback: function (indexes, callback, callbackContext)
+    {
+        TilemapComponents.SetTileIndexCallback(indexes, callback, callbackContext, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Sets a collision callback for the given rectangular area (in tile coordinates) within the layer.
+     * If a callback is already set for the tile index it will be replaced. Set the callback to null to
+     * remove it.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#setTileLocationCallback
+     * @since 3.0.0
+     *
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     * @param {function} callback - The callback that will be invoked when the tile is collided with.
+     * @param {object} [callbackContext] - The context under which the callback is called.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    setTileLocationCallback: function (tileX, tileY, width, height, callback, callbackContext)
+    {
+        TilemapComponents.SetTileLocationCallback(tileX, tileY, width, height, callback, callbackContext, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Shuffles the tiles in a rectangular region (specified in tile coordinates) within the given
+     * layer. It will only randomize the tiles in that area, so if they're all the same nothing will
+     * appear to have changed! This method only modifies tile indexes and does not change collision
+     * information.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#shuffle
+     * @since 3.0.0
+     *
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    shuffle: function (tileX, tileY, width, height)
+    {
+        TilemapComponents.Shuffle(tileX, tileY, width, height, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Scans the given rectangular area (given in tile coordinates) for tiles with an index matching
+     * `indexA` and swaps then with `indexB`. This only modifies the index and does not change collision
+     * information.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#swapByIndex
+     * @since 3.0.0
+     *
+     * @param {integer} tileA - First tile index.
+     * @param {integer} tileB - Second tile index.
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    swapByIndex: function (indexA, indexB, tileX, tileY, width, height)
+    {
+        TilemapComponents.SwapByIndex(indexA, indexB, tileX, tileY, width, height, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Converts from tile X coordinates (tile units) to world X coordinates (pixels), factoring in the
+     * layers position, scale and scroll.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#tileToWorldX
+     * @since 3.0.0
+     *
+     * @param {integer} tileX - The x coordinate, in tiles, not pixels.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     *
+     * @return {number}
+     */
+    tileToWorldX: function (tileX, camera)
+    {
+        return TilemapComponents.TileToWorldX(tileX, camera, this.layer);
+    },
+
+    /**
+     * Converts from tile Y coordinates (tile units) to world Y coordinates (pixels), factoring in the
+     * layers position, scale and scroll.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#tileToWorldY
+     * @since 3.0.0
+     *
+     * @param {integer} tileY - The y coordinate, in tiles, not pixels.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     *
+     * @return {number}
+     */
+    tileToWorldY: function (tileY, camera)
+    {
+        return TilemapComponents.TileToWorldY(tileY, camera, this.layer);
+    },
+
+    /**
+     * Converts from tile XY coordinates (tile units) to world XY coordinates (pixels), factoring in the
+     * layers position, scale and scroll. This will return a new Vector2 object or update the given
+     * `point` object.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#tileToWorldXY
+     * @since 3.0.0
+     *
+     * @param {integer} tileX - The x coordinate, in tiles, not pixels.
+     * @param {integer} tileY - The y coordinate, in tiles, not pixels.
+     * @param {Phaser.Math.Vector2} [point] - A Vector2 to store the coordinates in. If not given a new Vector2 is created.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     *
+     * @return {Phaser.Math.Vector2}
+     */
+    tileToWorldXY: function (tileX, tileY, point, camera)
+    {
+        return TilemapComponents.TileToWorldXY(tileX, tileY, point, camera, this.layer);
+    },
+
+    /**
+     * Randomizes the indexes of a rectangular region of tiles (in tile coordinates) within the
+     * specified layer. Each tile will recieve a new index. New indexes are drawn from the given
+     * weightedIndexes array. An example weighted array:
+     *
+     * [
+     *  { index: 6, weight: 4 },    // Probability of index 6 is 4 / 8
+     *  { index: 7, weight: 2 },    // Probability of index 7 would be 2 / 8
+     *  { index: 8, weight: 1.5 },  // Probability of index 8 would be 1.5 / 8
+     *  { index: 26, weight: 0.5 }  // Probability of index 27 would be 0.5 / 8
+     * ]
+     *
+     * The probability of any index being choose is (the index's weight) / (sum of all weights). This
+     * method only modifies tile indexes and does not change collision information.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#weightedRandomize
+     * @since 3.0.0
+     *
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     * @param {object[]} [weightedIndexes] - An array of objects to randomly draw from during
+     * randomization. They should be in the form: { index: 0, weight: 4 } or
+     * { index: [0, 1], weight: 4 } if you wish to draw from multiple tile indexes.
+     *
+     * @return {Phaser.Tilemaps.DynamicTilemapLayer} This Tilemap Layer object.
+     */
+    weightedRandomize: function (tileX, tileY, width, height, weightedIndexes)
+    {
+        TilemapComponents.WeightedRandomize(tileX, tileY, width, height, weightedIndexes, this.layer);
+
+        return this;
+    },
+
+    /**
+     * Converts from world X coordinates (pixels) to tile X coordinates (tile units), factoring in the
+     * layers position, scale and scroll.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#worldToTileX
+     * @since 3.0.0
+     *
+     * @param {number} worldX - The x coordinate to be converted, in pixels, not tiles.
+     * @param {boolean} [snapToFloor=true] - Whether or not to round the tile coordinate down to the nearest integer.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     *
+     * @return {number}
+     */
+    worldToTileX: function (worldX, snapToFloor, camera)
+    {
+        return TilemapComponents.WorldToTileX(worldX, snapToFloor, camera, this.layer);
+    },
+
+    /**
+     * Converts from world Y coordinates (pixels) to tile Y coordinates (tile units), factoring in the
+     * layers position, scale and scroll.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#worldToTileY
+     * @since 3.0.0
+     *
+     * @param {number} worldY - The y coordinate to be converted, in pixels, not tiles.
+     * @param {boolean} [snapToFloor=true] - Whether or not to round the tile coordinate down to the nearest integer.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     *
+     * @return {number}
+     */
+    worldToTileY: function (worldY, snapToFloor, camera)
+    {
+        return TilemapComponents.WorldToTileY(worldY, snapToFloor, camera, this.layer);
+    },
+
+    /**
+     * Converts from world XY coordinates (pixels) to tile XY coordinates (tile units), factoring in the
+     * layers position, scale and scroll. This will return a new Vector2 object or update the given
+     * `point` object.
+     *
+     * @method Phaser.Tilemaps.DynamicTilemapLayer#worldToTileXY
+     * @since 3.0.0
+     *
+     * @param {number} worldX - The x coordinate to be converted, in pixels, not tiles.
+     * @param {number} worldY - The y coordinate to be converted, in pixels, not tiles.
+     * @param {boolean} [snapToFloor=true] - Whether or not to round the tile coordinate down to the nearest integer.
+     * @param {Phaser.Math.Vector2} [point] - A Vector2 to store the coordinates in. If not given a new Vector2 is created.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     *
+     * @return {Phaser.Math.Vector2}
+     */
+    worldToTileXY: function (worldX, worldY, snapToFloor, point, camera)
+    {
