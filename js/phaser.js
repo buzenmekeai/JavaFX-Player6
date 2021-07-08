@@ -50757,3 +50757,244 @@ var Tilemap = new Class({
 
         /**
          * An array of Tilemap layer data.
+         *
+         * @name Phaser.Tilemaps.Tilemap#layers
+         * @type {Phaser.Tilemaps.LayerData[]}
+         * @since 3.0.0
+         */
+        this.layers = mapData.layers;
+
+        /**
+         * An array of Tilesets used in the map.
+         *
+         * @name Phaser.Tilemaps.Tilemap#tilesets
+         * @type {Phaser.Tilemaps.Tileset[]}
+         * @since 3.0.0
+         */
+        this.tilesets = mapData.tilesets;
+
+        /**
+         * An array of ObjectLayer instances parsed from Tiled object layers.
+         *
+         * @name Phaser.Tilemaps.Tilemap#objects
+         * @type {Phaser.Tilemaps.ObjectLayer[]}
+         * @since 3.0.0
+         */
+        this.objects = mapData.objects;
+
+        /**
+         * The index of the currently selected LayerData object.
+         *
+         * @name Phaser.Tilemaps.Tilemap#currentLayerIndex
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.currentLayerIndex = 0;
+    },
+
+    /**
+     * Sets the rendering (draw) order of the tiles in this map.
+     * 
+     * The default is 'right-down', meaning it will order the tiles starting from the top-left,
+     * drawing to the right and then moving down to the next row.
+     * 
+     * The draw orders are:
+     * 
+     * 0 = right-down
+     * 1 = left-down
+     * 2 = right-up
+     * 3 = left-up
+     * 
+     * Setting the render order does not change the tiles or how they are stored in the layer,
+     * it purely impacts the order in which they are rendered.
+     * 
+     * You can provide either an integer (0 to 3), or the string version of the order.
+     * 
+     * Calling this method _after_ creating Static or Dynamic Tilemap Layers will **not** automatically
+     * update them to use the new render order. If you call this method after creating layers, use their
+     * own `setRenderOrder` methods to change them as needed.
+     *
+     * @method Phaser.Tilemaps.Tilemap#setRenderOrder
+     * @since 3.12.0
+     *
+     * @param {(integer|string)} renderOrder - The render (draw) order value. Either an integer between 0 and 3, or a string: 'right-down', 'left-down', 'right-up' or 'left-up'.
+     *
+     * @return {this} This Tilemap object.
+     */
+    setRenderOrder: function (renderOrder)
+    {
+        var orders = [ 'right-down', 'left-down', 'right-up', 'left-up' ];
+
+        if (typeof renderOrder === 'number')
+        {
+            renderOrder = orders[renderOrder];
+        }
+
+        if (orders.indexOf(renderOrder) > -1)
+        {
+            this.renderOrder = renderOrder;
+        }
+
+        return this;
+    },
+
+    /**
+     * Adds an image to the map to be used as a tileset. A single map may use multiple tilesets.
+     * Note that the tileset name can be found in the JSON file exported from Tiled, or in the Tiled
+     * editor.
+     *
+     * @method Phaser.Tilemaps.Tilemap#addTilesetImage
+     * @since 3.0.0
+     *
+     * @param {string} tilesetName - The name of the tileset as specified in the map data.
+     * @param {string} [key] - The key of the Phaser.Cache image used for this tileset. If
+     * `undefined` or `null` it will look for an image with a key matching the tilesetName parameter.
+     * @param {integer} [tileWidth] - The width of the tile (in pixels) in the Tileset Image. If not
+     * given it will default to the map's tileWidth value, or the tileWidth specified in the Tiled
+     * JSON file.
+     * @param {integer} [tileHeight] - The height of the tiles (in pixels) in the Tileset Image. If
+     * not given it will default to the map's tileHeight value, or the tileHeight specified in the
+     * Tiled JSON file.
+     * @param {integer} [tileMargin] - The margin around the tiles in the sheet (in pixels). If not
+     * specified, it will default to 0 or the value specified in the Tiled JSON file.
+     * @param {integer} [tileSpacing] - The spacing between each the tile in the sheet (in pixels).
+     * If not specified, it will default to 0 or the value specified in the Tiled JSON file.
+     * @param {integer} [gid=0] - If adding multiple tilesets to a blank map, specify the starting
+     * GID this set will use here.
+     *
+     * @return {?Phaser.Tilemaps.Tileset} Returns the Tileset object that was created or updated, or null if it
+     * failed.
+     */
+    addTilesetImage: function (tilesetName, key, tileWidth, tileHeight, tileMargin, tileSpacing, gid)
+    {
+        if (tilesetName === undefined) { return null; }
+        if (key === undefined || key === null) { key = tilesetName; }
+
+        if (!this.scene.sys.textures.exists(key))
+        {
+            console.warn('Invalid Tileset Image: ' + key);
+            return null;
+        }
+
+        var texture = this.scene.sys.textures.get(key);
+
+        var index = this.getTilesetIndex(tilesetName);
+
+        if (index === null && this.format === Formats.TILED_JSON)
+        {
+            console.warn('No data found for Tileset: ' + tilesetName);
+            return null;
+        }
+
+        var tileset = this.tilesets[index];
+
+        if (tileset)
+        {
+            tileset.setTileSize(tileWidth, tileHeight);
+            tileset.setSpacing(tileMargin, tileSpacing);
+            tileset.setImage(texture);
+
+            return tileset;
+        }
+
+        if (tileWidth === undefined) { tileWidth = this.tileWidth; }
+        if (tileHeight === undefined) { tileHeight = this.tileHeight; }
+        if (tileMargin === undefined) { tileMargin = 0; }
+        if (tileSpacing === undefined) { tileSpacing = 0; }
+        if (gid === undefined) { gid = 0; }
+
+        tileset = new Tileset(tilesetName, gid, tileWidth, tileHeight, tileMargin, tileSpacing);
+
+        tileset.setImage(texture);
+
+        this.tilesets.push(tileset);
+
+        return tileset;
+    },
+
+    /**
+     * Turns the StaticTilemapLayer associated with the given layer into a DynamicTilemapLayer. If
+     * no layer specified, the map's current layer is used. This is useful if you want to manipulate
+     * a map at the start of a scene, but then make it non-manipulable and optimize it for speed.
+     * Note: the DynamicTilemapLayer passed in is destroyed, so make sure to store the value
+     * returned from this method if you want to manipulate the new StaticTilemapLayer.
+     *
+     * @method Phaser.Tilemaps.Tilemap#convertLayerToStatic
+     * @since 3.0.0
+     *
+     * @param {(string|integer|Phaser.Tilemaps.DynamicTilemapLayer)} [layer] - The name of the layer from Tiled, the
+     * index of the layer in the map, or a DynamicTilemapLayer.
+     *
+     * @return {?Phaser.Tilemaps.StaticTilemapLayer} Returns the new layer that was created, or null if it
+     * failed.
+     */
+    convertLayerToStatic: function (layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return null; }
+
+        var dynamicLayer = layer.tilemapLayer;
+
+        if (!dynamicLayer || !(dynamicLayer instanceof DynamicTilemapLayer))
+        {
+            return null;
+        }
+
+        var staticLayer = new StaticTilemapLayer(
+            dynamicLayer.scene,
+            dynamicLayer.tilemap,
+            dynamicLayer.layerIndex,
+            dynamicLayer.tileset,
+            dynamicLayer.x,
+            dynamicLayer.y
+        );
+
+        this.scene.sys.displayList.add(staticLayer);
+
+        dynamicLayer.destroy();
+
+        return staticLayer;
+    },
+
+    /**
+     * Copies the tiles in the source rectangular area to a new destination (all specified in tile
+     * coordinates) within the layer. This copies all tile properties & recalculates collision
+     * information in the destination region.
+     * 
+     * If no layer specified, the map's current layer is used. This cannot be applied to StaticTilemapLayers.
+     *
+     * @method Phaser.Tilemaps.Tilemap#copy
+     * @since 3.0.0
+     * 
+     * @param {integer} srcTileX - The x coordinate of the area to copy from, in tiles, not pixels.
+     * @param {integer} srcTileY - The y coordinate of the area to copy from, in tiles, not pixels.
+     * @param {integer} width - The width of the area to copy, in tiles, not pixels.
+     * @param {integer} height - The height of the area to copy, in tiles, not pixels.
+     * @param {integer} destTileX - The x coordinate of the area to copy to, in tiles, not pixels.
+     * @param {integer} destTileY - The y coordinate of the area to copy to, in tiles, not pixels.
+     * @param {boolean} [recalculateFaces=true] - `true` if the faces data should be recalculated.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tilemap} Returns this, or null if the layer given was invalid.
+     */
+    copy: function (srcTileX, srcTileY, width, height, destTileX, destTileY, recalculateFaces, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (this._isStaticCall(layer, 'copy')) { return this; }
+
+        if (layer !== null)
+        {
+            TilemapComponents.Copy(
+                srcTileX, srcTileY,
+                width, height,
+                destTileX, destTileY,
+                recalculateFaces, layer
+            );
+        }
+
+        return this;
+    },
+
+    /**
