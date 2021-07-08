@@ -50539,3 +50539,221 @@ var DynamicTilemapLayer = new Class({
      */
     worldToTileXY: function (worldX, worldY, snapToFloor, point, camera)
     {
+        return TilemapComponents.WorldToTileXY(worldX, worldY, snapToFloor, point, camera, this.layer);
+    }
+
+});
+
+module.exports = DynamicTilemapLayer;
+
+
+/***/ }),
+/* 209 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var DegToRad = __webpack_require__(31);
+var DynamicTilemapLayer = __webpack_require__(208);
+var Extend = __webpack_require__(20);
+var Formats = __webpack_require__(29);
+var LayerData = __webpack_require__(78);
+var Rotate = __webpack_require__(242);
+var StaticTilemapLayer = __webpack_require__(207);
+var Tile = __webpack_require__(55);
+var TilemapComponents = __webpack_require__(103);
+var Tileset = __webpack_require__(99);
+
+/**
+ * @callback TilemapFilterCallback
+ *
+ * @param {Phaser.GameObjects.GameObject} value - An object found in the filtered area.
+ * @param {number} index - The index of the object within the array.
+ * @param {Phaser.GameObjects.GameObject[]} array - An array of all the objects found.
+ *
+ * @return {Phaser.GameObjects.GameObject} The object.
+ */
+
+/**
+ * @callback TilemapFindCallback
+ *
+ * @param {Phaser.GameObjects.GameObject} value - An object found.
+ * @param {number} index - The index of the object within the array.
+ * @param {Phaser.GameObjects.GameObject[]} array - An array of all the objects found.
+ *
+ * @return {boolean} `true` if the callback should be invoked, otherwise `false`.
+ */
+
+/**
+ * @classdesc
+ * A Tilemap is a container for Tilemap data. This isn't a display object, rather, it holds data
+ * about the map and allows you to add tilesets and tilemap layers to it. A map can have one or
+ * more tilemap layers (StaticTilemapLayer or DynamicTilemapLayer), which are the display
+ * objects that actually render tiles.
+ *
+ * The Tilemap data be parsed from a Tiled JSON file, a CSV file or a 2D array. Tiled is a free
+ * software package specifically for creating tile maps, and is available from:
+ * http://www.mapeditor.org
+ *
+ * A Tilemap has handy methods for getting & manipulating the tiles within a layer. You can only
+ * use the methods that change tiles (e.g. removeTileAt) on a DynamicTilemapLayer.
+ *
+ * Note that all Tilemaps use a base tile size to calculate dimensions from, but that a
+ * StaticTilemapLayer or DynamicTilemapLayer may have its own unique tile size that overrides
+ * it.
+ *
+ * @class Tilemap
+ * @memberof Phaser.Tilemaps
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Tilemap belongs.
+ * @param {Phaser.Tilemaps.MapData} mapData - A MapData instance containing Tilemap data.
+ */
+var Tilemap = new Class({
+
+    initialize:
+
+    function Tilemap (scene, mapData)
+    {
+        /**
+         * @name Phaser.Tilemaps.Tilemap#scene
+         * @type {Phaser.Scene}
+         * @since 3.0.0
+         */
+        this.scene = scene;
+
+        /**
+         * The base width of a tile in pixels. Note that individual layers may have a different tile
+         * width.
+         *
+         * @name Phaser.Tilemaps.Tilemap#tileWidth
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.tileWidth = mapData.tileWidth;
+
+        /**
+         * The base height of a tile in pixels. Note that individual layers may have a different
+         * tile height.
+         *
+         * @name Phaser.Tilemaps.Tilemap#tileHeight
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.tileHeight = mapData.tileHeight;
+
+        /**
+         * The width of the map (in tiles).
+         *
+         * @name Phaser.Tilemaps.Tilemap#width
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.width = mapData.width;
+
+        /**
+         * The height of the map (in tiles).
+         *
+         * @name Phaser.Tilemaps.Tilemap#height
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.height = mapData.height;
+
+        /**
+         * The orientation of the map data (as specified in Tiled), usually 'orthogonal'.
+         *
+         * @name Phaser.Tilemaps.Tilemap#orientation
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.orientation = mapData.orientation;
+
+        /**
+         * The render (draw) order of the map data (as specified in Tiled), usually 'right-down'.
+         * 
+         * The draw orders are:
+         * 
+         * right-down
+         * left-down
+         * right-up
+         * left-up
+         * 
+         * This can be changed via the `setRenderOrder` method.
+         *
+         * @name Phaser.Tilemaps.Tilemap#renderOrder
+         * @type {string}
+         * @since 3.12.0
+         */
+        this.renderOrder = mapData.renderOrder;
+
+        /**
+         * The format of the map data.
+         *
+         * @name Phaser.Tilemaps.Tilemap#format
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.format = mapData.format;
+
+        /**
+         * The version of the map data (as specified in Tiled, usually 1).
+         *
+         * @name Phaser.Tilemaps.Tilemap#version
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.version = mapData.version;
+
+        /**
+         * Map specific properties as specified in Tiled.
+         *
+         * @name Phaser.Tilemaps.Tilemap#properties
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.properties = mapData.properties;
+
+        /**
+         * The width of the map in pixels based on width * tileWidth.
+         *
+         * @name Phaser.Tilemaps.Tilemap#widthInPixels
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.widthInPixels = mapData.widthInPixels;
+
+        /**
+         * The height of the map in pixels based on height * tileHeight.
+         *
+         * @name Phaser.Tilemaps.Tilemap#heightInPixels
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.heightInPixels = mapData.heightInPixels;
+
+        /**
+         *
+         * @name Phaser.Tilemaps.Tilemap#imageCollections
+         * @type {Phaser.Tilemaps.ImageCollection[]}
+         * @since 3.0.0
+         */
+        this.imageCollections = mapData.imageCollections;
+
+        /**
+         * An array of Tiled Image Layers.
+         *
+         * @name Phaser.Tilemaps.Tilemap#images
+         * @type {array}
+         * @since 3.0.0
+         */
+        this.images = mapData.images;
+
+        /**
+         * An array of Tilemap layer data.
