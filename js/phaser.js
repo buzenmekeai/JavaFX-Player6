@@ -50998,3 +50998,210 @@ var Tilemap = new Class({
     },
 
     /**
+     * Creates a new and empty DynamicTilemapLayer. The currently selected layer in the map is set to this new layer.
+     *
+     * @method Phaser.Tilemaps.Tilemap#createBlankDynamicLayer
+     * @since 3.0.0
+     *
+     * @param {string} name - The name of this layer. Must be unique within the map.
+     * @param {(string|string[]|Phaser.Tilemaps.Tileset|Phaser.Tilemaps.Tileset[])} tileset - The tileset, or an array of tilesets, used to render this layer. Can be a string or a Tileset object.
+     * @param {number} [x=0] - The world x position where the top left of this layer will be placed.
+     * @param {number} [y=0] - The world y position where the top left of this layer will be placed.
+     * @param {integer} [width] - The width of the layer in tiles. If not specified, it will default to the map's width.
+     * @param {integer} [height] - The height of the layer in tiles. If not specified, it will default to the map's height.
+     * @param {integer} [tileWidth] - The width of the tiles the layer uses for calculations. If not specified, it will default to the map's tileWidth.
+     * @param {integer} [tileHeight] - The height of the tiles the layer uses for calculations. If not specified, it will default to the map's tileHeight.
+     * 
+     * @return {?Phaser.Tilemaps.DynamicTilemapLayer} Returns the new layer was created, or null if it failed.
+     */
+    createBlankDynamicLayer: function (name, tileset, x, y, width, height, tileWidth, tileHeight)
+    {
+        if (tileWidth === undefined) { tileWidth = tileset.tileWidth; }
+        if (tileHeight === undefined) { tileHeight = tileset.tileHeight; }
+        if (width === undefined) { width = this.width; }
+        if (height === undefined) { height = this.height; }
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = 0; }
+
+        var index = this.getLayerIndex(name);
+
+        if (index !== null)
+        {
+            console.warn('Invalid Tilemap Layer ID: ' + name);
+            return null;
+        }
+
+        var layerData = new LayerData({
+            name: name,
+            tileWidth: tileWidth,
+            tileHeight: tileHeight,
+            width: width,
+            height: height
+        });
+
+        var row;
+
+        for (var tileY = 0; tileY < height; tileY++)
+        {
+            row = [];
+
+            for (var tileX = 0; tileX < width; tileX++)
+            {
+                row.push(new Tile(layerData, -1, tileX, tileY, tileWidth, tileHeight, this.tileWidth, this.tileHeight));
+            }
+
+            layerData.data.push(row);
+        }
+
+        this.layers.push(layerData);
+
+        this.currentLayerIndex = this.layers.length - 1;
+
+        var dynamicLayer = new DynamicTilemapLayer(this.scene, this, this.currentLayerIndex, tileset, x, y);
+
+        dynamicLayer.setRenderOrder(this.renderOrder);
+
+        this.scene.sys.displayList.add(dynamicLayer);
+
+        return dynamicLayer;
+    },
+
+    /**
+     * Creates a new DynamicTilemapLayer that renders the LayerData associated with the given
+     * `layerID`. The currently selected layer in the map is set to this new layer.
+     *
+     * The `layerID` is important. If you've created your map in Tiled then you can get this by
+     * looking in Tiled and looking at the layer name. Or you can open the JSON file it exports and
+     * look at the layers[].name value. Either way it must match.
+     *
+     * Unlike a static layer, a dynamic layer can be modified. See DynamicTilemapLayer for more
+     * information.
+     *
+     * @method Phaser.Tilemaps.Tilemap#createDynamicLayer
+     * @since 3.0.0
+     *
+     * @param {(integer|string)} layerID - The layer array index value, or if a string is given, the layer name from Tiled.
+     * @param {(string|string[]|Phaser.Tilemaps.Tileset|Phaser.Tilemaps.Tileset[])} tileset - The tileset, or an array of tilesets, used to render this layer. Can be a string or a Tileset object.
+     * @param {number} x - The x position to place the layer in the world. If not specified, it will default to the layer offset from Tiled or 0.
+     * @param {number} y - The y position to place the layer in the world. If not specified, it will default to the layer offset from Tiled or 0.
+     *
+     * @return {?Phaser.Tilemaps.DynamicTilemapLayer} Returns the new layer was created, or null if it failed.
+     */
+    createDynamicLayer: function (layerID, tileset, x, y)
+    {
+        var index = this.getLayerIndex(layerID);
+
+        if (index === null)
+        {
+            console.warn('Invalid Tilemap Layer ID: ' + layerID);
+            return null;
+        }
+
+        var layerData = this.layers[index];
+
+        // Check for an associated static or dynamic tilemap layer
+        if (layerData.tilemapLayer)
+        {
+            console.warn('Tilemap Layer ID already exists:' + layerID);
+            return null;
+        }
+
+        this.currentLayerIndex = index;
+
+        //  Default the x/y position to match Tiled layer offset, if it exists.
+        if (x === undefined && this.layers[index].x) { x = this.layers[index].x; }
+        if (y === undefined && this.layers[index].y) { y = this.layers[index].y; }
+
+        var layer = new DynamicTilemapLayer(this.scene, this, index, tileset, x, y);
+
+        layer.setRenderOrder(this.renderOrder);
+
+        this.scene.sys.displayList.add(layer);
+
+        return layer;
+    },
+
+    /**
+     * Creates a Sprite for every object matching the given gid in the map data. All properties from
+     * the map data objectgroup are copied into the `spriteConfig`, so you can use this as an easy
+     * way to configure Sprite properties from within the map editor. For example giving an object a
+     * property of alpha: 0.5 in the map editor will duplicate that when the Sprite is created.
+     *
+     * Custom object properties not sharing names with the Sprite's own properties are copied to the
+     * Sprite's {@link Phaser.GameObjects.Sprite#data data store}.
+     *
+     * @method Phaser.Tilemaps.Tilemap#createFromObjects
+     * @since 3.0.0
+     *
+     * @param {string} name - The name of the object layer (from Tiled) to create Sprites from.
+     * @param {(integer|string)} id - Either the id (object), gid (tile object) or name (object or
+     * tile object) from Tiled. Ids are unique in Tiled, but a gid is shared by all tile objects
+     * with the same graphic. The same name can be used on multiple objects.
+     * @param {SpriteConfig} spriteConfig - The config object to pass into the Sprite creator (i.e.
+     * scene.make.sprite).
+     * @param {Phaser.Scene} [scene=the scene the map is within] - The Scene to create the Sprites within.
+     *
+     * @return {Phaser.GameObjects.Sprite[]} An array of the Sprites that were created.
+     */
+    createFromObjects: function (name, id, spriteConfig, scene)
+    {
+        if (spriteConfig === undefined) { spriteConfig = {}; }
+        if (scene === undefined) { scene = this.scene; }
+
+        var objectLayer = this.getObjectLayer(name);
+        if (!objectLayer)
+        {
+            console.warn('Cannot create from object. Invalid objectgroup name given: ' + name);
+            return;
+        }
+
+        var objects = objectLayer.objects;
+        var sprites = [];
+
+        for (var i = 0; i < objects.length; i++)
+        {
+            var found = false;
+            var obj = objects[i];
+
+            if (obj.gid !== undefined && typeof id === 'number' && obj.gid === id ||
+                obj.id !== undefined && typeof id === 'number' && obj.id === id ||
+                obj.name !== undefined && typeof id === 'string' && obj.name === id)
+            {
+                found = true;
+            }
+
+            if (found)
+            {
+                var config = Extend({}, spriteConfig, obj.properties);
+
+                config.x = obj.x;
+                config.y = obj.y;
+
+                var sprite = this.scene.make.sprite(config);
+
+                sprite.name = obj.name;
+
+                if (obj.width) { sprite.displayWidth = obj.width; }
+                if (obj.height) { sprite.displayHeight = obj.height; }
+
+                // Origin is (0, 1) in Tiled, so find the offset that matches the Sprite's origin.
+                var offset = {
+                    x: sprite.originX * sprite.displayWidth,
+                    y: (sprite.originY - 1) * sprite.displayHeight
+                };
+
+                // If the object is rotated, then the origin offset also needs to be rotated.
+                if (obj.rotation)
+                {
+                    var angle = DegToRad(obj.rotation);
+                    Rotate(offset, angle);
+                    sprite.rotation = angle;
+                }
+
+                sprite.x += offset.x;
+                sprite.y += offset.y;
+
+                if (obj.flippedHorizontal !== undefined || obj.flippedVertical !== undefined)
+                {
+                    sprite.setFlip(obj.flippedHorizontal, obj.flippedVertical);
+                }
