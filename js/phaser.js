@@ -51205,3 +51205,225 @@ var Tilemap = new Class({
                 {
                     sprite.setFlip(obj.flippedHorizontal, obj.flippedVertical);
                 }
+
+                if (!obj.visible) { sprite.visible = false; }
+
+                for (var key in obj.properties)
+                {
+                    if (sprite.hasOwnProperty(key))
+                    {
+                        continue;
+                    }
+
+                    sprite.setData(key, obj.properties[key]);
+                }
+
+                sprites.push(sprite);
+            }
+        }
+
+        return sprites;
+    },
+
+    /**
+     * Creates a Sprite for every object matching the given tile indexes in the layer. You can
+     * optionally specify if each tile will be replaced with a new tile after the Sprite has been
+     * created. This is useful if you want to lay down special tiles in a level that are converted to
+     * Sprites, but want to replace the tile itself with a floor tile or similar once converted.
+     *
+     * @method Phaser.Tilemaps.Tilemap#createFromTiles
+     * @since 3.0.0
+     *
+     * @param {(integer|array)} indexes - The tile index, or array of indexes, to create Sprites from.
+     * @param {(integer|array)} replacements - The tile index, or array of indexes, to change a converted
+     * tile to. Set to `null` to leave the tiles unchanged. If an array is given, it is assumed to be a
+     * one-to-one mapping with the indexes array.
+     * @param {SpriteConfig} spriteConfig - The config object to pass into the Sprite creator (i.e. scene.make.sprite).
+     * @param {Phaser.Scene} [scene=scene the map is within] - The Scene to create the Sprites within.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.GameObjects.Sprite[]} Returns an array of Tiles, or null if the layer given was invalid.
+     */
+    createFromTiles: function (indexes, replacements, spriteConfig, scene, camera, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return null; }
+
+        return TilemapComponents.CreateFromTiles(indexes, replacements, spriteConfig, scene, camera, layer);
+    },
+
+    /**
+     * Creates a new StaticTilemapLayer that renders the LayerData associated with the given
+     * `layerID`. The currently selected layer in the map is set to this new layer.
+     *
+     * The `layerID` is important. If you've created your map in Tiled then you can get this by
+     * looking in Tiled and looking at the layer name. Or you can open the JSON file it exports and
+     * look at the layers[].name value. Either way it must match.
+     *
+     * It's important to remember that a static layer cannot be modified. See StaticTilemapLayer for
+     * more information.
+     *
+     * @method Phaser.Tilemaps.Tilemap#createStaticLayer
+     * @since 3.0.0
+     *
+     * @param {(integer|string)} layerID - The layer array index value, or if a string is given, the layer name from Tiled.
+     * @param {(string|string[]|Phaser.Tilemaps.Tileset|Phaser.Tilemaps.Tileset[])} tileset - The tileset, or an array of tilesets, used to render this layer. Can be a string or a Tileset object.
+     * @param {number} x - The x position to place the layer in the world. If not specified, it will default to the layer offset from Tiled or 0.
+     * @param {number} y - The y position to place the layer in the world. If not specified, it will default to the layer offset from Tiled or 0.
+     *
+     * @return {?Phaser.Tilemaps.StaticTilemapLayer} Returns the new layer was created, or null if it failed.
+     */
+    createStaticLayer: function (layerID, tileset, x, y)
+    {
+        var index = this.getLayerIndex(layerID);
+
+        if (index === null)
+        {
+            console.warn('Invalid Tilemap Layer ID: ' + layerID);
+            return null;
+        }
+
+        var layerData = this.layers[index];
+
+        //  Check for an associated static or dynamic tilemap layer
+        if (layerData.tilemapLayer)
+        {
+            console.warn('Tilemap Layer ID already exists:' + layerID);
+            return null;
+        }
+
+        this.currentLayerIndex = index;
+
+        //  Default the x/y position to match Tiled layer offset, if it exists.
+        if (x === undefined && this.layers[index].x) { x = this.layers[index].x; }
+        if (y === undefined && this.layers[index].y) { y = this.layers[index].y; }
+
+        var layer = new StaticTilemapLayer(this.scene, this, index, tileset, x, y);
+
+        layer.setRenderOrder(this.renderOrder);
+
+        this.scene.sys.displayList.add(layer);
+
+        return layer;
+    },
+
+    /**
+     * Removes all layer data from this Tilemap and nulls the scene reference. This will destroy any
+     * StaticTilemapLayers or DynamicTilemapLayers that have been linked to LayerData.
+     *
+     * @method Phaser.Tilemaps.Tilemap#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.removeAllLayers();
+        this.tilesets.length = 0;
+        this.objects.length = 0;
+        this.scene = undefined;
+    },
+
+    /**
+     * Sets the tiles in the given rectangular area (in tile coordinates) of the layer with the
+     * specified index. Tiles will be set to collide if the given index is a colliding index.
+     * Collision information in the region will be recalculated.
+     *
+     * If no layer specified, the map's current layer is used.
+     * This cannot be applied to StaticTilemapLayers.
+     *
+     * @method Phaser.Tilemaps.Tilemap#fill
+     * @since 3.0.0
+     *
+     * @param {integer} index - The tile index to fill the area with.
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     * @param {boolean} [recalculateFaces=true] - `true` if the faces data should be recalculated.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tilemap} Returns this, or null if the layer given was invalid.
+     */
+    fill: function (index, tileX, tileY, width, height, recalculateFaces, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (this._isStaticCall(layer, 'fill')) { return this; }
+
+        if (layer !== null)
+        {
+            TilemapComponents.Fill(index, tileX, tileY, width, height, recalculateFaces, layer);
+        }
+
+        return this;
+    },
+
+    /**
+     * For each object in the given object layer, run the given filter callback function. Any
+     * objects that pass the filter test (i.e. where the callback returns true) will returned as a
+     * new array. Similar to Array.prototype.Filter in vanilla JS.
+     *
+     * @method Phaser.Tilemaps.Tilemap#filterObjects
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Tilemaps.ObjectLayer|string)} objectLayer - The name of an object layer (from Tiled) or an ObjectLayer instance.
+     * @param {TilemapFilterCallback} callback - The callback. Each object in the given area will be passed to this callback as the first and only parameter.
+     * @param {object} [context] - The context under which the callback should be run.
+     *
+     * @return {?Phaser.GameObjects.GameObject[]} An array of object that match the search, or null if the objectLayer given was invalid.
+     */
+    filterObjects: function (objectLayer, callback, context)
+    {
+        if (typeof objectLayer === 'string')
+        {
+            var name = objectLayer;
+
+            objectLayer = this.getObjectLayer(objectLayer);
+
+            if (!objectLayer)
+            {
+                console.warn('No object layer found with the name: ' + name);
+                return null;
+            }
+        }
+
+        return objectLayer.objects.filter(callback, context);
+    },
+
+    /**
+     * For each tile in the given rectangular area (in tile coordinates) of the layer, run the given
+     * filter callback function. Any tiles that pass the filter test (i.e. where the callback returns
+     * true) will returned as a new array. Similar to Array.prototype.Filter in vanilla JS.
+     * If no layer specified, the map's current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#filterTiles
+     * @since 3.0.0
+     *
+     * @param {function} callback - The callback. Each tile in the given area will be passed to this
+     * callback as the first and only parameter. The callback should return true for tiles that pass the
+     * filter.
+     * @param {object} [context] - The context under which the callback should be run.
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area to filter.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area to filter.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have -1 for an index.
+     * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide on at least one side.
+     * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that have at least one interesting face.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The Tile layer to apply the filter on. If not provided will use the current layer.
+     *
+     * @return {?Phaser.Tilemaps.Tile[]} Returns an array of Tiles, or null if the layer given was invalid.
+     */
+    filterTiles: function (callback, context, tileX, tileY, width, height, filteringOptions, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return null; }
+
+        return TilemapComponents.FilterTiles(callback, context, tileX, tileY, width, height, filteringOptions, layer);
+    },
+
+    /**
+     * Searches the entire map layer for the first tile matching the given index, then returns that Tile
