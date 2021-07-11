@@ -51427,3 +51427,212 @@ var Tilemap = new Class({
 
     /**
      * Searches the entire map layer for the first tile matching the given index, then returns that Tile
+     * object. If no match is found, it returns null. The search starts from the top-left tile and
+     * continues horizontally until it hits the end of the row, then it drops down to the next column.
+     * If the reverse boolean is true, it scans starting from the bottom-right corner traveling up to
+     * the top-left.
+     * If no layer specified, the map's current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#findByIndex
+     * @since 3.0.0
+     *
+     * @param {integer} index - The tile index value to search for.
+     * @param {integer} [skip=0] - The number of times to skip a matching tile before returning.
+     * @param {boolean} [reverse=false] - If true it will scan the layer in reverse, starting at the bottom-right. Otherwise it scans from the top-left.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The Tile layer to run the search on. If not provided will use the current layer.
+     *
+     * @return {?Phaser.Tilemaps.Tile} Returns a Tiles, or null if the layer given was invalid.
+     */
+    findByIndex: function (findIndex, skip, reverse, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return null; }
+
+        return TilemapComponents.FindByIndex(findIndex, skip, reverse, layer);
+    },
+
+    /**
+     * Find the first object in the given object layer that satisfies the provided testing function.
+     * I.e. finds the first object for which `callback` returns true. Similar to
+     * Array.prototype.find in vanilla JS.
+     *
+     * @method Phaser.Tilemaps.Tilemap#findObject
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Tilemaps.ObjectLayer|string)} objectLayer - The name of an object layer (from Tiled) or an ObjectLayer instance.
+     * @param {TilemapFindCallback} callback - The callback. Each object in the given area will be passed to this callback as the first and only parameter.
+     * @param {object} [context] - The context under which the callback should be run.
+     *
+     * @return {?Phaser.GameObjects.GameObject} An object that matches the search, or null if no object found.
+     */
+    findObject: function (objectLayer, callback, context)
+    {
+        if (typeof objectLayer === 'string')
+        {
+            var name = objectLayer;
+
+            objectLayer = this.getObjectLayer(objectLayer);
+
+            if (!objectLayer)
+            {
+                console.warn('No object layer found with the name: ' + name);
+                return null;
+            }
+        }
+
+        return objectLayer.objects.find(callback, context) || null;
+    },
+
+    /**
+     * Find the first tile in the given rectangular area (in tile coordinates) of the layer that
+     * satisfies the provided testing function. I.e. finds the first tile for which `callback` returns
+     * true. Similar to Array.prototype.find in vanilla JS.
+     * If no layer specified, the maps current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#findTile
+     * @since 3.0.0
+     *
+     * @param {FindTileCallback} callback - The callback. Each tile in the given area will be passed to this callback as the first and only parameter.
+     * @param {object} [context] - The context under which the callback should be run.
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area to search.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area to search.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have -1 for an index.
+     * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide on at least one side.
+     * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that have at least one interesting face.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The Tile layer to run the search on. If not provided will use the current layer.
+     *
+     * @return {?Phaser.Tilemaps.Tile} Returns a Tiles, or null if the layer given was invalid.
+     */
+    findTile: function (callback, context, tileX, tileY, width, height, filteringOptions, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return null; }
+
+        return TilemapComponents.FindTile(callback, context, tileX, tileY, width, height, filteringOptions, layer);
+    },
+
+    /**
+     * For each tile in the given rectangular area (in tile coordinates) of the layer, run the given
+     * callback. Similar to Array.prototype.forEach in vanilla JS.
+     *
+     * If no layer specified, the map's current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#forEachTile
+     * @since 3.0.0
+     *
+     * @param {EachTileCallback} callback - The callback. Each tile in the given area will be passed to this callback as the first and only parameter.
+     * @param {object} [context] - The context under which the callback should be run.
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area to search.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area to search.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have -1 for an index.
+     * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide on at least one side.
+     * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that have at least one interesting face.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The Tile layer to run the search on. If not provided will use the current layer.
+     *
+     * @return {?Phaser.Tilemaps.Tilemap} Returns this, or null if the layer given was invalid.
+     */
+    forEachTile: function (callback, context, tileX, tileY, width, height, filteringOptions, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer !== null)
+        {
+            TilemapComponents.ForEachTile(callback, context, tileX, tileY, width, height, filteringOptions, layer);
+        }
+
+        return this;
+    },
+
+    /**
+     * Gets the image layer index based on its name.
+     *
+     * @method Phaser.Tilemaps.Tilemap#getImageIndex
+     * @since 3.0.0
+     *
+     * @param {string} name - The name of the image to get.
+     *
+     * @return {integer} The index of the image in this tilemap, or null if not found.
+     */
+    getImageIndex: function (name)
+    {
+        return this.getIndex(this.images, name);
+    },
+
+    /**
+     * Internally used. Returns the index of the object in one of the Tilemaps arrays whose name
+     * property matches the given `name`.
+     *
+     * @method Phaser.Tilemaps.Tilemap#getIndex
+     * @since 3.0.0
+     *
+     * @param {array} location - The Tilemap array to search.
+     * @param {string} name - The name of the array element to get.
+     *
+     * @return {number} The index of the element in the array, or null if not found.
+     */
+    getIndex: function (location, name)
+    {
+        for (var i = 0; i < location.length; i++)
+        {
+            if (location[i].name === name)
+            {
+                return i;
+            }
+        }
+
+        return null;
+    },
+
+    /**
+     * Gets the LayerData from this.layers that is associated with `layer`, or null if an invalid
+     * `layer` is given.
+     *
+     * @method Phaser.Tilemaps.Tilemap#getLayer
+     * @since 3.0.0
+     *
+     * @param {(string|integer|Phaser.Tilemaps.DynamicTilemapLayer|Phaser.Tilemaps.StaticTilemapLayer)} [layer] - The name of the
+     * layer from Tiled, the index of the layer in the map, a DynamicTilemapLayer or a
+     * StaticTilemapLayer. If not given will default to the maps current layer index.
+     *
+     * @return {Phaser.Tilemaps.LayerData} The corresponding LayerData within this.layers.
+     */
+    getLayer: function (layer)
+    {
+        var index = this.getLayerIndex(layer);
+
+        return index !== null ? this.layers[index] : null;
+    },
+
+    /**
+     * Gets the ObjectLayer from this.objects that has the given `name`, or null if no ObjectLayer
+     * is found with that name.
+     *
+     * @method Phaser.Tilemaps.Tilemap#getObjectLayer
+     * @since 3.0.0
+     *
+     * @param {string} [name] - The name of the object layer from Tiled.
+     *
+     * @return {?Phaser.Tilemaps.ObjectLayer} The corresponding ObjectLayer within this.objects or null.
+     */
+    getObjectLayer: function (name)
+    {
+        var index = this.getIndex(this.objects, name);
+
+        return index !== null ? this.objects[index] : null;
+    },
+
+    /**
+     * Gets the LayerData index of the given `layer` within this.layers, or null if an invalid
+     * `layer` is given.
+     *
+     * @method Phaser.Tilemaps.Tilemap#getLayerIndex
+     * @since 3.0.0
+     *
