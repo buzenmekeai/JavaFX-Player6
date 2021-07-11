@@ -51636,3 +51636,222 @@ var Tilemap = new Class({
      * @method Phaser.Tilemaps.Tilemap#getLayerIndex
      * @since 3.0.0
      *
+     * @param {(string|integer|Phaser.Tilemaps.DynamicTilemapLayer|Phaser.Tilemaps.StaticTilemapLayer)} [layer] - The name of the
+     * layer from Tiled, the index of the layer in the map, a DynamicTilemapLayer or a
+     * StaticTilemapLayer. If not given will default to the map's current layer index.
+     *
+     * @return {integer} The LayerData index within this.layers.
+     */
+    getLayerIndex: function (layer)
+    {
+        if (layer === undefined)
+        {
+            return this.currentLayerIndex;
+        }
+        else if (typeof layer === 'string')
+        {
+            return this.getLayerIndexByName(layer);
+        }
+        else if (typeof layer === 'number' && layer < this.layers.length)
+        {
+            return layer;
+        }
+        else if (layer instanceof StaticTilemapLayer || layer instanceof DynamicTilemapLayer)
+        {
+            return layer.layerIndex;
+        }
+        else
+        {
+            return null;
+        }
+    },
+
+    /**
+     * Gets the index of the LayerData within this.layers that has the given `name`, or null if an
+     * invalid `name` is given.
+     *
+     * @method Phaser.Tilemaps.Tilemap#getLayerIndexByName
+     * @since 3.0.0
+     *
+     * @param {string} name - The name of the layer to get.
+     *
+     * @return {integer} The LayerData index within this.layers.
+     */
+    getLayerIndexByName: function (name)
+    {
+        return this.getIndex(this.layers, name);
+    },
+
+    /**
+     * Gets a tile at the given tile coordinates from the given layer.
+     * If no layer specified, the map's current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#getTileAt
+     * @since 3.0.0
+     *
+     * @param {integer} tileX - X position to get the tile from (given in tile units, not pixels).
+     * @param {integer} tileY - Y position to get the tile from (given in tile units, not pixels).
+     * @param {boolean} [nonNull=false] - If true getTile won't return null for empty tiles, but a Tile object with an index of -1.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tile} Returns a Tile, or null if the layer given was invalid.
+     */
+    getTileAt: function (tileX, tileY, nonNull, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return null; }
+
+        return TilemapComponents.GetTileAt(tileX, tileY, nonNull, layer);
+    },
+
+    /**
+     * Gets a tile at the given world coordinates from the given layer.
+     * If no layer specified, the map's current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#getTileAtWorldXY
+     * @since 3.0.0
+     *
+     * @param {number} worldX - X position to get the tile from (given in pixels)
+     * @param {number} worldY - Y position to get the tile from (given in pixels)
+     * @param {boolean} [nonNull=false] - If true, function won't return null for empty tiles, but a Tile object with an index of -1.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tile} Returns a Tile, or null if the layer given was invalid.
+     */
+    getTileAtWorldXY: function (worldX, worldY, nonNull, camera, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null)
+        {
+            return null;
+        }
+        else
+        {
+            return TilemapComponents.GetTileAtWorldXY(worldX, worldY, nonNull, camera, layer);
+        }
+    },
+
+    /**
+     * Gets the tiles in the given rectangular area (in tile coordinates) of the layer.
+     * If no layer specified, the maps current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#getTilesWithin
+     * @since 3.0.0
+     *
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have -1 for an index.
+     * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide on at least one side.
+     * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that have at least one interesting face.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tile[]} Returns an array of Tiles, or null if the layer given was invalid.
+     */
+    getTilesWithin: function (tileX, tileY, width, height, filteringOptions, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return null; }
+
+        return TilemapComponents.GetTilesWithin(tileX, tileY, width, height, filteringOptions, layer);
+    },
+
+    /**
+     * Gets the tiles that overlap with the given shape in the given layer. The shape must be a Circle,
+     * Line, Rectangle or Triangle. The shape should be in world coordinates.
+     * If no layer specified, the maps current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#getTilesWithinShape
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Geom.Circle|Phaser.Geom.Line|Phaser.Geom.Rectangle|Phaser.Geom.Triangle)} shape - A shape in world (pixel) coordinates
+     * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have -1 for an index.
+     * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide on at least one side.
+     * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that have at least one interesting face.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when factoring in which tiles to return.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to search. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tile[]} Returns an array of Tiles, or null if the layer given was invalid.
+     */
+    getTilesWithinShape: function (shape, filteringOptions, camera, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return null; }
+
+        return TilemapComponents.GetTilesWithinShape(shape, filteringOptions, camera, layer);
+    },
+
+    /**
+     * Gets the tiles in the given rectangular area (in world coordinates) of the layer.
+     * If no layer specified, the maps current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#getTilesWithinWorldXY
+     * @since 3.0.0
+     *
+     * @param {number} worldX - The world x coordinate for the top-left of the area.
+     * @param {number} worldY - The world y coordinate for the top-left of the area.
+     * @param {number} width - The width of the area.
+     * @param {number} height - The height of the area.
+     * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+     * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have -1 for an index.
+     * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide on at least one side.
+     * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that have at least one interesting face.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when factoring in which tiles to return.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to search. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tile[]} Returns an array of Tiles, or null if the layer given was invalid.
+     */
+    getTilesWithinWorldXY: function (worldX, worldY, width, height, filteringOptions, camera, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return null; }
+
+        return TilemapComponents.GetTilesWithinWorldXY(worldX, worldY, width, height, filteringOptions, camera, layer);
+    },
+
+    /**
+     * Gets the Tileset that has the given `name`, or null if an invalid `name` is given.
+     *
+     * @method Phaser.Tilemaps.Tilemap#getTileset
+     * @since 3.14.0
+     *
+     * @param {string} name - The name of the Tileset to get.
+     *
+     * @return {?Phaser.Tilemaps.Tileset} The Tileset, or `null` if no matching named tileset was found.
+     */
+    getTileset: function (name)
+    {
+        var index = this.getIndex(this.tilesets, name);
+
+        return (index !== null) ? this.tilesets[index] : null;
+    },
+
+    /**
+     * Gets the index of the Tileset within this.tilesets that has the given `name`, or null if an
+     * invalid `name` is given.
+     *
+     * @method Phaser.Tilemaps.Tilemap#getTilesetIndex
+     * @since 3.0.0
+     *
+     * @param {string} name - The name of the Tileset to get.
+     *
+     * @return {integer} The Tileset index within this.tilesets.
+     */
+    getTilesetIndex: function (name)
+    {
+        return this.getIndex(this.tilesets, name);
+    },
+
+    /**
+     * Checks if there is a tile at the given location (in tile coordinates) in the given layer. Returns
+     * false if there is no tile or if the tile at that location has an index of -1.
+     *
