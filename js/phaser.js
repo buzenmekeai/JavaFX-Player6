@@ -52073,3 +52073,235 @@ var Tilemap = new Class({
      */
     calculateFacesAt: function (tileX, tileY, layer)
     {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return this; }
+
+        TilemapComponents.CalculateFacesAt(tileX, tileY, layer);
+
+        return this;
+    },
+
+    /**
+     * Calculates interesting faces within the rectangular area specified (in tile coordinates) of the
+     * layer. Interesting faces are used internally for optimizing collisions against tiles. This method
+     * is mostly used internally.
+     *
+     * If no layer specified, the map's current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#calculateFacesWithin
+     * @since 3.0.0
+     *
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tilemap} Returns this, or null if the layer given was invalid.
+     */
+    calculateFacesWithin: function (tileX, tileY, width, height, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return this; }
+
+        TilemapComponents.CalculateFacesWithin(tileX, tileY, width, height, layer);
+
+        return this;
+    },
+
+    /**
+     * Removes all layers from this Tilemap and destroys any associated StaticTilemapLayers or
+     * DynamicTilemapLayers.
+     *
+     * @method Phaser.Tilemaps.Tilemap#removeAllLayers
+     * @since 3.0.0
+     *
+     * @return {Phaser.Tilemaps.Tilemap} This Tilemap object.
+     */
+    removeAllLayers: function ()
+    {
+        // Destroy any StaticTilemapLayers or DynamicTilemapLayers that are stored in LayerData
+        for (var i = 0; i < this.layers.length; i++)
+        {
+            if (this.layers[i].tilemapLayer)
+            {
+                this.layers[i].tilemapLayer.destroy();
+            }
+        }
+
+        this.layers.length = 0;
+        this.currentLayerIndex = 0;
+
+        return this;
+    },
+
+    /**
+     * Removes the tile at the given tile coordinates in the specified layer and updates the layer's
+     * collision information.
+     *
+     * If no layer specified, the maps current layer is used.
+     * This cannot be applied to StaticTilemapLayers.
+     *
+     * @method Phaser.Tilemaps.Tilemap#removeTileAt
+     * @since 3.0.0
+     *
+     * @param {integer} tileX - The x coordinate, in tiles, not pixels.
+     * @param {integer} tileY - The y coordinate, in tiles, not pixels.
+     * @param {boolean} [replaceWithNull=true] - If true, this will replace the tile at the specified location with null instead of a Tile with an index of -1.
+     * @param {boolean} [recalculateFaces=true] - `true` if the faces data should be recalculated.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to search. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tile} Returns a Tile, or null if the layer given was invalid.
+     */
+    removeTileAt: function (tileX, tileY, replaceWithNull, recalculateFaces, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (this._isStaticCall(layer, 'removeTileAt')) { return null; }
+
+        if (layer === null) { return null; }
+
+        return TilemapComponents.RemoveTileAt(tileX, tileY, replaceWithNull, recalculateFaces, layer);
+    },
+
+    /**
+     * Removes the tile at the given world coordinates in the specified layer and updates the layer's
+     * collision information.
+     *
+     * If no layer specified, the maps current layer is used.
+     * This cannot be applied to StaticTilemapLayers.
+     *
+     * @method Phaser.Tilemaps.Tilemap#removeTileAtWorldXY
+     * @since 3.0.0
+     *
+     * @param {number} worldX - The x coordinate, in pixels.
+     * @param {number} worldY - The y coordinate, in pixels.
+     * @param {boolean} [replaceWithNull=true] - If true, this will replace the tile at the specified location with null instead of a Tile with an index of -1.
+     * @param {boolean} [recalculateFaces=true] - `true` if the faces data should be recalculated.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tile} Returns a Tile, or null if the layer given was invalid.
+     */
+    removeTileAtWorldXY: function (worldX, worldY, replaceWithNull, recalculateFaces, camera, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (this._isStaticCall(layer, 'removeTileAtWorldXY')) { return null; }
+
+        if (layer === null) { return null; }
+
+        return TilemapComponents.RemoveTileAtWorldXY(worldX, worldY, replaceWithNull, recalculateFaces, camera, layer);
+    },
+
+    /**
+     * Draws a debug representation of the layer to the given Graphics. This is helpful when you want to
+     * get a quick idea of which of your tiles are colliding and which have interesting faces. The tiles
+     * are drawn starting at (0, 0) in the Graphics, allowing you to place the debug representation
+     * wherever you want on the screen.
+     *
+     * If no layer specified, the maps current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#renderDebug
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Graphics} graphics - The target Graphics object to draw upon.
+     * @param {object} styleConfig - An object specifying the colors to use for the debug drawing.
+     * @param {?Color} [styleConfig.tileColor=blue] - Color to use for drawing a filled rectangle at non-colliding tile locations. If set to null, non-colliding tiles will not be drawn.
+     * @param {?Color} [styleConfig.collidingTileColor=orange] - Color to use for drawing a filled rectangle at colliding tile locations. If set to null, colliding tiles will not be drawn.
+     * @param {?Color} [styleConfig.faceColor=grey] - Color to use for drawing a line at interesting tile faces. If set to null, interesting tile faces will not be drawn.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to search. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tilemap} Return this Tilemap object, or null if the layer given was invalid.
+     */
+    renderDebug: function (graphics, styleConfig, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return this; }
+
+        TilemapComponents.RenderDebug(graphics, styleConfig, layer);
+
+        return this;
+    },
+
+    /**
+     * Scans the given rectangular area (given in tile coordinates) for tiles with an index matching
+     * `findIndex` and updates their index to match `newIndex`. This only modifies the index and does
+     * not change collision information.
+     *
+     * If no layer specified, the maps current layer is used.
+     * This cannot be applied to StaticTilemapLayers.
+     *
+     * @method Phaser.Tilemaps.Tilemap#replaceByIndex
+     * @since 3.0.0
+     *
+     * @param {integer} findIndex - The index of the tile to search for.
+     * @param {integer} newIndex - The index of the tile to replace it with.
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tilemap} Return this Tilemap object, or null if the layer given was invalid.
+     */
+    replaceByIndex: function (findIndex, newIndex, tileX, tileY, width, height, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (this._isStaticCall(layer, 'replaceByIndex')) { return this; }
+
+        if (layer !== null)
+        {
+            TilemapComponents.ReplaceByIndex(findIndex, newIndex, tileX, tileY, width, height, layer);
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets collision on the given tile or tiles within a layer by index. You can pass in either a
+     * single numeric index or an array of indexes: [2, 3, 15, 20]. The `collides` parameter controls if
+     * collision will be enabled (true) or disabled (false).
+     *
+     * If no layer specified, the map's current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#setCollision
+     * @since 3.0.0
+     *
+     * @param {(integer|array)} indexes - Either a single tile index, or an array of tile indexes.
+     * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear collision.
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the update.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tilemap} Return this Tilemap object, or null if the layer given was invalid.
+     */
+    setCollision: function (indexes, collides, recalculateFaces, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return this; }
+
+        TilemapComponents.SetCollision(indexes, collides, recalculateFaces, layer);
+
+        return this;
+    },
+
+    /**
+     * Sets collision on a range of tiles in a layer whose index is between the specified `start` and
+     * `stop` (inclusive). Calling this with a start value of 10 and a stop value of 14 would set
+     * collision for tiles 10, 11, 12, 13 and 14. The `collides` parameter controls if collision will be
+     * enabled (true) or disabled (false).
+     *
+     * If no layer specified, the map's current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#setCollisionBetween
+     * @since 3.0.0
+     *
+     * @param {integer} start - The first index of the tile to be set for collision.
+     * @param {integer} stop - The last index of the tile to be set for collision.
+     * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear collision.
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the update.
