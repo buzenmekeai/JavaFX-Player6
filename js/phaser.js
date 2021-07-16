@@ -52305,3 +52305,223 @@ var Tilemap = new Class({
      * @param {integer} stop - The last index of the tile to be set for collision.
      * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear collision.
      * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the update.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tilemap} Return this Tilemap object, or null if the layer given was invalid.
+     */
+    setCollisionBetween: function (start, stop, collides, recalculateFaces, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return this; }
+
+        TilemapComponents.SetCollisionBetween(start, stop, collides, recalculateFaces, layer);
+
+        return this;
+    },
+
+    /**
+     * Sets collision on the tiles within a layer by checking tile properties. If a tile has a property
+     * that matches the given properties object, its collision flag will be set. The `collides`
+     * parameter controls if collision will be enabled (true) or disabled (false). Passing in
+     * `{ collides: true }` would update the collision flag on any tiles with a "collides" property that
+     * has a value of true. Any tile that doesn't have "collides" set to true will be ignored. You can
+     * also use an array of values, e.g. `{ types: ["stone", "lava", "sand" ] }`. If a tile has a
+     * "types" property that matches any of those values, its collision flag will be updated.
+     *
+     * If no layer specified, the map's current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#setCollisionByProperty
+     * @since 3.0.0
+     *
+     * @param {object} properties - An object with tile properties and corresponding values that should be checked.
+     * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear collision.
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the update.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tilemap} Return this Tilemap object, or null if the layer given was invalid.
+     */
+    setCollisionByProperty: function (properties, collides, recalculateFaces, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return this; }
+
+        TilemapComponents.SetCollisionByProperty(properties, collides, recalculateFaces, layer);
+
+        return this;
+    },
+
+    /**
+     * Sets collision on all tiles in the given layer, except for tiles that have an index specified in
+     * the given array. The `collides` parameter controls if collision will be enabled (true) or
+     * disabled (false).
+     *
+     * If no layer specified, the map's current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#setCollisionByExclusion
+     * @since 3.0.0
+     *
+     * @param {integer[]} indexes - An array of the tile indexes to not be counted for collision.
+     * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear collision.
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the update.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tilemap} Return this Tilemap object, or null if the layer given was invalid.
+     */
+    setCollisionByExclusion: function (indexes, collides, recalculateFaces, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return this; }
+
+        TilemapComponents.SetCollisionByExclusion(indexes, collides, recalculateFaces, layer);
+
+        return this;
+    },
+
+    /**
+     * Sets collision on the tiles within a layer by checking each tile's collision group data
+     * (typically defined in Tiled within the tileset collision editor). If any objects are found within
+     * a tile's collision group, the tile's colliding information will be set. The `collides` parameter
+     * controls if collision will be enabled (true) or disabled (false).
+     *
+     * If no layer specified, the map's current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#setCollisionFromCollisionGroup
+     * @since 3.0.0
+     *
+     * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear collision.
+     * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the update.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tilemap} Return this Tilemap object, or null if the layer given was invalid.
+     */
+    setCollisionFromCollisionGroup: function (collides, recalculateFaces, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return this; }
+
+        TilemapComponents.SetCollisionFromCollisionGroup(collides, recalculateFaces, layer);
+
+        return this;
+    },
+
+    /**
+     * Sets a global collision callback for the given tile index within the layer. This will affect all
+     * tiles on this layer that have the same index. If a callback is already set for the tile index it
+     * will be replaced. Set the callback to null to remove it. If you want to set a callback for a tile
+     * at a specific location on the map then see setTileLocationCallback.
+     *
+     * If no layer specified, the map's current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#setTileIndexCallback
+     * @since 3.0.0
+     *
+     * @param {(integer|array)} indexes - Either a single tile index, or an array of tile indexes to have a collision callback set for.
+     * @param {function} callback - The callback that will be invoked when the tile is collided with.
+     * @param {object} callbackContext - The context under which the callback is called.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tilemap} Return this Tilemap object, or null if the layer given was invalid.
+     */
+    setTileIndexCallback: function (indexes, callback, callbackContext, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return this; }
+
+        TilemapComponents.SetTileIndexCallback(indexes, callback, callbackContext, layer);
+
+        return this;
+    },
+
+    /**
+     * Sets a collision callback for the given rectangular area (in tile coordindates) within the layer.
+     * If a callback is already set for the tile index it will be replaced. Set the callback to null to
+     * remove it.
+     *
+     * If no layer specified, the map's current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#setTileLocationCallback
+     * @since 3.0.0
+     *
+     * @param {integer} tileX - The left most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} tileY - The top most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} width - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} height - How many tiles tall from the `tileY` index the area will be.
+     * @param {function} callback - The callback that will be invoked when the tile is collided with.
+     * @param {object} [callbackContext] - The context under which the callback is called.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tilemap} Return this Tilemap object, or null if the layer given was invalid.
+     */
+    setTileLocationCallback: function (tileX, tileY, width, height, callback, callbackContext, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return this; }
+
+        TilemapComponents.SetTileLocationCallback(tileX, tileY, width, height, callback, callbackContext, layer);
+
+        return this;
+    },
+
+    /**
+     * Sets the current layer to the LayerData associated with `layer`.
+     *
+     * @method Phaser.Tilemaps.Tilemap#setLayer
+     * @since 3.0.0
+     *
+     * @param {(string|integer|Phaser.Tilemaps.DynamicTilemapLayer|Phaser.Tilemaps.StaticTilemapLayer)} [layer] - The name of the
+     * layer from Tiled, the index of the layer in the map, a DynamicTilemapLayer or a
+     * StaticTilemapLayer. If not given will default to the map's current layer index.
+     *
+     * @return {Phaser.Tilemaps.Tilemap} This Tilemap object.
+     */
+    setLayer: function (layer)
+    {
+        var index = this.getLayerIndex(layer);
+
+        if (index !== null)
+        {
+            this.currentLayerIndex = index;
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets the base tile size for the map. Note: this does not necessarily match the tileWidth and
+     * tileHeight for all layers. This also updates the base size on all tiles across all layers.
+     *
+     * @method Phaser.Tilemaps.Tilemap#setBaseTileSize
+     * @since 3.0.0
+     *
+     * @param {integer} tileWidth - The width of the tiles the map uses for calculations.
+     * @param {integer} tileHeight - The height of the tiles the map uses for calculations.
+     *
+     * @return {Phaser.Tilemaps.Tilemap} This Tilemap object.
+     */
+    setBaseTileSize: function (tileWidth, tileHeight)
+    {
+        this.tileWidth = tileWidth;
+        this.tileHeight = tileHeight;
+        this.widthInPixels = this.width * tileWidth;
+        this.heightInPixels = this.height * tileHeight;
+
+        // Update the base tile size on all layers & tiles
+        for (var i = 0; i < this.layers.length; i++)
+        {
+            this.layers[i].baseTileWidth = tileWidth;
+            this.layers[i].baseTileHeight = tileHeight;
+
+            var mapData = this.layers[i].data;
+            var mapWidth = this.layers[i].width;
+            var mapHeight = this.layers[i].height;
+
+            for (var row = 0; row < mapHeight; ++row)
+            {
+                for (var col = 0; col < mapWidth; ++col)
+                {
