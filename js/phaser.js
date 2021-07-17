@@ -52525,3 +52525,208 @@ var Tilemap = new Class({
             {
                 for (var col = 0; col < mapWidth; ++col)
                 {
+                    var tile = mapData[row][col];
+
+                    if (tile !== null)
+                    {
+                        tile.setSize(undefined, undefined, tileWidth, tileHeight);
+                    }
+                }
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets the tile size for a specific `layer`. Note: this does not necessarily match the map's
+     * tileWidth and tileHeight for all layers. This will set the tile size for the layer and any
+     * tiles the layer has.
+     *
+     * @method Phaser.Tilemaps.Tilemap#setLayerTileSize
+     * @since 3.0.0
+     *
+     * @param {integer} tileWidth - The width of the tiles (in pixels) in the layer.
+     * @param {integer} tileHeight - The height of the tiles (in pixels) in the layer.
+     * @param {(string|integer|Phaser.Tilemaps.DynamicTilemapLayer|Phaser.Tilemaps.StaticTilemapLayer)} [layer] - The name of the
+     * layer from Tiled, the index of the layer in the map, a DynamicTilemapLayer or a
+     * StaticTilemapLayer. If not given will default to the map's current layer index.
+     *
+     * @return {Phaser.Tilemaps.Tilemap} This Tilemap object.
+     */
+    setLayerTileSize: function (tileWidth, tileHeight, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return this; }
+
+        layer.tileWidth = tileWidth;
+        layer.tileHeight = tileHeight;
+
+        var mapData = layer.data;
+        var mapWidth = layer.width;
+        var mapHeight = layer.height;
+
+        for (var row = 0; row < mapHeight; ++row)
+        {
+            for (var col = 0; col < mapWidth; ++col)
+            {
+                var tile = mapData[row][col];
+
+                if (tile !== null) { tile.setSize(tileWidth, tileHeight); }
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Shuffles the tiles in a rectangular region (specified in tile coordinates) within the given
+     * layer. It will only randomize the tiles in that area, so if they're all the same nothing will
+     * appear to have changed! This method only modifies tile indexes and does not change collision
+     * information.
+     *
+     * If no layer specified, the maps current layer is used.
+     * This cannot be applied to StaticTilemapLayers.
+     *
+     * @method Phaser.Tilemaps.Tilemap#shuffle
+     * @since 3.0.0
+     *
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tilemap} Return this Tilemap object, or null if the layer given was invalid.
+     */
+    shuffle: function (tileX, tileY, width, height, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (this._isStaticCall(layer, 'shuffle')) { return this; }
+
+        if (layer !== null)
+        {
+            TilemapComponents.Shuffle(tileX, tileY, width, height, layer);
+        }
+
+        return this;
+    },
+
+    /**
+     * Scans the given rectangular area (given in tile coordinates) for tiles with an index matching
+     * `indexA` and swaps then with `indexB`. This only modifies the index and does not change collision
+     * information.
+     *
+     * If no layer specified, the maps current layer is used.
+     * This cannot be applied to StaticTilemapLayers.
+     *
+     * @method Phaser.Tilemaps.Tilemap#swapByIndex
+     * @since 3.0.0
+     *
+     * @param {integer} tileA - First tile index.
+     * @param {integer} tileB - Second tile index.
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tilemap} Return this Tilemap object, or null if the layer given was invalid.
+     */
+    swapByIndex: function (indexA, indexB, tileX, tileY, width, height, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (this._isStaticCall(layer, 'swapByIndex')) { return this; }
+
+        if (layer !== null)
+        {
+            TilemapComponents.SwapByIndex(indexA, indexB, tileX, tileY, width, height, layer);
+        }
+
+        return this;
+    },
+
+    /**
+     * Converts from tile X coordinates (tile units) to world X coordinates (pixels), factoring in the
+     * layers position, scale and scroll.
+     *
+     * If no layer specified, the maps current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#tileToWorldX
+     * @since 3.0.0
+     *
+     * @param {integer} tileX - The x coordinate, in tiles, not pixels.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?number} Returns a number, or null if the layer given was invalid.
+     */
+    tileToWorldX: function (tileX, camera, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return null; }
+
+        return TilemapComponents.TileToWorldX(tileX, camera, layer);
+    },
+
+    /**
+     * Converts from tile Y coordinates (tile units) to world Y coordinates (pixels), factoring in the
+     * layers position, scale and scroll.
+     *
+     * If no layer specified, the maps current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#tileToWorldY
+     * @since 3.0.0
+     *
+     * @param {integer} tileY - The y coordinate, in tiles, not pixels.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?number} Returns a number, or null if the layer given was invalid.
+     */
+    tileToWorldY: function (tileX, camera, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return null; }
+
+        return TilemapComponents.TileToWorldY(tileX, camera, layer);
+    },
+
+    /**
+     * Converts from tile XY coordinates (tile units) to world XY coordinates (pixels), factoring in the
+     * layers position, scale and scroll. This will return a new Vector2 object or update the given
+     * `point` object.
+     *
+     * If no layer specified, the maps current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#tileToWorldXY
+     * @since 3.0.0
+     *
+     * @param {integer} tileX - The x coordinate, in tiles, not pixels.
+     * @param {integer} tileY - The y coordinate, in tiles, not pixels.
+     * @param {Phaser.Math.Vector2} [point] - A Vector2 to store the coordinates in. If not given a new Vector2 is created.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Math.Vector2} Returns a point, or null if the layer given was invalid.
+     */
+    tileToWorldXY: function (tileX, tileY, point, camera, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return null; }
+
+        return TilemapComponents.TileToWorldXY(tileX, tileY, point, camera, layer);
+    },
+
+    /**
+     * Randomizes the indexes of a rectangular region of tiles (in tile coordinates) within the
+     * specified layer. Each tile will receive a new index. New indexes are drawn from the given
+     * weightedIndexes array. An example weighted array:
+     *
+     * [
