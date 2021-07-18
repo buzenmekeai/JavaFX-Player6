@@ -52935,3 +52935,211 @@ var ParseWeltmeister = function (name, json, insertNull)
         tileWidth: json.layer[0].tilesize,
         tileHeight: json.layer[0].tilesize,
         format: Formats.WELTMEISTER
+    });
+
+    mapData.layers = ParseTileLayers(json, insertNull);
+    mapData.tilesets = ParseTilesets(json);
+
+    return mapData;
+};
+
+module.exports = ParseWeltmeister;
+
+
+/***/ }),
+/* 211 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var GetFastValue = __webpack_require__(2);
+
+/**
+ * @classdesc
+ * A class for representing a Tiled object layer in a map. This mirrors the structure of a Tiled
+ * object layer, except:
+ *  - "x" & "y" properties are ignored since these cannot be changed in Tiled.
+ *  - "offsetx" & "offsety" are applied to the individual object coordinates directly, so they
+ *    are ignored as well.
+ *  - "draworder" is ignored.
+ *
+ * @class ObjectLayer
+ * @memberof Phaser.Tilemaps
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {object} [config] - [description]
+ */
+var ObjectLayer = new Class({
+
+    initialize:
+
+    function ObjectLayer (config)
+    {
+        if (config === undefined) { config = {}; }
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.ObjectLayer#name
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.name = GetFastValue(config, 'name', 'object layer');
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.ObjectLayer#opacity
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.opacity = GetFastValue(config, 'opacity', 1);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.ObjectLayer#properties
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.properties = GetFastValue(config, 'properties', {});
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.ObjectLayer#propertyTypes
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.propertyTypes = GetFastValue(config, 'propertytypes', {});
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.ObjectLayer#type
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.type = GetFastValue(config, 'type', 'objectgroup');
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.ObjectLayer#visible
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.visible = GetFastValue(config, 'visible', true);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tilemaps.ObjectLayer#objects
+         * @type {Phaser.GameObjects.GameObject[]}
+         * @since 3.0.0
+         */
+        this.objects = GetFastValue(config, 'objects', []);
+    }
+
+});
+
+module.exports = ObjectLayer;
+
+
+/***/ }),
+/* 212 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Pick = __webpack_require__(455);
+var ParseGID = __webpack_require__(214);
+
+var copyPoints = function (p) { return { x: p.x, y: p.y }; };
+
+var commonObjectProps = [ 'id', 'name', 'type', 'rotation', 'properties', 'visible', 'x', 'y', 'width', 'height' ];
+
+/**
+ * [description]
+ *
+ * @function Phaser.Tilemaps.Parsers.Tiled.ParseObject
+ * @since 3.0.0
+ *
+ * @param {object} tiledObject - [description]
+ * @param {number} [offsetX=0] - [description]
+ * @param {number} [offsetY=0] - [description]
+ *
+ * @return {object} [description]
+ */
+var ParseObject = function (tiledObject, offsetX, offsetY)
+{
+    if (offsetX === undefined) { offsetX = 0; }
+    if (offsetY === undefined) { offsetY = 0; }
+
+    var parsedObject = Pick(tiledObject, commonObjectProps);
+
+    parsedObject.x += offsetX;
+    parsedObject.y += offsetY;
+
+    if (tiledObject.gid)
+    {
+        //  Object tiles
+        var gidInfo = ParseGID(tiledObject.gid);
+        parsedObject.gid = gidInfo.gid;
+        parsedObject.flippedHorizontal = gidInfo.flippedHorizontal;
+        parsedObject.flippedVertical = gidInfo.flippedVertical;
+        parsedObject.flippedAntiDiagonal = gidInfo.flippedAntiDiagonal;
+    }
+    else if (tiledObject.polyline)
+    {
+        parsedObject.polyline = tiledObject.polyline.map(copyPoints);
+    }
+    else if (tiledObject.polygon)
+    {
+        parsedObject.polygon = tiledObject.polygon.map(copyPoints);
+    }
+    else if (tiledObject.ellipse)
+    {
+        parsedObject.ellipse = tiledObject.ellipse;
+        parsedObject.width = tiledObject.width;
+        parsedObject.height = tiledObject.height;
+    }
+    else if (tiledObject.text)
+    {
+        parsedObject.width = tiledObject.width;
+        parsedObject.height = tiledObject.height;
+        parsedObject.text = tiledObject.text;
+    }
+    else
+    {
+        // Otherwise, assume it is a rectangle
+        parsedObject.rectangle = true;
+        parsedObject.width = tiledObject.width;
+        parsedObject.height = tiledObject.height;
+    }
+
+    return parsedObject;
+};
+
+module.exports = ParseObject;
+
+
+/***/ }),
+/* 213 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
