@@ -52730,3 +52730,208 @@ var Tilemap = new Class({
      * weightedIndexes array. An example weighted array:
      *
      * [
+     *  { index: 6, weight: 4 },    // Probability of index 6 is 4 / 8
+     *  { index: 7, weight: 2 },    // Probability of index 7 would be 2 / 8
+     *  { index: 8, weight: 1.5 },  // Probability of index 8 would be 1.5 / 8
+     *  { index: 26, weight: 0.5 }  // Probability of index 27 would be 0.5 / 8
+     * ]
+     *
+     * The probability of any index being choose is (the index's weight) / (sum of all weights). This
+     * method only modifies tile indexes and does not change collision information.
+     *
+     * If no layer specified, the map's current layer is used. This
+     * cannot be applied to StaticTilemapLayers.
+     *
+     * @method Phaser.Tilemaps.Tilemap#weightedRandomize
+     * @since 3.0.0
+     *
+     * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+     * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+     * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+     * @param {object[]} [weightedIndexes] - An array of objects to randomly draw from during
+     * randomization. They should be in the form: { index: 0, weight: 4 } or
+     * { index: [0, 1], weight: 4 } if you wish to draw from multiple tile indexes.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Tilemaps.Tilemap} Return this Tilemap object, or null if the layer given was invalid.
+     */
+    weightedRandomize: function (tileX, tileY, width, height, weightedIndexes, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (this._isStaticCall(layer, 'weightedRandomize')) { return this; }
+
+        if (layer !== null)
+        {
+            TilemapComponents.WeightedRandomize(tileX, tileY, width, height, weightedIndexes, layer);
+        }
+
+        return this;
+    },
+
+    /**
+     * Converts from world X coordinates (pixels) to tile X coordinates (tile units), factoring in the
+     * layers position, scale and scroll.
+     *
+     * If no layer specified, the maps current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#worldToTileX
+     * @since 3.0.0
+     *
+     * @param {number} worldX - The x coordinate to be converted, in pixels, not tiles.
+     * @param {boolean} [snapToFloor=true] - Whether or not to round the tile coordinate down to the nearest integer.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?number} Returns a number, or null if the layer given was invalid.
+     */
+    worldToTileX: function (worldX, snapToFloor, camera, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return null; }
+
+        return TilemapComponents.WorldToTileX(worldX, snapToFloor, camera, layer);
+    },
+
+    /**
+     * Converts from world Y coordinates (pixels) to tile Y coordinates (tile units), factoring in the
+     * layers position, scale and scroll.
+     *
+     * If no layer specified, the maps current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#worldToTileY
+     * @since 3.0.0
+     *
+     * @param {number} worldY - The y coordinate to be converted, in pixels, not tiles.
+     * @param {boolean} [snapToFloor=true] - Whether or not to round the tile coordinate down to the nearest integer.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?number} Returns a number, or null if the layer given was invalid.
+     */
+    worldToTileY: function (worldY, snapToFloor, camera, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return null; }
+
+        return TilemapComponents.WorldToTileY(worldY, snapToFloor, camera, layer);
+    },
+
+    /**
+     * Converts from world XY coordinates (pixels) to tile XY coordinates (tile units), factoring in the
+     * layers position, scale and scroll. This will return a new Vector2 object or update the given
+     * `point` object.
+     *
+     * If no layer specified, the maps current layer is used.
+     *
+     * @method Phaser.Tilemaps.Tilemap#worldToTileXY
+     * @since 3.0.0
+     *
+     * @param {number} worldX - The x coordinate to be converted, in pixels, not tiles.
+     * @param {number} worldY - The y coordinate to be converted, in pixels, not tiles.
+     * @param {boolean} [snapToFloor=true] - Whether or not to round the tile coordinate down to the nearest integer.
+     * @param {Phaser.Math.Vector2} [point] - A Vector2 to store the coordinates in. If not given a new Vector2 is created.
+     * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+     * @param {Phaser.Tilemaps.LayerData} [layer] - The tile layer to use. If not given the current layer is used.
+     *
+     * @return {?Phaser.Math.Vector2} Returns a point, or null if the layer given was invalid.
+     */
+    worldToTileXY: function (worldX, worldY, snapToFloor, point, camera, layer)
+    {
+        layer = this.getLayer(layer);
+
+        if (layer === null) { return null; }
+
+        return TilemapComponents.WorldToTileXY(worldX, worldY, snapToFloor, point, camera, layer);
+    },
+
+    /**
+     * Used internally to check if a layer is static and prints out a warning.
+     *
+     * @method Phaser.Tilemaps.Tilemap#_isStaticCall
+     * @private
+     * @since 3.0.0
+     *
+     * @return {boolean}
+     */
+    _isStaticCall: function (layer, functionName)
+    {
+        if (layer.tilemapLayer instanceof StaticTilemapLayer)
+        {
+            console.warn(functionName + ': You cannot change the tiles in a static tilemap layer');
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+});
+
+module.exports = Tilemap;
+
+
+/***/ }),
+/* 210 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Formats = __webpack_require__(29);
+var MapData = __webpack_require__(77);
+var ParseTileLayers = __webpack_require__(451);
+var ParseTilesets = __webpack_require__(450);
+
+/**
+ * @namespace Phaser.Tilemaps.Parsers.Impact
+ */
+
+/**
+ * Parses a Weltmeister JSON object into a new MapData object.
+ *
+ * @function Phaser.Tilemaps.Parsers.Impact.ParseWeltmeister
+ * @since 3.0.0
+ *
+ * @param {string} name - The name of the tilemap, used to set the name on the MapData.
+ * @param {object} json - The Weltmeister JSON object.
+ * @param {boolean} insertNull - Controls how empty tiles, tiles with an index of -1, in the map
+ * data are handled. If `true`, empty locations will get a value of `null`. If `false`, empty
+ * location will get a Tile object with an index of -1. If you've a large sparsely populated map and
+ * the tile data doesn't need to change then setting this value to `true` will help with memory
+ * consumption. However if your map is small or you need to update the tiles dynamically, then leave
+ * the default value set.
+ *
+ * @return {?object} [description]
+ */
+var ParseWeltmeister = function (name, json, insertNull)
+{
+    if (json.layer.length === 0)
+    {
+        console.warn('No layers found in the Weltmeister map: ' + name);
+        return null;
+    }
+
+    var width = 0;
+    var height = 0;
+
+    for (var i = 0; i < json.layer.length; i++)
+    {
+        if (json.layer[i].width > width) { width = json.layer[i].width; }
+        if (json.layer[i].height > height) { height = json.layer[i].height; }
+    }
+
+    var mapData = new MapData({
+        width: width,
+        height: height,
+        name: name,
+        tileWidth: json.layer[0].tilesize,
+        tileHeight: json.layer[0].tilesize,
+        format: Formats.WELTMEISTER
