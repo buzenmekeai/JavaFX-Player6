@@ -53378,3 +53378,215 @@ var ParseGID = function (gid)
         flipped = true;
     }
     else if (!flippedHorizontal && !flippedVertical && !flippedAntiDiagonal)
+    {
+        rotation = 0;
+        flipped = false;
+    }
+
+    return {
+        gid: gid,
+        flippedHorizontal: flippedHorizontal,
+        flippedVertical: flippedVertical,
+        flippedAntiDiagonal: flippedAntiDiagonal,
+        rotation: rotation,
+        flipped: flipped
+    };
+};
+
+module.exports = ParseGID;
+
+
+/***/ }),
+/* 215 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Formats = __webpack_require__(29);
+var MapData = __webpack_require__(77);
+var ParseTileLayers = __webpack_require__(459);
+var ParseImageLayers = __webpack_require__(457);
+var ParseTilesets = __webpack_require__(456);
+var ParseObjectLayers = __webpack_require__(454);
+var BuildTilesetIndex = __webpack_require__(453);
+var AssignTileProperties = __webpack_require__(452);
+
+/**
+ * @namespace Phaser.Tilemaps.Parsers.Tiled
+ */
+
+/**
+ * Parses a Tiled JSON object into a new MapData object.
+ *
+ * @function Phaser.Tilemaps.Parsers.Tiled.ParseJSONTiled
+ * @since 3.0.0
+ *
+ * @param {string} name - The name of the tilemap, used to set the name on the MapData.
+ * @param {object} json - The Tiled JSON object.
+ * @param {boolean} insertNull - Controls how empty tiles, tiles with an index of -1, in the map
+ * data are handled. If `true`, empty locations will get a value of `null`. If `false`, empty
+ * location will get a Tile object with an index of -1. If you've a large sparsely populated map and
+ * the tile data doesn't need to change then setting this value to `true` will help with memory
+ * consumption. However if your map is small or you need to update the tiles dynamically, then leave
+ * the default value set.
+ *
+ * @return {?Phaser.Tilemaps.MapData} The created MapData object, or `null` if the data can't be parsed.
+ */
+var ParseJSONTiled = function (name, json, insertNull)
+{
+    if (json.orientation !== 'orthogonal')
+    {
+        console.warn('Only orthogonal map types are supported in this version of Phaser');
+        return null;
+    }
+
+    //  Map data will consist of: layers, objects, images, tilesets, sizes
+    var mapData = new MapData({
+        width: json.width,
+        height: json.height,
+        name: name,
+        tileWidth: json.tilewidth,
+        tileHeight: json.tileheight,
+        orientation: json.orientation,
+        format: Formats.TILED_JSON,
+        version: json.version,
+        properties: json.properties,
+        renderOrder: json.renderorder
+    });
+
+    mapData.layers = ParseTileLayers(json, insertNull);
+    mapData.images = ParseImageLayers(json);
+
+    var sets = ParseTilesets(json);
+    mapData.tilesets = sets.tilesets;
+    mapData.imageCollections = sets.imageCollections;
+
+    mapData.objects = ParseObjectLayers(json);
+
+    mapData.tiles = BuildTilesetIndex(mapData);
+
+    AssignTileProperties(mapData);
+
+    return mapData;
+};
+
+module.exports = ParseJSONTiled;
+
+
+/***/ }),
+/* 216 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Formats = __webpack_require__(29);
+var Parse2DArray = __webpack_require__(133);
+
+/**
+ * Parses a CSV string of tile indexes into a new MapData object with a single layer.
+ *
+ * @function Phaser.Tilemaps.Parsers.ParseCSV
+ * @since 3.0.0
+ *
+ * @param {string} name - The name of the tilemap, used to set the name on the MapData.
+ * @param {string} data - CSV string of tile indexes.
+ * @param {integer} tileWidth - The width of a tile in pixels.
+ * @param {integer} tileHeight - The height of a tile in pixels.
+ * @param {boolean} insertNull - Controls how empty tiles, tiles with an index of -1, in the map
+ * data are handled. If `true`, empty locations will get a value of `null`. If `false`, empty
+ * location will get a Tile object with an index of -1. If you've a large sparsely populated map and
+ * the tile data doesn't need to change then setting this value to `true` will help with memory
+ * consumption. However if your map is small or you need to update the tiles dynamically, then leave
+ * the default value set.
+ *
+ * @return {Phaser.Tilemaps.MapData} The resulting MapData object.
+ */
+var ParseCSV = function (name, data, tileWidth, tileHeight, insertNull)
+{
+    var array2D = data
+        .trim()
+        .split('\n')
+        .map(function (row) { return row.split(','); });
+
+    var map = Parse2DArray(name, array2D, tileWidth, tileHeight, insertNull);
+    map.format = Formats.CSV;
+
+    return map;
+};
+
+module.exports = ParseCSV;
+
+
+/***/ }),
+/* 217 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Formats = __webpack_require__(29);
+var Parse2DArray = __webpack_require__(133);
+var ParseCSV = __webpack_require__(216);
+var ParseJSONTiled = __webpack_require__(215);
+var ParseWeltmeister = __webpack_require__(210);
+
+/**
+ * Parses raw data of a given Tilemap format into a new MapData object. If no recognized data format
+ * is found, returns `null`. When loading from CSV or a 2D array, you should specify the tileWidth &
+ * tileHeight. When parsing from a map from Tiled, the tileWidth & tileHeight will be pulled from
+ * the map data.
+ *
+ * @function Phaser.Tilemaps.Parsers.Parse
+ * @since 3.0.0
+ *
+ * @param {string} name - The name of the tilemap, used to set the name on the MapData.
+ * @param {integer} mapFormat - See ../Formats.js.
+ * @param {(integer[][]|string|object)} data - 2D array, CSV string or Tiled JSON object.
+ * @param {integer} tileWidth - The width of a tile in pixels. Required for 2D array and CSV, but
+ * ignored for Tiled JSON.
+ * @param {integer} tileHeight - The height of a tile in pixels. Required for 2D array and CSV, but
+ * ignored for Tiled JSON.
+ * @param {boolean} insertNull - Controls how empty tiles, tiles with an index of -1, in the map
+ * data are handled. If `true`, empty locations will get a value of `null`. If `false`, empty
+ * location will get a Tile object with an index of -1. If you've a large sparsely populated map and
+ * the tile data doesn't need to change then setting this value to `true` will help with memory
+ * consumption. However if your map is small or you need to update the tiles dynamically, then leave
+ * the default value set.
+ *
+ * @return {Phaser.Tilemaps.MapData} The created `MapData` object.
+ */
+var Parse = function (name, mapFormat, data, tileWidth, tileHeight, insertNull)
+{
+    var newMap;
+
+    switch (mapFormat)
+    {
+        case (Formats.ARRAY_2D):
+            newMap = Parse2DArray(name, data, tileWidth, tileHeight, insertNull);
+            break;
+        case (Formats.CSV):
+            newMap = ParseCSV(name, data, tileWidth, tileHeight, insertNull);
+            break;
+        case (Formats.TILED_JSON):
+            newMap = ParseJSONTiled(name, data, insertNull);
+            break;
+        case (Formats.WELTMEISTER):
+            newMap = ParseWeltmeister(name, data, insertNull);
+            break;
+        default:
+            console.warn('Unrecognized tilemap data format: ' + mapFormat);
+            newMap = null;
+    }
+
+    return newMap;
