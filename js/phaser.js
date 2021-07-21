@@ -53590,3 +53590,223 @@ var Parse = function (name, mapFormat, data, tileWidth, tileHeight, insertNull)
     }
 
     return newMap;
+};
+
+module.exports = Parse;
+
+
+/***/ }),
+/* 218 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Tile = __webpack_require__(55);
+var IsInLayerBounds = __webpack_require__(79);
+var CalculateFacesAt = __webpack_require__(136);
+
+/**
+ * Removes the tile at the given tile coordinates in the specified layer and updates the layer's
+ * collision information.
+ *
+ * @function Phaser.Tilemaps.Components.RemoveTileAt
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} tileX - The x coordinate.
+ * @param {integer} tileY - The y coordinate.
+ * @param {boolean} [replaceWithNull=true] - If true, this will replace the tile at the specified location with null instead of a Tile with an index of -1.
+ * @param {boolean} [recalculateFaces=true] - `true` if the faces data should be recalculated.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ *
+ * @return {Phaser.Tilemaps.Tile} The Tile object that was removed.
+ */
+var RemoveTileAt = function (tileX, tileY, replaceWithNull, recalculateFaces, layer)
+{
+    if (replaceWithNull === undefined) { replaceWithNull = false; }
+    if (recalculateFaces === undefined) { recalculateFaces = true; }
+    if (!IsInLayerBounds(tileX, tileY, layer)) { return null; }
+
+    var tile = layer.data[tileY][tileX];
+    if (tile === null)
+    {
+        return null;
+    }
+    else
+    {
+        layer.data[tileY][tileX] = replaceWithNull
+            ? null
+            : new Tile(layer, -1, tileX, tileY, tile.width, tile.height);
+    }
+
+    // Recalculate faces only if the removed tile was a colliding tile
+    if (recalculateFaces && tile && tile.collides)
+    {
+        CalculateFacesAt(tileX, tileY, layer);
+    }
+
+    return tile;
+};
+
+module.exports = RemoveTileAt;
+
+
+/***/ }),
+/* 219 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var IsInLayerBounds = __webpack_require__(79);
+
+/**
+ * Checks if there is a tile at the given location (in tile coordinates) in the given layer. Returns
+ * false if there is no tile or if the tile at that location has an index of -1.
+ *
+ * @function Phaser.Tilemaps.Components.HasTileAt
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} tileX - X position to get the tile from (given in tile units, not pixels).
+ * @param {integer} tileY - Y position to get the tile from (given in tile units, not pixels).
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ * 
+ * @return {?boolean} Returns a boolean, or null if the layer given was invalid.
+ */
+var HasTileAt = function (tileX, tileY, layer)
+{
+    if (IsInLayerBounds(tileX, tileY, layer))
+    {
+        var tile = layer.data[tileY][tileX];
+        return (tile !== null && tile.index > -1);
+    }
+    else
+    {
+        return false;
+    }
+
+};
+
+module.exports = HasTileAt;
+
+
+/***/ }),
+/* 220 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetTilesWithin = __webpack_require__(17);
+
+/**
+ * Scans the given rectangular area (given in tile coordinates) for tiles with an index matching
+ * `findIndex` and updates their index to match `newIndex`. This only modifies the index and does
+ * not change collision information.
+ *
+ * @function Phaser.Tilemaps.Components.ReplaceByIndex
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} findIndex - The index of the tile to search for.
+ * @param {integer} newIndex - The index of the tile to replace it with.
+ * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+ * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+ * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+ * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var ReplaceByIndex = function (findIndex, newIndex, tileX, tileY, width, height, layer)
+{
+    var tiles = GetTilesWithin(tileX, tileY, width, height, null, layer);
+
+    for (var i = 0; i < tiles.length; i++)
+    {
+        if (tiles[i] && tiles[i].index === findIndex)
+        {
+            tiles[i].index = newIndex;
+        }
+    }
+};
+
+module.exports = ReplaceByIndex;
+
+
+/***/ }),
+/* 221 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+* @author       Richard Davey <rich@photonstorm.com>
+* @copyright    2018 Photon Storm Ltd.
+* @license      {@link https://github.com/photonstorm/phaser3-plugin-template/blob/master/LICENSE|MIT License}
+*/
+
+var Class = __webpack_require__(0);
+
+/**
+ * @classdesc
+ * A Global Plugin is installed just once into the Game owned Plugin Manager.
+ * It can listen for Game events and respond to them.
+ *
+ * @class BasePlugin
+ * @memberof Phaser.Plugins
+ * @constructor
+ * @since 3.8.0
+ *
+ * @param {Phaser.Plugins.PluginManager} pluginManager - A reference to the Plugin Manager.
+ */
+var BasePlugin = new Class({
+
+    initialize:
+
+    function BasePlugin (pluginManager)
+    {
+        /**
+         * A handy reference to the Plugin Manager that is responsible for this plugin.
+         * Can be used as a route to gain access to game systems and  events.
+         *
+         * @name Phaser.Plugins.BasePlugin#pluginManager
+         * @type {Phaser.Plugins.PluginManager}
+         * @protected
+         * @since 3.8.0
+         */
+        this.pluginManager = pluginManager;
+
+        /**
+         * A reference to the Game instance this plugin is running under.
+         *
+         * @name Phaser.Plugins.BasePlugin#game
+         * @type {Phaser.Game}
+         * @protected
+         * @since 3.8.0
+         */
+        this.game = pluginManager.game;
+
+        /**
+         * A reference to the Scene that has installed this plugin.
+         * Only set if it's a Scene Plugin, otherwise `null`.
+         * This property is only set when the plugin is instantiated and added to the Scene, not before.
+         * You cannot use it during the `init` method, but you can during the `boot` method.
+         *
+         * @name Phaser.Plugins.BasePlugin#scene
+         * @type {?Phaser.Scene}
+         * @protected
+         * @since 3.8.0
+         */
+        this.scene;
+
+        /**
+         * A reference to the Scene Systems of the Scene that has installed this plugin.
+         * Only set if it's a Scene Plugin, otherwise `null`.
