@@ -54007,3 +54007,254 @@ var Events = __webpack_require__(195);
             // don't wake if at least one body is static
             if ((bodyA.isSleeping && bodyB.isSleeping) || bodyA.isStatic || bodyB.isStatic)
                 continue;
+        
+            if (bodyA.isSleeping || bodyB.isSleeping) {
+                var sleepingBody = (bodyA.isSleeping && !bodyA.isStatic) ? bodyA : bodyB,
+                    movingBody = sleepingBody === bodyA ? bodyB : bodyA;
+
+                if (!sleepingBody.isStatic && movingBody.motion > Sleeping._motionWakeThreshold * timeFactor) {
+                    Sleeping.set(sleepingBody, false);
+                }
+            }
+        }
+    };
+  
+    /**
+     * Set a body as sleeping or awake.
+     * @method set
+     * @param {body} body
+     * @param {boolean} isSleeping
+     */
+    Sleeping.set = function(body, isSleeping) {
+        var wasSleeping = body.isSleeping;
+
+        if (isSleeping) {
+            body.isSleeping = true;
+            body.sleepCounter = body.sleepThreshold;
+
+            body.positionImpulse.x = 0;
+            body.positionImpulse.y = 0;
+
+            body.positionPrev.x = body.position.x;
+            body.positionPrev.y = body.position.y;
+
+            body.anglePrev = body.angle;
+            body.speed = 0;
+            body.angularSpeed = 0;
+            body.motion = 0;
+
+            if (!wasSleeping) {
+                Events.trigger(body, 'sleepStart');
+            }
+        } else {
+            body.isSleeping = false;
+            body.sleepCounter = 0;
+
+            if (wasSleeping) {
+                Events.trigger(body, 'sleepEnd');
+            }
+        }
+    };
+
+})();
+
+
+/***/ }),
+/* 223 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Collision Types - Determine if and how entities collide with each other.
+ *
+ * In ACTIVE vs. LITE or FIXED vs. ANY collisions, only the "weak" entity moves,
+ * while the other one stays fixed. In ACTIVE vs. ACTIVE and ACTIVE vs. PASSIVE
+ * collisions, both entities are moved. LITE or PASSIVE entities don't collide
+ * with other LITE or PASSIVE entities at all. The behavior for FIXED vs.
+ * FIXED collisions is undefined.
+ *
+ * @name Phaser.Physics.Impact.TYPE
+ * @enum {integer}
+ * @memberof Phaser.Physics.Impact
+ * @readonly
+ * @since 3.0.0
+ */
+module.exports = {
+
+    /**
+     * Collides with nothing.
+     *
+     * @name Phaser.Physics.Impact.TYPE.NONE
+     */
+    NONE: 0,
+
+    /**
+     * Type A. Collides with Type B.
+     *
+     * @name Phaser.Physics.Impact.TYPE.A
+     */
+    A: 1,
+
+    /**
+     * Type B. Collides with Type A.
+     *
+     * @name Phaser.Physics.Impact.TYPE.B
+     */
+    B: 2,
+
+    /**
+     * Collides with both types A and B.
+     *
+     * @name Phaser.Physics.Impact.TYPE.BOTH
+     */
+    BOTH: 3
+
+};
+
+
+/***/ }),
+/* 224 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Collision Types - Determine if and how entities collide with each other.
+ *
+ * In ACTIVE vs. LITE or FIXED vs. ANY collisions, only the "weak" entity moves,
+ * while the other one stays fixed. In ACTIVE vs. ACTIVE and ACTIVE vs. PASSIVE
+ * collisions, both entities are moved. LITE or PASSIVE entities don't collide
+ * with other LITE or PASSIVE entities at all. The behavior for FIXED vs.
+ * FIXED collisions is undefined.
+ *
+ * @name Phaser.Physics.Impact.COLLIDES
+ * @enum {integer}
+ * @memberof Phaser.Physics.Impact
+ * @readonly
+ * @since 3.0.0
+ */
+module.exports = {
+
+    /**
+     * Never collides.
+     *
+     * @name Phaser.Physics.Impact.COLLIDES.NEVER
+     */
+    NEVER: 0,
+
+    /**
+     * Lite collision.
+     *
+     * @name Phaser.Physics.Impact.COLLIDES.LITE
+     */
+    LITE: 1,
+
+    /**
+     * Passive collision.
+     *
+     * @name Phaser.Physics.Impact.COLLIDES.PASSIVE
+     */
+    PASSIVE: 2,
+
+    /**
+     * Active collision.
+     *
+     * @name Phaser.Physics.Impact.COLLIDES.ACTIVE
+     */
+    ACTIVE: 4,
+
+    /**
+     * Fixed collision.
+     *
+     * @name Phaser.Physics.Impact.COLLIDES.FIXED
+     */
+    FIXED: 8
+
+};
+
+
+/***/ }),
+/* 225 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CircleContains = __webpack_require__(40);
+var Class = __webpack_require__(0);
+var CONST = __webpack_require__(35);
+var RectangleContains = __webpack_require__(39);
+var Vector2 = __webpack_require__(3);
+
+/**
+ * @classdesc
+ * A Static Arcade Physics Body.
+ *
+ * A Static Body never moves, and isn't automatically synchronized with its parent Game Object.
+ * That means if you make any change to the parent's origin, position, or scale after creating or adding the body, you'll need to update the Body manually.
+ *
+ * A Static Body can collide with other Bodies, but is never moved by collisions.
+ *
+ * Its dynamic counterpart is {@link Phaser.Physics.Arcade.Body}.
+ *
+ * @class StaticBody
+ * @memberof Phaser.Physics.Arcade
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Physics.Arcade.World} world - [description]
+ * @param {Phaser.GameObjects.GameObject} gameObject - [description]
+ */
+var StaticBody = new Class({
+
+    initialize:
+
+    function StaticBody (world, gameObject)
+    {
+        var width = (gameObject.width) ? gameObject.width : 64;
+        var height = (gameObject.height) ? gameObject.height : 64;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#world
+         * @type {Phaser.Physics.Arcade.World}
+         * @since 3.0.0
+         */
+        this.world = world;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#gameObject
+         * @type {Phaser.GameObjects.GameObject}
+         * @since 3.0.0
+         */
+        this.gameObject = gameObject;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#debugShowBody
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.debugShowBody = world.defaults.debugShowStaticBody;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#debugBodyColor
+         * @type {integer}
