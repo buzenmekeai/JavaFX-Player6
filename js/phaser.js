@@ -54680,3 +54680,243 @@ var StaticBody = new Class({
         this.position.y += this.offset.y;
 
         this.updateCenter();
+
+        this.world.staticTree.insert(this);
+
+        return this;
+    },
+
+    /**
+     * Sets the size of the body.
+     * Resets the width and height to match current frame, if no width and height provided and a frame is found.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#setSize
+     * @since 3.0.0
+     *
+     * @param {integer} [width] - The width of the Body in pixels. Cannot be zero. If not given, and the parent Game Object has a frame, it will use the frame width.
+     * @param {integer} [height] - The height of the Body in pixels. Cannot be zero. If not given, and the parent Game Object has a frame, it will use the frame height.
+     * @param {number} [offsetX] - The horizontal offset of the Body from the Game Object's center.
+     * @param {number} [offsetY] - The vertical offset of the Body from the Game Object's center.
+     *
+     * @return {Phaser.Physics.Arcade.StaticBody} This Static Body object.
+     */
+    setSize: function (width, height, offsetX, offsetY)
+    {
+        if (offsetX === undefined) { offsetX = this.offset.x; }
+        if (offsetY === undefined) { offsetY = this.offset.y; }
+
+        var gameObject = this.gameObject;
+
+        if (!width && gameObject.frame)
+        {
+            width = gameObject.frame.realWidth;
+        }
+
+        if (!height && gameObject.frame)
+        {
+            height = gameObject.frame.realHeight;
+        }
+
+        this.world.staticTree.remove(this);
+
+        this.width = width;
+        this.height = height;
+
+        this.halfWidth = Math.floor(width / 2);
+        this.halfHeight = Math.floor(height / 2);
+
+        this.offset.set(offsetX, offsetY);
+
+        this.updateCenter();
+
+        this.isCircle = false;
+        this.radius = 0;
+
+        this.world.staticTree.insert(this);
+
+        return this;
+    },
+
+    /**
+     * Sets this Static Body to have a circular body and sets its sizes and position.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#setCircle
+     * @since 3.0.0
+     *
+     * @param {number} radius - The radius of the StaticBody, in pixels.
+     * @param {number} [offsetX] - The horizontal offset of the StaticBody from its Game Object, in pixels.
+     * @param {number} [offsetY] - The vertical offset of the StaticBody from its Game Object, in pixels.
+     *
+     * @return {Phaser.Physics.Arcade.StaticBody} This Static Body object.
+     */
+    setCircle: function (radius, offsetX, offsetY)
+    {
+        if (offsetX === undefined) { offsetX = this.offset.x; }
+        if (offsetY === undefined) { offsetY = this.offset.y; }
+
+        if (radius > 0)
+        {
+            this.world.staticTree.remove(this);
+
+            this.isCircle = true;
+
+            this.radius = radius;
+
+            this.width = radius * 2;
+            this.height = radius * 2;
+
+            this.halfWidth = Math.floor(this.width / 2);
+            this.halfHeight = Math.floor(this.height / 2);
+
+            this.offset.set(offsetX, offsetY);
+
+            this.updateCenter();
+
+            this.world.staticTree.insert(this);
+        }
+        else
+        {
+            this.isCircle = false;
+        }
+
+        return this;
+    },
+
+    /**
+     * Updates the StaticBody's `center` from its `position` and dimensions.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#updateCenter
+     * @since 3.0.0
+     */
+    updateCenter: function ()
+    {
+        this.center.set(this.position.x + this.halfWidth, this.position.y + this.halfHeight);
+    },
+
+    /**
+     * Updates this Static Body's position based on the current Game Object it is bound to.
+     * Similar to `updateFromGameObject`, but doesn't modify the Body's dimensions.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#reset
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate to reset the body to.
+     * @param {number} y - The y coordinate to reset the body to.
+     */
+    reset: function (x, y)
+    {
+        var gameObject = this.gameObject;
+
+        if (x === undefined) { x = gameObject.x; }
+        if (y === undefined) { y = gameObject.y; }
+
+        this.world.staticTree.remove(this);
+
+        gameObject.getTopLeft(this.position);
+
+        this.updateCenter();
+
+        this.world.staticTree.insert(this);
+    },
+
+    /**
+     * NOOP function. A Static Body cannot be stopped.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#stop
+     * @since 3.0.0
+     *
+     * @return {Phaser.Physics.Arcade.StaticBody} This Static Body object.
+     */
+    stop: function ()
+    {
+        return this;
+    },
+
+    /**
+     * Returns the x and y coordinates of the top left and bottom right points of the StaticBody.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#getBounds
+     * @since 3.0.0
+     *
+     * @param {ArcadeBodyBounds} obj - The object which will hold the coordinates of the bounds.
+     *
+     * @return {ArcadeBodyBounds} The same object that was passed with `x`, `y`, `right` and `bottom` values matching the respective values of the StaticBody.
+     */
+    getBounds: function (obj)
+    {
+        obj.x = this.x;
+        obj.y = this.y;
+        obj.right = this.right;
+        obj.bottom = this.bottom;
+
+        return obj;
+    },
+
+    /**
+     * Checks to see if a given x,y coordinate is colliding with this Static Body.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#hitTest
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate to check against this body.
+     * @param {number} y - The y coordinate to check against this body.
+     *
+     * @return {boolean} `true` if the given coordinate lies within this body, otherwise `false`.
+     */
+    hitTest: function (x, y)
+    {
+        return (this.isCircle) ? CircleContains(this, x, y) : RectangleContains(this, x, y);
+    },
+
+    /**
+     * NOOP
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#postUpdate
+     * @since 3.12.0
+     */
+    postUpdate: function ()
+    {
+    },
+
+    /**
+     * The absolute (non-negative) change in this StaticBody's horizontal position from the previous step. Always zero.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#deltaAbsX
+     * @since 3.0.0
+     *
+     * @return {number} Always zero for a Static Body.
+     */
+    deltaAbsX: function ()
+    {
+        return 0;
+    },
+
+    /**
+     * The absolute (non-negative) change in this StaticBody's vertical position from the previous step. Always zero.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#deltaAbsY
+     * @since 3.0.0
+     *
+     * @return {number} Always zero for a Static Body.
+     */
+    deltaAbsY: function ()
+    {
+        return 0;
+    },
+
+    /**
+     * The change in this StaticBody's horizontal position from the previous step. Always zero.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#deltaX
+     * @since 3.0.0
+     *
+     * @return {number} Always zero for a Static Body.
+     */
+    deltaX: function ()
+    {
+        return 0;
+    },
+
+    /**
+     * The change in this StaticBody's vertical position from the previous step. Always zero.
+     *
