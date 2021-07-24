@@ -54258,3 +54258,211 @@ var StaticBody = new Class({
          *
          * @name Phaser.Physics.Arcade.StaticBody#debugBodyColor
          * @type {integer}
+         * @since 3.0.0
+         */
+        this.debugBodyColor = world.defaults.staticBodyDebugColor;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#enable
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.enable = true;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#isCircle
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.isCircle = false;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#radius
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.radius = 0;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#offset
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.offset = new Vector2();
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#position
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.position = new Vector2(gameObject.x - gameObject.displayOriginX, gameObject.y - gameObject.displayOriginY);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#width
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.width = width;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#height
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.height = height;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#halfWidth
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.halfWidth = Math.abs(this.width / 2);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#halfHeight
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.halfHeight = Math.abs(this.height / 2);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#center
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.center = new Vector2(gameObject.x + this.halfWidth, gameObject.y + this.halfHeight);
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#velocity
+         * @type {Phaser.Math.Vector2}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.velocity = Vector2.ZERO;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#allowGravity
+         * @type {boolean}
+         * @readonly
+         * @default false
+         * @since 3.0.0
+         */
+        this.allowGravity = false;
+
+        /**
+         * Gravitational force applied specifically to this Body. Values are in pixels per second squared. Always zero for a Static Body.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#gravity
+         * @type {Phaser.Math.Vector2}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.gravity = Vector2.ZERO;
+
+        /**
+         * Rebound, or restitution, following a collision, relative to 1. Always zero for a Static Body.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#bounce
+         * @type {Phaser.Math.Vector2}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.bounce = Vector2.ZERO;
+
+        //  If true this Body will dispatch events
+
+        /**
+         * Whether the simulation emits a `worldbounds` event when this StaticBody collides with the world boundary (and `collideWorldBounds` is also true).
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#onWorldBounds
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.onWorldBounds = false;
+
+        /**
+         * Whether the simulation emits a `collide` event when this StaticBody collides with another.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#onCollide
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.onCollide = false;
+
+        /**
+         * Whether the simulation emits an `overlap` event when this StaticBody overlaps with another.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#onOverlap
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.onOverlap = false;
+
+        /**
+         * The StaticBody's inertia, relative to a default unit (1). With `bounce`, this affects the exchange of momentum (velocities) during collisions.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#mass
+         * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.mass = 1;
+
+        /**
+         * Whether this object can be moved by collisions with another body.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#immovable
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.immovable = true;
+
+        /**
+         * A flag disabling the default horizontal separation of colliding bodies. Pass your own `processHandler` to the collider.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#customSeparateX
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.customSeparateX = false;
+
+        /**
+         * A flag disabling the default vertical separation of colliding bodies. Pass your own `processHandler` to the collider.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#customSeparateY
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
