@@ -54466,3 +54466,217 @@ var StaticBody = new Class({
          * @default false
          * @since 3.0.0
          */
+        this.customSeparateY = false;
+
+        /**
+         * The amount of horizontal overlap (before separation), if this Body is colliding with another.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#overlapX
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.overlapX = 0;
+
+        /**
+         * The amount of vertical overlap (before separation), if this Body is colliding with another.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#overlapY
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.overlapY = 0;
+
+        /**
+         * The amount of overlap (before separation), if this StaticBody is circular and colliding with another circular body.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#overlapR
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.overlapR = 0;
+
+        /**
+         * Whether this StaticBody is overlapped with another and both have zero velocity.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#embedded
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.embedded = false;
+
+        /**
+         * Whether this StaticBody interacts with the world boundary.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#collideWorldBounds
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.collideWorldBounds = false;
+
+        /**
+         * Whether this StaticBody is checked for collisions and for which directions. You can set `checkCollision.none = false` to disable collision checks.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#checkCollision
+         * @type {ArcadeBodyCollision}
+         * @since 3.0.0
+         */
+        this.checkCollision = { none: false, up: true, down: true, left: true, right: true };
+
+        /**
+         * Whether this StaticBody is colliding with another and in which direction.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#touching
+         * @type {ArcadeBodyCollision}
+         * @since 3.0.0
+         */
+        this.touching = { none: true, up: false, down: false, left: false, right: false };
+
+        /**
+         * Whether this StaticBody was colliding with another during the last step, and in which direction.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#wasTouching
+         * @type {ArcadeBodyCollision}
+         * @since 3.0.0
+         */
+        this.wasTouching = { none: true, up: false, down: false, left: false, right: false };
+
+        /**
+         * Whether this StaticBody is colliding with a tile or the world boundary.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#blocked
+         * @type {ArcadeBodyCollision}
+         * @since 3.0.0
+         */
+        this.blocked = { none: true, up: false, down: false, left: false, right: false };
+
+        /**
+         * The StaticBody's physics type (static by default).
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#physicsType
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.physicsType = CONST.STATIC_BODY;
+
+        /**
+         * The calculated change in the Body's horizontal position during the current step.
+         * For a static body this is always zero.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#_dx
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.10.0
+         */
+        this._dx = 0;
+
+        /**
+         * The calculated change in the Body's vertical position during the current step.
+         * For a static body this is always zero.
+         *
+         * @name Phaser.Physics.Arcade.StaticBody#_dy
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.10.0
+         */
+        this._dy = 0;
+    },
+
+    /**
+     * Changes the Game Object this Body is bound to.
+     * First it removes its reference from the old Game Object, then sets the new one.
+     * You can optionally update the position and dimensions of this Body to reflect that of the new Game Object.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#setGameObject
+     * @since 3.1.0
+     *
+     * @param {Phaser.GameObjects.GameObject} gameObject - The new Game Object that will own this Body.
+     * @param {boolean} [update=true] - Reposition and resize this Body to match the new Game Object?
+     *
+     * @return {Phaser.Physics.Arcade.StaticBody} This Static Body object.
+     *
+     * @see Phaser.Physics.Arcade.StaticBody#updateFromGameObject
+     */
+    setGameObject: function (gameObject, update)
+    {
+        if (gameObject && gameObject !== this.gameObject)
+        {
+            //  Remove this body from the old game object
+            this.gameObject.body = null;
+
+            gameObject.body = this;
+
+            //  Update our reference
+            this.gameObject = gameObject;
+        }
+
+        if (update)
+        {
+            this.updateFromGameObject();
+        }
+
+        return this;
+    },
+
+    /**
+     * Updates this Static Body so that its position and dimensions are updated
+     * based on the current Game Object it is bound to.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#updateFromGameObject
+     * @since 3.1.0
+     *
+     * @return {Phaser.Physics.Arcade.StaticBody} This Static Body object.
+     */
+    updateFromGameObject: function ()
+    {
+        this.world.staticTree.remove(this);
+
+        var gameObject = this.gameObject;
+
+        gameObject.getTopLeft(this.position);
+
+        this.width = gameObject.displayWidth;
+        this.height = gameObject.displayHeight;
+
+        this.halfWidth = Math.abs(this.width / 2);
+        this.halfHeight = Math.abs(this.height / 2);
+
+        this.center.set(this.position.x + this.halfWidth, this.position.y + this.halfHeight);
+
+        this.world.staticTree.insert(this);
+
+        return this;
+    },
+
+    /**
+     * Sets the offset of the body.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#setOffset
+     * @since 3.4.0
+     *
+     * @param {number} x - The horizontal offset of the Body from the Game Object's center.
+     * @param {number} y - The vertical offset of the Body from the Game Object's center.
+     *
+     * @return {Phaser.Physics.Arcade.StaticBody} This Static Body object.
+     */
+    setOffset: function (x, y)
+    {
+        if (y === undefined) { y = x; }
+
+        this.world.staticTree.remove(this);
+
+        this.position.x -= this.offset.x;
+        this.position.y -= this.offset.y;
+
+        this.offset.set(x, y);
+
+        this.position.x += this.offset.x;
+        this.position.y += this.offset.y;
+
+        this.updateCenter();
