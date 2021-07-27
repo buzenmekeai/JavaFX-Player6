@@ -55126,3 +55126,220 @@ var StaticBody = new Class({
         {
             return this.position.y + this.height;
         }
+
+    }
+
+});
+
+module.exports = StaticBody;
+
+
+/***/ }),
+/* 226 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Physics.Arcade.Tilemap.TileIntersectsBody
+ * @since 3.0.0
+ *
+ * @param {{ left: number, right: number, top: number, bottom: number }} tileWorldRect - [description]
+ * @param {Phaser.Physics.Arcade.Body} body - [description]
+ *
+ * @return {boolean} [description]
+ */
+var TileIntersectsBody = function (tileWorldRect, body)
+{
+    // Currently, all bodies are treated as rectangles when colliding with a Tile. Eventually, this
+    // should support circle bodies when those are less buggy in v3.
+
+    return !(
+        body.right <= tileWorldRect.left ||
+        body.bottom <= tileWorldRect.top ||
+        body.position.x >= tileWorldRect.right ||
+        body.position.y >= tileWorldRect.bottom
+    );
+};
+
+module.exports = TileIntersectsBody;
+
+
+/***/ }),
+/* 227 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var quickselect = __webpack_require__(313);
+
+/**
+ * @classdesc
+ * RBush is a high-performance JavaScript library for 2D spatial indexing of points and rectangles.
+ * It's based on an optimized R-tree data structure with bulk insertion support.
+ *
+ * Spatial index is a special data structure for points and rectangles that allows you to perform queries like
+ * "all items within this bounding box" very efficiently (e.g. hundreds of times faster than looping over all items).
+ *
+ * This version of RBush uses a fixed min/max accessor structure of `[ '.left', '.top', '.right', '.bottom' ]`.
+ * This is to avoid the eval like function creation that the original library used, which caused CSP policy violations.
+ *
+ * @class RTree
+ * @memberof Phaser.Structs
+ * @constructor
+ * @since 3.0.0
+ */
+
+function rbush (maxEntries)
+{
+    var format = [ '.left', '.top', '.right', '.bottom' ];
+
+    if (!(this instanceof rbush)) return new rbush(maxEntries, format);
+
+    // max entries in a node is 9 by default; min node fill is 40% for best performance
+    this._maxEntries = Math.max(4, maxEntries || 9);
+    this._minEntries = Math.max(2, Math.ceil(this._maxEntries * 0.4));
+
+    this.clear();
+}
+
+rbush.prototype = {
+
+    all: function ()
+    {
+        return this._all(this.data, []);
+    },
+
+    search: function (bbox)
+    {
+        var node = this.data,
+            result = [],
+            toBBox = this.toBBox;
+
+        if (!intersects(bbox, node)) return result;
+
+        var nodesToSearch = [],
+            i, len, child, childBBox;
+
+        while (node) {
+            for (i = 0, len = node.children.length; i < len; i++) {
+
+                child = node.children[i];
+                childBBox = node.leaf ? toBBox(child) : child;
+
+                if (intersects(bbox, childBBox)) {
+                    if (node.leaf) result.push(child);
+                    else if (contains(bbox, childBBox)) this._all(child, result);
+                    else nodesToSearch.push(child);
+                }
+            }
+            node = nodesToSearch.pop();
+        }
+
+        return result;
+    },
+
+    collides: function (bbox)
+    {
+        var node = this.data,
+            toBBox = this.toBBox;
+
+        if (!intersects(bbox, node)) return false;
+
+        var nodesToSearch = [],
+            i, len, child, childBBox;
+
+        while (node) {
+            for (i = 0, len = node.children.length; i < len; i++) {
+
+                child = node.children[i];
+                childBBox = node.leaf ? toBBox(child) : child;
+
+                if (intersects(bbox, childBBox)) {
+                    if (node.leaf || contains(bbox, childBBox)) return true;
+                    nodesToSearch.push(child);
+                }
+            }
+            node = nodesToSearch.pop();
+        }
+
+        return false;
+    },
+
+    load: function (data)
+    {
+        if (!(data && data.length)) return this;
+
+        if (data.length < this._minEntries) {
+            for (var i = 0, len = data.length; i < len; i++) {
+                this.insert(data[i]);
+            }
+            return this;
+        }
+
+        // recursively build the tree with the given data from scratch using OMT algorithm
+        var node = this._build(data.slice(), 0, data.length - 1, 0);
+
+        if (!this.data.children.length) {
+            // save as is if tree is empty
+            this.data = node;
+
+        } else if (this.data.height === node.height) {
+            // split root if trees have the same height
+            this._splitRoot(this.data, node);
+
+        } else {
+            if (this.data.height < node.height) {
+                // swap trees if inserted one is bigger
+                var tmpNode = this.data;
+                this.data = node;
+                node = tmpNode;
+            }
+
+            // insert the small tree into the large tree at appropriate level
+            this._insert(node, this.data.height - node.height - 1, true);
+        }
+
+        return this;
+    },
+
+    insert: function (item)
+    {
+        if (item) this._insert(item, this.data.height - 1);
+        return this;
+    },
+
+    clear: function ()
+    {
+        this.data = createNode([]);
+        return this;
+    },
+
+    remove: function (item, equalsFn)
+    {
+        if (!item) return this;
+
+        var node = this.data,
+            bbox = this.toBBox(item),
+            path = [],
+            indexes = [],
+            i, parent, index, goingUp;
+
+        // depth-first iterative tree traversal
+        while (node || path.length) {
+
+            if (!node) { // go up
+                node = path.pop();
+                parent = path[path.length - 1];
+                i = indexes.pop();
+                goingUp = true;
