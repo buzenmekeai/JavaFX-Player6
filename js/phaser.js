@@ -54920,3 +54920,209 @@ var StaticBody = new Class({
     /**
      * The change in this StaticBody's vertical position from the previous step. Always zero.
      *
+     * @method Phaser.Physics.Arcade.StaticBody#deltaY
+     * @since 3.0.0
+     *
+     * @return {number} 0
+     */
+    deltaY: function ()
+    {
+        return 0;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#deltaZ
+     * @since 3.0.0
+     *
+     * @return {number} 0
+     */
+    deltaZ: function ()
+    {
+        return 0;
+    },
+
+    /**
+     * Disables this Body and marks it for destruction during the next step.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.enable = false;
+
+        this.world.pendingDestroy.set(this);
+    },
+
+    /**
+     * Draws a graphical representation of the StaticBody for visual debugging purposes.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#drawDebug
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Graphics} graphic - The Graphics object to use for the debug drawing of the StaticBody.
+     */
+    drawDebug: function (graphic)
+    {
+        var pos = this.position;
+
+        if (this.debugShowBody)
+        {
+            graphic.lineStyle(1, this.debugBodyColor, 1);
+            graphic.strokeRect(pos.x, pos.y, this.width, this.height);
+        }
+    },
+
+    /**
+     * Indicates whether the StaticBody is going to be showing a debug visualization during postUpdate.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#willDrawDebug
+     * @since 3.0.0
+     *
+     * @return {boolean} Whether or not the StaticBody is going to show the debug visualization during postUpdate.
+     */
+    willDrawDebug: function ()
+    {
+        return this.debugShowBody;
+    },
+
+    /**
+     * Sets the Mass of the StaticBody. Will set the Mass to 0.1 if the value passed is less than or equal to zero.
+     *
+     * @method Phaser.Physics.Arcade.StaticBody#setMass
+     * @since 3.0.0
+     *
+     * @param {number} value - The value to set the Mass to. Values of zero or less are changed to 0.1.
+     *
+     * @return {Phaser.Physics.Arcade.StaticBody} This Static Body object.
+     */
+    setMass: function (value)
+    {
+        if (value <= 0)
+        {
+            //  Causes havoc otherwise
+            value = 0.1;
+        }
+
+        this.mass = value;
+
+        return this;
+    },
+
+    /**
+     * The x coordinate of the StaticBody.
+     *
+     * @name Phaser.Physics.Arcade.StaticBody#x
+     * @type {number}
+     * @since 3.0.0
+     */
+    x: {
+
+        get: function ()
+        {
+            return this.position.x;
+        },
+
+        set: function (value)
+        {
+            this.world.staticTree.remove(this);
+
+            this.position.x = value;
+
+            this.world.staticTree.insert(this);
+        }
+
+    },
+
+    /**
+     * The y coordinate of the StaticBody.
+     *
+     * @name Phaser.Physics.Arcade.StaticBody#y
+     * @type {number}
+     * @since 3.0.0
+     */
+    y: {
+
+        get: function ()
+        {
+            return this.position.y;
+        },
+
+        set: function (value)
+        {
+            this.world.staticTree.remove(this);
+
+            this.position.y = value;
+
+            this.world.staticTree.insert(this);
+        }
+
+    },
+
+    /**
+     * Returns the left-most x coordinate of the area of the StaticBody.
+     *
+     * @name Phaser.Physics.Arcade.StaticBody#left
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    left: {
+
+        get: function ()
+        {
+            return this.position.x;
+        }
+
+    },
+
+    /**
+     * The right-most x coordinate of the area of the StaticBody.
+     *
+     * @name Phaser.Physics.Arcade.StaticBody#right
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    right: {
+
+        get: function ()
+        {
+            return this.position.x + this.width;
+        }
+
+    },
+
+    /**
+     * The highest y coordinate of the area of the StaticBody.
+     *
+     * @name Phaser.Physics.Arcade.StaticBody#top
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    top: {
+
+        get: function ()
+        {
+            return this.position.y;
+        }
+
+    },
+
+    /**
+     * The lowest y coordinate of the area of the StaticBody. (y + height)
+     *
+     * @name Phaser.Physics.Arcade.StaticBody#bottom
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    bottom: {
+
+        get: function ()
+        {
+            return this.position.y + this.height;
+        }
