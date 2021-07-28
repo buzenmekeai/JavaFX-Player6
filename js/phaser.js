@@ -55569,3 +55569,203 @@ rbush.prototype = {
             } else if (overlap === minOverlap) {
                 // otherwise choose distribution with minimum area
                 if (area < minArea) {
+                    minArea = area;
+                    index = i;
+                }
+            }
+        }
+
+        return index;
+    },
+
+    // sorts node children by the best axis for split
+    _chooseSplitAxis: function (node, m, M)
+    {
+        var compareMinX = node.leaf ? this.compareMinX : compareNodeMinX,
+            compareMinY = node.leaf ? this.compareMinY : compareNodeMinY,
+            xMargin = this._allDistMargin(node, m, M, compareMinX),
+            yMargin = this._allDistMargin(node, m, M, compareMinY);
+
+        // if total distributions margin value is minimal for x, sort by minX,
+        // otherwise it's already sorted by minY
+        if (xMargin < yMargin) node.children.sort(compareMinX);
+    },
+
+    // total margin of all possible split distributions where each node is at least m full
+    _allDistMargin: function (node, m, M, compare)
+    {
+        node.children.sort(compare);
+
+        var toBBox = this.toBBox,
+            leftBBox = distBBox(node, 0, m, toBBox),
+            rightBBox = distBBox(node, M - m, M, toBBox),
+            margin = bboxMargin(leftBBox) + bboxMargin(rightBBox),
+            i, child;
+
+        for (i = m; i < M - m; i++) {
+            child = node.children[i];
+            extend(leftBBox, node.leaf ? toBBox(child) : child);
+            margin += bboxMargin(leftBBox);
+        }
+
+        for (i = M - m - 1; i >= m; i--) {
+            child = node.children[i];
+            extend(rightBBox, node.leaf ? toBBox(child) : child);
+            margin += bboxMargin(rightBBox);
+        }
+
+        return margin;
+    },
+
+    _adjustParentBBoxes: function (bbox, path, level)
+    {
+        // adjust bboxes along the given tree path
+        for (var i = level; i >= 0; i--) {
+            extend(path[i], bbox);
+        }
+    },
+
+    _condense: function (path)
+    {
+        // go through the path, removing empty nodes and updating bboxes
+        for (var i = path.length - 1, siblings; i >= 0; i--) {
+            if (path[i].children.length === 0) {
+                if (i > 0) {
+                    siblings = path[i - 1].children;
+                    siblings.splice(siblings.indexOf(path[i]), 1);
+
+                } else this.clear();
+
+            } else calcBBox(path[i], this.toBBox);
+        }
+    },
+
+    compareMinX: function (a, b)
+    {
+        return a.left - b.left;
+    },
+
+    compareMinY: function (a, b)
+    {
+        return a.top - b.top;
+    },
+
+    toBBox: function (a)
+    {
+        return {
+            minX: a.left,
+            minY: a.top,
+            maxX: a.right,
+            maxY: a.bottom
+        };
+    }
+};
+
+function findItem (item, items, equalsFn)
+{
+    if (!equalsFn) return items.indexOf(item);
+
+    for (var i = 0; i < items.length; i++) {
+        if (equalsFn(item, items[i])) return i;
+    }
+    return -1;
+}
+
+// calculate node's bbox from bboxes of its children
+function calcBBox (node, toBBox)
+{
+    distBBox(node, 0, node.children.length, toBBox, node);
+}
+
+// min bounding rectangle of node children from k to p-1
+function distBBox (node, k, p, toBBox, destNode)
+{
+    if (!destNode) destNode = createNode(null);
+    destNode.minX = Infinity;
+    destNode.minY = Infinity;
+    destNode.maxX = -Infinity;
+    destNode.maxY = -Infinity;
+
+    for (var i = k, child; i < p; i++) {
+        child = node.children[i];
+        extend(destNode, node.leaf ? toBBox(child) : child);
+    }
+
+    return destNode;
+}
+
+function extend (a, b)
+{
+    a.minX = Math.min(a.minX, b.minX);
+    a.minY = Math.min(a.minY, b.minY);
+    a.maxX = Math.max(a.maxX, b.maxX);
+    a.maxY = Math.max(a.maxY, b.maxY);
+    return a;
+}
+
+function compareNodeMinX (a, b) { return a.minX - b.minX; }
+function compareNodeMinY (a, b) { return a.minY - b.minY; }
+
+function bboxArea (a) { return (a.maxX - a.minX) * (a.maxY - a.minY); }
+function bboxMargin (a) { return (a.maxX - a.minX) + (a.maxY - a.minY); }
+
+function enlargedArea (a, b)
+{
+    return (Math.max(b.maxX, a.maxX) - Math.min(b.minX, a.minX)) *
+           (Math.max(b.maxY, a.maxY) - Math.min(b.minY, a.minY));
+}
+
+function intersectionArea (a, b)
+{
+    var minX = Math.max(a.minX, b.minX),
+        minY = Math.max(a.minY, b.minY),
+        maxX = Math.min(a.maxX, b.maxX),
+        maxY = Math.min(a.maxY, b.maxY);
+
+    return Math.max(0, maxX - minX) *
+           Math.max(0, maxY - minY);
+}
+
+function contains (a, b)
+{
+    return a.minX <= b.minX &&
+           a.minY <= b.minY &&
+           b.maxX <= a.maxX &&
+           b.maxY <= a.maxY;
+}
+
+function intersects (a, b)
+{
+    return b.minX <= a.maxX &&
+           b.minY <= a.maxY &&
+           b.maxX >= a.minX &&
+           b.maxY >= a.minY;
+}
+
+function createNode (children)
+{
+    return {
+        children: children,
+        height: 1,
+        leaf: true,
+        minX: Infinity,
+        minY: Infinity,
+        maxX: -Infinity,
+        maxY: -Infinity
+    };
+}
+
+// sort an array so that items come in groups of n unsorted items, with groups sorted between each other;
+// combines selection algorithm with binary divide & conquer approach
+
+function multiSelect (arr, left, right, n, compare)
+{
+    var stack = [left, right],
+        mid;
+
+    while (stack.length)
+    {
+        right = stack.pop();
+        left = stack.pop();
+
+        if (right - left <= n) continue;
