@@ -56207,3 +56207,228 @@ var GetOverlapX = function (body1, body2, overlapOnly, bias)
 };
 
 module.exports = GetOverlapX;
+
+
+/***/ }),
+/* 231 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+
+/**
+ * @classdesc
+ * [description]
+ *
+ * @class Collider
+ * @memberof Phaser.Physics.Arcade
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Physics.Arcade.World} world - [description]
+ * @param {boolean} overlapOnly - [description]
+ * @param {ArcadeColliderType} object1 - The first object to check for collision.
+ * @param {ArcadeColliderType} object2 - The second object to check for collision.
+ * @param {ArcadePhysicsCallback} collideCallback - The callback to invoke when the two objects collide.
+ * @param {ArcadePhysicsCallback} processCallback - The callback to invoke when the two objects collide. Must return a boolean.
+ * @param {any} callbackContext - The scope in which to call the callbacks.
+ */
+var Collider = new Class({
+
+    initialize:
+
+    function Collider (world, overlapOnly, object1, object2, collideCallback, processCallback, callbackContext)
+    {
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.Collider#world
+         * @type {Phaser.Physics.Arcade.World}
+         * @since 3.0.0
+         */
+        this.world = world;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.Collider#name
+         * @type {string}
+         * @since 3.1.0
+         */
+        this.name = '';
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.Collider#active
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.active = true;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.Collider#overlapOnly
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.overlapOnly = overlapOnly;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.Collider#object1
+         * @type {ArcadeColliderType}
+         * @since 3.0.0
+         */
+        this.object1 = object1;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.Collider#object2
+         * @type {ArcadeColliderType}
+         * @since 3.0.0
+         */
+        this.object2 = object2;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.Collider#collideCallback
+         * @type {ArcadePhysicsCallback}
+         * @since 3.0.0
+         */
+        this.collideCallback = collideCallback;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.Collider#processCallback
+         * @type {ArcadePhysicsCallback}
+         * @since 3.0.0
+         */
+        this.processCallback = processCallback;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Physics.Arcade.Collider#callbackContext
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.callbackContext = callbackContext;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Collider#setName
+     * @since 3.1.0
+     *
+     * @param {string} name - [description]
+     *
+     * @return {Phaser.Physics.Arcade.Collider} [description]
+     */
+    setName: function (name)
+    {
+        this.name = name;
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Collider#update
+     * @since 3.0.0
+     */
+    update: function ()
+    {
+        this.world.collideObjects(
+            this.object1,
+            this.object2,
+            this.collideCallback,
+            this.processCallback,
+            this.callbackContext,
+            this.overlapOnly
+        );
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Collider#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.world.removeCollider(this);
+
+        this.active = false;
+
+        this.world = null;
+
+        this.object1 = null;
+        this.object2 = null;
+
+        this.collideCallback = null;
+        this.processCallback = null;
+        this.callbackContext = null;
+    }
+
+});
+
+module.exports = Collider;
+
+
+/***/ }),
+/* 232 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CircleContains = __webpack_require__(40);
+var Class = __webpack_require__(0);
+var CONST = __webpack_require__(35);
+var RadToDeg = __webpack_require__(172);
+var Rectangle = __webpack_require__(9);
+var RectangleContains = __webpack_require__(39);
+var Vector2 = __webpack_require__(3);
+
+/**
+ * @typedef {object} ArcadeBodyBounds
+ *
+ * @property {number} x - The left edge.
+ * @property {number} y - The upper edge.
+ * @property {number} right - The right edge.
+ * @property {number} bottom - The lower edge.
+ */
+
+/**
+ * @typedef {object} ArcadeBodyCollision
+ *
+ * @property {boolean} none - True if the Body is not colliding.
+ * @property {boolean} up - True if the Body is colliding on its upper edge.
+ * @property {boolean} down - True if the Body is colliding on its lower edge.
+ * @property {boolean} left - True if the Body is colliding on its left edge.
+ * @property {boolean} right - True if the Body is colliding on its right edge.
+ */
+
+/**
+ * @classdesc
+ * A Dynamic Arcade Body.
+ *
+ * Its static counterpart is {@link Phaser.Physics.Arcade.StaticBody}.
+ *
