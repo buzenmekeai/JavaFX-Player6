@@ -56432,3 +56432,218 @@ var Vector2 = __webpack_require__(3);
  *
  * Its static counterpart is {@link Phaser.Physics.Arcade.StaticBody}.
  *
+ * @class Body
+ * @memberof Phaser.Physics.Arcade
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Physics.Arcade.World} world - The Arcade Physics simulation this Body belongs to.
+ * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object this Body belongs to.
+ */
+var Body = new Class({
+
+    initialize:
+
+    function Body (world, gameObject)
+    {
+        var width = (gameObject.width) ? gameObject.width : 64;
+        var height = (gameObject.height) ? gameObject.height : 64;
+
+        /**
+         * The Arcade Physics simulation this Body belongs to.
+         *
+         * @name Phaser.Physics.Arcade.Body#world
+         * @type {Phaser.Physics.Arcade.World}
+         * @since 3.0.0
+         */
+        this.world = world;
+
+        /**
+         * The Game Object this Body belongs to.
+         *
+         * @name Phaser.Physics.Arcade.Body#gameObject
+         * @type {Phaser.GameObjects.GameObject}
+         * @since 3.0.0
+         */
+        this.gameObject = gameObject;
+
+        /**
+         * Transformations applied to this Body.
+         *
+         * @name Phaser.Physics.Arcade.Body#transform
+         * @type {object}
+         * @since 3.4.0
+         */
+        this.transform = {
+            x: gameObject.x,
+            y: gameObject.y,
+            rotation: gameObject.angle,
+            scaleX: gameObject.scaleX,
+            scaleY: gameObject.scaleY,
+            displayOriginX: gameObject.displayOriginX,
+            displayOriginY: gameObject.displayOriginY
+        };
+
+        /**
+         * Whether the Body's boundary is drawn to the debug display.
+         *
+         * @name Phaser.Physics.Arcade.Body#debugShowBody
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.debugShowBody = world.defaults.debugShowBody;
+
+        /**
+         * Whether the Body's velocity is drawn to the debug display.
+         *
+         * @name Phaser.Physics.Arcade.Body#debugShowVelocity
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.debugShowVelocity = world.defaults.debugShowVelocity;
+
+        /**
+         * The color of this Body on the debug display.
+         *
+         * @name Phaser.Physics.Arcade.Body#debugBodyColor
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.debugBodyColor = world.defaults.bodyDebugColor;
+
+        /**
+         * Whether this Body is updated by the physics simulation.
+         *
+         * @name Phaser.Physics.Arcade.Body#enable
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.enable = true;
+
+        /**
+         * Whether this Body's boundary is circular (true) or rectangular (false).
+         *
+         * @name Phaser.Physics.Arcade.Body#isCircle
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         * @see Phaser.Physics.Arcade.Body#setCircle
+         */
+        this.isCircle = false;
+
+        /**
+         * If this Body is circular, this is the unscaled radius of the Body's boundary, as set by setCircle(), in source pixels.
+         * The true radius is equal to `halfWidth`.
+         *
+         * @name Phaser.Physics.Arcade.Body#radius
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         * @see Phaser.Physics.Arcade.Body#setCircle
+         */
+        this.radius = 0;
+
+        /**
+         * The offset of this Body's position from its Game Object's position, in source pixels.
+         *
+         * @name Phaser.Physics.Arcade.Body#offset
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         * @see Phaser.Physics.Arcade.Body#setOffset
+         */
+        this.offset = new Vector2();
+
+        /**
+         * The position of this Body within the simulation.
+         *
+         * @name Phaser.Physics.Arcade.Body#position
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.position = new Vector2(gameObject.x, gameObject.y);
+
+        /**
+         * The position of this Body during the previous step.
+         *
+         * @name Phaser.Physics.Arcade.Body#prev
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.prev = new Vector2(gameObject.x, gameObject.y);
+
+        /**
+         * Whether this Body's `rotation` is affected by its angular acceleration and angular velocity.
+         *
+         * @name Phaser.Physics.Arcade.Body#allowRotation
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.allowRotation = true;
+
+        /**
+         * This body's rotation, in degrees, based on its angular acceleration and angular velocity.
+         * The Body's rotation controls the `angle` of its Game Object.
+         * It doesn't rotate the Body's boundary, which is always an axis-aligned rectangle or a circle.
+         *
+         * @name Phaser.Physics.Arcade.Body#rotation
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.rotation = gameObject.angle;
+
+        /**
+         * The Body's rotation, in degrees, during the previous step.
+         *
+         * @name Phaser.Physics.Arcade.Body#preRotation
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.preRotation = gameObject.angle;
+
+        /**
+         * The width of the Body's boundary, in pixels.
+         * If the Body is circular, this is also the Body's diameter.
+         *
+         * @name Phaser.Physics.Arcade.Body#width
+         * @type {number}
+         * @default 64
+         * @since 3.0.0
+         */
+        this.width = width;
+
+        /**
+         * The height of the Body's boundary, in pixels.
+         * If the Body is circular, this is also the Body's diameter.
+         *
+         * @name Phaser.Physics.Arcade.Body#height
+         * @type {number}
+         * @default 64
+         * @since 3.0.0
+         */
+        this.height = height;
+
+        /**
+         * The unscaled width of the Body, in source pixels, as set by setSize().
+         * The default is the width of the Body's Game Object's texture frame.
+         *
+         * @name Phaser.Physics.Arcade.Body#sourceWidth
+         * @type {number}
+         * @since 3.0.0
+         * @see Phaser.Physics.Arcade.Body#setSize
+         */
+        this.sourceWidth = width;
+
+        /**
+         * The unscaled height of the Body, in source pixels, as set by setSize().
+         * The default is the height of the Body's Game Object's texture frame.
+         *
+         * @name Phaser.Physics.Arcade.Body#sourceHeight
+         * @type {number}
+         * @since 3.0.0
+         * @see Phaser.Physics.Arcade.Body#setSize
+         */
+        this.sourceHeight = height;
+
+        if (gameObject.frame)
