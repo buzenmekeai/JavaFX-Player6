@@ -56647,3 +56647,221 @@ var Body = new Class({
         this.sourceHeight = height;
 
         if (gameObject.frame)
+        {
+            this.sourceWidth = gameObject.frame.realWidth;
+            this.sourceHeight = gameObject.frame.realHeight;
+        }
+
+        /**
+         * Half the Body's width, in pixels.
+         *
+         * @name Phaser.Physics.Arcade.Body#halfWidth
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.halfWidth = Math.abs(width / 2);
+
+        /**
+         * Half the Body's height, in pixels.
+         *
+         * @name Phaser.Physics.Arcade.Body#halfHeight
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.halfHeight = Math.abs(height / 2);
+
+        /**
+         * The center of the Body's boundary.
+         * The midpoint of its `position` (top-left corner) and its bottom-right corner.
+         *
+         * @name Phaser.Physics.Arcade.Body#center
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.center = new Vector2(gameObject.x + this.halfWidth, gameObject.y + this.halfHeight);
+
+        /**
+         * The Body's velocity, in pixels per second.
+         *
+         * @name Phaser.Physics.Arcade.Body#velocity
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.velocity = new Vector2();
+
+        /**
+         * The Body's calculated velocity, in pixels per second, at the last step.
+         *
+         * @name Phaser.Physics.Arcade.Body#newVelocity
+         * @type {Phaser.Math.Vector2}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.newVelocity = new Vector2();
+
+        /**
+         * The Body's absolute maximum change in position, in pixels per step.
+         *
+         * @name Phaser.Physics.Arcade.Body#deltaMax
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.deltaMax = new Vector2();
+
+        /**
+         * The Body's change in velocity, in pixels per second squared.
+         *
+         * @name Phaser.Physics.Arcade.Body#acceleration
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.acceleration = new Vector2();
+
+        /**
+         * Whether this Body's velocity is affected by its `drag`.
+         *
+         * @name Phaser.Physics.Arcade.Body#allowDrag
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.allowDrag = true;
+
+        /**
+         * Absolute loss of velocity due to movement, in pixels per second squared.
+         * The x and y components are applied separately.
+         *
+         * When `useDamping` is true, this is 1 minus the damping factor.
+         * A value of 1 means the Body loses no velocity.
+         * A value of 0.95 means the Body loses 5% of its velocity per step.
+         * A value of 0.5 means the Body loses 50% of its velocity per step.
+         *
+         * Drag is applied only when `acceleration` is zero.
+         *
+         * @name Phaser.Physics.Arcade.Body#drag
+         * @type {(Phaser.Math.Vector2|number)}
+         * @since 3.0.0
+         */
+        this.drag = new Vector2();
+
+        /**
+         * Whether this Body's position is affected by gravity (local or world).
+         *
+         * @name Phaser.Physics.Arcade.Body#allowGravity
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         * @see Phaser.Physics.Arcade.Body#gravity
+         * @see Phaser.Physics.Arcade.World#gravity
+         */
+        this.allowGravity = true;
+
+        /**
+         * Acceleration due to gravity (specific to this Body), in pixels per second squared.
+         * Total gravity is the sum of this vector and the simulation's `gravity`.
+         *
+         * @name Phaser.Physics.Arcade.Body#gravity
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         * @see Phaser.Physics.Arcade.World#gravity
+         */
+        this.gravity = new Vector2();
+
+        /**
+         * Rebound following a collision, relative to 1.
+         *
+         * @name Phaser.Physics.Arcade.Body#bounce
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.bounce = new Vector2();
+
+        /**
+         * Rebound following a collision with the world boundary, relative to 1.
+         * If null, `bounce` is used instead.
+         *
+         * @name Phaser.Physics.Arcade.Body#worldBounce
+         * @type {?Phaser.Math.Vector2}
+         * @default null
+         * @since 3.0.0
+         */
+        this.worldBounce = null;
+
+        //  If true this Body will dispatch events
+
+        /**
+         * Whether the simulation emits a `worldbounds` event when this Body collides with the world boundary (and `collideWorldBounds` is also true).
+         *
+         * @name Phaser.Physics.Arcade.Body#onWorldBounds
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         * @see Phaser.Physics.Arcade.World#event:worldbounds
+         */
+        this.onWorldBounds = false;
+
+        /**
+         * Whether the simulation emits a `collide` event when this Body collides with another.
+         *
+         * @name Phaser.Physics.Arcade.Body#onCollide
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         * @see Phaser.Physics.Arcade.World#event:collide
+         */
+        this.onCollide = false;
+
+        /**
+         * Whether the simulation emits an `overlap` event when this Body overlaps with another.
+         *
+         * @name Phaser.Physics.Arcade.Body#onOverlap
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         * @see Phaser.Physics.Arcade.World#event:overlap
+         */
+        this.onOverlap = false;
+
+        /**
+         * The Body's absolute maximum velocity, in pixels per second.
+         * The horizontal and vertical components are applied separately.
+         *
+         * @name Phaser.Physics.Arcade.Body#maxVelocity
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.maxVelocity = new Vector2(10000, 10000);
+
+        /**
+         * If this Body is `immovable` and in motion, `friction` is the proportion of this Body's motion received by the riding Body on each axis, relative to 1.
+         * The default value (1, 0) moves the riding Body horizontally in equal proportion to this Body and vertically not at all.
+         * The horizontal component (x) is applied only when two colliding Bodies are separated vertically.
+         * The vertical component (y) is applied only when two colliding Bodies are separated horizontally.
+         *
+         * @name Phaser.Physics.Arcade.Body#friction
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.friction = new Vector2(1, 0);
+
+        /**
+         * If this Body is using `drag` for deceleration this property controls how the drag is applied.
+         * If set to `true` drag will use a damping effect rather than a linear approach. If you are
+         * creating a game where the Body moves freely at any angle (i.e. like the way the ship moves in
+         * the game Asteroids) then you will get a far smoother and more visually correct deceleration
+         * by using damping, avoiding the axis-drift that is prone with linear deceleration.
+         *
+         * If you enable this property then you should use far smaller `drag` values than with linear, as
+         * they are used as a multiplier on the velocity. Values such as 0.95 will give a nice slow
+         * deceleration, where-as smaller values, such as 0.5 will stop an object almost immediately.
+         *
+         * @name Phaser.Physics.Arcade.Body#useDamping
+         * @type {boolean}
+         * @default false
+         * @since 3.10.0
+         */
+        this.useDamping = false;
+
+        /**
+         * The rate of change of this Body's `rotation`, in degrees per second.
+         *
