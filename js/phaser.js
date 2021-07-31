@@ -56865,3 +56865,252 @@ var Body = new Class({
         /**
          * The rate of change of this Body's `rotation`, in degrees per second.
          *
+         * @name Phaser.Physics.Arcade.Body#angularVelocity
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.angularVelocity = 0;
+
+        /**
+         * The Body's angular acceleration (change in angular velocity), in degrees per second squared.
+         *
+         * @name Phaser.Physics.Arcade.Body#angularAcceleration
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.angularAcceleration = 0;
+
+        /**
+         * Loss of angular velocity due to angular movement, in degrees per second.
+         *
+         * Angular drag is applied only when angular acceleration is zero.
+         *
+         * @name Phaser.Physics.Arcade.Body#angularDrag
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.angularDrag = 0;
+
+        /**
+         * The Body's maximum angular velocity, in degrees per second.
+         *
+         * @name Phaser.Physics.Arcade.Body#maxAngular
+         * @type {number}
+         * @default 1000
+         * @since 3.0.0
+         */
+        this.maxAngular = 1000;
+
+        /**
+         * The Body's inertia, relative to a default unit (1).
+         * With `bounce`, this affects the exchange of momentum (velocities) during collisions.
+         *
+         * @name Phaser.Physics.Arcade.Body#mass
+         * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.mass = 1;
+
+        /**
+         * The calculated angle of this Body's velocity vector, in degrees, during the last step.
+         *
+         * @name Phaser.Physics.Arcade.Body#angle
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.angle = 0;
+
+        /**
+         * The calculated magnitude of the Body's velocity, in pixels per second, during the last step.
+         *
+         * @name Phaser.Physics.Arcade.Body#speed
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.speed = 0;
+
+        /**
+         * The direction of the Body's velocity, as calculated during the last step.
+         * If the Body is moving on both axes (diagonally), this describes motion on the vertical axis only.
+         *
+         * @name Phaser.Physics.Arcade.Body#facing
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.facing = CONST.FACING_NONE;
+
+        /**
+         * Whether this Body can be moved by collisions with another Body.
+         *
+         * @name Phaser.Physics.Arcade.Body#immovable
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.immovable = false;
+
+        /**
+         * Whether the Body's position and rotation are affected by its velocity, acceleration, drag, and gravity.
+         *
+         * @name Phaser.Physics.Arcade.Body#moves
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.moves = true;
+
+        /**
+         * A flag disabling the default horizontal separation of colliding bodies.
+         * Pass your own `collideCallback` to the collider.
+         *
+         * @name Phaser.Physics.Arcade.Body#customSeparateX
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.customSeparateX = false;
+
+        /**
+         * A flag disabling the default vertical separation of colliding bodies.
+         * Pass your own `collideCallback` to the collider.
+         *
+         * @name Phaser.Physics.Arcade.Body#customSeparateY
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.customSeparateY = false;
+
+        /**
+         * The amount of horizontal overlap (before separation), if this Body is colliding with another.
+         *
+         * @name Phaser.Physics.Arcade.Body#overlapX
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.overlapX = 0;
+
+        /**
+         * The amount of vertical overlap (before separation), if this Body is colliding with another.
+         *
+         * @name Phaser.Physics.Arcade.Body#overlapY
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.overlapY = 0;
+
+        /**
+         * The amount of overlap (before separation), if this Body is circular and colliding with another circular body.
+         *
+         * @name Phaser.Physics.Arcade.Body#overlapR
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.overlapR = 0;
+
+        /**
+         * Whether this Body is overlapped with another and both have zero velocity.
+         *
+         * @name Phaser.Physics.Arcade.Body#embedded
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.embedded = false;
+
+        /**
+         * Whether this Body interacts with the world boundary.
+         *
+         * @name Phaser.Physics.Arcade.Body#collideWorldBounds
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.collideWorldBounds = false;
+
+        /**
+         * Whether this Body is checked for collisions and for which directions.
+         * You can set `checkCollision.none = false` to disable collision checks.
+         *
+         * @name Phaser.Physics.Arcade.Body#checkCollision
+         * @type {ArcadeBodyCollision}
+         * @since 3.0.0
+         */
+        this.checkCollision = { none: false, up: true, down: true, left: true, right: true };
+
+        /**
+         * Whether this Body is colliding with another and in which direction.
+         *
+         * @name Phaser.Physics.Arcade.Body#touching
+         * @type {ArcadeBodyCollision}
+         * @since 3.0.0
+         */
+        this.touching = { none: true, up: false, down: false, left: false, right: false };
+
+        /**
+         * Whether this Body was colliding with another during the last step, and in which direction.
+         *
+         * @name Phaser.Physics.Arcade.Body#wasTouching
+         * @type {ArcadeBodyCollision}
+         * @since 3.0.0
+         */
+        this.wasTouching = { none: true, up: false, down: false, left: false, right: false };
+
+        /**
+         * Whether this Body is colliding with a tile or the world boundary.
+         *
+         * @name Phaser.Physics.Arcade.Body#blocked
+         * @type {ArcadeBodyCollision}
+         * @since 3.0.0
+         */
+        this.blocked = { none: true, up: false, down: false, left: false, right: false };
+
+        /**
+         * Whether to automatically synchronize this Body's dimensions to the dimensions of its Game Object's visual bounds.
+         *
+         * @name Phaser.Physics.Arcade.Body#syncBounds
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Components.GetBounds#getBounds
+         */
+        this.syncBounds = false;
+
+        /**
+         * Whether this Body is being moved by the `moveTo` or `moveFrom` methods.
+         *
+         * @name Phaser.Physics.Arcade.Body#isMoving
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.isMoving = false;
+
+        /**
+         * Whether this Body's movement by `moveTo` or `moveFrom` will be stopped by collisions with other bodies.
+         *
+         * @name Phaser.Physics.Arcade.Body#stopVelocityOnCollide
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.stopVelocityOnCollide = true;
+
+        //  read-only
+
+        /**
+         * The Body's physics type (dynamic or static).
+         *
+         * @name Phaser.Physics.Arcade.Body#physicsType
+         * @type {integer}
+         * @readonly
+         * @since 3.0.0
