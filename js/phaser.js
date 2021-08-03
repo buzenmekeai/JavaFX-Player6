@@ -57114,3 +57114,229 @@ var Body = new Class({
          * @type {integer}
          * @readonly
          * @since 3.0.0
+         */
+        this.physicsType = CONST.DYNAMIC_BODY;
+
+        /**
+         * Whether the Body's position needs updating from its Game Object.
+         *
+         * @name Phaser.Physics.Arcade.Body#_reset
+         * @type {boolean}
+         * @private
+         * @default true
+         * @since 3.0.0
+         */
+        this._reset = true;
+
+        /**
+         * Cached horizontal scale of the Body's Game Object.
+         *
+         * @name Phaser.Physics.Arcade.Body#_sx
+         * @type {number}
+         * @private
+         * @since 3.0.0
+         */
+        this._sx = gameObject.scaleX;
+
+        /**
+         * Cached vertical scale of the Body's Game Object.
+         *
+         * @name Phaser.Physics.Arcade.Body#_sy
+         * @type {number}
+         * @private
+         * @since 3.0.0
+         */
+        this._sy = gameObject.scaleY;
+
+        /**
+         * The calculated change in the Body's horizontal position during the last step.
+         *
+         * @name Phaser.Physics.Arcade.Body#_dx
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.0.0
+         */
+        this._dx = 0;
+
+        /**
+         * The calculated change in the Body's vertical position during the last step.
+         *
+         * @name Phaser.Physics.Arcade.Body#_dy
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.0.0
+         */
+        this._dy = 0;
+
+        /**
+         * Stores the Game Object's bounds.
+         *
+         * @name Phaser.Physics.Arcade.Body#_bounds
+         * @type {Phaser.Geom.Rectangle}
+         * @private
+         * @since 3.0.0
+         */
+        this._bounds = new Rectangle();
+    },
+
+    /**
+     * Updates this Body's transform, dimensions, and position from its Game Object.
+     *
+     * @method Phaser.Physics.Arcade.Body#updateBounds
+     * @since 3.0.0
+     */
+    updateBounds: function ()
+    {
+        var sprite = this.gameObject;
+
+        //  Container?
+
+        var transform = this.transform;
+
+        if (sprite.parentContainer)
+        {
+            var matrix = sprite.getWorldTransformMatrix(this.world._tempMatrix, this.world._tempMatrix2);
+
+            transform.x = matrix.tx;
+            transform.y = matrix.ty;
+            transform.rotation = RadToDeg(matrix.rotation);
+            transform.scaleX = matrix.scaleX;
+            transform.scaleY = matrix.scaleY;
+            transform.displayOriginX = sprite.displayOriginX;
+            transform.displayOriginY = sprite.displayOriginY;
+        }
+        else
+        {
+            transform.x = sprite.x;
+            transform.y = sprite.y;
+            transform.rotation = sprite.angle;
+            transform.scaleX = sprite.scaleX;
+            transform.scaleY = sprite.scaleY;
+            transform.displayOriginX = sprite.displayOriginX;
+            transform.displayOriginY = sprite.displayOriginY;
+        }
+
+        var recalc = false;
+
+        if (this.syncBounds)
+        {
+            var b = sprite.getBounds(this._bounds);
+
+            this.width = b.width;
+            this.height = b.height;
+            recalc = true;
+        }
+        else
+        {
+            var asx = Math.abs(transform.scaleX);
+            var asy = Math.abs(transform.scaleY);
+
+            if (this._sx !== asx || this._sy !== asy)
+            {
+                this.width = this.sourceWidth * asx;
+                this.height = this.sourceHeight * asy;
+                this._sx = asx;
+                this._sy = asy;
+                recalc = true;
+            }
+        }
+
+        if (recalc)
+        {
+            this.halfWidth = Math.floor(this.width / 2);
+            this.halfHeight = Math.floor(this.height / 2);
+            this.updateCenter();
+        }
+    },
+
+    /**
+     * Updates the Body's `center` from its `position`, `width`, and `height`.
+     *
+     * @method Phaser.Physics.Arcade.Body#updateCenter
+     * @since 3.0.0
+     */
+    updateCenter: function ()
+    {
+        this.center.set(this.position.x + this.halfWidth, this.position.y + this.halfHeight);
+    },
+
+    /**
+     * Updates the Body.
+     *
+     * @method Phaser.Physics.Arcade.Body#update
+     * @fires Phaser.Physics.Arcade.World#worldbounds
+     * @since 3.0.0
+     *
+     * @param {number} delta - The delta time, in ms, elapsed since the last frame.
+     */
+    update: function (delta)
+    {
+        //  Store and reset collision flags
+        this.wasTouching.none = this.touching.none;
+        this.wasTouching.up = this.touching.up;
+        this.wasTouching.down = this.touching.down;
+        this.wasTouching.left = this.touching.left;
+        this.wasTouching.right = this.touching.right;
+
+        this.touching.none = true;
+        this.touching.up = false;
+        this.touching.down = false;
+        this.touching.left = false;
+        this.touching.right = false;
+
+        this.blocked.none = true;
+        this.blocked.up = false;
+        this.blocked.down = false;
+        this.blocked.left = false;
+        this.blocked.right = false;
+
+        this.overlapR = 0;
+        this.overlapX = 0;
+        this.overlapY = 0;
+
+        this.embedded = false;
+
+        //  Updates the transform values
+        this.updateBounds();
+
+        var sprite = this.transform;
+
+        this.position.x = sprite.x + sprite.scaleX * (this.offset.x - sprite.displayOriginX);
+        this.position.y = sprite.y + sprite.scaleY * (this.offset.y - sprite.displayOriginY);
+
+        this.updateCenter();
+
+        this.rotation = sprite.rotation;
+
+        this.preRotation = this.rotation;
+
+        if (this._reset)
+        {
+            this.prev.x = this.position.x;
+            this.prev.y = this.position.y;
+        }
+
+        if (this.moves)
+        {
+            this.world.updateMotion(this, delta);
+
+            var vx = this.velocity.x;
+            var vy = this.velocity.y;
+
+            this.newVelocity.set(vx * delta, vy * delta);
+
+            this.position.add(this.newVelocity);
+
+            this.updateCenter();
+
+            this.angle = Math.atan2(vy, vx);
+            this.speed = Math.sqrt(vx * vx + vy * vy);
+
+            //  Now the State update will throw collision checks at the Body
+            //  And finally we'll integrate the new position back to the Sprite in postUpdate
+
+            if (this.collideWorldBounds && this.checkWorldBounds() && this.onWorldBounds)
+            {
+                this.world.emit('worldbounds', this, this.blocked.up, this.blocked.down, this.blocked.left, this.blocked.right);
