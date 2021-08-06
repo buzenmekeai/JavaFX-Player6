@@ -57340,3 +57340,208 @@ var Body = new Class({
             if (this.collideWorldBounds && this.checkWorldBounds() && this.onWorldBounds)
             {
                 this.world.emit('worldbounds', this, this.blocked.up, this.blocked.down, this.blocked.left, this.blocked.right);
+            }
+        }
+
+        this._dx = this.position.x - this.prev.x;
+        this._dy = this.position.y - this.prev.y;
+    },
+
+    /**
+     * Feeds the Body results back into the parent Game Object.
+     *
+     * @method Phaser.Physics.Arcade.Body#postUpdate
+     * @since 3.0.0
+     *
+     * @param {boolean} resetDelta - Reset the delta properties?
+     */
+    postUpdate: function ()
+    {
+        this._dx = this.position.x - this.prev.x;
+        this._dy = this.position.y - this.prev.y;
+
+        if (this.moves)
+        {
+            if (this.deltaMax.x !== 0 && this._dx !== 0)
+            {
+                if (this._dx < 0 && this._dx < -this.deltaMax.x)
+                {
+                    this._dx = -this.deltaMax.x;
+                }
+                else if (this._dx > 0 && this._dx > this.deltaMax.x)
+                {
+                    this._dx = this.deltaMax.x;
+                }
+            }
+
+            if (this.deltaMax.y !== 0 && this._dy !== 0)
+            {
+                if (this._dy < 0 && this._dy < -this.deltaMax.y)
+                {
+                    this._dy = -this.deltaMax.y;
+                }
+                else if (this._dy > 0 && this._dy > this.deltaMax.y)
+                {
+                    this._dy = this.deltaMax.y;
+                }
+            }
+
+            this.gameObject.x += this._dx;
+            this.gameObject.y += this._dy;
+
+            this._reset = true;
+        }
+
+        if (this._dx < 0)
+        {
+            this.facing = CONST.FACING_LEFT;
+        }
+        else if (this._dx > 0)
+        {
+            this.facing = CONST.FACING_RIGHT;
+        }
+
+        if (this._dy < 0)
+        {
+            this.facing = CONST.FACING_UP;
+        }
+        else if (this._dy > 0)
+        {
+            this.facing = CONST.FACING_DOWN;
+        }
+
+        if (this.allowRotation)
+        {
+            this.gameObject.angle += this.deltaZ();
+        }
+
+        this.prev.x = this.position.x;
+        this.prev.y = this.position.y;
+    },
+
+    /**
+     * Checks for collisions between this Body and the world boundary and separates them.
+     *
+     * @method Phaser.Physics.Arcade.Body#checkWorldBounds
+     * @since 3.0.0
+     *
+     * @return {boolean} True if this Body is colliding with the world boundary.
+     */
+    checkWorldBounds: function ()
+    {
+        var pos = this.position;
+        var bounds = this.world.bounds;
+        var check = this.world.checkCollision;
+
+        var bx = (this.worldBounce) ? -this.worldBounce.x : -this.bounce.x;
+        var by = (this.worldBounce) ? -this.worldBounce.y : -this.bounce.y;
+
+        if (pos.x < bounds.x && check.left)
+        {
+            pos.x = bounds.x;
+            this.velocity.x *= bx;
+            this.blocked.left = true;
+            this.blocked.none = false;
+        }
+        else if (this.right > bounds.right && check.right)
+        {
+            pos.x = bounds.right - this.width;
+            this.velocity.x *= bx;
+            this.blocked.right = true;
+            this.blocked.none = false;
+        }
+
+        if (pos.y < bounds.y && check.up)
+        {
+            pos.y = bounds.y;
+            this.velocity.y *= by;
+            this.blocked.up = true;
+            this.blocked.none = false;
+        }
+        else if (this.bottom > bounds.bottom && check.down)
+        {
+            pos.y = bounds.bottom - this.height;
+            this.velocity.y *= by;
+            this.blocked.down = true;
+            this.blocked.none = false;
+        }
+
+        return !this.blocked.none;
+    },
+
+    /**
+     * Sets the offset of the Body's position from its Game Object's position.
+     *
+     * @method Phaser.Physics.Arcade.Body#setOffset
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal offset, in source pixels.
+     * @param {number} [y=x] - The vertical offset, in source pixels.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setOffset: function (x, y)
+    {
+        if (y === undefined) { y = x; }
+
+        this.offset.set(x, y);
+
+        return this;
+    },
+
+    /**
+     * Sizes and positions this Body's boundary, as a rectangle.
+     * Modifies the Body `offset` if `center` is true (the default).
+     * Resets the width and height to match current frame, if no width and height provided and a frame is found.
+     *
+     * @method Phaser.Physics.Arcade.Body#setSize
+     * @since 3.0.0
+     *
+     * @param {integer} [width] - The width of the Body in pixels. Cannot be zero. If not given, and the parent Game Object has a frame, it will use the frame width.
+     * @param {integer} [height] - The height of the Body in pixels. Cannot be zero. If not given, and the parent Game Object has a frame, it will use the frame height.
+     * @param {boolean} [center=true] - Modify the Body's `offset`, placing the Body's center on its Game Object's center. Only works if the Game Object has the `getCenter` method.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setSize: function (width, height, center)
+    {
+        if (center === undefined) { center = true; }
+
+        var gameObject = this.gameObject;
+
+        if (!width && gameObject.frame)
+        {
+            width = gameObject.frame.realWidth;
+        }
+
+        if (!height && gameObject.frame)
+        {
+            height = gameObject.frame.realHeight;
+        }
+
+        this.sourceWidth = width;
+        this.sourceHeight = height;
+
+        this.width = this.sourceWidth * this._sx;
+        this.height = this.sourceHeight * this._sy;
+
+        this.halfWidth = Math.floor(this.width / 2);
+        this.halfHeight = Math.floor(this.height / 2);
+
+        this.updateCenter();
+
+        if (center && gameObject.getCenter)
+        {
+            var ox = gameObject.displayWidth / 2;
+            var oy = gameObject.displayHeight / 2;
+
+            this.offset.set(ox - this.halfWidth, oy - this.halfHeight);
+        }
+
+        this.isCircle = false;
+        this.radius = 0;
+
+        return this;
+    },
+
+    /**
