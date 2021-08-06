@@ -57752,3 +57752,216 @@ var Body = new Class({
     {
         return this._dx;
     },
+
+    /**
+     * The change in this Body's vertical position from the previous step.
+     * This value is set during the Body's update phase.
+     *
+     * @method Phaser.Physics.Arcade.Body#deltaY
+     * @since 3.0.0
+     *
+     * @return {number} The delta value.
+     */
+    deltaY: function ()
+    {
+        return this._dy;
+    },
+
+    /**
+     * The change in this Body's rotation from the previous step, in degrees.
+     *
+     * @method Phaser.Physics.Arcade.Body#deltaZ
+     * @since 3.0.0
+     *
+     * @return {number} The delta value.
+     */
+    deltaZ: function ()
+    {
+        return this.rotation - this.preRotation;
+    },
+
+    /**
+     * Disables this Body and marks it for deletion by the simulation.
+     *
+     * @method Phaser.Physics.Arcade.Body#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.enable = false;
+
+        this.world.pendingDestroy.set(this);
+    },
+
+    /**
+     * Draws this Body's boundary and velocity, if enabled.
+     *
+     * @method Phaser.Physics.Arcade.Body#drawDebug
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Graphics} graphic - The Graphics object to draw on.
+     */
+    drawDebug: function (graphic)
+    {
+        var pos = this.position;
+
+        var x = pos.x + this.halfWidth;
+        var y = pos.y + this.halfHeight;
+
+        if (this.debugShowBody)
+        {
+            graphic.lineStyle(1, this.debugBodyColor);
+
+            if (this.isCircle)
+            {
+                graphic.strokeCircle(x, y, this.width / 2);
+            }
+            else
+            {
+                graphic.strokeRect(pos.x, pos.y, this.width, this.height);
+            }
+        }
+
+        if (this.debugShowVelocity)
+        {
+            graphic.lineStyle(1, this.world.defaults.velocityDebugColor, 1);
+            graphic.lineBetween(x, y, x + this.velocity.x / 2, y + this.velocity.y / 2);
+        }
+    },
+
+    /**
+     * Whether this Body will be drawn to the debug display.
+     *
+     * @method Phaser.Physics.Arcade.Body#willDrawDebug
+     * @since 3.0.0
+     *
+     * @return {boolean} True if either `debugShowBody` or `debugShowVelocity` are enabled.
+     */
+    willDrawDebug: function ()
+    {
+        return (this.debugShowBody || this.debugShowVelocity);
+    },
+
+    /**
+     * Sets whether this Body collides with the world boundary.
+     *
+     * @method Phaser.Physics.Arcade.Body#setCollideWorldBounds
+     * @since 3.0.0
+     *
+     * @param {boolean} [value=true] - True (collisions) or false (no collisions).
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setCollideWorldBounds: function (value)
+    {
+        if (value === undefined) { value = true; }
+
+        this.collideWorldBounds = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's velocity.
+     *
+     * @method Phaser.Physics.Arcade.Body#setVelocity
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal velocity, in pixels per second.
+     * @param {number} [y=x] - The vertical velocity, in pixels per second.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setVelocity: function (x, y)
+    {
+        this.velocity.set(x, y);
+
+        this.speed = Math.sqrt(x * x + y * y);
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's horizontal velocity.
+     *
+     * @method Phaser.Physics.Arcade.Body#setVelocityX
+     * @since 3.0.0
+     *
+     * @param {number} value - The velocity, in pixels per second.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setVelocityX: function (value)
+    {
+        this.velocity.x = value;
+
+        var vx = value;
+        var vy = this.velocity.y;
+
+        this.speed = Math.sqrt(vx * vx + vy * vy);
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's vertical velocity.
+     *
+     * @method Phaser.Physics.Arcade.Body#setVelocityY
+     * @since 3.0.0
+     *
+     * @param {number} value - The velocity, in pixels per second.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setVelocityY: function (value)
+    {
+        this.velocity.y = value;
+
+        var vx = this.velocity.x;
+        var vy = value;
+
+        this.speed = Math.sqrt(vx * vx + vy * vy);
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's maximum velocity.
+     *
+     * @method Phaser.Physics.Arcade.Body#setMaxVelocity
+     * @since 3.10.0
+     *
+     * @param {number} x - The horizontal velocity, in pixels per second.
+     * @param {number} [y=x] - The vertical velocity, in pixels per second.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setMaxVelocity: function (x, y)
+    {
+        this.maxVelocity.set(x, y);
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's bounce.
+     *
+     * @method Phaser.Physics.Arcade.Body#setBounce
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal bounce, relative to 1.
+     * @param {number} y - The vertical bounce, relative to 1.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setBounce: function (x, y)
+    {
+        this.bounce.set(x, y);
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's horizontal bounce.
+     *
+     * @method Phaser.Physics.Arcade.Body#setBounceX
