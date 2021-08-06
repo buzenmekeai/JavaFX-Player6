@@ -57545,3 +57545,210 @@ var Body = new Class({
     },
 
     /**
+     * Sizes and positions this Body's boundary, as a circle.
+     *
+     * @method Phaser.Physics.Arcade.Body#setCircle
+     * @since 3.0.0
+     *
+     * @param {number} radius - The radius of the Body, in source pixels.
+     * @param {number} [offsetX] - The horizontal offset of the Body from its Game Object, in source pixels.
+     * @param {number} [offsetY] - The vertical offset of the Body from its Game Object, in source pixels.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setCircle: function (radius, offsetX, offsetY)
+    {
+        if (offsetX === undefined) { offsetX = this.offset.x; }
+        if (offsetY === undefined) { offsetY = this.offset.y; }
+
+        if (radius > 0)
+        {
+            this.isCircle = true;
+            this.radius = radius;
+
+            this.sourceWidth = radius * 2;
+            this.sourceHeight = radius * 2;
+
+            this.width = this.sourceWidth * this._sx;
+            this.height = this.sourceHeight * this._sy;
+
+            this.halfWidth = Math.floor(this.width / 2);
+            this.halfHeight = Math.floor(this.height / 2);
+
+            this.offset.set(offsetX, offsetY);
+
+            this.updateCenter();
+        }
+        else
+        {
+            this.isCircle = false;
+        }
+
+        return this;
+    },
+
+    /**
+     * Resets this Body to the given coordinates. Also positions its parent Game Object to the same coordinates.
+     * If the Body had any velocity or acceleration it is lost as a result of calling this.
+     *
+     * @method Phaser.Physics.Arcade.Body#reset
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal position to place the Game Object and Body.
+     * @param {number} y - The vertical position to place the Game Object and Body.
+     */
+    reset: function (x, y)
+    {
+        this.stop();
+
+        var gameObject = this.gameObject;
+
+        gameObject.setPosition(x, y);
+
+        gameObject.getTopLeft(this.position);
+
+        this.prev.copy(this.position);
+
+        this.rotation = gameObject.angle;
+        this.preRotation = gameObject.angle;
+
+        this.updateBounds();
+        this.updateCenter();
+    },
+
+    /**
+     * Sets acceleration, velocity, and speed to zero.
+     *
+     * @method Phaser.Physics.Arcade.Body#stop
+     * @since 3.0.0
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    stop: function ()
+    {
+        this.velocity.set(0);
+        this.acceleration.set(0);
+        this.speed = 0;
+        this.angularVelocity = 0;
+        this.angularAcceleration = 0;
+
+        return this;
+    },
+
+    /**
+     * Copies the coordinates of this Body's edges into an object.
+     *
+     * @method Phaser.Physics.Arcade.Body#getBounds
+     * @since 3.0.0
+     *
+     * @param {ArcadeBodyBounds} obj - An object to copy the values into.
+     *
+     * @return {ArcadeBodyBounds} - An object with {x, y, right, bottom}.
+     */
+    getBounds: function (obj)
+    {
+        obj.x = this.x;
+        obj.y = this.y;
+        obj.right = this.right;
+        obj.bottom = this.bottom;
+
+        return obj;
+    },
+
+    /**
+     * Tests if the coordinates are within this Body's boundary.
+     *
+     * @method Phaser.Physics.Arcade.Body#hitTest
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal coordinate.
+     * @param {number} y - The vertical coordinate.
+     *
+     * @return {boolean} True if (x, y) is within this Body.
+     */
+    hitTest: function (x, y)
+    {
+        return (this.isCircle) ? CircleContains(this, x, y) : RectangleContains(this, x, y);
+    },
+
+    /**
+     * Whether this Body is touching a tile or the world boundary while moving down.
+     *
+     * @method Phaser.Physics.Arcade.Body#onFloor
+     * @since 3.0.0
+     * @see Phaser.Physics.Arcade.Body#blocked
+     *
+     * @return {boolean} True if touching.
+     */
+    onFloor: function ()
+    {
+        return this.blocked.down;
+    },
+
+    /**
+     * Whether this Body is touching a tile or the world boundary while moving up.
+     *
+     * @method Phaser.Physics.Arcade.Body#onCeiling
+     * @since 3.0.0
+     * @see Phaser.Physics.Arcade.Body#blocked
+     *
+     * @return {boolean} True if touching.
+     */
+    onCeiling: function ()
+    {
+        return this.blocked.up;
+    },
+
+    /**
+     * Whether this Body is touching a tile or the world boundary while moving left or right.
+     *
+     * @method Phaser.Physics.Arcade.Body#onWall
+     * @since 3.0.0
+     * @see Phaser.Physics.Arcade.Body#blocked
+     *
+     * @return {boolean} True if touching.
+     */
+    onWall: function ()
+    {
+        return (this.blocked.left || this.blocked.right);
+    },
+
+    /**
+     * The absolute (non-negative) change in this Body's horizontal position from the previous step.
+     *
+     * @method Phaser.Physics.Arcade.Body#deltaAbsX
+     * @since 3.0.0
+     *
+     * @return {number} The delta value.
+     */
+    deltaAbsX: function ()
+    {
+        return (this._dx > 0) ? this._dx : -this._dx;
+    },
+
+    /**
+     * The absolute (non-negative) change in this Body's vertical position from the previous step.
+     *
+     * @method Phaser.Physics.Arcade.Body#deltaAbsY
+     * @since 3.0.0
+     *
+     * @return {number} The delta value.
+     */
+    deltaAbsY: function ()
+    {
+        return (this._dy > 0) ? this._dy : -this._dy;
+    },
+
+    /**
+     * The change in this Body's horizontal position from the previous step.
+     * This value is set during the Body's update phase.
+     *
+     * @method Phaser.Physics.Arcade.Body#deltaX
+     * @since 3.0.0
+     *
+     * @return {number} The delta value.
+     */
+    deltaX: function ()
+    {
+        return this._dx;
+    },
