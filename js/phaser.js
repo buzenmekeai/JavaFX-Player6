@@ -57965,3 +57965,225 @@ var Body = new Class({
      * Sets the Body's horizontal bounce.
      *
      * @method Phaser.Physics.Arcade.Body#setBounceX
+     * @since 3.0.0
+     *
+     * @param {number} value - The bounce, relative to 1.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setBounceX: function (value)
+    {
+        this.bounce.x = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's vertical bounce.
+     *
+     * @method Phaser.Physics.Arcade.Body#setBounceY
+     * @since 3.0.0
+     *
+     * @param {number} value - The bounce, relative to 1.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setBounceY: function (value)
+    {
+        this.bounce.y = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's acceleration.
+     *
+     * @method Phaser.Physics.Arcade.Body#setAcceleration
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal component, in pixels per second squared.
+     * @param {number} y - The vertical component, in pixels per second squared.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setAcceleration: function (x, y)
+    {
+        this.acceleration.set(x, y);
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's horizontal acceleration.
+     *
+     * @method Phaser.Physics.Arcade.Body#setAccelerationX
+     * @since 3.0.0
+     *
+     * @param {number} value - The acceleration, in pixels per second squared.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setAccelerationX: function (value)
+    {
+        this.acceleration.x = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's vertical acceleration.
+     *
+     * @method Phaser.Physics.Arcade.Body#setAccelerationY
+     * @since 3.0.0
+     *
+     * @param {number} value - The acceleration, in pixels per second squared.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setAccelerationY: function (value)
+    {
+        this.acceleration.y = value;
+
+        return this;
+    },
+
+    /**
+     * Enables or disables drag.
+     *
+     * @method Phaser.Physics.Arcade.Body#setAllowDrag
+     * @since 3.9.0
+     * @see Phaser.Physics.Arcade.Body#allowDrag
+     *
+     * @param {boolean} [value=true] - `true` to allow drag on this body, or `false` to disable it.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setAllowDrag: function (value)
+    {
+        if (value === undefined) { value = true; }
+
+        this.allowDrag = value;
+
+        return this;
+    },
+
+    /**
+     * Enables or disables gravity's effect on this Body.
+     *
+     * @method Phaser.Physics.Arcade.Body#setAllowGravity
+     * @since 3.9.0
+     * @see Phaser.Physics.Arcade.Body#allowGravity
+     *
+     * @param {boolean} [value=true] - `true` to allow gravity on this body, or `false` to disable it.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setAllowGravity: function (value)
+    {
+        if (value === undefined) { value = true; }
+
+        this.allowGravity = value;
+
+        return this;
+    },
+
+    /**
+     * Enables or disables rotation.
+     *
+     * @method Phaser.Physics.Arcade.Body#setAllowRotation
+     * @since 3.9.0
+     * @see Phaser.Physics.Arcade.Body#allowRotation
+     *
+     * @param {boolean} [value=true] - `true` to allow rotation on this body, or `false` to disable it.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setAllowRotation: function (value)
+    {
+        if (value === undefined) { value = true; }
+
+        this.allowRotation = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's drag.
+     *
+     * @method Phaser.Physics.Arcade.Body#setDrag
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal component, in pixels per second squared.
+     * @param {number} y - The vertical component, in pixels per second squared.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setDrag: function (x, y)
+    {
+        this.drag.set(x, y);
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's horizontal drag.
+     *
+     * @method Phaser.Physics.Arcade.Body#setDragX
+     * @since 3.0.0
+     *
+     * @param {number} value - The drag, in pixels per second squared.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setDragX: function (value)
+    {
+        this.drag.x = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's vertical drag.
+     *
+     * @method Phaser.Physics.Arcade.Body#setDragY
+     * @since 3.0.0
+     *
+     * @param {number} value - The drag, in pixels per second squared.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setDragY: function (value)
+    {
+        this.drag.y = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's gravity.
+     *
+     * @method Phaser.Physics.Arcade.Body#setGravity
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal component, in pixels per second squared.
+     * @param {number} y - The vertical component, in pixels per second squared.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setGravity: function (x, y)
+    {
+        this.gravity.set(x, y);
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's horizontal gravity.
+     *
+     * @method Phaser.Physics.Arcade.Body#setGravityX
+     * @since 3.0.0
+     *
+     * @param {number} value - The gravity, in pixels per second squared.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
