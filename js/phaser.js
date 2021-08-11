@@ -58187,3 +58187,245 @@ var Body = new Class({
      *
      * @return {Phaser.Physics.Arcade.Body} This Body object.
      */
+    setGravityX: function (value)
+    {
+        this.gravity.x = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's vertical gravity.
+     *
+     * @method Phaser.Physics.Arcade.Body#setGravityY
+     * @since 3.0.0
+     *
+     * @param {number} value - The gravity, in pixels per second squared.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setGravityY: function (value)
+    {
+        this.gravity.y = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's friction.
+     *
+     * @method Phaser.Physics.Arcade.Body#setFriction
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal component, relative to 1.
+     * @param {number} y - The vertical component, relative to 1.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setFriction: function (x, y)
+    {
+        this.friction.set(x, y);
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's horizontal friction.
+     *
+     * @method Phaser.Physics.Arcade.Body#setFrictionX
+     * @since 3.0.0
+     *
+     * @param {number} value - The friction value, relative to 1.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setFrictionX: function (value)
+    {
+        this.friction.x = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's vertical friction.
+     *
+     * @method Phaser.Physics.Arcade.Body#setFrictionY
+     * @since 3.0.0
+     *
+     * @param {number} value - The friction value, relative to 1.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setFrictionY: function (value)
+    {
+        this.friction.y = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's angular velocity.
+     *
+     * @method Phaser.Physics.Arcade.Body#setAngularVelocity
+     * @since 3.0.0
+     *
+     * @param {number} value - The velocity, in degrees per second.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setAngularVelocity: function (value)
+    {
+        this.angularVelocity = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's angular acceleration.
+     *
+     * @method Phaser.Physics.Arcade.Body#setAngularAcceleration
+     * @since 3.0.0
+     *
+     * @param {number} value - The acceleration, in degrees per second squared.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setAngularAcceleration: function (value)
+    {
+        this.angularAcceleration = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's angular drag.
+     *
+     * @method Phaser.Physics.Arcade.Body#setAngularDrag
+     * @since 3.0.0
+     *
+     * @param {number} value - The drag, in degrees per second squared.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setAngularDrag: function (value)
+    {
+        this.angularDrag = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's mass.
+     *
+     * @method Phaser.Physics.Arcade.Body#setMass
+     * @since 3.0.0
+     *
+     * @param {number} value - The mass value, relative to 1.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setMass: function (value)
+    {
+        this.mass = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's `immovable` property.
+     *
+     * @method Phaser.Physics.Arcade.Body#setImmovable
+     * @since 3.0.0
+     *
+     * @param {boolean} [value=true] - The value to assign to `immovable`.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setImmovable: function (value)
+    {
+        if (value === undefined) { value = true; }
+
+        this.immovable = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the Body's `enable` property.
+     *
+     * @method Phaser.Physics.Arcade.Body#setEnable
+     * @since 3.15.0
+     *
+     * @param {boolean} [value=true] - The value to assign to `enable`.
+     *
+     * @return {Phaser.Physics.Arcade.Body} This Body object.
+     */
+    setEnable: function (value)
+    {
+        if (value === undefined) { value = true; }
+
+        this.enable = value;
+
+        return this;
+    },
+
+    /**
+     * The Body's horizontal position (left edge).
+     *
+     * @name Phaser.Physics.Arcade.Body#x
+     * @type {number}
+     * @since 3.0.0
+     */
+    x: {
+
+        get: function ()
+        {
+            return this.position.x;
+        },
+
+        set: function (value)
+        {
+            this.position.x = value;
+        }
+
+    },
+
+    /**
+     * The Body's vertical position (top edge).
+     *
+     * @name Phaser.Physics.Arcade.Body#y
+     * @type {number}
+     * @since 3.0.0
+     */
+    y: {
+
+        get: function ()
+        {
+            return this.position.y;
+        },
+
+        set: function (value)
+        {
+            this.position.y = value;
+        }
+
+    },
+
+    /**
+     * The left edge of the Body's boundary. Identical to x.
+     *
+     * @name Phaser.Physics.Arcade.Body#left
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    left: {
+
+        get: function ()
+        {
+            return this.position.x;
+        }
+
+    },
+
+    /**
