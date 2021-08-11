@@ -58429,3 +58429,220 @@ var Body = new Class({
     },
 
     /**
+     * The right edge of the Body's boundary.
+     *
+     * @name Phaser.Physics.Arcade.Body#right
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    right: {
+
+        get: function ()
+        {
+            return this.position.x + this.width;
+        }
+
+    },
+
+    /**
+     * The top edge of the Body's boundary. Identical to y.
+     *
+     * @name Phaser.Physics.Arcade.Body#top
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    top: {
+
+        get: function ()
+        {
+            return this.position.y;
+        }
+
+    },
+
+    /**
+     * The bottom edge of this Body's boundary.
+     *
+     * @name Phaser.Physics.Arcade.Body#bottom
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    bottom: {
+
+        get: function ()
+        {
+            return this.position.y + this.height;
+        }
+
+    }
+
+});
+
+module.exports = Body;
+
+
+/***/ }),
+/* 233 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Body = __webpack_require__(232);
+var Clamp = __webpack_require__(23);
+var Class = __webpack_require__(0);
+var Collider = __webpack_require__(231);
+var CONST = __webpack_require__(35);
+var DistanceBetween = __webpack_require__(52);
+var EventEmitter = __webpack_require__(11);
+var FuzzyEqual = __webpack_require__(248);
+var FuzzyGreaterThan = __webpack_require__(247);
+var FuzzyLessThan = __webpack_require__(246);
+var GetOverlapX = __webpack_require__(230);
+var GetOverlapY = __webpack_require__(229);
+var GetValue = __webpack_require__(4);
+var ProcessQueue = __webpack_require__(228);
+var ProcessTileCallbacks = __webpack_require__(514);
+var Rectangle = __webpack_require__(9);
+var RTree = __webpack_require__(227);
+var SeparateTile = __webpack_require__(513);
+var SeparateX = __webpack_require__(508);
+var SeparateY = __webpack_require__(507);
+var Set = __webpack_require__(95);
+var StaticBody = __webpack_require__(225);
+var TileIntersectsBody = __webpack_require__(226);
+var TransformMatrix = __webpack_require__(38);
+var Vector2 = __webpack_require__(3);
+var Wrap = __webpack_require__(53);
+
+/**
+ * @event Phaser.Physics.Arcade.World#pause
+ */
+
+/**
+ * @event Phaser.Physics.Arcade.World#resume
+ */
+
+/**
+ * @event Phaser.Physics.Arcade.World#collide
+ * @param {Phaser.GameObjects.GameObject} gameObject1
+ * @param {Phaser.GameObjects.GameObject} gameObject2
+ * @param {Phaser.Physics.Arcade.Body|Phaser.Physics.Arcade.StaticBody} body1
+ * @param {Phaser.Physics.Arcade.Body|Phaser.Physics.Arcade.StaticBody} body2
+ */
+
+/**
+ * @event Phaser.Physics.Arcade.World#overlap
+ * @param {Phaser.GameObjects.GameObject} gameObject1
+ * @param {Phaser.GameObjects.GameObject} gameObject2
+ * @param {Phaser.Physics.Arcade.Body|Phaser.Physics.Arcade.StaticBody} body1
+ * @param {Phaser.Physics.Arcade.Body|Phaser.Physics.Arcade.StaticBody} body2
+ */
+
+/**
+ * @event Phaser.Physics.Arcade.World#worldbounds
+ * @param {Phaser.Physics.Arcade.Body} body
+ * @param {boolean} up
+ * @param {boolean} down
+ * @param {boolean} left
+ * @param {boolean} right
+ */
+
+/**
+ * @typedef {object} ArcadeWorldConfig
+ *
+ * @property {number} [fps=60] - Sets {@link Phaser.Physics.Arcade.World#fps}.
+ * @property {number} [timeScale=1] - Sets {@link Phaser.Physics.Arcade.World#timeScale}.
+ * @property {object} [gravity] - Sets {@link Phaser.Physics.Arcade.World#gravity}.
+ * @property {number} [gravity.x=0] - The horizontal world gravity value.
+ * @property {number} [gravity.y=0] - The vertical world gravity value.
+ * @property {number} [x=0] - Sets {@link Phaser.Physics.Arcade.World#bounds bounds.x}.
+ * @property {number} [y=0] - Sets {@link Phaser.Physics.Arcade.World#bounds bounds.y}.
+ * @property {number} [width=0] - Sets {@link Phaser.Physics.Arcade.World#bounds bounds.width}.
+ * @property {number} [height=0] - Sets {@link Phaser.Physics.Arcade.World#bounds bounds.height}.
+ * @property {object} [checkCollision] - Sets {@link Phaser.Physics.Arcade.World#checkCollision}.
+ * @property {boolean} [checkCollision.up=true] - Should bodies collide with the top of the world bounds?
+ * @property {boolean} [checkCollision.down=true] - Should bodies collide with the bottom of the world bounds?
+ * @property {boolean} [checkCollision.left=true] - Should bodies collide with the left of the world bounds?
+ * @property {boolean} [checkCollision.right=true] - Should bodies collide with the right of the world bounds?
+ * @property {number} [overlapBias=4] - Sets {@link Phaser.Physics.Arcade.World#OVERLAP_BIAS}.
+ * @property {number} [tileBias=16] - Sets {@link Phaser.Physics.Arcade.World#TILE_BIAS}.
+ * @property {boolean} [forceX=false] - Sets {@link Phaser.Physics.Arcade.World#forceX}.
+ * @property {boolean} [isPaused=false] - Sets {@link Phaser.Physics.Arcade.World#isPaused}.
+ * @property {boolean} [debug=false] - Sets {@link Phaser.Physics.Arcade.World#debug}.
+ * @property {boolean} [debugShowBody=true] - Sets {@link Phaser.Physics.Arcade.World#defaults debugShowBody}.
+ * @property {boolean} [debugShowStaticBody=true] - Sets {@link Phaser.Physics.Arcade.World#defaults debugShowStaticBody}.
+ * @property {boolean} [debugShowVelocity=true] - Sets {@link Phaser.Physics.Arcade.World#defaults debugShowStaticBody}.
+ * @property {number} [debugBodyColor=0xff00ff] - Sets {@link Phaser.Physics.Arcade.World#defaults debugBodyColor}.
+ * @property {number} [debugStaticBodyColor=0x0000ff] - Sets {@link Phaser.Physics.Arcade.World#defaults debugStaticBodyColor}.
+ * @property {number} [debugVelocityColor=0x00ff00] - Sets {@link Phaser.Physics.Arcade.World#defaults debugVelocityColor}.
+ * @property {number} [maxEntries=16] - Sets {@link Phaser.Physics.Arcade.World#maxEntries}.
+ * @property {boolean} [useTree=true] - Sets {@link Phaser.Physics.Arcade.World#useTree}.
+ */
+
+/**
+ * @typedef {object} CheckCollisionObject
+ *
+ * @property {boolean} up - [description]
+ * @property {boolean} down - [description]
+ * @property {boolean} left - [description]
+ * @property {boolean} right - [description]
+ */
+
+/**
+ * @typedef {object} ArcadeWorldDefaults
+ *
+ * @property {boolean} debugShowBody - [description]
+ * @property {boolean} debugShowStaticBody - [description]
+ * @property {boolean} debugShowVelocity - [description]
+ * @property {number} bodyDebugColor - [description]
+ * @property {number} staticBodyDebugColor - [description]
+ * @property {number} velocityDebugColor - [description]
+ */
+
+/**
+ * @typedef {object} ArcadeWorldTreeMinMax
+ *
+ * @property {number} minX - [description]
+ * @property {number} minY - [description]
+ * @property {number} maxX - [description]
+ * @property {number} maxY - [description]
+ */
+
+/**
+ * An Arcade Physics Collider Type.
+ *
+ * @typedef {(
+ * Phaser.GameObjects.GameObject|
+ * Phaser.GameObjects.Group|
+ * Phaser.Physics.Arcade.Sprite|
+ * Phaser.Physics.Arcade.Image|
+ * Phaser.Physics.Arcade.StaticGroup|
+ * Phaser.Physics.Arcade.Group|
+ * Phaser.Tilemaps.DynamicTilemapLayer|
+ * Phaser.Tilemaps.StaticTilemapLayer|
+ * Phaser.GameObjects.GameObject[]|
+ * Phaser.Physics.Arcade.Sprite[]|
+ * Phaser.Physics.Arcade.Image[]|
+ * Phaser.Physics.Arcade.StaticGroup[]|
+ * Phaser.Physics.Arcade.Group[]|
+ * Phaser.Tilemaps.DynamicTilemapLayer[]|
+ * Phaser.Tilemaps.StaticTilemapLayer[]
+ * )} ArcadeColliderType
+ */
+
+/**
+ * @classdesc
+ * The Arcade Physics World.
+ *
+ * The World is responsible for creating, managing, colliding and updating all of the bodies within it.
+ *
+ * An instance of the World belongs to a Phaser.Scene and is accessed via the property `physics.world`.
+ *
+ * @class World
