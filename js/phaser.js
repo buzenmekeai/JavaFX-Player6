@@ -58646,3 +58646,219 @@ var Wrap = __webpack_require__(53);
  * An instance of the World belongs to a Phaser.Scene and is accessed via the property `physics.world`.
  *
  * @class World
+ * @extends Phaser.Events.EventEmitter
+ * @memberof Phaser.Physics.Arcade
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this World instance belongs.
+ * @param {ArcadeWorldConfig} config - An Arcade Physics Configuration object.
+ */
+var World = new Class({
+
+    Extends: EventEmitter,
+
+    initialize:
+
+    function World (scene, config)
+    {
+        EventEmitter.call(this);
+
+        /**
+         * The Scene this simulation belongs to.
+         *
+         * @name Phaser.Physics.Arcade.World#scene
+         * @type {Phaser.Scene}
+         * @since 3.0.0
+         */
+        this.scene = scene;
+
+        /**
+         * Dynamic Bodies in this simulation.
+         *
+         * @name Phaser.Physics.Arcade.World#bodies
+         * @type {Phaser.Structs.Set.<Phaser.Physics.Arcade.Body>}
+         * @since 3.0.0
+         */
+        this.bodies = new Set();
+
+        /**
+         * Static Bodies in this simulation.
+         *
+         * @name Phaser.Physics.Arcade.World#staticBodies
+         * @type {Phaser.Structs.Set.<Phaser.Physics.Arcade.StaticBody>}
+         * @since 3.0.0
+         */
+        this.staticBodies = new Set();
+
+        /**
+         * Static Bodies marked for deletion.
+         *
+         * @name Phaser.Physics.Arcade.World#pendingDestroy
+         * @type {Phaser.Structs.Set.<(Phaser.Physics.Arcade.Body|Phaser.Physics.Arcade.StaticBody)>}
+         * @since 3.1.0
+         */
+        this.pendingDestroy = new Set();
+
+        /**
+         * This simulation's collision processors.
+         *
+         * @name Phaser.Physics.Arcade.World#colliders
+         * @type {Phaser.Structs.ProcessQueue.<Phaser.Physics.Arcade.Collider>}
+         * @since 3.0.0
+         */
+        this.colliders = new ProcessQueue();
+
+        /**
+         * Acceleration of Bodies due to gravity, in pixels per second.
+         *
+         * @name Phaser.Physics.Arcade.World#gravity
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.gravity = new Vector2(GetValue(config, 'gravity.x', 0), GetValue(config, 'gravity.y', 0));
+
+        /**
+         * A boundary constraining Bodies.
+         *
+         * @name Phaser.Physics.Arcade.World#bounds
+         * @type {Phaser.Geom.Rectangle}
+         * @since 3.0.0
+         */
+        this.bounds = new Rectangle(
+            GetValue(config, 'x', 0),
+            GetValue(config, 'y', 0),
+            GetValue(config, 'width', scene.sys.game.config.width),
+            GetValue(config, 'height', scene.sys.game.config.height)
+        );
+
+        /**
+         * The boundary edges that Bodies can collide with.
+         *
+         * @name Phaser.Physics.Arcade.World#checkCollision
+         * @type {CheckCollisionObject}
+         * @since 3.0.0
+         */
+        this.checkCollision = {
+            up: GetValue(config, 'checkCollision.up', true),
+            down: GetValue(config, 'checkCollision.down', true),
+            left: GetValue(config, 'checkCollision.left', true),
+            right: GetValue(config, 'checkCollision.right', true)
+        };
+
+        /**
+         * The number of physics steps to be taken per second.
+         *
+         * This property is read-only. Use the `setFPS` method to modify it at run-time.
+         *
+         * @name Phaser.Physics.Arcade.World#fps
+         * @readonly
+         * @type {number}
+         * @default 60
+         * @since 3.10.0
+         */
+        this.fps = GetValue(config, 'fps', 60);
+
+        /**
+         * The amount of elapsed ms since the last frame.
+         *
+         * @name Phaser.Physics.Arcade.World#_elapsed
+         * @private
+         * @type {number}
+         * @since 3.10.0
+         */
+        this._elapsed = 0;
+
+        /**
+         * Internal frame time value.
+         *
+         * @name Phaser.Physics.Arcade.World#_frameTime
+         * @private
+         * @type {number}
+         * @since 3.10.0
+         */
+        this._frameTime = 1 / this.fps;
+
+        /**
+         * Internal frame time ms value.
+         *
+         * @name Phaser.Physics.Arcade.World#_frameTimeMS
+         * @private
+         * @type {number}
+         * @since 3.10.0
+         */
+        this._frameTimeMS = 1000 * this._frameTime;
+
+        /**
+         * The number of steps that took place in the last frame.
+         *
+         * @name Phaser.Physics.Arcade.World#stepsLastFrame
+         * @readonly
+         * @type {number}
+         * @since 3.10.0
+         */
+        this.stepsLastFrame = 0;
+
+        /**
+         * Scaling factor applied to the frame rate.
+         *
+         * - 1.0 = normal speed
+         * - 2.0 = half speed
+         * - 0.5 = double speed
+         *
+         * @name Phaser.Physics.Arcade.World#timeScale
+         * @property {number}
+         * @default 1
+         * @since 3.10.0
+         */
+        this.timeScale = GetValue(config, 'timeScale', 1);
+
+        /**
+         * The maximum absolute difference of a Body's per-step velocity and its overlap with another Body that will result in separation on *each axis*.
+         * Larger values favor separation.
+         * Smaller values favor no separation.
+         *
+         * @name Phaser.Physics.Arcade.World#OVERLAP_BIAS
+         * @type {number}
+         * @default 4
+         * @since 3.0.0
+         */
+        this.OVERLAP_BIAS = GetValue(config, 'overlapBias', 4);
+
+        /**
+         * The maximum absolute value of a Body's overlap with a tile that will result in separation on *each axis*.
+         * Larger values favor separation.
+         * Smaller values favor no separation.
+         * The optimum value may be similar to the tile size.
+         *
+         * @name Phaser.Physics.Arcade.World#TILE_BIAS
+         * @type {number}
+         * @default 16
+         * @since 3.0.0
+         */
+        this.TILE_BIAS = GetValue(config, 'tileBias', 16);
+
+        /**
+         * Always separate overlapping Bodies horizontally before vertically.
+         * False (the default) means Bodies are first separated on the axis of greater gravity, or the vertical axis if neither is greater.
+         *
+         * @name Phaser.Physics.Arcade.World#forceX
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.forceX = GetValue(config, 'forceX', false);
+
+        /**
+         * Whether the simulation advances with the game loop.
+         *
+         * @name Phaser.Physics.Arcade.World#isPaused
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.isPaused = GetValue(config, 'isPaused', false);
+
+        /**
+         * Temporary total of colliding Bodies.
+         *
