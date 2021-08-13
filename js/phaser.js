@@ -59096,3 +59096,198 @@ var World = new Class({
     enableBody: function (object, bodyType)
     {
         if (bodyType === undefined) { bodyType = CONST.DYNAMIC_BODY; }
+
+        if (!object.body)
+        {
+            if (bodyType === CONST.DYNAMIC_BODY)
+            {
+                object.body = new Body(this, object);
+            }
+            else if (bodyType === CONST.STATIC_BODY)
+            {
+                object.body = new StaticBody(this, object);
+            }
+        }
+
+        this.add(object.body);
+
+        return object;
+    },
+
+    /**
+     * Adds an existing Arcade Physics Body or StaticBody to the simulation.
+     *
+     * The body is enabled and added to the local search trees.
+     *
+     * @method Phaser.Physics.Arcade.World#add
+     * @since 3.10.0
+     *
+     * @param {(Phaser.Physics.Arcade.Body|Phaser.Physics.Arcade.StaticBody)} body - The Body to be added to the simulation.
+     *
+     * @return {(Phaser.Physics.Arcade.Body|Phaser.Physics.Arcade.StaticBody)} The Body that was added to the simulation.
+     */
+    add: function (body)
+    {
+        if (body.physicsType === CONST.DYNAMIC_BODY)
+        {
+            this.bodies.set(body);
+        }
+        else if (body.physicsType === CONST.STATIC_BODY)
+        {
+            this.staticBodies.set(body);
+
+            this.staticTree.insert(body);
+        }
+
+        body.enable = true;
+
+        return body;
+    },
+
+    /**
+     * Disables the Arcade Physics Body of a Game Object, an array of Game Objects, or the children of a Group.
+     *
+     * The difference between this and the `disableBody` method is that you can pass arrays or Groups
+     * to this method.
+     *
+     * The body itself is not deleted, it just has its `enable` property set to false, which
+     * means you can re-enable it again at any point by passing it to enable `World.enable` or `World.add`.
+     *
+     * @method Phaser.Physics.Arcade.World#disable
+     * @since 3.0.0
+     *
+     * @param {(Phaser.GameObjects.GameObject|Phaser.GameObjects.GameObject[]|Phaser.GameObjects.Group|Phaser.GameObjects.Group[])} object - The object, or objects, on which to disable the bodies.
+     */
+    disable: function (object)
+    {
+        if (!Array.isArray(object))
+        {
+            object = [ object ];
+        }
+
+        for (var i = 0; i < object.length; i++)
+        {
+            var entry = object[i];
+
+            if (entry.isParent)
+            {
+                var children = entry.getChildren();
+
+                for (var c = 0; c < children.length; c++)
+                {
+                    var child = children[c];
+
+                    if (child.isParent)
+                    {
+                        //  Handle Groups nested inside of Groups
+                        this.disable(child);
+                    }
+                    else
+                    {
+                        this.disableBody(child.body);
+                    }
+                }
+            }
+            else
+            {
+                this.disableBody(entry.body);
+            }
+        }
+    },
+
+    /**
+     * Disables an existing Arcade Physics Body or StaticBody and removes it from the simulation.
+     *
+     * The body is disabled and removed from the local search trees.
+     *
+     * The body itself is not deleted, it just has its `enable` property set to false, which
+     * means you can re-enable it again at any point by passing it to enable `World.enable` or `World.add`.
+     *
+     * @method Phaser.Physics.Arcade.World#disableBody
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Physics.Arcade.Body|Phaser.Physics.Arcade.StaticBody)} body - The Body to be disabled.
+     */
+    disableBody: function (body)
+    {
+        this.remove(body);
+
+        body.enable = false;
+    },
+
+    /**
+     * Removes an existing Arcade Physics Body or StaticBody from the simulation.
+     *
+     * The body is disabled and removed from the local search trees.
+     *
+     * The body itself is not deleted, it just has its `enabled` property set to false, which
+     * means you can re-enable it again at any point by passing it to enable `enable` or `add`.
+     *
+     * @method Phaser.Physics.Arcade.World#remove
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Physics.Arcade.Body|Phaser.Physics.Arcade.StaticBody)} body - The body to be removed from the simulation.
+     */
+    remove: function (body)
+    {
+        if (body.physicsType === CONST.DYNAMIC_BODY)
+        {
+            this.tree.remove(body);
+            this.bodies.delete(body);
+        }
+        else if (body.physicsType === CONST.STATIC_BODY)
+        {
+            this.staticBodies.delete(body);
+            this.staticTree.remove(body);
+        }
+    },
+
+    /**
+     * Creates a Graphics Game Object that the world will use to render the debug display to.
+     *
+     * This is called automatically when the World is instantiated if the `debug` config property
+     * was set to `true`. However, you can call it at any point should you need to display the
+     * debug Graphic from a fixed point.
+     *
+     * You can control which objects are drawn to the Graphics object, and the colors they use,
+     * by setting the debug properties in the physics config.
+     *
+     * You should not typically use this in a production game. Use it to aid during debugging.
+     *
+     * @method Phaser.Physics.Arcade.World#createDebugGraphic
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Graphics} The Graphics object that was created for use by the World.
+     */
+    createDebugGraphic: function ()
+    {
+        var graphic = this.scene.sys.add.graphics({ x: 0, y: 0 });
+
+        graphic.setDepth(Number.MAX_VALUE);
+
+        this.debugGraphic = graphic;
+
+        this.drawDebug = true;
+
+        return graphic;
+    },
+
+    /**
+     * Sets the position, size and properties of the World boundary.
+     *
+     * The World boundary is an invisible rectangle that defines the edges of the World.
+     * If a Body is set to collide with the world bounds then it will automatically stop
+     * when it reaches any of the edges. You can optionally set which edges of the boundary
+     * should be checked against.
+     *
+     * @method Phaser.Physics.Arcade.World#setBounds
+     * @since 3.0.0
+     *
+     * @param {number} x - The top-left x coordinate of the boundary.
+     * @param {number} y - The top-left y coordinate of the boundary.
+     * @param {number} width - The width of the boundary.
+     * @param {number} height - The height of the boundary.
+     * @param {boolean} [checkLeft] - Should bodies check against the left edge of the boundary?
+     * @param {boolean} [checkRight] - Should bodies check against the right edge of the boundary?
+     * @param {boolean} [checkUp] - Should bodies check against the top edge of the boundary?
+     * @param {boolean} [checkDown] - Should bodies check against the bottom edge of the boundary?
