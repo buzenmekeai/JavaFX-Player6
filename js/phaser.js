@@ -58862,3 +58862,237 @@ var World = new Class({
         /**
          * Temporary total of colliding Bodies.
          *
+         * @name Phaser.Physics.Arcade.World#_total
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.0.0
+         */
+        this._total = 0;
+
+        /**
+         * Enables the debug display.
+         *
+         * @name Phaser.Physics.Arcade.World#drawDebug
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.drawDebug = GetValue(config, 'debug', false);
+
+        /**
+         * The graphics object drawing the debug display.
+         *
+         * @name Phaser.Physics.Arcade.World#debugGraphic
+         * @type {Phaser.GameObjects.Graphics}
+         * @since 3.0.0
+         */
+        this.debugGraphic;
+
+        /**
+         * Default debug display settings for new Bodies.
+         *
+         * @name Phaser.Physics.Arcade.World#defaults
+         * @type {ArcadeWorldDefaults}
+         * @since 3.0.0
+         */
+        this.defaults = {
+            debugShowBody: GetValue(config, 'debugShowBody', true),
+            debugShowStaticBody: GetValue(config, 'debugShowStaticBody', true),
+            debugShowVelocity: GetValue(config, 'debugShowVelocity', true),
+            bodyDebugColor: GetValue(config, 'debugBodyColor', 0xff00ff),
+            staticBodyDebugColor: GetValue(config, 'debugStaticBodyColor', 0x0000ff),
+            velocityDebugColor: GetValue(config, 'debugVelocityColor', 0x00ff00)
+        };
+
+        /**
+         * The maximum number of items per node on the RTree.
+         *
+         * This is ignored if `useTree` is `false`. If you have a large number of bodies in
+         * your world then you may find search performance improves by increasing this value,
+         * to allow more items per node and less node division.
+         *
+         * @name Phaser.Physics.Arcade.World#maxEntries
+         * @type {integer}
+         * @default 16
+         * @since 3.0.0
+         */
+        this.maxEntries = GetValue(config, 'maxEntries', 16);
+
+        /**
+         * Should this Arcade Physics World use an RTree for Dynamic Physics bodies or not?
+         *
+         * An RTree is a fast way of spatially sorting of all the moving bodies in the world.
+         * However, at certain limits, the cost of clearing and inserting the bodies into the
+         * tree every frame becomes more expensive than the search speed gains it provides.
+         *
+         * If you have a large number of dynamic bodies in your world then it may be best to
+         * disable the use of the RTree by setting this property to `true`.
+         * The number it can cope with depends on browser and device, but a conservative estimate
+         * of around 5,000 bodies should be considered the max before disabling it.
+         *
+         * Note this only applies to dynamic bodies. Static bodies are always kept in an RTree,
+         * because they don't have to be cleared every frame, so you benefit from the
+         * massive search speeds all the time.
+         *
+         * @name Phaser.Physics.Arcade.World#useTree
+         * @type {boolean}
+         * @default true
+         * @since 3.10.0
+         */
+        this.useTree = GetValue(config, 'useTree', true);
+
+        /**
+         * The spatial index of Dynamic Bodies.
+         *
+         * @name Phaser.Physics.Arcade.World#tree
+         * @type {Phaser.Structs.RTree}
+         * @since 3.0.0
+         */
+        this.tree = new RTree(this.maxEntries);
+
+        /**
+         * The spatial index of Static Bodies.
+         *
+         * @name Phaser.Physics.Arcade.World#staticTree
+         * @type {Phaser.Structs.RTree}
+         * @since 3.0.0
+         */
+        this.staticTree = new RTree(this.maxEntries);
+
+        /**
+         * Recycled input for tree searches.
+         *
+         * @name Phaser.Physics.Arcade.World#treeMinMax
+         * @type {ArcadeWorldTreeMinMax}
+         * @since 3.0.0
+         */
+        this.treeMinMax = { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+
+        /**
+         * A temporary Transform Matrix used by bodies for calculations without them needing their own local copy.
+         *
+         * @name Phaser.Physics.Arcade.World#_tempMatrix
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @private
+         * @since 3.12.0
+         */
+        this._tempMatrix = new TransformMatrix();
+
+        /**
+         * A temporary Transform Matrix used by bodies for calculations without them needing their own local copy.
+         *
+         * @name Phaser.Physics.Arcade.World#_tempMatrix2
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @private
+         * @since 3.12.0
+         */
+        this._tempMatrix2 = new TransformMatrix();
+
+        if (this.drawDebug)
+        {
+            this.createDebugGraphic();
+        }
+    },
+
+    /**
+     * Adds an Arcade Physics Body to a Game Object, an array of Game Objects, or the children of a Group.
+     *
+     * The difference between this and the `enableBody` method is that you can pass arrays or Groups
+     * to this method.
+     *
+     * You can specify if the bodies are to be Dynamic or Static. A dynamic body can move via velocity and
+     * acceleration. A static body remains fixed in place and as such is able to use an optimized search
+     * tree, making it ideal for static elements such as level objects. You can still collide and overlap
+     * with static bodies.
+     *
+     * Normally, rather than calling this method directly, you'd use the helper methods available in the
+     * Arcade Physics Factory, such as:
+     *
+     * ```javascript
+     * this.physics.add.image(x, y, textureKey);
+     * this.physics.add.sprite(x, y, textureKey);
+     * ```
+     *
+     * Calling factory methods encapsulates the creation of a Game Object and the creation of its
+     * body at the same time. If you are creating custom classes then you can pass them to this
+     * method to have their bodies created.
+     *
+     * @method Phaser.Physics.Arcade.World#enable
+     * @since 3.0.0
+     *
+     * @param {(Phaser.GameObjects.GameObject|Phaser.GameObjects.GameObject[]|Phaser.GameObjects.Group|Phaser.GameObjects.Group[])} object - The object, or objects, on which to create the bodies.
+     * @param {integer} [bodyType] - The type of Body to create. Either `DYNAMIC_BODY` or `STATIC_BODY`.
+     */
+    enable: function (object, bodyType)
+    {
+        if (bodyType === undefined) { bodyType = CONST.DYNAMIC_BODY; }
+
+        if (!Array.isArray(object))
+        {
+            object = [ object ];
+        }
+
+        for (var i = 0; i < object.length; i++)
+        {
+            var entry = object[i];
+
+            if (entry.isParent)
+            {
+                var children = entry.getChildren();
+
+                for (var c = 0; c < children.length; c++)
+                {
+                    var child = children[c];
+
+                    if (child.isParent)
+                    {
+                        //  Handle Groups nested inside of Groups
+                        this.enable(child, bodyType);
+                    }
+                    else
+                    {
+                        this.enableBody(child, bodyType);
+                    }
+                }
+            }
+            else
+            {
+                this.enableBody(entry, bodyType);
+            }
+        }
+    },
+
+    /**
+     * Creates an Arcade Physics Body on a single Game Object.
+     *
+     * If the Game Object already has a body, this method will simply add it back into the simulation.
+     *
+     * You can specify if the body is Dynamic or Static. A dynamic body can move via velocity and
+     * acceleration. A static body remains fixed in place and as such is able to use an optimized search
+     * tree, making it ideal for static elements such as level objects. You can still collide and overlap
+     * with static bodies.
+     *
+     * Normally, rather than calling this method directly, you'd use the helper methods available in the
+     * Arcade Physics Factory, such as:
+     *
+     * ```javascript
+     * this.physics.add.image(x, y, textureKey);
+     * this.physics.add.sprite(x, y, textureKey);
+     * ```
+     *
+     * Calling factory methods encapsulates the creation of a Game Object and the creation of its
+     * body at the same time. If you are creating custom classes then you can pass them to this
+     * method to have their bodies created.
+     *
+     * @method Phaser.Physics.Arcade.World#enableBody
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} object - The Game Object on which to create the body.
+     * @param {integer} [bodyType] - The type of Body to create. Either `DYNAMIC_BODY` or `STATIC_BODY`.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object on which the body was created.
+     */
+    enableBody: function (object, bodyType)
+    {
+        if (bodyType === undefined) { bodyType = CONST.DYNAMIC_BODY; }
