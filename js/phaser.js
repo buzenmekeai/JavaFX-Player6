@@ -59291,3 +59291,243 @@ var World = new Class({
      * @param {boolean} [checkRight] - Should bodies check against the right edge of the boundary?
      * @param {boolean} [checkUp] - Should bodies check against the top edge of the boundary?
      * @param {boolean} [checkDown] - Should bodies check against the bottom edge of the boundary?
+     *
+     * @return {Phaser.Physics.Arcade.World} This World object.
+     */
+    setBounds: function (x, y, width, height, checkLeft, checkRight, checkUp, checkDown)
+    {
+        this.bounds.setTo(x, y, width, height);
+
+        if (checkLeft !== undefined)
+        {
+            this.setBoundsCollision(checkLeft, checkRight, checkUp, checkDown);
+        }
+
+        return this;
+    },
+
+    /**
+     * Enables or disables collisions on each edge of the World boundary.
+     *
+     * @method Phaser.Physics.Arcade.World#setBoundsCollision
+     * @since 3.0.0
+     *
+     * @param {boolean} [left=true] - Should bodies check against the left edge of the boundary?
+     * @param {boolean} [right=true] - Should bodies check against the right edge of the boundary?
+     * @param {boolean} [up=true] - Should bodies check against the top edge of the boundary?
+     * @param {boolean} [down=true] - Should bodies check against the bottom edge of the boundary?
+     *
+     * @return {Phaser.Physics.Arcade.World} This World object.
+     */
+    setBoundsCollision: function (left, right, up, down)
+    {
+        if (left === undefined) { left = true; }
+        if (right === undefined) { right = true; }
+        if (up === undefined) { up = true; }
+        if (down === undefined) { down = true; }
+
+        this.checkCollision.left = left;
+        this.checkCollision.right = right;
+        this.checkCollision.up = up;
+        this.checkCollision.down = down;
+
+        return this;
+    },
+
+    /**
+     * Pauses the simulation.
+     *
+     * A paused simulation does not update any existing bodies, or run any Colliders.
+     *
+     * However, you can still enable and disable bodies within it, or manually run collide or overlap
+     * checks.
+     *
+     * @method Phaser.Physics.Arcade.World#pause
+     * @fires Phaser.Physics.Arcade.World#pause
+     * @since 3.0.0
+     *
+     * @return {Phaser.Physics.Arcade.World} This World object.
+     */
+    pause: function ()
+    {
+        this.isPaused = true;
+
+        this.emit('pause');
+
+        return this;
+    },
+
+    /**
+     * Resumes the simulation, if paused.
+     *
+     * @method Phaser.Physics.Arcade.World#resume
+     * @fires Phaser.Physics.Arcade.World#resume
+     * @since 3.0.0
+     *
+     * @return {Phaser.Physics.Arcade.World} This World object.
+     */
+    resume: function ()
+    {
+        this.isPaused = false;
+
+        this.emit('resume');
+
+        return this;
+    },
+
+    /**
+     * Creates a new Collider object and adds it to the simulation.
+     *
+     * A Collider is a way to automatically perform collision checks between two objects,
+     * calling the collide and process callbacks if they occur.
+     *
+     * Colliders are run as part of the World update, after all of the Bodies have updated.
+     *
+     * By creating a Collider you don't need then call `World.collide` in your `update` loop,
+     * as it will be handled for you automatically.
+     *
+     * @method Phaser.Physics.Arcade.World#addCollider
+     * @since 3.0.0
+     * @see Phaser.Physics.Arcade.World#collide
+     *
+     * @param {ArcadeColliderType} object1 - The first object to check for collision.
+     * @param {ArcadeColliderType} object2 - The second object to check for collision.
+     * @param {ArcadePhysicsCallback} [collideCallback] - The callback to invoke when the two objects collide.
+     * @param {ArcadePhysicsCallback} [processCallback] - The callback to invoke when the two objects collide. Must return a boolean.
+     * @param {*} [callbackContext] - The scope in which to call the callbacks.
+     *
+     * @return {Phaser.Physics.Arcade.Collider} The Collider that was created.
+     */
+    addCollider: function (object1, object2, collideCallback, processCallback, callbackContext)
+    {
+        if (collideCallback === undefined) { collideCallback = null; }
+        if (processCallback === undefined) { processCallback = null; }
+        if (callbackContext === undefined) { callbackContext = collideCallback; }
+
+        var collider = new Collider(this, false, object1, object2, collideCallback, processCallback, callbackContext);
+
+        this.colliders.add(collider);
+
+        return collider;
+    },
+
+    /**
+     * Creates a new Overlap Collider object and adds it to the simulation.
+     *
+     * A Collider is a way to automatically perform overlap checks between two objects,
+     * calling the collide and process callbacks if they occur.
+     *
+     * Colliders are run as part of the World update, after all of the Bodies have updated.
+     *
+     * By creating a Collider you don't need then call `World.overlap` in your `update` loop,
+     * as it will be handled for you automatically.
+     *
+     * @method Phaser.Physics.Arcade.World#addOverlap
+     * @since 3.0.0
+     *
+     * @param {ArcadeColliderType} object1 - The first object to check for overlap.
+     * @param {ArcadeColliderType} object2 - The second object to check for overlap.
+     * @param {ArcadePhysicsCallback} [collideCallback] - The callback to invoke when the two objects overlap.
+     * @param {ArcadePhysicsCallback} [processCallback] - The callback to invoke when the two objects overlap. Must return a boolean.
+     * @param {*} [callbackContext] - The scope in which to call the callbacks.
+     *
+     * @return {Phaser.Physics.Arcade.Collider} The Collider that was created.
+     */
+    addOverlap: function (object1, object2, collideCallback, processCallback, callbackContext)
+    {
+        if (collideCallback === undefined) { collideCallback = null; }
+        if (processCallback === undefined) { processCallback = null; }
+        if (callbackContext === undefined) { callbackContext = collideCallback; }
+
+        var collider = new Collider(this, true, object1, object2, collideCallback, processCallback, callbackContext);
+
+        this.colliders.add(collider);
+
+        return collider;
+    },
+
+    /**
+     * Removes a Collider from the simulation so it is no longer processed.
+     *
+     * This method does not destroy the Collider. If you wish to add it back at a later stage you can call
+     * `World.colliders.add(Collider)`.
+     *
+     * If you no longer need the Collider you can call the `Collider.destroy` method instead, which will
+     * automatically clear all of its references and then remove it from the World. If you call destroy on
+     * a Collider you _don't_ need to pass it to this method too.
+     *
+     * @method Phaser.Physics.Arcade.World#removeCollider
+     * @since 3.0.0
+     *
+     * @param {Phaser.Physics.Arcade.Collider} collider - The Collider to remove from the simulation.
+     *
+     * @return {Phaser.Physics.Arcade.World} This World object.
+     */
+    removeCollider: function (collider)
+    {
+        this.colliders.remove(collider);
+
+        return this;
+    },
+
+    /**
+     * Sets the frame rate to run the simulation at.
+     *
+     * The frame rate value is used to simulate a fixed update time step. This fixed
+     * time step allows for a straightforward implementation of a deterministic game state.
+     *
+     * This frame rate is independent of the frequency at which the game is rendering. The
+     * higher you set the fps, the more physics simulation steps will occur per game step.
+     * Conversely, the lower you set it, the less will take place.
+     *
+     * You can optionally advance the simulation directly yourself by calling the `step` method.
+     *
+     * @method Phaser.Physics.Arcade.World#setFPS
+     * @since 3.10.0
+     *
+     * @param {integer} framerate - The frame rate to advance the simulation at.
+     *
+     * @return {this} This World object.
+     */
+    setFPS: function (framerate)
+    {
+        this.fps = framerate;
+        this._frameTime = 1 / this.fps;
+        this._frameTimeMS = 1000 * this._frameTime;
+
+        return this;
+    },
+
+    /**
+     * Advances the simulation based on the elapsed time and fps rate.
+     *
+     * This is called automatically by your Scene and does not need to be invoked directly.
+     *
+     * @method Phaser.Physics.Arcade.World#update
+     * @protected
+     * @since 3.0.0
+     *
+     * @param {number} time - The current timestamp as generated by the Request Animation Frame or SetTimeout.
+     * @param {number} delta - The delta time, in ms, elapsed since the last frame.
+     */
+    update: function (time, delta)
+    {
+        if (this.isPaused || this.bodies.size === 0)
+        {
+            return;
+        }
+
+        var stepsThisFrame = 0;
+        var fixedDelta = this._frameTime;
+        var msPerFrame = this._frameTimeMS * this.timeScale;
+
+        this._elapsed += delta;
+
+        while (this._elapsed >= msPerFrame)
+        {
+            this._elapsed -= msPerFrame;
+
+            stepsThisFrame++;
+
+            this.step(fixedDelta);
+        }
