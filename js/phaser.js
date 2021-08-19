@@ -59531,3 +59531,233 @@ var World = new Class({
 
             this.step(fixedDelta);
         }
+
+        this.stepsLastFrame = stepsThisFrame;
+    },
+
+    /**
+     * Advances the simulation by one step.
+     *
+     * @method Phaser.Physics.Arcade.World#step
+     * @since 3.10.0
+     *
+     * @param {number} delta - The delta time amount, in ms, by which to advance the simulation.
+     */
+    step: function (delta)
+    {
+        //  Update all active bodies
+        var i;
+        var body;
+        var bodies = this.bodies.entries;
+        var len = bodies.length;
+
+        for (i = 0; i < len; i++)
+        {
+            body = bodies[i];
+
+            if (body.enable)
+            {
+                body.update(delta);
+            }
+        }
+
+        //  Optionally populate our dynamic collision tree
+        if (this.useTree)
+        {
+            this.tree.clear();
+            this.tree.load(bodies);
+        }
+
+        //  Process any colliders
+        var colliders = this.colliders.update();
+
+        for (i = 0; i < colliders.length; i++)
+        {
+            var collider = colliders[i];
+
+            if (collider.active)
+            {
+                collider.update();
+            }
+        }
+
+        len = bodies.length;
+
+        for (i = 0; i < len; i++)
+        {
+            body = bodies[i];
+
+            if (body.enable)
+            {
+                body.postUpdate();
+            }
+        }
+    },
+
+    /**
+     * Updates bodies, draws the debug display, and handles pending queue operations.
+     *
+     * @method Phaser.Physics.Arcade.World#postUpdate
+     * @since 3.0.0
+     */
+    postUpdate: function ()
+    {
+        var i;
+        var body;
+
+        var dynamic = this.bodies;
+        var staticBodies = this.staticBodies;
+        var pending = this.pendingDestroy;
+
+        var bodies = dynamic.entries;
+        var len = bodies.length;
+
+        if (this.drawDebug)
+        {
+            var graphics = this.debugGraphic;
+
+            graphics.clear();
+
+            for (i = 0; i < len; i++)
+            {
+                body = bodies[i];
+
+                if (body.willDrawDebug())
+                {
+                    body.drawDebug(graphics);
+                }
+            }
+
+            bodies = staticBodies.entries;
+            len = bodies.length;
+
+            for (i = 0; i < len; i++)
+            {
+                body = bodies[i];
+
+                if (body.willDrawDebug())
+                {
+                    body.drawDebug(graphics);
+                }
+            }
+        }
+
+        if (pending.size > 0)
+        {
+            var dynamicTree = this.tree;
+            var staticTree = this.staticTree;
+
+            bodies = pending.entries;
+            len = bodies.length;
+
+            for (i = 0; i < len; i++)
+            {
+                body = bodies[i];
+
+                if (body.physicsType === CONST.DYNAMIC_BODY)
+                {
+                    dynamicTree.remove(body);
+                    dynamic.delete(body);
+                }
+                else if (body.physicsType === CONST.STATIC_BODY)
+                {
+                    staticTree.remove(body);
+                    staticBodies.delete(body);
+                }
+
+                body.world = undefined;
+                body.gameObject = undefined;
+            }
+
+            pending.clear();
+        }
+    },
+
+    /**
+     * Calculates a Body's velocity and updates its position.
+     *
+     * @method Phaser.Physics.Arcade.World#updateMotion
+     * @since 3.0.0
+     *
+     * @param {Phaser.Physics.Arcade.Body} body - The Body to be updated.
+     * @param {number} delta - The delta value to be used in the motion calculations.
+     */
+    updateMotion: function (body, delta)
+    {
+        if (body.allowRotation)
+        {
+            this.computeAngularVelocity(body, delta);
+        }
+
+        this.computeVelocity(body, delta);
+    },
+
+    /**
+     * Calculates a Body's angular velocity.
+     *
+     * @method Phaser.Physics.Arcade.World#computeAngularVelocity
+     * @since 3.10.0
+     *
+     * @param {Phaser.Physics.Arcade.Body} body - The Body to compute the velocity for.
+     * @param {number} delta - The delta value to be used in the calculation.
+     */
+    computeAngularVelocity: function (body, delta)
+    {
+        var velocity = body.angularVelocity;
+        var acceleration = body.angularAcceleration;
+        var drag = body.angularDrag;
+        var max = body.maxAngular;
+
+        if (acceleration)
+        {
+            velocity += acceleration * delta;
+        }
+        else if (body.allowDrag && drag)
+        {
+            drag *= delta;
+
+            if (FuzzyGreaterThan(velocity - drag, 0, 0.1))
+            {
+                velocity -= drag;
+            }
+            else if (FuzzyLessThan(velocity + drag, 0, 0.1))
+            {
+                velocity += drag;
+            }
+            else
+            {
+                velocity = 0;
+            }
+        }
+
+        velocity = Clamp(velocity, -max, max);
+
+        var velocityDelta = velocity - body.angularVelocity;
+
+        body.angularVelocity += velocityDelta;
+        body.rotation += (body.angularVelocity * delta);
+    },
+
+    /**
+     * Calculates a Body's per-axis velocity.
+     *
+     * @method Phaser.Physics.Arcade.World#computeVelocity
+     * @since 3.0.0
+     *
+     * @param {Phaser.Physics.Arcade.Body} body - The Body to compute the velocity for.
+     * @param {number} delta - The delta value to be used in the calculation.
+     */
+    computeVelocity: function (body, delta)
+    {
+        var velocityX = body.velocity.x;
+        var accelerationX = body.acceleration.x;
+        var dragX = body.drag.x;
+        var maxX = body.maxVelocity.x;
+
+        var velocityY = body.velocity.y;
+        var accelerationY = body.acceleration.y;
+        var dragY = body.drag.y;
+        var maxY = body.maxVelocity.y;
+
+        var speed = body.speed;
+        var allowDrag = body.allowDrag;
