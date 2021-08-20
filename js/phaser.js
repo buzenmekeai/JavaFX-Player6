@@ -60209,3 +60209,214 @@ var World = new Class({
             return this.circleBodyIntersects(body2, body1);
         }
     },
+
+    /**
+     * Tests if a circular Body intersects with another Body.
+     *
+     * @method Phaser.Physics.Arcade.World#circleBodyIntersects
+     * @since 3.0.0
+     *
+     * @param {Phaser.Physics.Arcade.Body} circle - The circular body to test.
+     * @param {Phaser.Physics.Arcade.Body} body - The rectangular body to test.
+     *
+     * @return {boolean} True if the two bodies intersect, otherwise false.
+     */
+    circleBodyIntersects: function (circle, body)
+    {
+        var x = Clamp(circle.center.x, body.left, body.right);
+        var y = Clamp(circle.center.y, body.top, body.bottom);
+
+        var dx = (circle.center.x - x) * (circle.center.x - x);
+        var dy = (circle.center.y - y) * (circle.center.y - y);
+
+        return (dx + dy) <= (circle.halfWidth * circle.halfWidth);
+    },
+
+    /**
+     * Tests if Game Objects overlap.
+     *
+     * @method Phaser.Physics.Arcade.World#overlap
+     * @since 3.0.0
+     *
+     * @param {ArcadeColliderType} object1 - The first object or array of objects to check.
+     * @param {ArcadeColliderType} [object2] - The second object or array of objects to check, or `undefined`.
+     * @param {ArcadePhysicsCallback} [overlapCallback] - An optional callback function that is called if the objects overlap.
+     * @param {ArcadePhysicsCallback} [processCallback] - An optional callback function that lets you perform additional checks against the two objects if they overlap. If this is set then `overlapCallback` will only be called if this callback returns `true`.
+     * @param {*} [callbackContext] - The context in which to run the callbacks.
+     *
+     * @return {boolean} True if at least one Game Object overlaps another.
+     */
+    overlap: function (object1, object2, overlapCallback, processCallback, callbackContext)
+    {
+        if (overlapCallback === undefined) { overlapCallback = null; }
+        if (processCallback === undefined) { processCallback = null; }
+        if (callbackContext === undefined) { callbackContext = overlapCallback; }
+
+        return this.collideObjects(object1, object2, overlapCallback, processCallback, callbackContext, true);
+    },
+
+    /**
+     * Performs a collision check and separation between the two physics enabled objects given, which can be single
+     * Game Objects, arrays of Game Objects, Physics Groups, arrays of Physics Groups or normal Groups.
+     *
+     * If you don't require separation then use {@link #overlap} instead.
+     *
+     * If two Groups or arrays are passed, each member of one will be tested against each member of the other.
+     *
+     * If one Group **only** is passed (as `object1`), each member of the Group will be collided against the other members.
+     *
+     * Two callbacks can be provided. The `collideCallback` is invoked if a collision occurs and the two colliding
+     * objects are passed to it.
+     *
+     * Arcade Physics uses the Projection Method of collision resolution and separation. While it's fast and suitable
+     * for 'arcade' style games it lacks stability when multiple objects are in close proximity or resting upon each other.
+     * The separation that stops two objects penetrating may create a new penetration against a different object. If you
+     * require a high level of stability please consider using an alternative physics system, such as Matter.js.
+     *
+     * @method Phaser.Physics.Arcade.World#collide
+     * @since 3.0.0
+     *
+     * @param {ArcadeColliderType} object1 - The first object or array of objects to check.
+     * @param {ArcadeColliderType} [object2] - The second object or array of objects to check, or `undefined`.
+     * @param {ArcadePhysicsCallback} [collideCallback] - An optional callback function that is called if the objects collide.
+     * @param {ArcadePhysicsCallback} [processCallback] - An optional callback function that lets you perform additional checks against the two objects if they collide. If this is set then `collideCallback` will only be called if this callback returns `true`.
+     * @param {*} [callbackContext] - The context in which to run the callbacks.
+     *
+     * @return {boolean} True if any overlapping Game Objects were separated, otherwise false.
+     */
+    collide: function (object1, object2, collideCallback, processCallback, callbackContext)
+    {
+        if (collideCallback === undefined) { collideCallback = null; }
+        if (processCallback === undefined) { processCallback = null; }
+        if (callbackContext === undefined) { callbackContext = collideCallback; }
+
+        return this.collideObjects(object1, object2, collideCallback, processCallback, callbackContext, false);
+    },
+
+    /**
+     * Helper for Phaser.Physics.Arcade.World#collide.
+     *
+     * @method Phaser.Physics.Arcade.World#collideObjects
+     * @since 3.0.0
+     *
+     * @param {ArcadeColliderType} object1 - [description]
+     * @param {ArcadeColliderType} [object2] - [description]
+     * @param {ArcadePhysicsCallback} collideCallback - [description]
+     * @param {ArcadePhysicsCallback} processCallback - [description]
+     * @param {*} callbackContext - [description]
+     * @param {boolean} overlapOnly - Whether this is a collision or overlap check.
+     *
+     * @return {boolean} True if any objects overlap (with `overlapOnly`); or true if any overlapping objects were separated.
+     */
+    collideObjects: function (object1, object2, collideCallback, processCallback, callbackContext, overlapOnly)
+    {
+        var i;
+
+        if (object1.isParent && object1.physicsType === undefined)
+        {
+            object1 = object1.children.entries;
+        }
+
+        if (object2 && object2.isParent && object2.physicsType === undefined)
+        {
+            object2 = object2.children.entries;
+        }
+
+        var object1isArray = Array.isArray(object1);
+        var object2isArray = Array.isArray(object2);
+
+        this._total = 0;
+
+        if (!object1isArray && !object2isArray)
+        {
+            //  Neither of them are arrays - do this first as it's the most common use-case
+            this.collideHandler(object1, object2, collideCallback, processCallback, callbackContext, overlapOnly);
+        }
+        else if (!object1isArray && object2isArray)
+        {
+            //  Object 2 is an Array
+            for (i = 0; i < object2.length; i++)
+            {
+                this.collideHandler(object1, object2[i], collideCallback, processCallback, callbackContext, overlapOnly);
+            }
+        }
+        else if (object1isArray && !object2isArray)
+        {
+            //  Object 1 is an Array
+            for (i = 0; i < object1.length; i++)
+            {
+                this.collideHandler(object1[i], object2, collideCallback, processCallback, callbackContext, overlapOnly);
+            }
+        }
+        else
+        {
+            //  They're both arrays
+            for (i = 0; i < object1.length; i++)
+            {
+                for (var j = 0; j < object2.length; j++)
+                {
+                    this.collideHandler(object1[i], object2[j], collideCallback, processCallback, callbackContext, overlapOnly);
+                }
+            }
+        }
+
+        return (this._total > 0);
+    },
+
+    /**
+     * Helper for Phaser.Physics.Arcade.World#collide and Phaser.Physics.Arcade.World#overlap.
+     *
+     * @method Phaser.Physics.Arcade.World#collideHandler
+     * @since 3.0.0
+     *
+     * @param {ArcadeColliderType} object1 - [description]
+     * @param {ArcadeColliderType} [object2] - [description]
+     * @param {ArcadePhysicsCallback} collideCallback - [description]
+     * @param {ArcadePhysicsCallback} processCallback - [description]
+     * @param {*} callbackContext - [description]
+     * @param {boolean} overlapOnly - Whether this is a collision or overlap check.
+     *
+     * @return {boolean} True if any objects overlap (with `overlapOnly`); or true if any overlapping objects were separated.
+     */
+    collideHandler: function (object1, object2, collideCallback, processCallback, callbackContext, overlapOnly)
+    {
+        //  Collide Group with Self
+        //  Only collide valid objects
+        if (object2 === undefined && object1.isParent)
+        {
+            return this.collideGroupVsGroup(object1, object1, collideCallback, processCallback, callbackContext, overlapOnly);
+        }
+
+        //  If neither of the objects are set then bail out
+        if (!object1 || !object2)
+        {
+            return false;
+        }
+
+        //  A Body
+        if (object1.body)
+        {
+            if (object2.body)
+            {
+                return this.collideSpriteVsSprite(object1, object2, collideCallback, processCallback, callbackContext, overlapOnly);
+            }
+            else if (object2.isParent)
+            {
+                return this.collideSpriteVsGroup(object1, object2, collideCallback, processCallback, callbackContext, overlapOnly);
+            }
+            else if (object2.isTilemap)
+            {
+                return this.collideSpriteVsTilemapLayer(object1, object2, collideCallback, processCallback, callbackContext, overlapOnly);
+            }
+        }
+
+        //  GROUPS
+        else if (object1.isParent)
+        {
+            if (object2.body)
+            {
+                return this.collideSpriteVsGroup(object2, object1, collideCallback, processCallback, callbackContext, overlapOnly);
+            }
+            else if (object2.isParent)
+            {
+                return this.collideGroupVsGroup(object1, object2, collideCallback, processCallback, callbackContext, overlapOnly);
