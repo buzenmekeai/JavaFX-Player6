@@ -60420,3 +60420,239 @@ var World = new Class({
             else if (object2.isParent)
             {
                 return this.collideGroupVsGroup(object1, object2, collideCallback, processCallback, callbackContext, overlapOnly);
+            }
+            else if (object2.isTilemap)
+            {
+                return this.collideGroupVsTilemapLayer(object1, object2, collideCallback, processCallback, callbackContext, overlapOnly);
+            }
+        }
+
+        //  TILEMAP LAYERS
+        else if (object1.isTilemap)
+        {
+            if (object2.body)
+            {
+                return this.collideSpriteVsTilemapLayer(object2, object1, collideCallback, processCallback, callbackContext, overlapOnly);
+            }
+            else if (object2.isParent)
+            {
+                return this.collideGroupVsTilemapLayer(object2, object1, collideCallback, processCallback, callbackContext, overlapOnly);
+            }
+        }
+    },
+
+    /**
+     * Handler for Sprite vs. Sprite collisions.
+     *
+     * @method Phaser.Physics.Arcade.World#collideSpriteVsSprite
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} sprite1 - [description]
+     * @param {Phaser.GameObjects.GameObject} sprite2 - [description]
+     * @param {ArcadePhysicsCallback} collideCallback - [description]
+     * @param {ArcadePhysicsCallback} processCallback - [description]
+     * @param {*} callbackContext - [description]
+     * @param {boolean} overlapOnly - Whether this is a collision or overlap check.
+     *
+     * @return {boolean} [description]
+     */
+    collideSpriteVsSprite: function (sprite1, sprite2, collideCallback, processCallback, callbackContext, overlapOnly)
+    {
+        if (!sprite1.body || !sprite2.body)
+        {
+            return false;
+        }
+
+        if (this.separate(sprite1.body, sprite2.body, processCallback, callbackContext, overlapOnly))
+        {
+            if (collideCallback)
+            {
+                collideCallback.call(callbackContext, sprite1, sprite2);
+            }
+
+            this._total++;
+        }
+
+        return true;
+    },
+
+    /**
+     * Handler for Sprite vs. Group collisions.
+     *
+     * @method Phaser.Physics.Arcade.World#collideSpriteVsGroup
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} sprite - [description]
+     * @param {Phaser.GameObjects.Group} group - [description]
+     * @param {ArcadePhysicsCallback} collideCallback - [description]
+     * @param {ArcadePhysicsCallback} processCallback - [description]
+     * @param {*} callbackContext - [description]
+     * @param {boolean} overlapOnly - Whether this is a collision or overlap check.
+     *
+     * @return {boolean} [description]
+     */
+    collideSpriteVsGroup: function (sprite, group, collideCallback, processCallback, callbackContext, overlapOnly)
+    {
+        var bodyA = sprite.body;
+
+        if (group.length === 0 || !bodyA || !bodyA.enable)
+        {
+            return;
+        }
+
+        //  Does sprite collide with anything?
+
+        var i;
+        var len;
+        var bodyB;
+
+        if (this.useTree)
+        {
+            var minMax = this.treeMinMax;
+
+            minMax.minX = bodyA.left;
+            minMax.minY = bodyA.top;
+            minMax.maxX = bodyA.right;
+            minMax.maxY = bodyA.bottom;
+
+            var results = (group.physicsType === CONST.DYNAMIC_BODY) ? this.tree.search(minMax) : this.staticTree.search(minMax);
+
+            len = results.length;
+
+            for (i = 0; i < len; i++)
+            {
+                bodyB = results[i];
+
+                if (bodyA === bodyB || !group.contains(bodyB.gameObject))
+                {
+                    //  Skip if comparing against itself, or if bodyB isn't actually part of the Group
+                    continue;
+                }
+
+                if (this.separate(bodyA, bodyB, processCallback, callbackContext, overlapOnly))
+                {
+                    if (collideCallback)
+                    {
+                        collideCallback.call(callbackContext, bodyA.gameObject, bodyB.gameObject);
+                    }
+
+                    this._total++;
+                }
+            }
+        }
+        else
+        {
+            var children = group.getChildren();
+            var skipIndex = group.children.entries.indexOf(sprite);
+
+            len = children.length;
+
+            for (i = 0; i < len; i++)
+            {
+                bodyB = children[i].body;
+
+                if (!bodyB || i === skipIndex || !bodyB.enable)
+                {
+                    continue;
+                }
+
+                if (this.separate(bodyA, bodyB, processCallback, callbackContext, overlapOnly))
+                {
+                    if (collideCallback)
+                    {
+                        collideCallback.call(callbackContext, bodyA.gameObject, bodyB.gameObject);
+                    }
+
+                    this._total++;
+                }
+            }
+        }
+    },
+
+    /**
+     * Helper for Group vs. Tilemap collisions.
+     *
+     * @method Phaser.Physics.Arcade.World#collideGroupVsTilemapLayer
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Group} group - [description]
+     * @param {(Phaser.Tilemaps.DynamicTilemapLayer|Phaser.Tilemaps.StaticTilemapLayer)} tilemapLayer - [description]
+     * @param {ArcadePhysicsCallback} collideCallback - [description]
+     * @param {ArcadePhysicsCallback} processCallback - [description]
+     * @param {*} callbackContext - [description]
+     * @param {boolean} overlapOnly - Whether this is a collision or overlap check.
+     *
+     * @return {boolean} [description]
+     */
+    collideGroupVsTilemapLayer: function (group, tilemapLayer, collideCallback, processCallback, callbackContext, overlapOnly)
+    {
+        var children = group.getChildren();
+
+        if (children.length === 0)
+        {
+            return false;
+        }
+
+        var didCollide = false;
+
+        for (var i = 0; i < children.length; i++)
+        {
+            if (children[i].body)
+            {
+                if (this.collideSpriteVsTilemapLayer(children[i], tilemapLayer, collideCallback, processCallback, callbackContext, overlapOnly))
+                {
+                    didCollide = true;
+                }
+            }
+        }
+
+        return didCollide;
+    },
+
+    /**
+     * Helper for Sprite vs. Tilemap collisions.
+     *
+     * @method Phaser.Physics.Arcade.World#collideSpriteVsTilemapLayer
+     * @fires Phaser.Physics.Arcade.World#collide
+     * @fires Phaser.Physics.Arcade.World#overlap
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} sprite - [description]
+     * @param {(Phaser.Tilemaps.DynamicTilemapLayer|Phaser.Tilemaps.StaticTilemapLayer)} tilemapLayer - [description]
+     * @param {ArcadePhysicsCallback} collideCallback - [description]
+     * @param {ArcadePhysicsCallback} processCallback - [description]
+     * @param {*} callbackContext - [description]
+     * @param {boolean} overlapOnly - Whether this is a collision or overlap check.
+     *
+     * @return {boolean} [description]
+     */
+    collideSpriteVsTilemapLayer: function (sprite, tilemapLayer, collideCallback, processCallback, callbackContext, overlapOnly)
+    {
+        var body = sprite.body;
+
+        if (!body.enable)
+        {
+            return false;
+        }
+
+        var x = body.position.x;
+        var y = body.position.y;
+        var w = body.width;
+        var h = body.height;
+
+        // TODO: this logic should be encapsulated within the Tilemap API at some point.
+        // If the maps base tile size differs from the layer's tile size, we need to adjust the
+        // selection area by the difference between the two.
+        var layerData = tilemapLayer.layer;
+
+        if (layerData.tileWidth > layerData.baseTileWidth)
+        {
+            // The x origin of a tile is the left side, so x and width need to be adjusted.
+            var xDiff = (layerData.tileWidth - layerData.baseTileWidth) * tilemapLayer.scaleX;
+            x -= xDiff;
+            w += xDiff;
+        }
+
+        if (layerData.tileHeight > layerData.baseTileHeight)
+        {
+            // The y origin of a tile is the bottom side, so just the height needs to be adjusted.
