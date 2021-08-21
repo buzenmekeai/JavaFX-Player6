@@ -60656,3 +60656,187 @@ var World = new Class({
         if (layerData.tileHeight > layerData.baseTileHeight)
         {
             // The y origin of a tile is the bottom side, so just the height needs to be adjusted.
+            var yDiff = (layerData.tileHeight - layerData.baseTileHeight) * tilemapLayer.scaleY;
+            h += yDiff;
+        }
+
+        var mapData = tilemapLayer.getTilesWithinWorldXY(x, y, w, h);
+
+        if (mapData.length === 0)
+        {
+            return false;
+        }
+
+        var tile;
+        var tileWorldRect = { left: 0, right: 0, top: 0, bottom: 0 };
+
+        for (var i = 0; i < mapData.length; i++)
+        {
+            tile = mapData[i];
+            tileWorldRect.left = tilemapLayer.tileToWorldX(tile.x);
+            tileWorldRect.top = tilemapLayer.tileToWorldY(tile.y);
+
+            // If the map's base tile size differs from the layer's tile size, only the top of the rect
+            // needs to be adjusted since its origin is (0, 1).
+            if (tile.baseHeight !== tile.height)
+            {
+                tileWorldRect.top -= (tile.height - tile.baseHeight) * tilemapLayer.scaleY;
+            }
+
+            tileWorldRect.right = tileWorldRect.left + tile.width * tilemapLayer.scaleX;
+            tileWorldRect.bottom = tileWorldRect.top + tile.height * tilemapLayer.scaleY;
+
+            if (TileIntersectsBody(tileWorldRect, body)
+                && (!processCallback || processCallback.call(callbackContext, sprite, tile))
+                && ProcessTileCallbacks(tile, sprite)
+                && (overlapOnly || SeparateTile(i, body, tile, tileWorldRect, tilemapLayer, this.TILE_BIAS)))
+            {
+                this._total++;
+
+                if (collideCallback)
+                {
+                    collideCallback.call(callbackContext, sprite, tile);
+                }
+
+                if (overlapOnly && body.onOverlap)
+                {
+                    sprite.emit('overlap', body.gameObject, tile, body, null);
+                }
+                else if (body.onCollide)
+                {
+                    sprite.emit('collide', body.gameObject, tile, body, null);
+                }
+
+                //  sync changes back to the body
+                body.postUpdate();
+            }
+        }
+    },
+
+    /**
+     * Helper for Group vs. Group collisions.
+     *
+     * @method Phaser.Physics.Arcade.World#collideGroupVsGroup
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Group} group1 - [description]
+     * @param {Phaser.GameObjects.Group} group2 - [description]
+     * @param {ArcadePhysicsCallback} collideCallback - [description]
+     * @param {ArcadePhysicsCallback} processCallback - [description]
+     * @param {*} callbackContext - [description]
+     * @param {boolean} overlapOnly - Whether this is a collision or overlap check.
+     *
+     * @return {boolean} [description]
+     */
+    collideGroupVsGroup: function (group1, group2, collideCallback, processCallback, callbackContext, overlapOnly)
+    {
+        if (group1.length === 0 || group2.length === 0)
+        {
+            return;
+        }
+
+        var children = group1.getChildren();
+
+        for (var i = 0; i < children.length; i++)
+        {
+            this.collideSpriteVsGroup(children[i], group2, collideCallback, processCallback, callbackContext, overlapOnly);
+        }
+    },
+
+    /**
+     * Wrap an object's coordinates (or several objects' coordinates) within {@link Phaser.Physics.Arcade.World#bounds}.
+     *
+     * If the object is outside any boundary edge (left, top, right, bottom), it will be moved to the same offset from the opposite edge (the interior).
+     *
+     * @method Phaser.Physics.Arcade.World#wrap
+     * @since 3.3.0
+     *
+     * @param {*} object - A Game Object, a Group, an object with `x` and `y` coordinates, or an array of such objects.
+     * @param {number} [padding=0] - An amount added to each boundary edge during the operation.
+     */
+    wrap: function (object, padding)
+    {
+        if (object.body)
+        {
+            this.wrapObject(object, padding);
+        }
+        else if (object.getChildren)
+        {
+            this.wrapArray(object.getChildren(), padding);
+        }
+        else if (Array.isArray(object))
+        {
+            this.wrapArray(object, padding);
+        }
+        else
+        {
+            this.wrapObject(object, padding);
+        }
+    },
+
+
+    /**
+     * Wrap each object's coordinates within {@link Phaser.Physics.Arcade.World#bounds}.
+     *
+     * @method Phaser.Physics.Arcade.World#wrapArray
+     * @since 3.3.0
+     *
+     * @param {Array.<*>} objects - An array of objects to be wrapped.
+     * @param {number} [padding=0] - An amount added to the boundary.
+     */
+    wrapArray: function (objects, padding)
+    {
+        for (var i = 0; i < objects.length; i++)
+        {
+            this.wrapObject(objects[i], padding);
+        }
+    },
+
+    /**
+     * Wrap an object's coordinates within {@link Phaser.Physics.Arcade.World#bounds}.
+     *
+     * @method Phaser.Physics.Arcade.World#wrapObject
+     * @since 3.3.0
+     *
+     * @param {*} object - A Game Object, a Physics Body, or any object with `x` and `y` coordinates
+     * @param {number} [padding=0] - An amount added to the boundary.
+     */
+    wrapObject: function (object, padding)
+    {
+        if (padding === undefined) { padding = 0; }
+
+        object.x = Wrap(object.x, this.bounds.left - padding, this.bounds.right + padding);
+        object.y = Wrap(object.y, this.bounds.top - padding, this.bounds.bottom + padding);
+    },
+
+    /**
+     * Shuts down the simulation, clearing physics data and removing listeners.
+     *
+     * @method Phaser.Physics.Arcade.World#shutdown
+     * @since 3.0.0
+     */
+    shutdown: function ()
+    {
+        this.tree.clear();
+        this.staticTree.clear();
+        this.bodies.clear();
+        this.staticBodies.clear();
+        this.colliders.destroy();
+
+        this.removeAllListeners();
+    },
+
+    /**
+     * Shuts down the simulation and disconnects it from the current scene.
+     *
+     * @method Phaser.Physics.Arcade.World#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.shutdown();
+
+        this.scene = null;
+    }
+
+});
