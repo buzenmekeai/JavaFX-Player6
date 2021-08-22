@@ -60840,3 +60840,227 @@ var World = new Class({
     }
 
 });
+
+module.exports = World;
+
+
+/***/ }),
+/* 234 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var ArcadeSprite = __webpack_require__(104);
+var Class = __webpack_require__(0);
+var CONST = __webpack_require__(35);
+var Group = __webpack_require__(88);
+var IsPlainObject = __webpack_require__(8);
+
+/**
+ * @classdesc
+ * An Arcade Physics Static Group object.
+ *
+ * All Game Objects created by this Group will automatically be given static Arcade Physics bodies.
+ *
+ * Its dynamic counterpart is {@link Phaser.Physics.Arcade.Group}.
+ *
+ * @class StaticGroup
+ * @extends Phaser.GameObjects.Group
+ * @memberof Phaser.Physics.Arcade
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Physics.Arcade.World} world - The physics simulation.
+ * @param {Phaser.Scene} scene - The scene this group belongs to.
+ * @param {(Phaser.GameObjects.GameObject[]|GroupConfig|GroupCreateConfig)} [children] - Game Objects to add to this group; or the `config` argument.
+ * @param {GroupConfig|GroupCreateConfig} [config] - Settings for this group.
+ */
+var StaticPhysicsGroup = new Class({
+
+    Extends: Group,
+
+    initialize:
+
+    function StaticPhysicsGroup (world, scene, children, config)
+    {
+        if (!children && !config)
+        {
+            config = {
+                createCallback: this.createCallbackHandler,
+                removeCallback: this.removeCallbackHandler,
+                createMultipleCallback: this.createMultipleCallbackHandler,
+                classType: ArcadeSprite
+            };
+        }
+        else if (IsPlainObject(children))
+        {
+            //  children is a plain object, so swizzle them:
+            config = children;
+            children = null;
+
+            config.createCallback = this.createCallbackHandler;
+            config.removeCallback = this.removeCallbackHandler;
+            config.createMultipleCallback = this.createMultipleCallbackHandler;
+            config.classType = ArcadeSprite;
+        }
+        else if (Array.isArray(children) && IsPlainObject(children[0]))
+        {
+            //  children is an array of plain objects
+            config = children;
+            children = null;
+
+            config.forEach(function (singleConfig)
+            {
+                singleConfig.createCallback = this.createCallbackHandler;
+                singleConfig.removeCallback = this.removeCallbackHandler;
+                singleConfig.createMultipleCallback = this.createMultipleCallbackHandler;
+                singleConfig.classType = ArcadeSprite;
+            });
+        }
+
+        /**
+         * The physics simulation.
+         *
+         * @name Phaser.Physics.Arcade.StaticGroup#world
+         * @type {Phaser.Physics.Arcade.World}
+         * @since 3.0.0
+         */
+        this.world = world;
+
+        /**
+         * The scene this group belongs to.
+         *
+         * @name Phaser.Physics.Arcade.StaticGroup#physicsType
+         * @type {integer}
+         * @default STATIC_BODY
+         * @since 3.0.0
+         */
+        this.physicsType = CONST.STATIC_BODY;
+
+        Group.call(this, scene, children, config);
+    },
+
+    /**
+     * Adds a static physics body to the new group member (if it lacks one) and adds it to the simulation.
+     *
+     * @method Phaser.Physics.Arcade.StaticGroup#createCallbackHandler
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} child - The new group member.
+     *
+     * @see Phaser.Physics.Arcade.World#enableBody
+     */
+    createCallbackHandler: function (child)
+    {
+        if (!child.body)
+        {
+            this.world.enableBody(child, CONST.STATIC_BODY);
+        }
+    },
+
+    /**
+     * Disables the group member's physics body, removing it from the simulation.
+     *
+     * @method Phaser.Physics.Arcade.StaticGroup#removeCallbackHandler
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} child - The group member being removed.
+     *
+     * @see Phaser.Physics.Arcade.World#disableBody
+     */
+    removeCallbackHandler: function (child)
+    {
+        if (child.body)
+        {
+            this.world.disableBody(child);
+        }
+    },
+
+    /**
+     * Refreshes the group.
+     *
+     * @method Phaser.Physics.Arcade.StaticGroup#createMultipleCallbackHandler
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject[]} entries - The newly created group members.
+     *
+     * @see Phaser.Physics.Arcade.StaticGroup#refresh
+     */
+    createMultipleCallbackHandler: function ()
+    {
+        this.refresh();
+    },
+
+    /**
+     * Resets each Body to the position of its parent Game Object.
+     * Body sizes aren't changed (use {@link Phaser.Physics.Arcade.Components.Enable#refreshBody} for that).
+     *
+     * @method Phaser.Physics.Arcade.StaticGroup#refresh
+     * @since 3.0.0
+     *
+     * @return {Phaser.Physics.Arcade.StaticGroup} This group.
+     *
+     * @see Phaser.Physics.Arcade.StaticBody#reset
+     */
+    refresh: function ()
+    {
+        var children = this.children.entries;
+
+        for (var i = 0; i < children.length; i++)
+        {
+            children[i].body.reset();
+        }
+
+        return this;
+    }
+
+});
+
+module.exports = StaticPhysicsGroup;
+
+
+/***/ }),
+/* 235 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var ArcadeSprite = __webpack_require__(104);
+var Class = __webpack_require__(0);
+var CONST = __webpack_require__(35);
+var GetFastValue = __webpack_require__(2);
+var Group = __webpack_require__(88);
+var IsPlainObject = __webpack_require__(8);
+
+/**
+ * @typedef {object} PhysicsGroupConfig
+ * @extends GroupConfig
+ *
+ * @property {boolean} [collideWorldBounds=false] - Sets {@link Phaser.Physics.Arcade.Body#collideWorldBounds}.
+ * @property {number} [accelerationX=0] - Sets {@link Phaser.Physics.Arcade.Body#acceleration acceleration.x}.
+ * @property {number} [accelerationY=0] - Sets {@link Phaser.Physics.Arcade.Body#acceleration acceleration.y}.
+ * @property {boolean} [allowDrag=true] - Sets {@link Phaser.Physics.Arcade.Body#allowDrag}.
+ * @property {boolean} [allowGravity=true] - Sets {@link Phaser.Physics.Arcade.Body#allowGravity}.
+ * @property {boolean} [allowRotation=true] - Sets {@link Phaser.Physics.Arcade.Body#allowRotation}.
+ * @property {number} [bounceX=0] - Sets {@link Phaser.Physics.Arcade.Body#bounce bounce.x}.
+ * @property {number} [bounceY=0] - Sets {@link Phaser.Physics.Arcade.Body#bounce bounce.y}.
+ * @property {number} [dragX=0] - Sets {@link Phaser.Physics.Arcade.Body#drag drag.x}.
+ * @property {number} [dragY=0] - Sets {@link Phaser.Physics.Arcade.Body#drag drag.y}.
+ * @property {boolean} [enable=true] - Sets {@link Phaser.Physics.Arcade.Body#enable enable}.
+ * @property {number} [gravityX=0] - Sets {@link Phaser.Physics.Arcade.Body#gravity gravity.x}.
+ * @property {number} [gravityY=0] - Sets {@link Phaser.Physics.Arcade.Body#gravity gravity.y}.
+ * @property {number} [frictionX=0] - Sets {@link Phaser.Physics.Arcade.Body#friction friction.x}.
+ * @property {number} [frictionY=0] - Sets {@link Phaser.Physics.Arcade.Body#friction friction.y}.
+ * @property {number} [velocityX=0] - Sets {@link Phaser.Physics.Arcade.Body#velocity velocity.x}.
+ * @property {number} [velocityY=0] - Sets {@link Phaser.Physics.Arcade.Body#velocity velocity.y}.
+ * @property {number} [angularVelocity=0] - Sets {@link Phaser.Physics.Arcade.Body#angularVelocity}.
+ * @property {number} [angularAcceleration=0] - Sets {@link Phaser.Physics.Arcade.Body#angularAcceleration}.
+ * @property {number} [angularDrag=0] - Sets {@link Phaser.Physics.Arcade.Body#angularDrag}.
