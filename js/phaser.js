@@ -61303,3 +61303,226 @@ var PhysicsGroup = new Class({
         }
 
         return this;
+    },
+
+    /**
+     * Sets the vertical velocity of each Group member.
+     *
+     * @method Phaser.Physics.Arcade.Group#setVelocityY
+     * @since 3.0.0
+     *
+     * @param {number} value - The velocity value.
+     * @param {number} [step=0] - The velocity increment. When set, the first member receives velocity (y), the second (y + step), and so on.
+     *
+     * @return {Phaser.Physics.Arcade.Group} This Physics Group object.
+     */
+    setVelocityY: function (value, step)
+    {
+        if (step === undefined) { step = 0; }
+
+        var items = this.getChildren();
+
+        for (var i = 0; i < items.length; i++)
+        {
+            items[i].body.velocity.y = value + (i * step);
+        }
+
+        return this;
+    }
+
+});
+
+module.exports = PhysicsGroup;
+
+
+/***/ }),
+/* 236 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Physics.Arcade.Components
+ */
+
+module.exports = {
+
+    Acceleration: __webpack_require__(526),
+    Angular: __webpack_require__(525),
+    Bounce: __webpack_require__(524),
+    Debug: __webpack_require__(523),
+    Drag: __webpack_require__(522),
+    Enable: __webpack_require__(521),
+    Friction: __webpack_require__(520),
+    Gravity: __webpack_require__(519),
+    Immovable: __webpack_require__(518),
+    Mass: __webpack_require__(517),
+    Size: __webpack_require__(516),
+    Velocity: __webpack_require__(515)
+
+};
+
+
+/***/ }),
+/* 237 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(236);
+var Image = __webpack_require__(87);
+
+/**
+ * @classdesc
+ * An Arcade Physics Image Game Object.
+ *
+ * An Image is a light-weight Game Object useful for the display of static images in your game,
+ * such as logos, backgrounds, scenery or other non-animated elements. Images can have input
+ * events and physics bodies, or be tweened, tinted or scrolled. The main difference between an
+ * Image and a Sprite is that you cannot animate an Image as they do not have the Animation component.
+ *
+ * @class Image
+ * @extends Phaser.GameObjects.Image
+ * @memberof Phaser.Physics.Arcade
+ * @constructor
+ * @since 3.0.0
+ *
+ * @extends Phaser.Physics.Arcade.Components.Acceleration
+ * @extends Phaser.Physics.Arcade.Components.Angular
+ * @extends Phaser.Physics.Arcade.Components.Bounce
+ * @extends Phaser.Physics.Arcade.Components.Debug
+ * @extends Phaser.Physics.Arcade.Components.Drag
+ * @extends Phaser.Physics.Arcade.Components.Enable
+ * @extends Phaser.Physics.Arcade.Components.Friction
+ * @extends Phaser.Physics.Arcade.Components.Gravity
+ * @extends Phaser.Physics.Arcade.Components.Immovable
+ * @extends Phaser.Physics.Arcade.Components.Mass
+ * @extends Phaser.Physics.Arcade.Components.Size
+ * @extends Phaser.Physics.Arcade.Components.Velocity
+ * @extends Phaser.GameObjects.Components.Alpha
+ * @extends Phaser.GameObjects.Components.BlendMode
+ * @extends Phaser.GameObjects.Components.Depth
+ * @extends Phaser.GameObjects.Components.Flip
+ * @extends Phaser.GameObjects.Components.GetBounds
+ * @extends Phaser.GameObjects.Components.Origin
+ * @extends Phaser.GameObjects.Components.Pipeline
+ * @extends Phaser.GameObjects.Components.ScaleMode
+ * @extends Phaser.GameObjects.Components.ScrollFactor
+ * @extends Phaser.GameObjects.Components.Size
+ * @extends Phaser.GameObjects.Components.Texture
+ * @extends Phaser.GameObjects.Components.Tint
+ * @extends Phaser.GameObjects.Components.Transform
+ * @extends Phaser.GameObjects.Components.Visible
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Game Object belongs. A Game Object can only belong to one Scene at a time.
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {string} texture - The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
+ * @param {(string|integer)} [frame] - An optional frame from the Texture this Game Object is rendering with.
+ */
+var ArcadeImage = new Class({
+
+    Extends: Image,
+
+    Mixins: [
+        Components.Acceleration,
+        Components.Angular,
+        Components.Bounce,
+        Components.Debug,
+        Components.Drag,
+        Components.Enable,
+        Components.Friction,
+        Components.Gravity,
+        Components.Immovable,
+        Components.Mass,
+        Components.Size,
+        Components.Velocity
+    ],
+
+    initialize:
+
+    function ArcadeImage (scene, x, y, texture, frame)
+    {
+        Image.call(this, scene, x, y, texture, frame);
+
+        /**
+         * This Game Object's Physics Body.
+         *
+         * @name Phaser.Physics.Arcade.Image#body
+         * @type {?(Phaser.Physics.Arcade.Body|Phaser.Physics.Arcade.StaticBody)}
+         * @default null
+         * @since 3.0.0
+         */
+        this.body = null;
+    }
+
+});
+
+module.exports = ArcadeImage;
+
+
+/***/ }),
+/* 238 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var ArcadeImage = __webpack_require__(237);
+var ArcadeSprite = __webpack_require__(104);
+var Class = __webpack_require__(0);
+var CONST = __webpack_require__(35);
+var PhysicsGroup = __webpack_require__(235);
+var StaticPhysicsGroup = __webpack_require__(234);
+
+/**
+ * @classdesc
+ * The Arcade Physics Factory allows you to easily create Arcade Physics enabled Game Objects.
+ * Objects that are created by this Factory are automatically added to the physics world.
+ *
+ * @class Factory
+ * @memberof Phaser.Physics.Arcade
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Physics.Arcade.World} world - The Arcade Physics World instance.
+ */
+var Factory = new Class({
+
+    initialize:
+
+    function Factory (world)
+    {
+        /**
+         * A reference to the Arcade Physics World.
+         *
+         * @name Phaser.Physics.Arcade.Factory#world
+         * @type {Phaser.Physics.Arcade.World}
+         * @since 3.0.0
+         */
+        this.world = world;
+
+        /**
+         * A reference to the Scene this Arcade Physics instance belongs to.
+         *
+         * @name Phaser.Physics.Arcade.Factory#scene
+         * @type {Phaser.Scene}
+         * @since 3.0.0
+         */
+        this.scene = world.scene;
+
+        /**
+         * A reference to the Scene.Systems this Arcade Physics instance belongs to.
+         *
