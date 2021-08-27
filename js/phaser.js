@@ -61725,3 +61725,218 @@ var Factory = new Class({
 
     /**
      * Destroys this Factory.
+     *
+     * @method Phaser.Physics.Arcade.Factory#destroy
+     * @since 3.5.0
+     */
+    destroy: function ()
+    {
+        this.world = null;
+        this.scene = null;
+        this.sys = null;
+    }
+
+});
+
+module.exports = Factory;
+
+
+/***/ }),
+/* 239 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  Adapted from [gl-matrix](https://github.com/toji/gl-matrix) by toji
+//  and [vecmath](https://github.com/mattdesl/vecmath) by mattdesl
+
+var Class = __webpack_require__(0);
+var Vector3 = __webpack_require__(138);
+var Matrix3 = __webpack_require__(241);
+
+var EPSILON = 0.000001;
+
+//  Some shared 'private' arrays
+var siNext = new Int8Array([ 1, 2, 0 ]);
+var tmp = new Float32Array([ 0, 0, 0 ]);
+
+var xUnitVec3 = new Vector3(1, 0, 0);
+var yUnitVec3 = new Vector3(0, 1, 0);
+
+var tmpvec = new Vector3();
+var tmpMat3 = new Matrix3();
+
+/**
+ * @classdesc
+ * A quaternion.
+ *
+ * @class Quaternion
+ * @memberof Phaser.Math
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {number} [x] - The x component.
+ * @param {number} [y] - The y component.
+ * @param {number} [z] - The z component.
+ * @param {number} [w] - The w component.
+ */
+var Quaternion = new Class({
+
+    initialize:
+
+    function Quaternion (x, y, z, w)
+    {
+        /**
+         * The x component of this Quaternion.
+         *
+         * @name Phaser.Math.Quaternion#x
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+
+        /**
+         * The y component of this Quaternion.
+         *
+         * @name Phaser.Math.Quaternion#y
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+
+        /**
+         * The z component of this Quaternion.
+         *
+         * @name Phaser.Math.Quaternion#z
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+
+        /**
+         * The w component of this Quaternion.
+         *
+         * @name Phaser.Math.Quaternion#w
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+
+        if (typeof x === 'object')
+        {
+            this.x = x.x || 0;
+            this.y = x.y || 0;
+            this.z = x.z || 0;
+            this.w = x.w || 0;
+        }
+        else
+        {
+            this.x = x || 0;
+            this.y = y || 0;
+            this.z = z || 0;
+            this.w = w || 0;
+        }
+    },
+
+    /**
+     * Copy the components of a given Quaternion or Vector into this Quaternion.
+     *
+     * @method Phaser.Math.Quaternion#copy
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Quaternion|Phaser.Math.Vector4)} src - The Quaternion or Vector to copy the components from.
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    copy: function (src)
+    {
+        this.x = src.x;
+        this.y = src.y;
+        this.z = src.z;
+        this.w = src.w;
+
+        return this;
+    },
+
+    /**
+     * Set the components of this Quaternion.
+     *
+     * @method Phaser.Math.Quaternion#set
+     * @since 3.0.0
+     *
+     * @param {(number|object)} [x=0] - The x component, or an object containing x, y, z, and w components.
+     * @param {number} [y=0] - The y component.
+     * @param {number} [z=0] - The z component.
+     * @param {number} [w=0] - The w component.
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    set: function (x, y, z, w)
+    {
+        if (typeof x === 'object')
+        {
+            this.x = x.x || 0;
+            this.y = x.y || 0;
+            this.z = x.z || 0;
+            this.w = x.w || 0;
+        }
+        else
+        {
+            this.x = x || 0;
+            this.y = y || 0;
+            this.z = z || 0;
+            this.w = w || 0;
+        }
+
+        return this;
+    },
+
+    /**
+     * Add a given Quaternion or Vector to this Quaternion. Addition is component-wise.
+     *
+     * @method Phaser.Math.Quaternion#add
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Quaternion|Phaser.Math.Vector4)} v - The Quaternion or Vector to add to this Quaternion.
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    add: function (v)
+    {
+        this.x += v.x;
+        this.y += v.y;
+        this.z += v.z;
+        this.w += v.w;
+
+        return this;
+    },
+
+    /**
+     * Subtract a given Quaternion or Vector from this Quaternion. Subtraction is component-wise.
+     *
+     * @method Phaser.Math.Quaternion#subtract
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Quaternion|Phaser.Math.Vector4)} v - The Quaternion or Vector to subtract from this Quaternion.
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    subtract: function (v)
+    {
+        this.x -= v.x;
+        this.y -= v.y;
+        this.z -= v.z;
+        this.w -= v.w;
+
+        return this;
+    },
+
+    /**
+     * Scale this Quaternion by the given value.
+     *
+     * @method Phaser.Math.Quaternion#scale
+     * @since 3.0.0
