@@ -61940,3 +61940,233 @@ var Quaternion = new Class({
      *
      * @method Phaser.Math.Quaternion#scale
      * @since 3.0.0
+     *
+     * @param {number} scale - The value to scale this Quaternion by.
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    scale: function (scale)
+    {
+        this.x *= scale;
+        this.y *= scale;
+        this.z *= scale;
+        this.w *= scale;
+
+        return this;
+    },
+
+    /**
+     * Calculate the length of this Quaternion.
+     *
+     * @method Phaser.Math.Quaternion#length
+     * @since 3.0.0
+     *
+     * @return {number} The length of this Quaternion.
+     */
+    length: function ()
+    {
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+        var w = this.w;
+
+        return Math.sqrt(x * x + y * y + z * z + w * w);
+    },
+
+    /**
+     * Calculate the length of this Quaternion squared.
+     *
+     * @method Phaser.Math.Quaternion#lengthSq
+     * @since 3.0.0
+     *
+     * @return {number} The length of this Quaternion, squared.
+     */
+    lengthSq: function ()
+    {
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+        var w = this.w;
+
+        return x * x + y * y + z * z + w * w;
+    },
+
+    /**
+     * Normalize this Quaternion.
+     *
+     * @method Phaser.Math.Quaternion#normalize
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    normalize: function ()
+    {
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+        var w = this.w;
+        var len = x * x + y * y + z * z + w * w;
+
+        if (len > 0)
+        {
+            len = 1 / Math.sqrt(len);
+
+            this.x = x * len;
+            this.y = y * len;
+            this.z = z * len;
+            this.w = w * len;
+        }
+
+        return this;
+    },
+
+    /**
+     * Calculate the dot product of this Quaternion and the given Quaternion or Vector.
+     *
+     * @method Phaser.Math.Quaternion#dot
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Quaternion|Phaser.Math.Vector4)} v - The Quaternion or Vector to dot product with this Quaternion.
+     *
+     * @return {number} The dot product of this Quaternion and the given Quaternion or Vector.
+     */
+    dot: function (v)
+    {
+        return this.x * v.x + this.y * v.y + this.z * v.z + this.w * v.w;
+    },
+
+    /**
+     * Linearly interpolate this Quaternion towards the given Quaternion or Vector.
+     *
+     * @method Phaser.Math.Quaternion#lerp
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Quaternion|Phaser.Math.Vector4)} v - The Quaternion or Vector to interpolate towards.
+     * @param {number} [t=0] - The percentage of interpolation.
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    lerp: function (v, t)
+    {
+        if (t === undefined) { t = 0; }
+
+        var ax = this.x;
+        var ay = this.y;
+        var az = this.z;
+        var aw = this.w;
+
+        this.x = ax + t * (v.x - ax);
+        this.y = ay + t * (v.y - ay);
+        this.z = az + t * (v.z - az);
+        this.w = aw + t * (v.w - aw);
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Math.Quaternion#rotationTo
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector3} a - [description]
+     * @param {Phaser.Math.Vector3} b - [description]
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    rotationTo: function (a, b)
+    {
+        var dot = a.x * b.x + a.y * b.y + a.z * b.z;
+
+        if (dot < -0.999999)
+        {
+            if (tmpvec.copy(xUnitVec3).cross(a).length() < EPSILON)
+            {
+                tmpvec.copy(yUnitVec3).cross(a);
+            }
+
+            tmpvec.normalize();
+
+            return this.setAxisAngle(tmpvec, Math.PI);
+
+        }
+        else if (dot > 0.999999)
+        {
+            this.x = 0;
+            this.y = 0;
+            this.z = 0;
+            this.w = 1;
+
+            return this;
+        }
+        else
+        {
+            tmpvec.copy(a).cross(b);
+
+            this.x = tmpvec.x;
+            this.y = tmpvec.y;
+            this.z = tmpvec.z;
+            this.w = 1 + dot;
+
+            return this.normalize();
+        }
+    },
+
+    /**
+     * Set the axes of this Quaternion.
+     *
+     * @method Phaser.Math.Quaternion#setAxes
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector3} view - The view axis.
+     * @param {Phaser.Math.Vector3} right - The right axis.
+     * @param {Phaser.Math.Vector3} up - The upwards axis.
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    setAxes: function (view, right, up)
+    {
+        var m = tmpMat3.val;
+
+        m[0] = right.x;
+        m[3] = right.y;
+        m[6] = right.z;
+
+        m[1] = up.x;
+        m[4] = up.y;
+        m[7] = up.z;
+
+        m[2] = -view.x;
+        m[5] = -view.y;
+        m[8] = -view.z;
+
+        return this.fromMat3(tmpMat3).normalize();
+    },
+
+    /**
+     * Reset this Matrix to an identity (default) Quaternion.
+     *
+     * @method Phaser.Math.Quaternion#identity
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    identity: function ()
+    {
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+        this.w = 1;
+
+        return this;
+    },
+
+    /**
+     * Set the axis angle of this Quaternion.
+     *
+     * @method Phaser.Math.Quaternion#setAxisAngle
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector3} axis - The axis.
+     * @param {number} rad - The angle in radians.
+     *
