@@ -62170,3 +62170,221 @@ var Quaternion = new Class({
      * @param {Phaser.Math.Vector3} axis - The axis.
      * @param {number} rad - The angle in radians.
      *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    setAxisAngle: function (axis, rad)
+    {
+        rad = rad * 0.5;
+
+        var s = Math.sin(rad);
+
+        this.x = s * axis.x;
+        this.y = s * axis.y;
+        this.z = s * axis.z;
+        this.w = Math.cos(rad);
+
+        return this;
+    },
+
+    /**
+     * Multiply this Quaternion by the given Quaternion or Vector.
+     *
+     * @method Phaser.Math.Quaternion#multiply
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Quaternion|Phaser.Math.Vector4)} b - The Quaternion or Vector to multiply this Quaternion by.
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    multiply: function (b)
+    {
+        var ax = this.x;
+        var ay = this.y;
+        var az = this.z;
+        var aw = this.w;
+
+        var bx = b.x;
+        var by = b.y;
+        var bz = b.z;
+        var bw = b.w;
+
+        this.x = ax * bw + aw * bx + ay * bz - az * by;
+        this.y = ay * bw + aw * by + az * bx - ax * bz;
+        this.z = az * bw + aw * bz + ax * by - ay * bx;
+        this.w = aw * bw - ax * bx - ay * by - az * bz;
+
+        return this;
+    },
+
+    /**
+     * Smoothly linearly interpolate this Quaternion towards the given Quaternion or Vector.
+     *
+     * @method Phaser.Math.Quaternion#slerp
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Quaternion|Phaser.Math.Vector4)} b - The Quaternion or Vector to interpolate towards.
+     * @param {number} t - The percentage of interpolation.
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    slerp: function (b, t)
+    {
+        // benchmarks: http://jsperf.com/quaternion-slerp-implementations
+
+        var ax = this.x;
+        var ay = this.y;
+        var az = this.z;
+        var aw = this.w;
+
+        var bx = b.x;
+        var by = b.y;
+        var bz = b.z;
+        var bw = b.w;
+
+        // calc cosine
+        var cosom = ax * bx + ay * by + az * bz + aw * bw;
+
+        // adjust signs (if necessary)
+        if (cosom < 0)
+        {
+            cosom = -cosom;
+            bx = - bx;
+            by = - by;
+            bz = - bz;
+            bw = - bw;
+        }
+
+        // "from" and "to" quaternions are very close
+        //  ... so we can do a linear interpolation
+        var scale0 = 1 - t;
+        var scale1 = t;
+
+        // calculate coefficients
+        if ((1 - cosom) > EPSILON)
+        {
+            // standard case (slerp)
+            var omega = Math.acos(cosom);
+            var sinom = Math.sin(omega);
+
+            scale0 = Math.sin((1.0 - t) * omega) / sinom;
+            scale1 = Math.sin(t * omega) / sinom;
+        }
+
+        // calculate final values
+        this.x = scale0 * ax + scale1 * bx;
+        this.y = scale0 * ay + scale1 * by;
+        this.z = scale0 * az + scale1 * bz;
+        this.w = scale0 * aw + scale1 * bw;
+
+        return this;
+    },
+
+    /**
+     * Invert this Quaternion.
+     *
+     * @method Phaser.Math.Quaternion#invert
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    invert: function ()
+    {
+        var a0 = this.x;
+        var a1 = this.y;
+        var a2 = this.z;
+        var a3 = this.w;
+
+        var dot = a0 * a0 + a1 * a1 + a2 * a2 + a3 * a3;
+        var invDot = (dot) ? 1 / dot : 0;
+
+        // TODO: Would be faster to return [0,0,0,0] immediately if dot == 0
+
+        this.x = -a0 * invDot;
+        this.y = -a1 * invDot;
+        this.z = -a2 * invDot;
+        this.w = a3 * invDot;
+
+        return this;
+    },
+
+    /**
+     * Convert this Quaternion into its conjugate.
+     *
+     * Sets the x, y and z components.
+     *
+     * @method Phaser.Math.Quaternion#conjugate
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    conjugate: function ()
+    {
+        this.x = -this.x;
+        this.y = -this.y;
+        this.z = -this.z;
+
+        return this;
+    },
+
+    /**
+     * Rotate this Quaternion on the X axis.
+     *
+     * @method Phaser.Math.Quaternion#rotateX
+     * @since 3.0.0
+     *
+     * @param {number} rad - The rotation angle in radians.
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    rotateX: function (rad)
+    {
+        rad *= 0.5;
+
+        var ax = this.x;
+        var ay = this.y;
+        var az = this.z;
+        var aw = this.w;
+
+        var bx = Math.sin(rad);
+        var bw = Math.cos(rad);
+
+        this.x = ax * bw + aw * bx;
+        this.y = ay * bw + az * bx;
+        this.z = az * bw - ay * bx;
+        this.w = aw * bw - ax * bx;
+
+        return this;
+    },
+
+    /**
+     * Rotate this Quaternion on the Y axis.
+     *
+     * @method Phaser.Math.Quaternion#rotateY
+     * @since 3.0.0
+     *
+     * @param {number} rad - The rotation angle in radians.
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    rotateY: function (rad)
+    {
+        rad *= 0.5;
+
+        var ax = this.x;
+        var ay = this.y;
+        var az = this.z;
+        var aw = this.w;
+
+        var by = Math.sin(rad);
+        var bw = Math.cos(rad);
+
+        this.x = ax * bw - az * by;
+        this.y = ay * bw + aw * by;
+        this.z = az * bw + ax * by;
+        this.w = aw * bw - ay * by;
+
+        return this;
+    },
+
+    /**
+     * Rotate this Quaternion on the Z axis.
