@@ -62601,3 +62601,220 @@ var Matrix4 = new Class({
     /**
      * Copy the values of a given Matrix into this Matrix.
      *
+     * @method Phaser.Math.Matrix4#copy
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Matrix4} src - The Matrix to copy the values from.
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    copy: function (src)
+    {
+        var out = this.val;
+        var a = src.val;
+
+        out[0] = a[0];
+        out[1] = a[1];
+        out[2] = a[2];
+        out[3] = a[3];
+        out[4] = a[4];
+        out[5] = a[5];
+        out[6] = a[6];
+        out[7] = a[7];
+        out[8] = a[8];
+        out[9] = a[9];
+        out[10] = a[10];
+        out[11] = a[11];
+        out[12] = a[12];
+        out[13] = a[13];
+        out[14] = a[14];
+        out[15] = a[15];
+
+        return this;
+    },
+
+    /**
+     * Set the values of this Matrix from the given array.
+     *
+     * @method Phaser.Math.Matrix4#fromArray
+     * @since 3.0.0
+     *
+     * @param {array} a - The array to copy the values from.
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    fromArray: function (a)
+    {
+        var out = this.val;
+
+        out[0] = a[0];
+        out[1] = a[1];
+        out[2] = a[2];
+        out[3] = a[3];
+        out[4] = a[4];
+        out[5] = a[5];
+        out[6] = a[6];
+        out[7] = a[7];
+        out[8] = a[8];
+        out[9] = a[9];
+        out[10] = a[10];
+        out[11] = a[11];
+        out[12] = a[12];
+        out[13] = a[13];
+        out[14] = a[14];
+        out[15] = a[15];
+
+        return this;
+    },
+
+    /**
+     * Reset this Matrix.
+     *
+     * Sets all values to `0`.
+     *
+     * @method Phaser.Math.Matrix4#zero
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    zero: function ()
+    {
+        var out = this.val;
+
+        out[0] = 0;
+        out[1] = 0;
+        out[2] = 0;
+        out[3] = 0;
+        out[4] = 0;
+        out[5] = 0;
+        out[6] = 0;
+        out[7] = 0;
+        out[8] = 0;
+        out[9] = 0;
+        out[10] = 0;
+        out[11] = 0;
+        out[12] = 0;
+        out[13] = 0;
+        out[14] = 0;
+        out[15] = 0;
+
+        return this;
+    },
+
+    /**
+     * Set the `x`, `y` and `z` values of this Matrix.
+     *
+     * @method Phaser.Math.Matrix4#xyz
+     * @since 3.0.0
+     *
+     * @param {number} x - The x value.
+     * @param {number} y - The y value.
+     * @param {number} z - The z value.
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    xyz: function (x, y, z)
+    {
+        this.identity();
+
+        var out = this.val;
+
+        out[12] = x;
+        out[13] = y;
+        out[14] = z;
+
+        return this;
+    },
+
+    /**
+     * Set the scaling values of this Matrix.
+     *
+     * @method Phaser.Math.Matrix4#scaling
+     * @since 3.0.0
+     *
+     * @param {number} x - The x scaling value.
+     * @param {number} y - The y scaling value.
+     * @param {number} z - The z scaling value.
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    scaling: function (x, y, z)
+    {
+        this.zero();
+
+        var out = this.val;
+
+        out[0] = x;
+        out[5] = y;
+        out[10] = z;
+        out[15] = 1;
+
+        return this;
+    },
+
+    /**
+     * Reset this Matrix to an identity (default) matrix.
+     *
+     * @method Phaser.Math.Matrix4#identity
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    identity: function ()
+    {
+        var out = this.val;
+
+        out[0] = 1;
+        out[1] = 0;
+        out[2] = 0;
+        out[3] = 0;
+        out[4] = 0;
+        out[5] = 1;
+        out[6] = 0;
+        out[7] = 0;
+        out[8] = 0;
+        out[9] = 0;
+        out[10] = 1;
+        out[11] = 0;
+        out[12] = 0;
+        out[13] = 0;
+        out[14] = 0;
+        out[15] = 1;
+
+        return this;
+    },
+
+    /**
+     * Transpose this Matrix.
+     *
+     * @method Phaser.Math.Matrix4#transpose
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    transpose: function ()
+    {
+        var a = this.val;
+
+        var a01 = a[1];
+        var a02 = a[2];
+        var a03 = a[3];
+        var a12 = a[6];
+        var a13 = a[7];
+        var a23 = a[11];
+
+        a[1] = a[4];
+        a[2] = a[8];
+        a[3] = a[12];
+        a[4] = a01;
+        a[6] = a[9];
+        a[7] = a[13];
+        a[8] = a02;
+        a[9] = a12;
+        a[11] = a[14];
+        a[12] = a03;
+        a[13] = a13;
+        a[14] = a23;
+
+        return this;
+    },
