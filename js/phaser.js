@@ -62388,3 +62388,216 @@ var Quaternion = new Class({
 
     /**
      * Rotate this Quaternion on the Z axis.
+     *
+     * @method Phaser.Math.Quaternion#rotateZ
+     * @since 3.0.0
+     *
+     * @param {number} rad - The rotation angle in radians.
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    rotateZ: function (rad)
+    {
+        rad *= 0.5;
+
+        var ax = this.x;
+        var ay = this.y;
+        var az = this.z;
+        var aw = this.w;
+
+        var bz = Math.sin(rad);
+        var bw = Math.cos(rad);
+
+        this.x = ax * bw + ay * bz;
+        this.y = ay * bw - ax * bz;
+        this.z = az * bw + aw * bz;
+        this.w = aw * bw - az * bz;
+
+        return this;
+    },
+
+    /**
+     * Create a unit (or rotation) Quaternion from its x, y, and z components.
+     *
+     * Sets the w component.
+     *
+     * @method Phaser.Math.Quaternion#calculateW
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    calculateW: function ()
+    {
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+
+        this.w = -Math.sqrt(1.0 - x * x - y * y - z * z);
+
+        return this;
+    },
+
+    /**
+     * Convert the given Matrix into this Quaternion.
+     *
+     * @method Phaser.Math.Quaternion#fromMat3
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Matrix3} mat - The Matrix to convert from.
+     *
+     * @return {Phaser.Math.Quaternion} This Quaternion.
+     */
+    fromMat3: function (mat)
+    {
+        // benchmarks:
+        //    http://jsperf.com/typed-array-access-speed
+        //    http://jsperf.com/conversion-of-3x3-matrix-to-quaternion
+
+        // Algorithm in Ken Shoemake's article in 1987 SIGGRAPH course notes
+        // article "Quaternion Calculus and Fast Animation".
+        var m = mat.val;
+        var fTrace = m[0] + m[4] + m[8];
+        var fRoot;
+
+        if (fTrace > 0)
+        {
+            // |w| > 1/2, may as well choose w > 1/2
+            fRoot = Math.sqrt(fTrace + 1.0); // 2w
+
+            this.w = 0.5 * fRoot;
+
+            fRoot = 0.5 / fRoot; // 1/(4w)
+
+            this.x = (m[7] - m[5]) * fRoot;
+            this.y = (m[2] - m[6]) * fRoot;
+            this.z = (m[3] - m[1]) * fRoot;
+        }
+        else
+        {
+            // |w| <= 1/2
+            var i = 0;
+
+            if (m[4] > m[0])
+            {
+                i = 1;
+            }
+
+            if (m[8] > m[i * 3 + i])
+            {
+                i = 2;
+            }
+
+            var j = siNext[i];
+            var k = siNext[j];
+
+            //  This isn't quite as clean without array access
+            fRoot = Math.sqrt(m[i * 3 + i] - m[j * 3 + j] - m[k * 3 + k] + 1);
+            tmp[i] = 0.5 * fRoot;
+
+            fRoot = 0.5 / fRoot;
+
+            tmp[j] = (m[j * 3 + i] + m[i * 3 + j]) * fRoot;
+            tmp[k] = (m[k * 3 + i] + m[i * 3 + k]) * fRoot;
+
+            this.x = tmp[0];
+            this.y = tmp[1];
+            this.z = tmp[2];
+            this.w = (m[k * 3 + j] - m[j * 3 + k]) * fRoot;
+        }
+
+        return this;
+    }
+
+});
+
+module.exports = Quaternion;
+
+
+/***/ }),
+/* 240 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  Adapted from [gl-matrix](https://github.com/toji/gl-matrix) by toji
+//  and [vecmath](https://github.com/mattdesl/vecmath) by mattdesl
+
+var Class = __webpack_require__(0);
+
+var EPSILON = 0.000001;
+
+/**
+ * @classdesc
+ * A four-dimensional matrix.
+ *
+ * @class Matrix4
+ * @memberof Phaser.Math
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Math.Matrix4} [m] - Optional Matrix4 to copy values from.
+ */
+var Matrix4 = new Class({
+
+    initialize:
+
+    function Matrix4 (m)
+    {
+        /**
+         * The matrix values.
+         *
+         * @name Phaser.Math.Matrix4#val
+         * @type {Float32Array}
+         * @since 3.0.0
+         */
+        this.val = new Float32Array(16);
+
+        if (m)
+        {
+            //  Assume Matrix4 with val:
+            this.copy(m);
+        }
+        else
+        {
+            //  Default to identity
+            this.identity();
+        }
+    },
+
+    /**
+     * Make a clone of this Matrix4.
+     *
+     * @method Phaser.Math.Matrix4#clone
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Matrix4} A clone of this Matrix4.
+     */
+    clone: function ()
+    {
+        return new Matrix4(this);
+    },
+
+    //  TODO - Should work with basic values
+
+    /**
+     * This method is an alias for `Matrix4.copy`.
+     *
+     * @method Phaser.Math.Matrix4#set
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Matrix4} src - The Matrix to set the values of this Matrix's from.
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    set: function (src)
+    {
+        return this.copy(src);
+    },
+
+    /**
+     * Copy the values of a given Matrix into this Matrix.
+     *
