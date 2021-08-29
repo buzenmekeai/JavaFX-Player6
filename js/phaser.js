@@ -62818,3 +62818,226 @@ var Matrix4 = new Class({
 
         return this;
     },
+
+    /**
+     * Invert this Matrix.
+     *
+     * @method Phaser.Math.Matrix4#invert
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    invert: function ()
+    {
+        var a = this.val;
+
+        var a00 = a[0];
+        var a01 = a[1];
+        var a02 = a[2];
+        var a03 = a[3];
+
+        var a10 = a[4];
+        var a11 = a[5];
+        var a12 = a[6];
+        var a13 = a[7];
+
+        var a20 = a[8];
+        var a21 = a[9];
+        var a22 = a[10];
+        var a23 = a[11];
+
+        var a30 = a[12];
+        var a31 = a[13];
+        var a32 = a[14];
+        var a33 = a[15];
+
+        var b00 = a00 * a11 - a01 * a10;
+        var b01 = a00 * a12 - a02 * a10;
+        var b02 = a00 * a13 - a03 * a10;
+        var b03 = a01 * a12 - a02 * a11;
+
+        var b04 = a01 * a13 - a03 * a11;
+        var b05 = a02 * a13 - a03 * a12;
+        var b06 = a20 * a31 - a21 * a30;
+        var b07 = a20 * a32 - a22 * a30;
+
+        var b08 = a20 * a33 - a23 * a30;
+        var b09 = a21 * a32 - a22 * a31;
+        var b10 = a21 * a33 - a23 * a31;
+        var b11 = a22 * a33 - a23 * a32;
+
+        // Calculate the determinant
+        var det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+
+        if (!det)
+        {
+            return null;
+        }
+
+        det = 1 / det;
+
+        a[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
+        a[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
+        a[2] = (a31 * b05 - a32 * b04 + a33 * b03) * det;
+        a[3] = (a22 * b04 - a21 * b05 - a23 * b03) * det;
+        a[4] = (a12 * b08 - a10 * b11 - a13 * b07) * det;
+        a[5] = (a00 * b11 - a02 * b08 + a03 * b07) * det;
+        a[6] = (a32 * b02 - a30 * b05 - a33 * b01) * det;
+        a[7] = (a20 * b05 - a22 * b02 + a23 * b01) * det;
+        a[8] = (a10 * b10 - a11 * b08 + a13 * b06) * det;
+        a[9] = (a01 * b08 - a00 * b10 - a03 * b06) * det;
+        a[10] = (a30 * b04 - a31 * b02 + a33 * b00) * det;
+        a[11] = (a21 * b02 - a20 * b04 - a23 * b00) * det;
+        a[12] = (a11 * b07 - a10 * b09 - a12 * b06) * det;
+        a[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det;
+        a[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det;
+        a[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
+
+        return this;
+    },
+
+    /**
+     * Calculate the adjoint, or adjugate, of this Matrix.
+     *
+     * @method Phaser.Math.Matrix4#adjoint
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    adjoint: function ()
+    {
+        var a = this.val;
+
+        var a00 = a[0];
+        var a01 = a[1];
+        var a02 = a[2];
+        var a03 = a[3];
+
+        var a10 = a[4];
+        var a11 = a[5];
+        var a12 = a[6];
+        var a13 = a[7];
+
+        var a20 = a[8];
+        var a21 = a[9];
+        var a22 = a[10];
+        var a23 = a[11];
+
+        var a30 = a[12];
+        var a31 = a[13];
+        var a32 = a[14];
+        var a33 = a[15];
+
+        a[0] = (a11 * (a22 * a33 - a23 * a32) - a21 * (a12 * a33 - a13 * a32) + a31 * (a12 * a23 - a13 * a22));
+        a[1] = -(a01 * (a22 * a33 - a23 * a32) - a21 * (a02 * a33 - a03 * a32) + a31 * (a02 * a23 - a03 * a22));
+        a[2] = (a01 * (a12 * a33 - a13 * a32) - a11 * (a02 * a33 - a03 * a32) + a31 * (a02 * a13 - a03 * a12));
+        a[3] = -(a01 * (a12 * a23 - a13 * a22) - a11 * (a02 * a23 - a03 * a22) + a21 * (a02 * a13 - a03 * a12));
+        a[4] = -(a10 * (a22 * a33 - a23 * a32) - a20 * (a12 * a33 - a13 * a32) + a30 * (a12 * a23 - a13 * a22));
+        a[5] = (a00 * (a22 * a33 - a23 * a32) - a20 * (a02 * a33 - a03 * a32) + a30 * (a02 * a23 - a03 * a22));
+        a[6] = -(a00 * (a12 * a33 - a13 * a32) - a10 * (a02 * a33 - a03 * a32) + a30 * (a02 * a13 - a03 * a12));
+        a[7] = (a00 * (a12 * a23 - a13 * a22) - a10 * (a02 * a23 - a03 * a22) + a20 * (a02 * a13 - a03 * a12));
+        a[8] = (a10 * (a21 * a33 - a23 * a31) - a20 * (a11 * a33 - a13 * a31) + a30 * (a11 * a23 - a13 * a21));
+        a[9] = -(a00 * (a21 * a33 - a23 * a31) - a20 * (a01 * a33 - a03 * a31) + a30 * (a01 * a23 - a03 * a21));
+        a[10] = (a00 * (a11 * a33 - a13 * a31) - a10 * (a01 * a33 - a03 * a31) + a30 * (a01 * a13 - a03 * a11));
+        a[11] = -(a00 * (a11 * a23 - a13 * a21) - a10 * (a01 * a23 - a03 * a21) + a20 * (a01 * a13 - a03 * a11));
+        a[12] = -(a10 * (a21 * a32 - a22 * a31) - a20 * (a11 * a32 - a12 * a31) + a30 * (a11 * a22 - a12 * a21));
+        a[13] = (a00 * (a21 * a32 - a22 * a31) - a20 * (a01 * a32 - a02 * a31) + a30 * (a01 * a22 - a02 * a21));
+        a[14] = -(a00 * (a11 * a32 - a12 * a31) - a10 * (a01 * a32 - a02 * a31) + a30 * (a01 * a12 - a02 * a11));
+        a[15] = (a00 * (a11 * a22 - a12 * a21) - a10 * (a01 * a22 - a02 * a21) + a20 * (a01 * a12 - a02 * a11));
+
+        return this;
+    },
+
+    /**
+     * Calculate the determinant of this Matrix.
+     *
+     * @method Phaser.Math.Matrix4#determinant
+     * @since 3.0.0
+     *
+     * @return {number} The determinant of this Matrix.
+     */
+    determinant: function ()
+    {
+        var a = this.val;
+
+        var a00 = a[0];
+        var a01 = a[1];
+        var a02 = a[2];
+        var a03 = a[3];
+
+        var a10 = a[4];
+        var a11 = a[5];
+        var a12 = a[6];
+        var a13 = a[7];
+
+        var a20 = a[8];
+        var a21 = a[9];
+        var a22 = a[10];
+        var a23 = a[11];
+
+        var a30 = a[12];
+        var a31 = a[13];
+        var a32 = a[14];
+        var a33 = a[15];
+
+        var b00 = a00 * a11 - a01 * a10;
+        var b01 = a00 * a12 - a02 * a10;
+        var b02 = a00 * a13 - a03 * a10;
+        var b03 = a01 * a12 - a02 * a11;
+        var b04 = a01 * a13 - a03 * a11;
+        var b05 = a02 * a13 - a03 * a12;
+        var b06 = a20 * a31 - a21 * a30;
+        var b07 = a20 * a32 - a22 * a30;
+        var b08 = a20 * a33 - a23 * a30;
+        var b09 = a21 * a32 - a22 * a31;
+        var b10 = a21 * a33 - a23 * a31;
+        var b11 = a22 * a33 - a23 * a32;
+
+        // Calculate the determinant
+        return b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+    },
+
+    /**
+     * Multiply this Matrix by the given Matrix.
+     *
+     * @method Phaser.Math.Matrix4#multiply
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Matrix4} src - The Matrix to multiply this Matrix by.
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    multiply: function (src)
+    {
+        var a = this.val;
+
+        var a00 = a[0];
+        var a01 = a[1];
+        var a02 = a[2];
+        var a03 = a[3];
+
+        var a10 = a[4];
+        var a11 = a[5];
+        var a12 = a[6];
+        var a13 = a[7];
+
+        var a20 = a[8];
+        var a21 = a[9];
+        var a22 = a[10];
+        var a23 = a[11];
+
+        var a30 = a[12];
+        var a31 = a[13];
+        var a32 = a[14];
+        var a33 = a[15];
+
+        var b = src.val;
+
+        // Cache only the current line of the second matrix
+        var b0 = b[0];
+        var b1 = b[1];
+        var b2 = b[2];
+        var b3 = b[3];
+
+        a[0] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30;
+        a[1] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31;
