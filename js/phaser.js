@@ -63461,3 +63461,231 @@ var Matrix4 = new Class({
 
         out[12] = v.x;
         out[13] = v.y;
+        out[14] = v.z;
+        out[15] = 1;
+
+        return this;
+    },
+
+    /**
+     * Set the values of this Matrix from the given Quaternion.
+     *
+     * @method Phaser.Math.Matrix4#fromQuat
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Quaternion} q - The Quaternion to set the values of this Matrix from.
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    fromQuat: function (q)
+    {
+        var out = this.val;
+
+        var x = q.x;
+        var y = q.y;
+        var z = q.z;
+        var w = q.w;
+
+        var x2 = x + x;
+        var y2 = y + y;
+        var z2 = z + z;
+
+        var xx = x * x2;
+        var xy = x * y2;
+        var xz = x * z2;
+
+        var yy = y * y2;
+        var yz = y * z2;
+        var zz = z * z2;
+
+        var wx = w * x2;
+        var wy = w * y2;
+        var wz = w * z2;
+
+        out[0] = 1 - (yy + zz);
+        out[1] = xy + wz;
+        out[2] = xz - wy;
+        out[3] = 0;
+
+        out[4] = xy - wz;
+        out[5] = 1 - (xx + zz);
+        out[6] = yz + wx;
+        out[7] = 0;
+
+        out[8] = xz + wy;
+        out[9] = yz - wx;
+        out[10] = 1 - (xx + yy);
+        out[11] = 0;
+
+        out[12] = 0;
+        out[13] = 0;
+        out[14] = 0;
+        out[15] = 1;
+
+        return this;
+    },
+
+    /**
+     * Generate a frustum matrix with the given bounds.
+     *
+     * @method Phaser.Math.Matrix4#frustum
+     * @since 3.0.0
+     *
+     * @param {number} left - The left bound of the frustum.
+     * @param {number} right - The right bound of the frustum.
+     * @param {number} bottom - The bottom bound of the frustum.
+     * @param {number} top - The top bound of the frustum.
+     * @param {number} near - The near bound of the frustum.
+     * @param {number} far - The far bound of the frustum.
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    frustum: function (left, right, bottom, top, near, far)
+    {
+        var out = this.val;
+
+        var rl = 1 / (right - left);
+        var tb = 1 / (top - bottom);
+        var nf = 1 / (near - far);
+
+        out[0] = (near * 2) * rl;
+        out[1] = 0;
+        out[2] = 0;
+        out[3] = 0;
+
+        out[4] = 0;
+        out[5] = (near * 2) * tb;
+        out[6] = 0;
+        out[7] = 0;
+
+        out[8] = (right + left) * rl;
+        out[9] = (top + bottom) * tb;
+        out[10] = (far + near) * nf;
+        out[11] = -1;
+
+        out[12] = 0;
+        out[13] = 0;
+        out[14] = (far * near * 2) * nf;
+        out[15] = 0;
+
+        return this;
+    },
+
+    /**
+     * Generate a perspective projection matrix with the given bounds.
+     *
+     * @method Phaser.Math.Matrix4#perspective
+     * @since 3.0.0
+     *
+     * @param {number} fovy - Vertical field of view in radians
+     * @param {number} aspect - Aspect ratio. Typically viewport width  /height.
+     * @param {number} near - Near bound of the frustum.
+     * @param {number} far - Far bound of the frustum.
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    perspective: function (fovy, aspect, near, far)
+    {
+        var out = this.val;
+        var f = 1.0 / Math.tan(fovy / 2);
+        var nf = 1 / (near - far);
+
+        out[0] = f / aspect;
+        out[1] = 0;
+        out[2] = 0;
+        out[3] = 0;
+
+        out[4] = 0;
+        out[5] = f;
+        out[6] = 0;
+        out[7] = 0;
+
+        out[8] = 0;
+        out[9] = 0;
+        out[10] = (far + near) * nf;
+        out[11] = -1;
+
+        out[12] = 0;
+        out[13] = 0;
+        out[14] = (2 * far * near) * nf;
+        out[15] = 0;
+
+        return this;
+    },
+
+    /**
+     * Generate a perspective projection matrix with the given bounds.
+     *
+     * @method Phaser.Math.Matrix4#perspectiveLH
+     * @since 3.0.0
+     *
+     * @param {number} width - The width of the frustum.
+     * @param {number} height - The height of the frustum.
+     * @param {number} near - Near bound of the frustum.
+     * @param {number} far - Far bound of the frustum.
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    perspectiveLH: function (width, height, near, far)
+    {
+        var out = this.val;
+
+        out[0] = (2 * near) / width;
+        out[1] = 0;
+        out[2] = 0;
+        out[3] = 0;
+
+        out[4] = 0;
+        out[5] = (2 * near) / height;
+        out[6] = 0;
+        out[7] = 0;
+
+        out[8] = 0;
+        out[9] = 0;
+        out[10] = -far / (near - far);
+        out[11] = 1;
+
+        out[12] = 0;
+        out[13] = 0;
+        out[14] = (near * far) / (near - far);
+        out[15] = 0;
+
+        return this;
+    },
+
+    /**
+     * Generate an orthogonal projection matrix with the given bounds.
+     *
+     * @method Phaser.Math.Matrix4#ortho
+     * @since 3.0.0
+     *
+     * @param {number} left - The left bound of the frustum.
+     * @param {number} right - The right bound of the frustum.
+     * @param {number} bottom - The bottom bound of the frustum.
+     * @param {number} top - The top bound of the frustum.
+     * @param {number} near - The near bound of the frustum.
+     * @param {number} far - The far bound of the frustum.
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    ortho: function (left, right, bottom, top, near, far)
+    {
+        var out = this.val;
+        var lr = left - right;
+        var bt = bottom - top;
+        var nf = near - far;
+
+        //  Avoid division by zero
+        lr = (lr === 0) ? lr : 1 / lr;
+        bt = (bt === 0) ? bt : 1 / bt;
+        nf = (nf === 0) ? nf : 1 / nf;
+
+        out[0] = -2 * lr;
+        out[1] = 0;
+        out[2] = 0;
+        out[3] = 0;
+
+        out[4] = 0;
+        out[5] = -2 * bt;
+        out[6] = 0;
+        out[7] = 0;
