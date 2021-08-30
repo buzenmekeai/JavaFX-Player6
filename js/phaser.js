@@ -63689,3 +63689,222 @@ var Matrix4 = new Class({
         out[5] = -2 * bt;
         out[6] = 0;
         out[7] = 0;
+
+        out[8] = 0;
+        out[9] = 0;
+        out[10] = 2 * nf;
+        out[11] = 0;
+
+        out[12] = (left + right) * lr;
+        out[13] = (top + bottom) * bt;
+        out[14] = (far + near) * nf;
+        out[15] = 1;
+
+        return this;
+    },
+
+    /**
+     * Generate a look-at matrix with the given eye position, focal point, and up axis.
+     *
+     * @method Phaser.Math.Matrix4#lookAt
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector3} eye - Position of the viewer
+     * @param {Phaser.Math.Vector3} center - Point the viewer is looking at
+     * @param {Phaser.Math.Vector3} up - vec3 pointing up.
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    lookAt: function (eye, center, up)
+    {
+        var out = this.val;
+
+        var eyex = eye.x;
+        var eyey = eye.y;
+        var eyez = eye.z;
+
+        var upx = up.x;
+        var upy = up.y;
+        var upz = up.z;
+
+        var centerx = center.x;
+        var centery = center.y;
+        var centerz = center.z;
+
+        if (Math.abs(eyex - centerx) < EPSILON &&
+            Math.abs(eyey - centery) < EPSILON &&
+            Math.abs(eyez - centerz) < EPSILON)
+        {
+            return this.identity();
+        }
+
+        var z0 = eyex - centerx;
+        var z1 = eyey - centery;
+        var z2 = eyez - centerz;
+
+        var len = 1 / Math.sqrt(z0 * z0 + z1 * z1 + z2 * z2);
+
+        z0 *= len;
+        z1 *= len;
+        z2 *= len;
+
+        var x0 = upy * z2 - upz * z1;
+        var x1 = upz * z0 - upx * z2;
+        var x2 = upx * z1 - upy * z0;
+
+        len = Math.sqrt(x0 * x0 + x1 * x1 + x2 * x2);
+
+        if (!len)
+        {
+            x0 = 0;
+            x1 = 0;
+            x2 = 0;
+        }
+        else
+        {
+            len = 1 / len;
+            x0 *= len;
+            x1 *= len;
+            x2 *= len;
+        }
+
+        var y0 = z1 * x2 - z2 * x1;
+        var y1 = z2 * x0 - z0 * x2;
+        var y2 = z0 * x1 - z1 * x0;
+
+        len = Math.sqrt(y0 * y0 + y1 * y1 + y2 * y2);
+
+        if (!len)
+        {
+            y0 = 0;
+            y1 = 0;
+            y2 = 0;
+        }
+        else
+        {
+            len = 1 / len;
+            y0 *= len;
+            y1 *= len;
+            y2 *= len;
+        }
+
+        out[0] = x0;
+        out[1] = y0;
+        out[2] = z0;
+        out[3] = 0;
+
+        out[4] = x1;
+        out[5] = y1;
+        out[6] = z1;
+        out[7] = 0;
+
+        out[8] = x2;
+        out[9] = y2;
+        out[10] = z2;
+        out[11] = 0;
+
+        out[12] = -(x0 * eyex + x1 * eyey + x2 * eyez);
+        out[13] = -(y0 * eyex + y1 * eyey + y2 * eyez);
+        out[14] = -(z0 * eyex + z1 * eyey + z2 * eyez);
+        out[15] = 1;
+
+        return this;
+    },
+
+    /**
+     * Set the values of this matrix from the given `yaw`, `pitch` and `roll` values.
+     *
+     * @method Phaser.Math.Matrix4#yawPitchRoll
+     * @since 3.0.0
+     *
+     * @param {number} yaw - [description]
+     * @param {number} pitch - [description]
+     * @param {number} roll - [description]
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    yawPitchRoll: function (yaw, pitch, roll)
+    {
+        this.zero();
+        _tempMat1.zero();
+        _tempMat2.zero();
+
+        var m0 = this.val;
+        var m1 = _tempMat1.val;
+        var m2 = _tempMat2.val;
+
+        //  Rotate Z
+        var s = Math.sin(roll);
+        var c = Math.cos(roll);
+
+        m0[10] = 1;
+        m0[15] = 1;
+        m0[0] = c;
+        m0[1] = s;
+        m0[4] = -s;
+        m0[5] = c;
+
+        //  Rotate X
+        s = Math.sin(pitch);
+        c = Math.cos(pitch);
+
+        m1[0] = 1;
+        m1[15] = 1;
+        m1[5] = c;
+        m1[10] = c;
+        m1[9] = -s;
+        m1[6] = s;
+
+        //  Rotate Y
+        s = Math.sin(yaw);
+        c = Math.cos(yaw);
+
+        m2[5] = 1;
+        m2[15] = 1;
+        m2[0] = c;
+        m2[2] = -s;
+        m2[8] = s;
+        m2[10] = c;
+
+        this.multiplyLocal(_tempMat1);
+        this.multiplyLocal(_tempMat2);
+
+        return this;
+    },
+
+    /**
+     * Generate a world matrix from the given rotation, position, scale, view matrix and projection matrix.
+     *
+     * @method Phaser.Math.Matrix4#setWorldMatrix
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector3} rotation - The rotation of the world matrix.
+     * @param {Phaser.Math.Vector3} position - The position of the world matrix.
+     * @param {Phaser.Math.Vector3} scale - The scale of the world matrix.
+     * @param {Phaser.Math.Matrix4} [viewMatrix] - The view matrix.
+     * @param {Phaser.Math.Matrix4} [projectionMatrix] - The projection matrix.
+     *
+     * @return {Phaser.Math.Matrix4} This Matrix4.
+     */
+    setWorldMatrix: function (rotation, position, scale, viewMatrix, projectionMatrix)
+    {
+        this.yawPitchRoll(rotation.y, rotation.x, rotation.z);
+
+        _tempMat1.scaling(scale.x, scale.y, scale.z);
+        _tempMat2.xyz(position.x, position.y, position.z);
+
+        this.multiplyLocal(_tempMat1);
+        this.multiplyLocal(_tempMat2);
+
+        if (viewMatrix !== undefined)
+        {
+            this.multiplyLocal(viewMatrix);
+        }
+
+        if (projectionMatrix !== undefined)
+        {
+            this.multiplyLocal(projectionMatrix);
+        }
+
+        return this;
+    }
