@@ -63908,3 +63908,214 @@ var Matrix4 = new Class({
 
         return this;
     }
+
+});
+
+var _tempMat1 = new Matrix4();
+var _tempMat2 = new Matrix4();
+
+module.exports = Matrix4;
+
+
+/***/ }),
+/* 241 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  Adapted from [gl-matrix](https://github.com/toji/gl-matrix) by toji
+//  and [vecmath](https://github.com/mattdesl/vecmath) by mattdesl
+
+var Class = __webpack_require__(0);
+
+/**
+ * @classdesc
+ * A three-dimensional matrix.
+ *
+ * Defaults to the identity matrix when instantiated.
+ *
+ * @class Matrix3
+ * @memberof Phaser.Math
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Math.Matrix3} [m] - Optional Matrix3 to copy values from.
+ */
+var Matrix3 = new Class({
+
+    initialize:
+
+    function Matrix3 (m)
+    {
+        /**
+         * The matrix values.
+         *
+         * @name Phaser.Math.Matrix3#val
+         * @type {Float32Array}
+         * @since 3.0.0
+         */
+        this.val = new Float32Array(9);
+
+        if (m)
+        {
+            //  Assume Matrix3 with val:
+            this.copy(m);
+        }
+        else
+        {
+            //  Default to identity
+            this.identity();
+        }
+    },
+
+    /**
+     * Make a clone of this Matrix3.
+     *
+     * @method Phaser.Math.Matrix3#clone
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Matrix3} A clone of this Matrix3.
+     */
+    clone: function ()
+    {
+        return new Matrix3(this);
+    },
+
+    /**
+     * This method is an alias for `Matrix3.copy`.
+     *
+     * @method Phaser.Math.Matrix3#set
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Matrix3} src - The Matrix to set the values of this Matrix's from.
+     *
+     * @return {Phaser.Math.Matrix3} This Matrix3.
+     */
+    set: function (src)
+    {
+        return this.copy(src);
+    },
+
+    /**
+     * Copy the values of a given Matrix into this Matrix.
+     *
+     * @method Phaser.Math.Matrix3#copy
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Matrix3} src - The Matrix to copy the values from.
+     *
+     * @return {Phaser.Math.Matrix3} This Matrix3.
+     */
+    copy: function (src)
+    {
+        var out = this.val;
+        var a = src.val;
+
+        out[0] = a[0];
+        out[1] = a[1];
+        out[2] = a[2];
+        out[3] = a[3];
+        out[4] = a[4];
+        out[5] = a[5];
+        out[6] = a[6];
+        out[7] = a[7];
+        out[8] = a[8];
+
+        return this;
+    },
+
+    /**
+     * Copy the values of a given Matrix4 into this Matrix3.
+     *
+     * @method Phaser.Math.Matrix3#fromMat4
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Matrix4} m - The Matrix4 to copy the values from.
+     *
+     * @return {Phaser.Math.Matrix3} This Matrix3.
+     */
+    fromMat4: function (m)
+    {
+        var a = m.val;
+        var out = this.val;
+
+        out[0] = a[0];
+        out[1] = a[1];
+        out[2] = a[2];
+        out[3] = a[4];
+        out[4] = a[5];
+        out[5] = a[6];
+        out[6] = a[8];
+        out[7] = a[9];
+        out[8] = a[10];
+
+        return this;
+    },
+
+    /**
+     * Set the values of this Matrix from the given array.
+     *
+     * @method Phaser.Math.Matrix3#fromArray
+     * @since 3.0.0
+     *
+     * @param {array} a - The array to copy the values from.
+     *
+     * @return {Phaser.Math.Matrix3} This Matrix3.
+     */
+    fromArray: function (a)
+    {
+        var out = this.val;
+
+        out[0] = a[0];
+        out[1] = a[1];
+        out[2] = a[2];
+        out[3] = a[3];
+        out[4] = a[4];
+        out[5] = a[5];
+        out[6] = a[6];
+        out[7] = a[7];
+        out[8] = a[8];
+
+        return this;
+    },
+
+    /**
+     * Reset this Matrix to an identity (default) matrix.
+     *
+     * @method Phaser.Math.Matrix3#identity
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Matrix3} This Matrix3.
+     */
+    identity: function ()
+    {
+        var out = this.val;
+
+        out[0] = 1;
+        out[1] = 0;
+        out[2] = 0;
+        out[3] = 0;
+        out[4] = 1;
+        out[5] = 0;
+        out[6] = 0;
+        out[7] = 0;
+        out[8] = 1;
+
+        return this;
+    },
+
+    /**
+     * Transpose this Matrix.
+     *
+     * @method Phaser.Math.Matrix3#transpose
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Matrix3} This Matrix3.
+     */
+    transpose: function ()
+    {
+        var a = this.val;
