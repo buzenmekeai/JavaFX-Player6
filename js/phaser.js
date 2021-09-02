@@ -64119,3 +64119,207 @@ var Matrix3 = new Class({
     transpose: function ()
     {
         var a = this.val;
+        var a01 = a[1];
+        var a02 = a[2];
+        var a12 = a[5];
+
+        a[1] = a[3];
+        a[2] = a[6];
+        a[3] = a01;
+        a[5] = a[7];
+        a[6] = a02;
+        a[7] = a12;
+
+        return this;
+    },
+
+    /**
+     * Invert this Matrix.
+     *
+     * @method Phaser.Math.Matrix3#invert
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Matrix3} This Matrix3.
+     */
+    invert: function ()
+    {
+        var a = this.val;
+
+        var a00 = a[0];
+        var a01 = a[1];
+        var a02 = a[2];
+        var a10 = a[3];
+        var a11 = a[4];
+        var a12 = a[5];
+        var a20 = a[6];
+        var a21 = a[7];
+        var a22 = a[8];
+
+        var b01 = a22 * a11 - a12 * a21;
+        var b11 = -a22 * a10 + a12 * a20;
+        var b21 = a21 * a10 - a11 * a20;
+
+        // Calculate the determinant
+        var det = a00 * b01 + a01 * b11 + a02 * b21;
+
+        if (!det)
+        {
+            return null;
+        }
+
+        det = 1 / det;
+
+        a[0] = b01 * det;
+        a[1] = (-a22 * a01 + a02 * a21) * det;
+        a[2] = (a12 * a01 - a02 * a11) * det;
+        a[3] = b11 * det;
+        a[4] = (a22 * a00 - a02 * a20) * det;
+        a[5] = (-a12 * a00 + a02 * a10) * det;
+        a[6] = b21 * det;
+        a[7] = (-a21 * a00 + a01 * a20) * det;
+        a[8] = (a11 * a00 - a01 * a10) * det;
+
+        return this;
+    },
+
+    /**
+     * Calculate the adjoint, or adjugate, of this Matrix.
+     *
+     * @method Phaser.Math.Matrix3#adjoint
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Matrix3} This Matrix3.
+     */
+    adjoint: function ()
+    {
+        var a = this.val;
+
+        var a00 = a[0];
+        var a01 = a[1];
+        var a02 = a[2];
+        var a10 = a[3];
+        var a11 = a[4];
+        var a12 = a[5];
+        var a20 = a[6];
+        var a21 = a[7];
+        var a22 = a[8];
+
+        a[0] = (a11 * a22 - a12 * a21);
+        a[1] = (a02 * a21 - a01 * a22);
+        a[2] = (a01 * a12 - a02 * a11);
+        a[3] = (a12 * a20 - a10 * a22);
+        a[4] = (a00 * a22 - a02 * a20);
+        a[5] = (a02 * a10 - a00 * a12);
+        a[6] = (a10 * a21 - a11 * a20);
+        a[7] = (a01 * a20 - a00 * a21);
+        a[8] = (a00 * a11 - a01 * a10);
+
+        return this;
+    },
+
+    /**
+     * Calculate the determinant of this Matrix.
+     *
+     * @method Phaser.Math.Matrix3#determinant
+     * @since 3.0.0
+     *
+     * @return {number} The determinant of this Matrix.
+     */
+    determinant: function ()
+    {
+        var a = this.val;
+
+        var a00 = a[0];
+        var a01 = a[1];
+        var a02 = a[2];
+        var a10 = a[3];
+        var a11 = a[4];
+        var a12 = a[5];
+        var a20 = a[6];
+        var a21 = a[7];
+        var a22 = a[8];
+
+        return a00 * (a22 * a11 - a12 * a21) + a01 * (-a22 * a10 + a12 * a20) + a02 * (a21 * a10 - a11 * a20);
+    },
+
+    /**
+     * Multiply this Matrix by the given Matrix.
+     *
+     * @method Phaser.Math.Matrix3#multiply
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Matrix3} src - The Matrix to multiply this Matrix by.
+     *
+     * @return {Phaser.Math.Matrix3} This Matrix3.
+     */
+    multiply: function (src)
+    {
+        var a = this.val;
+
+        var a00 = a[0];
+        var a01 = a[1];
+        var a02 = a[2];
+        var a10 = a[3];
+        var a11 = a[4];
+        var a12 = a[5];
+        var a20 = a[6];
+        var a21 = a[7];
+        var a22 = a[8];
+
+        var b = src.val;
+
+        var b00 = b[0];
+        var b01 = b[1];
+        var b02 = b[2];
+        var b10 = b[3];
+        var b11 = b[4];
+        var b12 = b[5];
+        var b20 = b[6];
+        var b21 = b[7];
+        var b22 = b[8];
+
+        a[0] = b00 * a00 + b01 * a10 + b02 * a20;
+        a[1] = b00 * a01 + b01 * a11 + b02 * a21;
+        a[2] = b00 * a02 + b01 * a12 + b02 * a22;
+
+        a[3] = b10 * a00 + b11 * a10 + b12 * a20;
+        a[4] = b10 * a01 + b11 * a11 + b12 * a21;
+        a[5] = b10 * a02 + b11 * a12 + b12 * a22;
+
+        a[6] = b20 * a00 + b21 * a10 + b22 * a20;
+        a[7] = b20 * a01 + b21 * a11 + b22 * a21;
+        a[8] = b20 * a02 + b21 * a12 + b22 * a22;
+
+        return this;
+    },
+
+    /**
+     * Translate this Matrix using the given Vector.
+     *
+     * @method Phaser.Math.Matrix3#translate
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Vector2|Phaser.Math.Vector3|Phaser.Math.Vector4)} v - The Vector to translate this Matrix with.
+     *
+     * @return {Phaser.Math.Matrix3} This Matrix3.
+     */
+    translate: function (v)
+    {
+        var a = this.val;
+        var x = v.x;
+        var y = v.y;
+
+        a[6] = x * a[0] + y * a[3] + a[6];
+        a[7] = x * a[1] + y * a[4] + a[7];
+        a[8] = x * a[2] + y * a[5] + a[8];
+
+        return this;
+    },
+
+    /**
+     * Apply a rotation transformation to this Matrix.
+     *
+     * @method Phaser.Math.Matrix3#rotate
+     * @since 3.0.0
+     *
+     * @param {number} rad - The angle in radians to rotate by.
