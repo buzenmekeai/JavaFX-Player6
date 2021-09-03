@@ -64323,3 +64323,243 @@ var Matrix3 = new Class({
      * @since 3.0.0
      *
      * @param {number} rad - The angle in radians to rotate by.
+     *
+     * @return {Phaser.Math.Matrix3} This Matrix3.
+     */
+    rotate: function (rad)
+    {
+        var a = this.val;
+
+        var a00 = a[0];
+        var a01 = a[1];
+        var a02 = a[2];
+        var a10 = a[3];
+        var a11 = a[4];
+        var a12 = a[5];
+
+        var s = Math.sin(rad);
+        var c = Math.cos(rad);
+
+        a[0] = c * a00 + s * a10;
+        a[1] = c * a01 + s * a11;
+        a[2] = c * a02 + s * a12;
+
+        a[3] = c * a10 - s * a00;
+        a[4] = c * a11 - s * a01;
+        a[5] = c * a12 - s * a02;
+
+        return this;
+    },
+
+    /**
+     * Apply a scale transformation to this Matrix.
+     *
+     * Uses the `x` and `y` components of the given Vector to scale the Matrix.
+     *
+     * @method Phaser.Math.Matrix3#scale
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Vector2|Phaser.Math.Vector3|Phaser.Math.Vector4)} v - The Vector to scale this Matrix with.
+     *
+     * @return {Phaser.Math.Matrix3} This Matrix3.
+     */
+    scale: function (v)
+    {
+        var a = this.val;
+        var x = v.x;
+        var y = v.y;
+
+        a[0] = x * a[0];
+        a[1] = x * a[1];
+        a[2] = x * a[2];
+
+        a[3] = y * a[3];
+        a[4] = y * a[4];
+        a[5] = y * a[5];
+
+        return this;
+    },
+
+    /**
+     * Set the values of this Matrix from the given Quaternion.
+     *
+     * @method Phaser.Math.Matrix3#fromQuat
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Quaternion} q - The Quaternion to set the values of this Matrix from.
+     *
+     * @return {Phaser.Math.Matrix3} This Matrix3.
+     */
+    fromQuat: function (q)
+    {
+        var x = q.x;
+        var y = q.y;
+        var z = q.z;
+        var w = q.w;
+
+        var x2 = x + x;
+        var y2 = y + y;
+        var z2 = z + z;
+
+        var xx = x * x2;
+        var xy = x * y2;
+        var xz = x * z2;
+
+        var yy = y * y2;
+        var yz = y * z2;
+        var zz = z * z2;
+
+        var wx = w * x2;
+        var wy = w * y2;
+        var wz = w * z2;
+
+        var out = this.val;
+
+        out[0] = 1 - (yy + zz);
+        out[3] = xy + wz;
+        out[6] = xz - wy;
+
+        out[1] = xy - wz;
+        out[4] = 1 - (xx + zz);
+        out[7] = yz + wx;
+
+        out[2] = xz + wy;
+        out[5] = yz - wx;
+        out[8] = 1 - (xx + yy);
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Math.Matrix3#normalFromMat4
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Matrix4} m - [description]
+     *
+     * @return {Phaser.Math.Matrix3} This Matrix3.
+     */
+    normalFromMat4: function (m)
+    {
+        var a = m.val;
+        var out = this.val;
+
+        var a00 = a[0];
+        var a01 = a[1];
+        var a02 = a[2];
+        var a03 = a[3];
+
+        var a10 = a[4];
+        var a11 = a[5];
+        var a12 = a[6];
+        var a13 = a[7];
+
+        var a20 = a[8];
+        var a21 = a[9];
+        var a22 = a[10];
+        var a23 = a[11];
+
+        var a30 = a[12];
+        var a31 = a[13];
+        var a32 = a[14];
+        var a33 = a[15];
+
+        var b00 = a00 * a11 - a01 * a10;
+        var b01 = a00 * a12 - a02 * a10;
+        var b02 = a00 * a13 - a03 * a10;
+        var b03 = a01 * a12 - a02 * a11;
+
+        var b04 = a01 * a13 - a03 * a11;
+        var b05 = a02 * a13 - a03 * a12;
+        var b06 = a20 * a31 - a21 * a30;
+        var b07 = a20 * a32 - a22 * a30;
+
+        var b08 = a20 * a33 - a23 * a30;
+        var b09 = a21 * a32 - a22 * a31;
+        var b10 = a21 * a33 - a23 * a31;
+        var b11 = a22 * a33 - a23 * a32;
+
+        // Calculate the determinant
+        var det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+
+        if (!det)
+        {
+            return null;
+        }
+
+        det = 1 / det;
+
+        out[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
+        out[1] = (a12 * b08 - a10 * b11 - a13 * b07) * det;
+        out[2] = (a10 * b10 - a11 * b08 + a13 * b06) * det;
+
+        out[3] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
+        out[4] = (a00 * b11 - a02 * b08 + a03 * b07) * det;
+        out[5] = (a01 * b08 - a00 * b10 - a03 * b06) * det;
+
+        out[6] = (a31 * b05 - a32 * b04 + a33 * b03) * det;
+        out[7] = (a32 * b02 - a30 * b05 - a33 * b01) * det;
+        out[8] = (a30 * b04 - a31 * b02 + a33 * b00) * det;
+
+        return this;
+    }
+
+});
+
+module.exports = Matrix3;
+
+
+/***/ }),
+/* 242 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Rotate a given point by a given angle around the origin (0, 0), in an anti-clockwise direction.
+ *
+ * @function Phaser.Math.Rotate
+ * @since 3.0.0
+ *
+ * @param {(Phaser.Geom.Point|object)} point - The point to be rotated.
+ * @param {number} angle - The angle to be rotated by in an anticlockwise direction.
+ *
+ * @return {Phaser.Geom.Point} The given point, rotated by the given angle in an anticlockwise direction.
+ */
+var Rotate = function (point, angle)
+{
+    var x = point.x;
+    var y = point.y;
+
+    point.x = (x * Math.cos(angle)) - (y * Math.sin(angle));
+    point.y = (x * Math.sin(angle)) + (y * Math.cos(angle));
+
+    return point;
+};
+
+module.exports = Rotate;
+
+
+/***/ }),
+/* 243 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Snap a value to nearest grid slice, using ceil.
+ *
+ * Example: if you have an interval gap of `5` and a position of `12`... you will snap to `15`.
+ * As will `14` snap to `15`... but `16` will snap to `20`.
+ *
+ * @function Phaser.Math.Snap.Ceil
+ * @since 3.0.0
