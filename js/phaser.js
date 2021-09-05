@@ -65193,3 +65193,203 @@ var HTML5AudioFile = new Class({
         {
             audio = this.data[i];
             audio.src = GetURL(this, this.loader.baseURL);
+
+            if (!this.locked)
+            {
+                audio.load();
+            }
+        }
+
+        if (this.locked)
+        {
+            //  This is super-dangerous but works. Race condition potential high.
+            //  Is there another way?
+            setTimeout(this.onLoad.bind(this));
+        }
+    }
+
+});
+
+module.exports = HTML5AudioFile;
+
+
+/***/ }),
+/* 253 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var CONST = __webpack_require__(26);
+var File = __webpack_require__(21);
+var FileTypesManager = __webpack_require__(7);
+var GetFastValue = __webpack_require__(2);
+var HTML5AudioFile = __webpack_require__(252);
+var IsPlainObject = __webpack_require__(8);
+
+/**
+ * @typedef {object} Phaser.Loader.FileTypes.AudioFileConfig
+ *
+ * @property {string} key - The key of the file. Must be unique within the Loader and Audio Cache.
+ * @property {string} [urlConfig] - The absolute or relative URL to load the file from.
+ * @property {XHRSettingsObject} [xhrSettings] - Extra XHR Settings specifically for this file.
+ * @property {AudioContext} [audioContext] - The AudioContext this file will use to process itself.
+ */
+
+/**
+ * @classdesc
+ * A single Audio File suitable for loading by the Loader.
+ *
+ * These are created when you use the Phaser.Loader.LoaderPlugin#audio method and are not typically created directly.
+ * 
+ * For documentation about what all the arguments and configuration options mean please see Phaser.Loader.LoaderPlugin#audio.
+ *
+ * @class AudioFile
+ * @extends Phaser.Loader.File
+ * @memberof Phaser.Loader.FileTypes
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Loader.LoaderPlugin} loader - A reference to the Loader that is responsible for this file.
+ * @param {(string|Phaser.Loader.FileTypes.AudioFileConfig)} key - The key to use for this file, or a file configuration object.
+ * @param {any} [urlConfig] - The absolute or relative URL to load this file from in a config object.
+ * @param {XHRSettingsObject} [xhrSettings] - Extra XHR Settings specifically for this file.
+ * @param {AudioContext} [audioContext] - The AudioContext this file will use to process itself.
+ */
+var AudioFile = new Class({
+
+    Extends: File,
+
+    initialize:
+
+    //  URL is an object created by AudioFile.findAudioURL
+    function AudioFile (loader, key, urlConfig, xhrSettings, audioContext)
+    {
+        if (IsPlainObject(key))
+        {
+            var config = key;
+
+            key = GetFastValue(config, 'key');
+            xhrSettings = GetFastValue(config, 'xhrSettings');
+            audioContext = GetFastValue(config, 'context', audioContext);
+        }
+
+        var fileConfig = {
+            type: 'audio',
+            cache: loader.cacheManager.audio,
+            extension: urlConfig.type,
+            responseType: 'arraybuffer',
+            key: key,
+            url: urlConfig.url,
+            xhrSettings: xhrSettings,
+            config: { context: audioContext }
+        };
+
+        File.call(this, loader, fileConfig);
+    },
+
+    /**
+     * Called automatically by Loader.nextFile.
+     * This method controls what extra work this File does with its loaded data.
+     *
+     * @method Phaser.Loader.FileTypes.AudioFile#onProcess
+     * @since 3.0.0
+     */
+    onProcess: function ()
+    {
+        this.state = CONST.FILE_PROCESSING;
+
+        var _this = this;
+
+        // interesting read https://github.com/WebAudio/web-audio-api/issues/1305
+        this.config.context.decodeAudioData(this.xhrLoader.response,
+            function (audioBuffer)
+            {
+                _this.data = audioBuffer;
+
+                _this.onProcessComplete();
+            },
+            function (e)
+            {
+                // eslint-disable-next-line no-console
+                console.error('Error decoding audio: ' + this.key + ' - ', e ? e.message : null);
+
+                _this.onProcessError();
+            }
+        );
+
+        this.config.context = null;
+    }
+
+});
+
+AudioFile.create = function (loader, key, urls, config, xhrSettings)
+{
+    var game = loader.systems.game;
+    var audioConfig = game.config.audio;
+    var deviceAudio = game.device.audio;
+
+    //  url may be inside key, which may be an object
+    if (IsPlainObject(key))
+    {
+        urls = GetFastValue(key, 'url', []);
+        config = GetFastValue(key, 'config', {});
+    }
+
+    var urlConfig = AudioFile.getAudioURL(game, urls);
+
+    if (!urlConfig)
+    {
+        return null;
+    }
+
+    // https://developers.google.com/web/updates/2012/02/HTML5-audio-and-the-Web-Audio-API-are-BFFs
+    // var stream = GetFastValue(config, 'stream', false);
+
+    if (deviceAudio.webAudio && !(audioConfig && audioConfig.disableWebAudio))
+    {
+        return new AudioFile(loader, key, urlConfig, xhrSettings, game.sound.context);
+    }
+    else
+    {
+        return new HTML5AudioFile(loader, key, urlConfig, config);
+    }
+};
+
+AudioFile.getAudioURL = function (game, urls)
+{
+    if (!Array.isArray(urls))
+    {
+        urls = [ urls ];
+    }
+
+    for (var i = 0; i < urls.length; i++)
+    {
+        var url = GetFastValue(urls[i], 'url', urls[i]);
+
+        if (url.indexOf('blob:') === 0 || url.indexOf('data:') === 0)
+        {
+            return url;
+        }
+
+        var audioType = url.match(/\.([a-zA-Z0-9]+)($|\?)/);
+
+        audioType = GetFastValue(urls[i], 'type', (audioType) ? audioType[1] : '').toLowerCase();
+
+        if (game.device.audio[audioType])
+        {
+            return {
+                url: url,
+                type: audioType
+            };
+        }
+    }
+
+    return null;
+};
+
+/**
