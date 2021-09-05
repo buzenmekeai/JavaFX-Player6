@@ -64563,3 +64563,223 @@ module.exports = Rotate;
  *
  * @function Phaser.Math.Snap.Ceil
  * @since 3.0.0
+ *
+ * @param {number} value - The value to snap.
+ * @param {number} gap - The interval gap of the grid.
+ * @param {number} [start=0] - Optional starting offset for gap.
+ * @param {boolean} [divide=false] - If `true` it will divide the snapped value by the gap before returning.
+ *
+ * @return {number} The snapped value.
+ */
+var SnapCeil = function (value, gap, start, divide)
+{
+    if (start === undefined) { start = 0; }
+
+    if (gap === 0)
+    {
+        return value;
+    }
+
+    value -= start;
+    value = gap * Math.ceil(value / gap);
+
+    return (divide) ? (start + value) / gap : start + value;
+};
+
+module.exports = SnapCeil;
+
+
+/***/ }),
+/* 244 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculates the factorial of a given number for integer values greater than 0.
+ *
+ * @function Phaser.Math.Factorial
+ * @since 3.0.0
+ *
+ * @param {number} value - A positive integer to calculate the factorial of.
+ *
+ * @return {number} The factorial of the given number.
+ */
+var Factorial = function (value)
+{
+    if (value === 0)
+    {
+        return 1;
+    }
+
+    var res = value;
+
+    while (--value)
+    {
+        res *= value;
+    }
+
+    return res;
+};
+
+module.exports = Factorial;
+
+
+/***/ }),
+/* 245 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Factorial = __webpack_require__(244);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Math.Bernstein
+ * @since 3.0.0
+ *
+ * @param {number} n - [description]
+ * @param {number} i - [description]
+ *
+ * @return {number} [description]
+ */
+var Bernstein = function (n, i)
+{
+    return Factorial(n) / Factorial(i) / Factorial(n - i);
+};
+
+module.exports = Bernstein;
+
+
+/***/ }),
+/* 246 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Check whether `a` is fuzzily less than `b`.
+ *
+ * `a` is fuzzily less than `b` if it is less than `b + epsilon`.
+ *
+ * @function Phaser.Math.Fuzzy.LessThan
+ * @since 3.0.0
+ *
+ * @param {number} a - The first value.
+ * @param {number} b - The second value.
+ * @param {number} [epsilon=0.0001] - The epsilon.
+ *
+ * @return {boolean} `true` if `a` is fuzzily less than `b`, otherwise `false`.
+ */
+var LessThan = function (a, b, epsilon)
+{
+    if (epsilon === undefined) { epsilon = 0.0001; }
+
+    return a < b + epsilon;
+};
+
+module.exports = LessThan;
+
+
+/***/ }),
+/* 247 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Check whether `a` is fuzzily greater than `b`.
+ *
+ * `a` is fuzzily greater than `b` if it is more than `b - epsilon`.
+ *
+ * @function Phaser.Math.Fuzzy.GreaterThan
+ * @since 3.0.0
+ *
+ * @param {number} a - The first value.
+ * @param {number} b - The second value.
+ * @param {number} [epsilon=0.0001] - The epsilon.
+ *
+ * @return {boolean} `true` if `a` is fuzzily greater than than `b`, otherwise `false`.
+ */
+var GreaterThan = function (a, b, epsilon)
+{
+    if (epsilon === undefined) { epsilon = 0.0001; }
+
+    return a > b - epsilon;
+};
+
+module.exports = GreaterThan;
+
+
+/***/ }),
+/* 248 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Check whether the given values are fuzzily equal.
+ *
+ * Two numbers are fuzzily equal if their difference is less than `epsilon`.
+ *
+ * @function Phaser.Math.Fuzzy.Equal
+ * @since 3.0.0
+ *
+ * @param {number} a - The first value.
+ * @param {number} b - The second value.
+ * @param {number} [epsilon=0.0001] - The epsilon.
+ *
+ * @return {boolean} `true` if the values are fuzzily equal, otherwise `false`.
+ */
+var Equal = function (a, b, epsilon)
+{
+    if (epsilon === undefined) { epsilon = 0.0001; }
+
+    return Math.abs(a - b) < epsilon;
+};
+
+module.exports = Equal;
+
+
+/***/ }),
+/* 249 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculate the distance between two sets of coordinates (points), squared.
+ *
+ * @function Phaser.Math.Distance.Squared
+ * @since 3.0.0
+ *
+ * @param {number} x1 - The x coordinate of the first point.
+ * @param {number} y1 - The y coordinate of the first point.
+ * @param {number} x2 - The x coordinate of the second point.
+ * @param {number} y2 - The y coordinate of the second point.
+ *
