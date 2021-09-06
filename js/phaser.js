@@ -65393,3 +65393,185 @@ AudioFile.getAudioURL = function (game, urls)
 };
 
 /**
+ * Adds an Audio or HTML5Audio file, or array of audio files, to the current load queue.
+ *
+ * You can call this method from within your Scene's `preload`, along with any other files you wish to load:
+ * 
+ * ```javascript
+ * function preload ()
+ * {
+ *     this.load.audio('title', [ 'music/Title.ogg', 'music/Title.mp3', 'music/Title.m4a' ]);
+ * }
+ * ```
+ *
+ * The file is **not** loaded right away. It is added to a queue ready to be loaded either when the loader starts,
+ * or if it's already running, when the next free load slot becomes available. This happens automatically if you
+ * are calling this from within the Scene's `preload` method, or a related callback. Because the file is queued
+ * it means you cannot use the file immediately after calling this method, but must wait for the file to complete.
+ * The typical flow for a Phaser Scene is that you load assets in the Scene's `preload` method and then when the
+ * Scene's `create` method is called you are guaranteed that all of those assets are ready for use and have been
+ * loaded.
+ * 
+ * The key must be a unique String. It is used to add the file to the global Audio Cache upon a successful load.
+ * The key should be unique both in terms of files being loaded and files already present in the Audio Cache.
+ * Loading a file using a key that is already taken will result in a warning. If you wish to replace an existing file
+ * then remove it from the Audio Cache first, before loading a new one.
+ *
+ * Instead of passing arguments you can pass a configuration object, such as:
+ * 
+ * ```javascript
+ * this.load.audio({
+ *     key: 'title',
+ *     url: [ 'music/Title.ogg', 'music/Title.mp3', 'music/Title.m4a' ]
+ * });
+ * ```
+ *
+ * See the documentation for `Phaser.Loader.FileTypes.AudioFileConfig` for more details.
+ *
+ * The URLs can be relative or absolute. If the URLs are relative the `Loader.baseURL` and `Loader.path` values will be prepended to them.
+ *
+ * Due to different browsers supporting different audio file types you should usually provide your audio files in a variety of formats.
+ * ogg, mp3 and m4a are the most common. If you provide an array of URLs then the Loader will determine which _one_ file to load based on
+ * browser support.
+ *
+ * If audio has been disabled in your game, either via the game config, or lack of support from the device, then no audio will be loaded.
+ *
+ * Note: The ability to load this type of file will only be available if the Audio File type has been built into Phaser.
+ * It is available in the default build but can be excluded from custom builds.
+ *
+ * @method Phaser.Loader.LoaderPlugin#audio
+ * @fires Phaser.Loader.LoaderPlugin#addFileEvent
+ * @since 3.0.0
+ *
+ * @param {(string|Phaser.Loader.FileTypes.AudioFileConfig|Phaser.Loader.FileTypes.AudioFileConfig[])} key - The key to use for this file, or a file configuration object, or array of them.
+ * @param {(string|string[])} [urls] - The absolute or relative URL to load the audio files from.
+ * @param {any} [config] - An object containing an `instances` property for HTML5Audio. Defaults to 1.
+ * @param {XHRSettingsObject} [xhrSettings] - An XHR Settings configuration object. Used in replacement of the Loaders default XHR Settings.
+ *
+ * @return {Phaser.Loader.LoaderPlugin} The Loader instance.
+ */
+FileTypesManager.register('audio', function (key, urls, config, xhrSettings)
+{
+    var game = this.systems.game;
+    var audioConfig = game.config.audio;
+    var deviceAudio = game.device.audio;
+
+    if ((audioConfig && audioConfig.noAudio) || (!deviceAudio.webAudio && !deviceAudio.audioData))
+    {
+        //  Sounds are disabled, so skip loading audio
+        return this;
+    }
+
+    var audioFile;
+
+    if (Array.isArray(key))
+    {
+        for (var i = 0; i < key.length; i++)
+        {
+            //  If it's an array it has to be an array of Objects, so we get everything out of the 'key' object
+            audioFile = AudioFile.create(this, key[i]);
+
+            if (audioFile)
+            {
+                this.addFile(audioFile);
+            }
+        }
+    }
+    else
+    {
+        audioFile = AudioFile.create(this, key, urls, config, xhrSettings);
+
+        if (audioFile)
+        {
+            this.addFile(audioFile);
+        }
+    }
+
+    return this;
+});
+
+module.exports = AudioFile;
+
+
+/***/ }),
+/* 254 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var MergeXHRSettings = __webpack_require__(140);
+
+/**
+ * Creates a new XMLHttpRequest (xhr) object based on the given File and XHRSettings
+ * and starts the download of it. It uses the Files own XHRSettings and merges them
+ * with the global XHRSettings object to set the xhr values before download.
+ *
+ * @function Phaser.Loader.XHRLoader
+ * @since 3.0.0
+ *
+ * @param {Phaser.Loader.File} file - The File to download.
+ * @param {XHRSettingsObject} globalXHRSettings - The global XHRSettings object.
+ *
+ * @return {XMLHttpRequest} The XHR object.
+ */
+var XHRLoader = function (file, globalXHRSettings)
+{
+    var config = MergeXHRSettings(globalXHRSettings, file.xhrSettings);
+
+    var xhr = new XMLHttpRequest();
+
+    xhr.open('GET', file.src, config.async, config.user, config.password);
+
+    xhr.responseType = file.xhrSettings.responseType;
+    xhr.timeout = config.timeout;
+
+    if (config.header && config.headerValue)
+    {
+        xhr.setRequestHeader(config.header, config.headerValue);
+    }
+
+    if (config.requestedWith)
+    {
+        xhr.setRequestHeader('X-Requested-With', config.requestedWith);
+    }
+
+    if (config.overrideMimeType)
+    {
+        xhr.overrideMimeType(config.overrideMimeType);
+    }
+
+    // After a successful request, the xhr.response property will contain the requested data as a DOMString, ArrayBuffer, Blob, or Document (depending on what was set for responseType.)
+
+    xhr.onload = file.onLoad.bind(file, xhr);
+    xhr.onerror = file.onError.bind(file);
+    xhr.onprogress = file.onProgress.bind(file);
+
+    //  This is the only standard method, the ones above are browser additions (maybe not universal?)
+    // xhr.onreadystatechange
+
+    xhr.send();
+
+    return xhr;
+};
+
+module.exports = XHRLoader;
+
+
+/***/ }),
+/* 255 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var GetFastValue = __webpack_require__(2);
+var ProcessKeyCombo = __webpack_require__(605);
+var ResetKeyCombo = __webpack_require__(603);
