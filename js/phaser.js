@@ -66041,3 +66041,220 @@ var Key = new Class({
          * @type {boolean}
          * @private
          * @default false
+         * @since 3.0.0
+         */
+        this._justDown = false;
+
+        /**
+         * True if the key has just been pressed (NOTE: requires to be reset, see justDown getter)
+         *
+         * @name Phaser.Input.Keyboard.Key#_justUp
+         * @type {boolean}
+         * @private
+         * @default false
+         * @since 3.0.0
+         */
+        this._justUp = false;
+
+        /**
+         * Internal tick counter.
+         *
+         * @name Phaser.Input.Keyboard.Key#_tick
+         * @type {number}
+         * @private
+         * @since 3.11.0
+         */
+        this._tick = -1;
+    },
+
+    /**
+     * Resets this Key object back to its default un-pressed state.
+     *
+     * @method Phaser.Input.Keyboard.Key.reset
+     * @since 3.6.0
+     * 
+     * @return {Phaser.Input.Keyboard.Key} This Key instance.
+     */
+    reset: function ()
+    {
+        this.preventDefault = true;
+        this.enabled = true;
+        this.isDown = false;
+        this.isUp = true;
+        this.altKey = false;
+        this.ctrlKey = false;
+        this.shiftKey = false;
+        this.timeDown = 0;
+        this.duration = 0;
+        this.timeUp = 0;
+        this.repeats = 0;
+        this._justDown = false;
+        this._justUp = false;
+        this._tick = -1;
+
+        return this;
+    }
+
+});
+
+module.exports = Key;
+
+
+/***/ }),
+/* 257 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Axis = __webpack_require__(259);
+var Button = __webpack_require__(258);
+var Class = __webpack_require__(0);
+var EventEmitter = __webpack_require__(11);
+var Vector2 = __webpack_require__(3);
+
+/**
+ * @classdesc
+ * A single Gamepad.
+ *
+ * These are created, updated and managed by the Gamepad Plugin.
+ *
+ * @class Gamepad
+ * @extends Phaser.Events.EventEmitter
+ * @memberof Phaser.Input.Gamepad
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Input.Gamepad.GamepadPlugin} manager - A reference to the Gamepad Plugin.
+ * @param {Pad} pad - The Gamepad object, as extracted from GamepadEvent.
+ */
+var Gamepad = new Class({
+
+    Extends: EventEmitter,
+
+    initialize:
+
+    function Gamepad (manager, pad)
+    {
+        EventEmitter.call(this);
+
+        /**
+         * A reference to the Gamepad Plugin.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#manager
+         * @type {Phaser.Input.Gamepad.GamepadPlugin}
+         * @since 3.0.0
+         */
+        this.manager = manager;
+
+        /**
+         * A reference to the native Gamepad object that is connected to the browser.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#pad
+         * @type {any}
+         * @since 3.10.0
+         */
+        this.pad = pad;
+
+        /**
+         * A string containing some information about the controller.
+         *
+         * This is not strictly specified, but in Firefox it will contain three pieces of information
+         * separated by dashes (-): two 4-digit hexadecimal strings containing the USB vendor and
+         * product id of the controller, and the name of the controller as provided by the driver.
+         * In Chrome it will contain the name of the controller as provided by the driver,
+         * followed by vendor and product 4-digit hexadecimal strings.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#id
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.id = pad.id;
+
+        /**
+         * An integer that is unique for each Gamepad currently connected to the system.
+         * This can be used to distinguish multiple controllers.
+         * Note that disconnecting a device and then connecting a new device may reuse the previous index.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#index
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.index = pad.index;
+
+        var buttons = [];
+
+        for (var i = 0; i < pad.buttons.length; i++)
+        {
+            buttons.push(new Button(this, i));
+        }
+
+        /**
+         * An array of Gamepad Button objects, corresponding to the different buttons available on the Gamepad.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#buttons
+         * @type {Phaser.Input.Gamepad.Button[]}
+         * @since 3.0.0
+         */
+        this.buttons = buttons;
+
+        var axes = [];
+
+        for (i = 0; i < pad.axes.length; i++)
+        {
+            axes.push(new Axis(this, i));
+        }
+
+        /**
+         * An array of Gamepad Axis objects, corresponding to the different axes available on the Gamepad, if any.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#axes
+         * @type {Phaser.Input.Gamepad.Axis[]}
+         * @since 3.0.0
+         */
+        this.axes = axes;
+
+        /**
+         * The Gamepad's Haptic Actuator (Vibration / Rumble support).
+         * This is highly experimental and only set if both present on the device,
+         * and exposed by both the hardware and browser.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#vibration
+         * @type {GamepadHapticActuator}
+         * @since 3.10.0
+         */
+        this.vibration = pad.vibrationActuator;
+
+        // https://w3c.github.io/gamepad/#remapping
+
+        var _noButton = { value: 0, pressed: false };
+
+        /**
+         * A reference to the Left Button in the Left Cluster.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#_LCLeft
+         * @type {Phaser.Input.Gamepad.Button}
+         * @private
+         * @since 3.10.0
+         */
+        this._LCLeft = (buttons[14]) ? buttons[14] : _noButton;
+
+        /**
+         * A reference to the Right Button in the Left Cluster.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#_LCRight
+         * @type {Phaser.Input.Gamepad.Button}
+         * @private
+         * @since 3.10.0
+         */
+        this._LCRight = (buttons[15]) ? buttons[15] : _noButton;
+
+        /**
+         * A reference to the Top Button in the Left Cluster.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#_LCTop
+         * @type {Phaser.Input.Gamepad.Button}
+         * @private
