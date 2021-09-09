@@ -66482,3 +66482,220 @@ var Gamepad = new Class({
     },
 
     /**
+     * Gets the value of a button based on the given index.
+     * The index must be valid within the range of buttons supported by this Gamepad.
+     *
+     * The return value will be either 0 or 1 for an analogue button, or a float between 0 and 1
+     * for a pressure-sensitive digital button, such as the shoulder buttons on a Dual Shock.
+     *
+     * @method Phaser.Input.Gamepad.Gamepad#getButtonValue
+     * @since 3.10.0
+     *
+     * @param {integer} index - The index of the button to get the value for.
+     *
+     * @return {number} The value of the button, between 0 and 1.
+     */
+    getButtonValue: function (index)
+    {
+        return this.buttons[index].value;
+    },
+
+    /**
+     * Returns if the button is pressed down or not.
+     * The index must be valid within the range of buttons supported by this Gamepad.
+     *
+     * @method Phaser.Input.Gamepad.Gamepad#isButtonDown
+     * @since 3.10.0
+     *
+     * @param {integer} index - The index of the button to get the value for.
+     *
+     * @return {boolean} `true` if the button is considered as being pressed down, otherwise `false`.
+     */
+    isButtonDown: function (index)
+    {
+        return this.buttons[index].pressed;
+    },
+
+    /**
+     * Internal update handler for this Gamepad.
+     * Called automatically by the Gamepad Manager as part of its update.
+     *
+     * @method Phaser.Input.Gamepad.Gamepad#update
+     * @private
+     * @since 3.0.0
+     */
+    update: function (pad)
+    {
+        var i;
+
+        //  Sync the button values
+
+        var localButtons = this.buttons;
+        var gamepadButtons = pad.buttons;
+
+        var len = localButtons.length;
+
+        for (i = 0; i < len; i++)
+        {
+            localButtons[i].update(gamepadButtons[i].value);
+        }
+
+        //  Sync the axis values
+
+        var localAxes = this.axes;
+        var gamepadAxes = pad.axes;
+
+        len = localAxes.length;
+
+        for (i = 0; i < len; i++)
+        {
+            localAxes[i].update(gamepadAxes[i]);
+        }
+
+        if (len >= 2)
+        {
+            this.leftStick.set(localAxes[0].getValue(), localAxes[1].getValue());
+
+            if (len >= 4)
+            {
+                this.rightStick.set(localAxes[2].getValue(), localAxes[3].getValue());
+            }
+        }
+    },
+
+    /**
+     * Destroys this Gamepad instance, its buttons and axes, and releases external references it holds.
+     *
+     * @method Phaser.Input.Gamepad.Gamepad#destroy
+     * @since 3.10.0
+     */
+    destroy: function ()
+    {
+        this.removeAllListeners();
+
+        this.manager = null;
+        this.pad = null;
+
+        var i;
+
+        for (i = 0; i < this.buttons.length; i++)
+        {
+            this.buttons[i].destroy();
+        }
+
+        for (i = 0; i < this.axes.length; i++)
+        {
+            this.axes[i].destroy();
+        }
+
+        this.buttons = [];
+        this.axes = [];
+    },
+
+    /**
+     * Is this Gamepad currently connected or not?
+     *
+     * @name Phaser.Input.Gamepad.Gamepad#connected
+     * @type {boolean}
+     * @default true
+     * @since 3.0.0
+     */
+    connected: {
+
+        get: function ()
+        {
+            return this.pad.connected;
+        }
+
+    },
+
+    /**
+     * A timestamp containing the most recent time this Gamepad was updated.
+     *
+     * @name Phaser.Input.Gamepad.Gamepad#timestamp
+     * @type {number}
+     * @since 3.0.0
+     */
+    timestamp: {
+
+        get: function ()
+        {
+            return this.pad.timestamp;
+        }
+
+    },
+
+    /**
+     * Is the Gamepad's Left button being pressed?
+     * If the Gamepad doesn't have this button it will always return false.
+     * This is the d-pad left button under standard Gamepad mapping.
+     *
+     * @name Phaser.Input.Gamepad.Gamepad#left
+     * @type {boolean}
+     * @since 3.10.0
+     */
+    left: {
+
+        get: function ()
+        {
+            return this._LCLeft.pressed;
+        }
+
+    },
+
+    /**
+     * Is the Gamepad's Right button being pressed?
+     * If the Gamepad doesn't have this button it will always return false.
+     * This is the d-pad right button under standard Gamepad mapping.
+     *
+     * @name Phaser.Input.Gamepad.Gamepad#right
+     * @type {boolean}
+     * @since 3.10.0
+     */
+    right: {
+
+        get: function ()
+        {
+            return this._LCRight.pressed;
+        }
+
+    },
+
+    /**
+     * Is the Gamepad's Up button being pressed?
+     * If the Gamepad doesn't have this button it will always return false.
+     * This is the d-pad up button under standard Gamepad mapping.
+     *
+     * @name Phaser.Input.Gamepad.Gamepad#up
+     * @type {boolean}
+     * @since 3.10.0
+     */
+    up: {
+
+        get: function ()
+        {
+            return this._LCTop.pressed;
+        }
+
+    },
+
+    /**
+     * Is the Gamepad's Down button being pressed?
+     * If the Gamepad doesn't have this button it will always return false.
+     * This is the d-pad down button under standard Gamepad mapping.
+     *
+     * @name Phaser.Input.Gamepad.Gamepad#down
+     * @type {boolean}
+     * @since 3.10.0
+     */
+    down: {
+
+        get: function ()
+        {
+            return this._LCBottom.pressed;
+        }
+
+    },
+
+    /**
+     * Is the Gamepad's bottom button in the right button cluster being pressed?
