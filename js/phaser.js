@@ -66258,3 +66258,227 @@ var Gamepad = new Class({
          * @name Phaser.Input.Gamepad.Gamepad#_LCTop
          * @type {Phaser.Input.Gamepad.Button}
          * @private
+         * @since 3.10.0
+         */
+        this._LCTop = (buttons[12]) ? buttons[12] : _noButton;
+
+        /**
+         * A reference to the Bottom Button in the Left Cluster.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#_LCBottom
+         * @type {Phaser.Input.Gamepad.Button}
+         * @private
+         * @since 3.10.0
+         */
+        this._LCBottom = (buttons[13]) ? buttons[13] : _noButton;
+
+        /**
+         * A reference to the Left Button in the Right Cluster.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#_RCLeft
+         * @type {Phaser.Input.Gamepad.Button}
+         * @private
+         * @since 3.10.0
+         */
+        this._RCLeft = (buttons[2]) ? buttons[2] : _noButton;
+
+        /**
+         * A reference to the Right Button in the Right Cluster.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#_RCRight
+         * @type {Phaser.Input.Gamepad.Button}
+         * @private
+         * @since 3.10.0
+         */
+        this._RCRight = (buttons[1]) ? buttons[1] : _noButton;
+
+        /**
+         * A reference to the Top Button in the Right Cluster.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#_RCTop
+         * @type {Phaser.Input.Gamepad.Button}
+         * @private
+         * @since 3.10.0
+         */
+        this._RCTop = (buttons[3]) ? buttons[3] : _noButton;
+
+        /**
+         * A reference to the Bottom Button in the Right Cluster.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#_RCBottom
+         * @type {Phaser.Input.Gamepad.Button}
+         * @private
+         * @since 3.10.0
+         */
+        this._RCBottom = (buttons[0]) ? buttons[0] : _noButton;
+
+        /**
+         * A reference to the Top Left Front Button (L1 Shoulder Button)
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#_FBLeftTop
+         * @type {Phaser.Input.Gamepad.Button}
+         * @private
+         * @since 3.10.0
+         */
+        this._FBLeftTop = (buttons[4]) ? buttons[4] : _noButton;
+
+        /**
+         * A reference to the Bottom Left Front Button (L2 Shoulder Button)
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#_FBLeftBottom
+         * @type {Phaser.Input.Gamepad.Button}
+         * @private
+         * @since 3.10.0
+         */
+        this._FBLeftBottom = (buttons[6]) ? buttons[6] : _noButton;
+
+        /**
+         * A reference to the Top Right Front Button (R1 Shoulder Button)
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#_FBRightTop
+         * @type {Phaser.Input.Gamepad.Button}
+         * @private
+         * @since 3.10.0
+         */
+        this._FBRightTop = (buttons[5]) ? buttons[5] : _noButton;
+
+        /**
+         * A reference to the Bottom Right Front Button (R2 Shoulder Button)
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#_FBRightBottom
+         * @type {Phaser.Input.Gamepad.Button}
+         * @private
+         * @since 3.10.0
+         */
+        this._FBRightBottom = (buttons[7]) ? buttons[7] : _noButton;
+
+        var _noAxis = { value: 0 };
+
+        /**
+         * A reference to the Horizontal Axis for the Left Stick.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#_HAxisLeft
+         * @type {Phaser.Input.Gamepad.Button}
+         * @private
+         * @since 3.10.0
+         */
+        this._HAxisLeft = (axes[0]) ? axes[0] : _noAxis;
+
+        /**
+         * A reference to the Vertical Axis for the Left Stick.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#_VAxisLeft
+         * @type {Phaser.Input.Gamepad.Button}
+         * @private
+         * @since 3.10.0
+         */
+        this._VAxisLeft = (axes[1]) ? axes[1] : _noAxis;
+
+        /**
+         * A reference to the Horizontal Axis for the Right Stick.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#_HAxisRight
+         * @type {Phaser.Input.Gamepad.Button}
+         * @private
+         * @since 3.10.0
+         */
+        this._HAxisRight = (axes[2]) ? axes[2] : _noAxis;
+
+        /**
+         * A reference to the Vertical Axis for the Right Stick.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#_VAxisRight
+         * @type {Phaser.Input.Gamepad.Button}
+         * @private
+         * @since 3.10.0
+         */
+        this._VAxisRight = (axes[3]) ? axes[3] : _noAxis;
+
+        /**
+         * A Vector2 containing the most recent values from the Gamepad's left axis stick.
+         * This is updated automatically as part of the Gamepad.update cycle.
+         * The H Axis is mapped to the `Vector2.x` property, and the V Axis to the `Vector2.y` property.
+         * The values are based on the Axis thresholds.
+         * If the Gamepad does not have a left axis stick, the values will always be zero.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#leftStick
+         * @type {Phaser.Math.Vector2}
+         * @since 3.10.0
+         */
+        this.leftStick = new Vector2();
+
+        /**
+         * A Vector2 containing the most recent values from the Gamepad's right axis stick.
+         * This is updated automatically as part of the Gamepad.update cycle.
+         * The H Axis is mapped to the `Vector2.x` property, and the V Axis to the `Vector2.y` property.
+         * The values are based on the Axis thresholds.
+         * If the Gamepad does not have a right axis stick, the values will always be zero.
+         *
+         * @name Phaser.Input.Gamepad.Gamepad#rightStick
+         * @type {Phaser.Math.Vector2}
+         * @since 3.10.0
+         */
+        this.rightStick = new Vector2();
+    },
+
+    /**
+     * Gets the total number of axis this Gamepad claims to support.
+     *
+     * @method Phaser.Input.Gamepad.Gamepad#getAxisTotal
+     * @since 3.10.0
+     *
+     * @return {integer} The total number of axes this Gamepad claims to support.
+     */
+    getAxisTotal: function ()
+    {
+        return this.axes.length;
+    },
+
+    /**
+     * Gets the value of an axis based on the given index.
+     * The index must be valid within the range of axes supported by this Gamepad.
+     * The return value will be a float between 0 and 1.
+     *
+     * @method Phaser.Input.Gamepad.Gamepad#getAxisValue
+     * @since 3.10.0
+     *
+     * @param {integer} index - The index of the axes to get the value for.
+     *
+     * @return {number} The value of the axis, between 0 and 1.
+     */
+    getAxisValue: function (index)
+    {
+        return this.axes[index].getValue();
+    },
+
+    /**
+     * Sets the threshold value of all axis on this Gamepad.
+     * The value is a float between 0 and 1 and is the amount below which the axis is considered as not having been moved.
+     *
+     * @method Phaser.Input.Gamepad.Gamepad#setAxisThreshold
+     * @since 3.10.0
+     *
+     * @param {number} value - A value between 0 and 1.
+     */
+    setAxisThreshold: function (value)
+    {
+        for (var i = 0; i < this.axes.length; i++)
+        {
+            this.axes[i].threshold = value;
+        }
+    },
+
+    /**
+     * Gets the total number of buttons this Gamepad claims to have.
+     *
+     * @method Phaser.Input.Gamepad.Gamepad#getButtonTotal
+     * @since 3.10.0
+     *
+     * @return {integer} The total number of buttons this Gamepad claims to have.
+     */
+    getButtonTotal: function ()
+    {
+        return this.buttons.length;
+    },
+
+    /**
