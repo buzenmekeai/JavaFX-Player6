@@ -66699,3 +66699,229 @@ var Gamepad = new Class({
 
     /**
      * Is the Gamepad's bottom button in the right button cluster being pressed?
+     * If the Gamepad doesn't have this button it will always return false.
+     * On a Dual Shock controller it's the X button.
+     * On an XBox controller it's the A button.
+     *
+     * @name Phaser.Input.Gamepad.Gamepad#A
+     * @type {boolean}
+     * @since 3.10.0
+     */
+    A: {
+
+        get: function ()
+        {
+            return this._RCBottom.pressed;
+        }
+
+    },
+
+    /**
+     * Is the Gamepad's top button in the right button cluster being pressed?
+     * If the Gamepad doesn't have this button it will always return false.
+     * On a Dual Shock controller it's the Triangle button.
+     * On an XBox controller it's the Y button.
+     *
+     * @name Phaser.Input.Gamepad.Gamepad#Y
+     * @type {boolean}
+     * @since 3.10.0
+     */
+    Y: {
+
+        get: function ()
+        {
+            return this._RCTop.pressed;
+        }
+
+    },
+
+    /**
+     * Is the Gamepad's left button in the right button cluster being pressed?
+     * If the Gamepad doesn't have this button it will always return false.
+     * On a Dual Shock controller it's the Square button.
+     * On an XBox controller it's the X button.
+     *
+     * @name Phaser.Input.Gamepad.Gamepad#X
+     * @type {boolean}
+     * @since 3.10.0
+     */
+    X: {
+
+        get: function ()
+        {
+            return this._RCLeft.pressed;
+        }
+
+    },
+
+    /**
+     * Is the Gamepad's right button in the right button cluster being pressed?
+     * If the Gamepad doesn't have this button it will always return false.
+     * On a Dual Shock controller it's the Circle button.
+     * On an XBox controller it's the B button.
+     *
+     * @name Phaser.Input.Gamepad.Gamepad#B
+     * @type {boolean}
+     * @since 3.10.0
+     */
+    B: {
+
+        get: function ()
+        {
+            return this._RCRight.pressed;
+        }
+
+    },
+
+    /**
+     * Returns the value of the Gamepad's top left shoulder button.
+     * If the Gamepad doesn't have this button it will always return zero.
+     * The value is a float between 0 and 1, corresponding to how depressed the button is.
+     * On a Dual Shock controller it's the L1 button.
+     * On an XBox controller it's the LB button.
+     *
+     * @name Phaser.Input.Gamepad.Gamepad#L1
+     * @type {number}
+     * @since 3.10.0
+     */
+    L1: {
+
+        get: function ()
+        {
+            return this._FBLeftTop.value;
+        }
+
+    },
+
+    /**
+     * Returns the value of the Gamepad's bottom left shoulder button.
+     * If the Gamepad doesn't have this button it will always return zero.
+     * The value is a float between 0 and 1, corresponding to how depressed the button is.
+     * On a Dual Shock controller it's the L2 button.
+     * On an XBox controller it's the LT button.
+     *
+     * @name Phaser.Input.Gamepad.Gamepad#L2
+     * @type {number}
+     * @since 3.10.0
+     */
+    L2: {
+
+        get: function ()
+        {
+            return this._FBLeftBottom.value;
+        }
+
+    },
+
+    /**
+     * Returns the value of the Gamepad's top right shoulder button.
+     * If the Gamepad doesn't have this button it will always return zero.
+     * The value is a float between 0 and 1, corresponding to how depressed the button is.
+     * On a Dual Shock controller it's the R1 button.
+     * On an XBox controller it's the RB button.
+     *
+     * @name Phaser.Input.Gamepad.Gamepad#R1
+     * @type {number}
+     * @since 3.10.0
+     */
+    R1: {
+
+        get: function ()
+        {
+            return this._FBRightTop.value;
+        }
+
+    },
+
+    /**
+     * Returns the value of the Gamepad's bottom right shoulder button.
+     * If the Gamepad doesn't have this button it will always return zero.
+     * The value is a float between 0 and 1, corresponding to how depressed the button is.
+     * On a Dual Shock controller it's the R2 button.
+     * On an XBox controller it's the RT button.
+     *
+     * @name Phaser.Input.Gamepad.Gamepad#R2
+     * @type {number}
+     * @since 3.10.0
+     */
+    R2: {
+
+        get: function ()
+        {
+            return this._FBRightBottom.value;
+        }
+
+    }
+
+});
+
+module.exports = Gamepad;
+
+
+/***/ }),
+/* 258 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+
+/**
+ * @classdesc
+ * Contains information about a specific button on a Gamepad.
+ * Button objects are created automatically by the Gamepad as they are needed.
+ *
+ * @class Button
+ * @memberof Phaser.Input.Gamepad
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Input.Gamepad.Gamepad} pad - A reference to the Gamepad that this Button belongs to.
+ * @param {integer} index - The index of this Button.
+ */
+var Button = new Class({
+
+    initialize:
+
+    function Button (pad, index)
+    {
+        /**
+         * A reference to the Gamepad that this Button belongs to.
+         *
+         * @name Phaser.Input.Gamepad.Button#pad
+         * @type {Phaser.Input.Gamepad.Gamepad}
+         * @since 3.0.0
+         */
+        this.pad = pad;
+
+        /**
+         * An event emitter to use to emit the button events.
+         *
+         * @name Phaser.Input.Gamepad.Button#events
+         * @type {Phaser.Events.EventEmitter}
+         * @since 3.0.0
+         */
+        this.events = pad.manager;
+
+        /**
+         * The index of this Button.
+         *
+         * @name Phaser.Input.Gamepad.Button#index
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.index = index;
+
+        /**
+         * Between 0 and 1.
+         *
+         * @name Phaser.Input.Gamepad.Button#value
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.value = 0;
