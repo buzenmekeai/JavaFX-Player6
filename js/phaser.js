@@ -67140,3 +67140,229 @@ module.exports = Axis;
  * @param {any} hitArea - The hit area object.
  * @param {number} x - The translated x coordinate of the hit test event.
  * @param {number} y - The translated y coordinate of the hit test event.
+ * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object that invoked the hit test.
+ *
+ * @return {boolean} `true` if the coordinates fall within the space of the hitArea, otherwise `false`.
+ */
+
+/**
+ * @typedef {object} Phaser.Input.InteractiveObject
+ *
+ * @property {Phaser.GameObjects.GameObject} gameObject - The Game Object to which this Interactive Object is bound.
+ * @property {boolean} enabled - Is this Interactive Object currently enabled for input events?
+ * @property {boolean} draggable - Is this Interactive Object draggable? Enable with `InputPlugin.setDraggable`.
+ * @property {boolean} dropZone - Is this Interactive Object a drag-targets drop zone? Set when the object is created.
+ * @property {(boolean|string)} cursor - Should this Interactive Object change the cursor (via css) when over? (desktop only)
+ * @property {?Phaser.GameObjects.GameObject} target - An optional drop target for a draggable Interactive Object.
+ * @property {Phaser.Cameras.Scene2D.Camera} camera - The most recent Camera to be tested against this Interactive Object.
+ * @property {any} hitArea - The hit area for this Interactive Object. Typically a geometry shape, like a Rectangle or Circle.
+ * @property {HitAreaCallback} hitAreaCallback - The 'contains' check callback that the hit area shape will use for all hit tests.
+ * @property {number} localX - The x coordinate that the Pointer interacted with this object on, relative to the Game Object's top-left position.
+ * @property {number} localY - The y coordinate that the Pointer interacted with this object on, relative to the Game Object's top-left position.
+ * @property {(0|1|2)} dragState - The current drag state of this Interactive Object. 0 = Not being dragged, 1 = being checked for drag, or 2 = being actively dragged.
+ * @property {number} dragStartX - The x coordinate that the Pointer started dragging this Interactive Object from.
+ * @property {number} dragStartY - The y coordinate that the Pointer started dragging this Interactive Object from.
+ * @property {number} dragX - The x coordinate that this Interactive Object is currently being dragged to.
+ * @property {number} dragY - The y coordinate that this Interactive Object is currently being dragged to.
+ */
+
+/**
+ * Creates a new Interactive Object.
+ * 
+ * This is called automatically by the Input Manager when you enable a Game Object for input.
+ *
+ * The resulting Interactive Object is mapped to the Game Object's `input` property.
+ *
+ * @function Phaser.Input.CreateInteractiveObject
+ * @since 3.0.0
+ *
+ * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object to which this Interactive Object is bound.
+ * @param {any} hitArea - The hit area for this Interactive Object. Typically a geometry shape, like a Rectangle or Circle.
+ * @param {HitAreaCallback} hitAreaCallback - The 'contains' check callback that the hit area shape will use for all hit tests.
+ *
+ * @return {Phaser.Input.InteractiveObject} The new Interactive Object.
+ */
+var CreateInteractiveObject = function (gameObject, hitArea, hitAreaCallback)
+{
+    return {
+
+        gameObject: gameObject,
+
+        enabled: true,
+        draggable: false,
+        dropZone: false,
+        cursor: false,
+
+        target: null,
+
+        camera: null,
+
+        hitArea: hitArea,
+        hitAreaCallback: hitAreaCallback,
+
+        localX: 0,
+        localY: 0,
+
+        //  0 = Not being dragged
+        //  1 = Being checked for dragging
+        //  2 = Being dragged
+        dragState: 0,
+
+        dragStartX: 0,
+        dragStartY: 0,
+
+        dragX: 0,
+        dragY: 0
+
+    };
+};
+
+module.exports = CreateInteractiveObject;
+
+
+/***/ }),
+/* 261 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+// The three angle bisectors of a triangle meet in one point called the incenter.
+// It is the center of the incircle, the circle inscribed in the triangle.
+
+function getLength (x1, y1, x2, y2)
+{
+    var x = x1 - x2;
+    var y = y1 - y2;
+    var magnitude = (x * x) + (y * y);
+
+    return Math.sqrt(magnitude);
+}
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Triangle.InCenter
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ * @param {Phaser.Geom.Point} [out] - [description]
+ *
+ * @return {Phaser.Geom.Point} [description]
+ */
+var InCenter = function (triangle, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    var x1 = triangle.x1;
+    var y1 = triangle.y1;
+
+    var x2 = triangle.x2;
+    var y2 = triangle.y2;
+
+    var x3 = triangle.x3;
+    var y3 = triangle.y3;
+
+    var d1 = getLength(x3, y3, x2, y2);
+    var d2 = getLength(x1, y1, x3, y3);
+    var d3 = getLength(x2, y2, x1, y1);
+
+    var p = d1 + d2 + d3;
+
+    out.x = (x1 * d1 + x2 * d2 + x3 * d3) / p;
+    out.y = (y1 * d1 + y2 * d2 + y3 * d3) / p;
+
+    return out;
+};
+
+module.exports = InCenter;
+
+
+/***/ }),
+/* 262 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Triangle.Offset
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Triangle} O - [triangle,$return]
+ *
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ * @param {number} x - [description]
+ * @param {number} y - [description]
+ *
+ * @return {Phaser.Geom.Triangle} [description]
+ */
+var Offset = function (triangle, x, y)
+{
+    triangle.x1 += x;
+    triangle.y1 += y;
+
+    triangle.x2 += x;
+    triangle.y2 += y;
+
+    triangle.x3 += x;
+    triangle.y3 += y;
+
+    return triangle;
+};
+
+module.exports = Offset;
+
+
+/***/ }),
+/* 263 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+//  The three medians (the lines drawn from the vertices to the bisectors of the opposite sides)
+//  meet in the centroid or center of mass (center of gravity).
+//  The centroid divides each median in a ratio of 2:1
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Triangle.Centroid
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ * @param {(Phaser.Geom.Point|object)} [out] - [description]
+ *
+ * @return {(Phaser.Geom.Point|object)} [description]
+ */
+var Centroid = function (triangle, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    out.x = (triangle.x1 + triangle.x2 + triangle.x3) / 3;
+    out.y = (triangle.y1 + triangle.y2 + triangle.y3) / 3;
+
+    return out;
+};
+
+module.exports = Centroid;
