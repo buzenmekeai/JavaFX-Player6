@@ -67603,3 +67603,214 @@ module.exports = Decompose;
  * If an array is specified, each point object will be added to the end of the array, otherwise a new array will be created.
  *
  * @function Phaser.Geom.Rectangle.Decompose
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Rectangle} rect - The Rectangle object to be decomposed.
+ * @param {array} [out] - If provided, each point will be added to this array.
+ *
+ * @return {array} Will return the array you specified or a new array containing the points of the Rectangle.
+ */
+var Decompose = function (rect, out)
+{
+    if (out === undefined) { out = []; }
+
+    out.push({ x: rect.x, y: rect.y });
+    out.push({ x: rect.right, y: rect.y });
+    out.push({ x: rect.right, y: rect.bottom });
+    out.push({ x: rect.x, y: rect.bottom });
+
+    return out;
+};
+
+module.exports = Decompose;
+
+
+/***/ }),
+/* 271 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Intersects.PointToLine
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Point} point - [description]
+ * @param {Phaser.Geom.Line} line - [description]
+ *
+ * @return {boolean} [description]
+ */
+var PointToLine = function (point, line)
+{
+    return ((point.x - line.x1) * (line.y2 - line.y1) === (line.x2 - line.x1) * (point.y - line.y1));
+};
+
+module.exports = PointToLine;
+
+
+/***/ }),
+/* 272 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  Based on code by Matt DesLauriers
+//  https://github.com/mattdesl/line-circle-collision/blob/master/LICENSE.md
+
+var Contains = __webpack_require__(40);
+var Point = __webpack_require__(6);
+
+var tmp = new Point();
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Intersects.LineToCircle
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} line - [description]
+ * @param {Phaser.Geom.Circle} circle - [description]
+ * @param {Phaser.Geom.Point} [nearest] - [description]
+ *
+ * @return {boolean} [description]
+ */
+var LineToCircle = function (line, circle, nearest)
+{
+    if (nearest === undefined) { nearest = tmp; }
+
+    if (Contains(circle, line.x1, line.y1))
+    {
+        nearest.x = line.x1;
+        nearest.y = line.y1;
+
+        return true;
+    }
+
+    if (Contains(circle, line.x2, line.y2))
+    {
+        nearest.x = line.x2;
+        nearest.y = line.y2;
+
+        return true;
+    }
+
+    var dx = line.x2 - line.x1;
+    var dy = line.y2 - line.y1;
+
+    var lcx = circle.x - line.x1;
+    var lcy = circle.y - line.y1;
+
+    //  project lc onto d, resulting in vector p
+    var dLen2 = (dx * dx) + (dy * dy);
+    var px = dx;
+    var py = dy;
+
+    if (dLen2 > 0)
+    {
+        var dp = ((lcx * dx) + (lcy * dy)) / dLen2;
+
+        px *= dp;
+        py *= dp;
+    }
+
+    nearest.x = line.x1 + px;
+    nearest.y = line.y1 + py;
+    
+    //  len2 of p
+    var pLen2 = (px * px) + (py * py);
+    
+    return (
+        pLen2 <= dLen2 &&
+        ((px * dx) + (py * dy)) >= 0 &&
+        Contains(circle, nearest.x, nearest.y)
+    );
+};
+
+module.exports = LineToCircle;
+
+
+/***/ }),
+/* 273 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Geom.Intersects
+ */
+
+module.exports = {
+
+    CircleToCircle: __webpack_require__(703),
+    CircleToRectangle: __webpack_require__(702),
+    GetRectangleIntersection: __webpack_require__(701),
+    LineToCircle: __webpack_require__(272),
+    LineToLine: __webpack_require__(107),
+    LineToRectangle: __webpack_require__(700),
+    PointToLine: __webpack_require__(271),
+    PointToLineSegment: __webpack_require__(699),
+    RectangleToRectangle: __webpack_require__(148),
+    RectangleToTriangle: __webpack_require__(698),
+    RectangleToValues: __webpack_require__(697),
+    TriangleToCircle: __webpack_require__(696),
+    TriangleToLine: __webpack_require__(695),
+    TriangleToTriangle: __webpack_require__(694)
+
+};
+
+
+/***/ }),
+/* 274 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Geom
+ */
+
+module.exports = {
+    
+    Circle: __webpack_require__(723),
+    Ellipse: __webpack_require__(713),
+    Intersects: __webpack_require__(273),
+    Line: __webpack_require__(693),
+    Point: __webpack_require__(675),
+    Polygon: __webpack_require__(661),
+    Rectangle: __webpack_require__(265),
+    Triangle: __webpack_require__(631)
+
+};
+
+
+/***/ }),
+/* 275 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Light = __webpack_require__(276);
+var Utils = __webpack_require__(10);
