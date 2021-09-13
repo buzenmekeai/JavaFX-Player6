@@ -67366,3 +67366,240 @@ var Centroid = function (triangle, out)
 };
 
 module.exports = Centroid;
+
+
+/***/ }),
+/* 264 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  Checks if rectB is fully contained within rectA
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Rectangle.ContainsRect
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Rectangle} rectA - [description]
+ * @param {Phaser.Geom.Rectangle} rectB - [description]
+ *
+ * @return {boolean} [description]
+ */
+var ContainsRect = function (rectA, rectB)
+{
+    //  Volume check (if rectB volume > rectA then rectA cannot contain it)
+    if ((rectB.width * rectB.height) > (rectA.width * rectA.height))
+    {
+        return false;
+    }
+
+    return (
+        (rectB.x > rectA.x && rectB.x < rectA.right) &&
+        (rectB.right > rectA.x && rectB.right < rectA.right) &&
+        (rectB.y > rectA.y && rectB.y < rectA.bottom) &&
+        (rectB.bottom > rectA.y && rectB.bottom < rectA.bottom)
+    );
+};
+
+module.exports = ContainsRect;
+
+
+/***/ }),
+/* 265 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Rectangle = __webpack_require__(9);
+
+Rectangle.Area = __webpack_require__(656);
+Rectangle.Ceil = __webpack_require__(655);
+Rectangle.CeilAll = __webpack_require__(654);
+Rectangle.CenterOn = __webpack_require__(175);
+Rectangle.Clone = __webpack_require__(653);
+Rectangle.Contains = __webpack_require__(39);
+Rectangle.ContainsPoint = __webpack_require__(652);
+Rectangle.ContainsRect = __webpack_require__(264);
+Rectangle.CopyFrom = __webpack_require__(651);
+Rectangle.Decompose = __webpack_require__(270);
+Rectangle.Equals = __webpack_require__(650);
+Rectangle.FitInside = __webpack_require__(649);
+Rectangle.FitOutside = __webpack_require__(648);
+Rectangle.Floor = __webpack_require__(647);
+Rectangle.FloorAll = __webpack_require__(646);
+Rectangle.FromPoints = __webpack_require__(173);
+Rectangle.GetAspectRatio = __webpack_require__(145);
+Rectangle.GetCenter = __webpack_require__(645);
+Rectangle.GetPoint = __webpack_require__(190);
+Rectangle.GetPoints = __webpack_require__(398);
+Rectangle.GetSize = __webpack_require__(644);
+Rectangle.Inflate = __webpack_require__(643);
+Rectangle.Intersection = __webpack_require__(642);
+Rectangle.MarchingAnts = __webpack_require__(388);
+Rectangle.MergePoints = __webpack_require__(641);
+Rectangle.MergeRect = __webpack_require__(640);
+Rectangle.MergeXY = __webpack_require__(639);
+Rectangle.Offset = __webpack_require__(638);
+Rectangle.OffsetPoint = __webpack_require__(637);
+Rectangle.Overlaps = __webpack_require__(636);
+Rectangle.Perimeter = __webpack_require__(124);
+Rectangle.PerimeterPoint = __webpack_require__(635);
+Rectangle.Random = __webpack_require__(187);
+Rectangle.RandomOutside = __webpack_require__(634);
+Rectangle.SameDimensions = __webpack_require__(633);
+Rectangle.Scale = __webpack_require__(632);
+Rectangle.Union = __webpack_require__(309);
+
+module.exports = Rectangle;
+
+
+/***/ }),
+/* 266 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Point.GetMagnitudeSq
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Point} point - [description]
+ *
+ * @return {number} [description]
+ */
+var GetMagnitudeSq = function (point)
+{
+    return (point.x * point.x) + (point.y * point.y);
+};
+
+module.exports = GetMagnitudeSq;
+
+
+/***/ }),
+/* 267 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Point.GetMagnitude
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Point} point - [description]
+ *
+ * @return {number} [description]
+ */
+var GetMagnitude = function (point)
+{
+    return Math.sqrt((point.x * point.x) + (point.y * point.y));
+};
+
+module.exports = GetMagnitude;
+
+
+/***/ }),
+/* 268 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var MATH_CONST = __webpack_require__(16);
+var Wrap = __webpack_require__(53);
+var Angle = __webpack_require__(68);
+
+/**
+ * Get the angle of the normal of the given line in radians.
+ *
+ * @function Phaser.Geom.Line.NormalAngle
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} line - The line to calculate the angle of the normal of.
+ *
+ * @return {number} The angle of the normal of the line in radians.
+ */
+var NormalAngle = function (line)
+{
+    var angle = Angle(line) - MATH_CONST.TAU;
+
+    return Wrap(angle, -Math.PI, Math.PI);
+};
+
+module.exports = NormalAngle;
+
+
+/***/ }),
+/* 269 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Triangle.Decompose
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ * @param {array} [out] - [description]
+ *
+ * @return {array} [description]
+ */
+var Decompose = function (triangle, out)
+{
+    if (out === undefined) { out = []; }
+
+    out.push({ x: triangle.x1, y: triangle.y1 });
+    out.push({ x: triangle.x2, y: triangle.y2 });
+    out.push({ x: triangle.x3, y: triangle.y3 });
+
+    return out;
+};
+
+module.exports = Decompose;
+
+
+/***/ }),
+/* 270 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Create an array of points for each corner of a Rectangle
+ * If an array is specified, each point object will be added to the end of the array, otherwise a new array will be created.
+ *
+ * @function Phaser.Geom.Rectangle.Decompose
