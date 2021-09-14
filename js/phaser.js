@@ -67814,3 +67814,253 @@ module.exports = {
 var Class = __webpack_require__(0);
 var Light = __webpack_require__(276);
 var Utils = __webpack_require__(10);
+
+/**
+ * @callback LightForEach
+ *
+ * @param {Phaser.GameObjects.Light} light - The Light.
+ */
+
+/**
+ * @classdesc
+ * Manages Lights for a Scene.
+ *
+ * Affects the rendering of Game Objects using the `Light2D` pipeline.
+ *
+ * @class LightsManager
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @since 3.0.0
+ */
+var LightsManager = new Class({
+
+    initialize:
+
+    function LightsManager ()
+    {
+        /**
+         * The pool of Lights.
+         *
+         * Used to recycle removed Lights for a more efficient use of memory.
+         *
+         * @name Phaser.GameObjects.LightsManager#lightPool
+         * @type {Phaser.GameObjects.Light[]}
+         * @default []
+         * @since 3.0.0
+         */
+        this.lightPool = [];
+
+        /**
+         * The Lights in the Scene.
+         *
+         * @name Phaser.GameObjects.LightsManager#lights
+         * @type {Phaser.GameObjects.Light[]}
+         * @default []
+         * @since 3.0.0
+         */
+        this.lights = [];
+
+        /**
+         * Lights that have been culled from a Camera's viewport.
+         *
+         * Lights in this list will not be rendered.
+         *
+         * @name Phaser.GameObjects.LightsManager#culledLights
+         * @type {Phaser.GameObjects.Light[]}
+         * @default []
+         * @since 3.0.0
+         */
+        this.culledLights = [];
+
+        /**
+         * The ambient color.
+         *
+         * @name Phaser.GameObjects.LightsManager#ambientColor
+         * @type {{ r: number, g: number, b: number }}
+         * @since 3.0.0
+         */
+        this.ambientColor = { r: 0.1, g: 0.1, b: 0.1 };
+
+        /**
+         * Whether the Lights Manager is enabled.
+         *
+         * @name Phaser.GameObjects.LightsManager#active
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.active = false;
+
+        /**
+         * The maximum number of lights that a single Camera and the lights shader can process.
+         * Change this via the `maxLights` property in your game config, as it cannot be changed at runtime.
+         *
+         * @name Phaser.GameObjects.LightsManager#maxLights
+         * @type {integer}
+         * @readonly
+         * @since 3.15.0
+         */
+        this.maxLights = -1;
+    },
+
+    /**
+     * Enable the Lights Manager.
+     *
+     * @method Phaser.GameObjects.LightsManager#enable
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.LightsManager} This Lights Manager object.
+     */
+    enable: function ()
+    {
+        if (this.maxLights === -1)
+        {
+            this.maxLights = this.scene.sys.game.renderer.config.maxLights;
+        }
+
+        this.active = true;
+
+        return this;
+    },
+
+    /**
+     * Disable the Lights Manager.
+     *
+     * @method Phaser.GameObjects.LightsManager#disable
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.LightsManager} This Lights Manager object.
+     */
+    disable: function ()
+    {
+        this.active = false;
+
+        return this;
+    },
+
+    /**
+     * Cull any Lights that aren't visible to the given Camera.
+     *
+     * Culling Lights improves performance by ensuring that only Lights within a Camera's viewport are rendered.
+     *
+     * @method Phaser.GameObjects.LightsManager#cull
+     * @since 3.0.0
+     *
+     * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera to cull Lights for.
+     *
+     * @return {Phaser.GameObjects.Light[]} The culled Lights.
+     */
+    cull: function (camera)
+    {
+        var lights = this.lights;
+        var culledLights = this.culledLights;
+        var length = lights.length;
+        var cameraCenterX = camera.x + camera.width / 2.0;
+        var cameraCenterY = camera.y + camera.height / 2.0;
+        var cameraRadius = (camera.width + camera.height) / 2.0;
+        var point = { x: 0, y: 0 };
+        var cameraMatrix = camera.matrix;
+        var viewportHeight = this.systems.game.config.height;
+
+        culledLights.length = 0;
+
+        for (var index = 0; index < length && culledLights.length < this.maxLights; index++)
+        {
+            var light = lights[index];
+
+            cameraMatrix.transformPoint(light.x, light.y, point);
+
+            //  We'll just use bounding spheres to test if lights should be rendered
+            var dx = cameraCenterX - (point.x - (camera.scrollX * light.scrollFactorX * camera.zoom));
+            var dy = cameraCenterY - (viewportHeight - (point.y - (camera.scrollY * light.scrollFactorY) * camera.zoom));
+            var distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < light.radius + cameraRadius)
+            {
+                culledLights.push(lights[index]);
+            }
+        }
+
+        return culledLights;
+    },
+
+    /**
+     * Iterate over each Light with a callback.
+     *
+     * @method Phaser.GameObjects.LightsManager#forEachLight
+     * @since 3.0.0
+     *
+     * @param {LightForEach} callback - The callback that is called with each Light.
+     *
+     * @return {Phaser.GameObjects.LightsManager} This Lights Manager object.
+     */
+    forEachLight: function (callback)
+    {
+        if (!callback)
+        {
+            return;
+        }
+
+        var lights = this.lights;
+        var length = lights.length;
+
+        for (var index = 0; index < length; ++index)
+        {
+            callback(lights[index]);
+        }
+
+        return this;
+    },
+
+    /**
+     * Set the ambient light color.
+     *
+     * @method Phaser.GameObjects.LightsManager#setAmbientColor
+     * @since 3.0.0
+     *
+     * @param {number} rgb - The integer RGB color of the ambient light.
+     *
+     * @return {Phaser.GameObjects.LightsManager} This Lights Manager object.
+     */
+    setAmbientColor: function (rgb)
+    {
+        var color = Utils.getFloatsFromUintRGB(rgb);
+
+        this.ambientColor.r = color[0];
+        this.ambientColor.g = color[1];
+        this.ambientColor.b = color[2];
+
+        return this;
+    },
+
+    /**
+     * Returns the maximum number of Lights allowed to appear at once.
+     *
+     * @method Phaser.GameObjects.LightsManager#getMaxVisibleLights
+     * @since 3.0.0
+     *
+     * @return {integer} The maximum number of Lights allowed to appear at once.
+     */
+    getMaxVisibleLights: function ()
+    {
+        return 10;
+    },
+
+    /**
+     * Get the number of Lights managed by this Lights Manager.
+     *
+     * @method Phaser.GameObjects.LightsManager#getLightCount
+     * @since 3.0.0
+     *
+     * @return {integer} The number of Lights managed by this Lights Manager.
+     */
+    getLightCount: function ()
+    {
+        return this.lights.length;
+    },
+
+    /**
+     * Add a Light.
+     *
+     * @method Phaser.GameObjects.LightsManager#addLight
+     * @since 3.0.0
