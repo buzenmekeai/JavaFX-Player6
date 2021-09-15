@@ -68064,3 +68064,210 @@ var LightsManager = new Class({
      *
      * @method Phaser.GameObjects.LightsManager#addLight
      * @since 3.0.0
+     *
+     * @param {number} [x=0] - The horizontal position of the Light.
+     * @param {number} [y=0] - The vertical position of the Light.
+     * @param {number} [radius=100] - The radius of the Light.
+     * @param {number} [rgb=0xffffff] - The integer RGB color of the light.
+     * @param {number} [intensity=1] - The intensity of the Light.
+     *
+     * @return {Phaser.GameObjects.Light} The Light that was added.
+     */
+    addLight: function (x, y, radius, rgb, intensity)
+    {
+        var color = null;
+        var light = null;
+
+        x = (x === undefined) ? 0.0 : x;
+        y = (y === undefined) ? 0.0 : y;
+        rgb = (rgb === undefined) ? 0xffffff : rgb;
+        radius = (radius === undefined) ? 100.0 : radius;
+        intensity = (intensity === undefined) ? 1.0 : intensity;
+
+        color = Utils.getFloatsFromUintRGB(rgb);
+        light = null;
+
+        if (this.lightPool.length > 0)
+        {
+            light = this.lightPool.pop();
+            light.set(x, y, radius, color[0], color[1], color[2], intensity);
+        }
+        else
+        {
+            light = new Light(x, y, radius, color[0], color[1], color[2], intensity);
+        }
+
+        this.lights.push(light);
+
+        return light;
+    },
+
+    /**
+     * Remove a Light.
+     *
+     * @method Phaser.GameObjects.LightsManager#removeLight
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Light} light - The Light to remove.
+     *
+     * @return {Phaser.GameObjects.LightsManager} This Lights Manager object.
+     */
+    removeLight: function (light)
+    {
+        var index = this.lights.indexOf(light);
+
+        if (index >= 0)
+        {
+            this.lightPool.push(light);
+            this.lights.splice(index, 1);
+        }
+
+        return this;
+    },
+
+    /**
+     * Shut down the Lights Manager.
+     *
+     * Recycles all active Lights into the Light pool, resets ambient light color and clears the lists of Lights and
+     * culled Lights.
+     *
+     * @method Phaser.GameObjects.LightsManager#shutdown
+     * @since 3.0.0
+     */
+    shutdown: function ()
+    {
+        while (this.lights.length > 0)
+        {
+            this.lightPool.push(this.lights.pop());
+        }
+
+        this.ambientColor = { r: 0.1, g: 0.1, b: 0.1 };
+        this.culledLights.length = 0;
+        this.lights.length = 0;
+    },
+
+    /**
+     * Destroy the Lights Manager.
+     *
+     * Cleans up all references by calling {@link Phaser.GameObjects.LightsManager#shutdown}.
+     *
+     * @method Phaser.GameObjects.LightsManager#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.shutdown();
+    }
+
+});
+
+module.exports = LightsManager;
+
+
+/***/ }),
+/* 276 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Utils = __webpack_require__(10);
+
+/**
+ * @classdesc
+ * A 2D point light.
+ *
+ * These are typically created by a {@link Phaser.GameObjects.LightsManager}, available from within a scene via `this.lights`.
+ *
+ * Any Game Objects using the Light2D pipeline will then be affected by these Lights.
+ *
+ * They can also simply be used to represent a point light for your own purposes.
+ *
+ * @class Light
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {number} x - The horizontal position of the light.
+ * @param {number} y - The vertical position of the light.
+ * @param {number} radius - The radius of the light.
+ * @param {number} r - The red color of the light. A value between 0 and 1.
+ * @param {number} g - The green color of the light. A value between 0 and 1.
+ * @param {number} b - The blue color of the light. A value between 0 and 1.
+ * @param {number} intensity - The intensity of the light.
+ */
+var Light = new Class({
+
+    initialize:
+
+    function Light (x, y, radius, r, g, b, intensity)
+    {
+        /**
+         * The horizontal position of the light.
+         *
+         * @name Phaser.GameObjects.Light#x
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.x = x;
+
+        /**
+         * The vertical position of the light.
+         *
+         * @name Phaser.GameObjects.Light#y
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.y = y;
+
+        /**
+         * The radius of the light.
+         *
+         * @name Phaser.GameObjects.Light#radius
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.radius = radius;
+
+        /**
+         * The red color of the light. A value between 0 and 1.
+         *
+         * @name Phaser.GameObjects.Light#r
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.r = r;
+
+        /**
+         * The green color of the light. A value between 0 and 1.
+         *
+         * @name Phaser.GameObjects.Light#g
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.g = g;
+
+        /**
+         * The blue color of the light. A value between 0 and 1.
+         *
+         * @name Phaser.GameObjects.Light#b
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.b = b;
+
+        /**
+         * The intensity of the light.
+         *
+         * @name Phaser.GameObjects.Light#intensity
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.intensity = intensity;
+
+        /**
+         * The horizontal scroll factor of the light.
