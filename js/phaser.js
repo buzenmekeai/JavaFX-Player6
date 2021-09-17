@@ -68271,3 +68271,227 @@ var Light = new Class({
 
         /**
          * The horizontal scroll factor of the light.
+         *
+         * @name Phaser.GameObjects.Light#scrollFactorX
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.scrollFactorX = 1.0;
+
+        /**
+         * The vertical scroll factor of the light.
+         *
+         * @name Phaser.GameObjects.Light#scrollFactorY
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.scrollFactorY = 1.0;
+    },
+
+    /**
+     * Set the properties of the light.
+     *
+     * Sets both horizontal and vertical scroll factor to 1. Use {@link Phaser.GameObjects.Light#setScrollFactor} to set
+     * the scroll factor.
+     *
+     * @method Phaser.GameObjects.Light#set
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal position of the light.
+     * @param {number} y - The vertical position of the light.
+     * @param {number} radius - The radius of the light.
+     * @param {number} r - The red color. A value between 0 and 1.
+     * @param {number} g - The green color. A value between 0 and 1.
+     * @param {number} b - The blue color. A value between 0 and 1.
+     * @param {number} intensity - The intensity of the light.
+     *
+     * @return {Phaser.GameObjects.Light} This Light object.
+     */
+    set: function (x, y, radius, r, g, b, intensity)
+    {
+        this.x = x;
+        this.y = y;
+
+        this.radius = radius;
+
+        this.r = r;
+        this.g = g;
+        this.b = b;
+
+        this.intensity = intensity;
+
+        this.scrollFactorX = 1;
+        this.scrollFactorY = 1;
+
+        return this;
+    },
+
+    /**
+     * Set the scroll factor of the light.
+     *
+     * @method Phaser.GameObjects.Light#setScrollFactor
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal scroll factor of the light.
+     * @param {number} y - The vertical scroll factor of the light.
+     *
+     * @return {Phaser.GameObjects.Light} This Light object.
+     */
+    setScrollFactor: function (x, y)
+    {
+        if (x === undefined) { x = 1; }
+        if (y === undefined) { y = x; }
+
+        this.scrollFactorX = x;
+        this.scrollFactorY = y;
+
+        return this;
+    },
+
+    /**
+     * Set the color of the light from a single integer RGB value.
+     *
+     * @method Phaser.GameObjects.Light#setColor
+     * @since 3.0.0
+     *
+     * @param {number} rgb - The integer RGB color of the light.
+     *
+     * @return {Phaser.GameObjects.Light} This Light object.
+     */
+    setColor: function (rgb)
+    {
+        var color = Utils.getFloatsFromUintRGB(rgb);
+
+        this.r = color[0];
+        this.g = color[1];
+        this.b = color[2];
+
+        return this;
+    },
+
+    /**
+     * Set the intensity of the light.
+     *
+     * @method Phaser.GameObjects.Light#setIntensity
+     * @since 3.0.0
+     *
+     * @param {number} intensity - The intensity of the light.
+     *
+     * @return {Phaser.GameObjects.Light} This Light object.
+     */
+    setIntensity: function (intensity)
+    {
+        this.intensity = intensity;
+
+        return this;
+    },
+
+    /**
+     * Set the position of the light.
+     *
+     * @method Phaser.GameObjects.Light#setPosition
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal position of the light.
+     * @param {number} y - The vertical position of the light.
+     *
+     * @return {Phaser.GameObjects.Light} This Light object.
+     */
+    setPosition: function (x, y)
+    {
+        this.x = x;
+        this.y = y;
+
+        return this;
+    },
+
+    /**
+     * Set the radius of the light.
+     *
+     * @method Phaser.GameObjects.Light#setRadius
+     * @since 3.0.0
+     *
+     * @param {number} radius - The radius of the light.
+     *
+     * @return {Phaser.GameObjects.Light} This Light object.
+     */
+    setRadius: function (radius)
+    {
+        this.radius = radius;
+
+        return this;
+    }
+
+});
+
+module.exports = Light;
+
+
+/***/ }),
+/* 277 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Length = __webpack_require__(65);
+var Point = __webpack_require__(6);
+
+/**
+ * Returns an array of evenly spaced points on the perimeter of a Triangle.
+ *
+ * @function Phaser.Geom.Triangle.GetPoints
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Triangle} triangle - The Triangle to get the points from.
+ * @param {integer} quantity - The number of evenly spaced points to return. Set to 0 to return an arbitrary number of points based on the `stepRate`.
+ * @param {number} stepRate - If `quantity` is 0, the distance between each returned point.
+ * @param {(array|Phaser.Geom.Point[])} [out] - An array to which the points should be appended.
+ *
+ * @return {(array|Phaser.Geom.Point[])} The modified `out` array, or a new array if none was provided.
+ */
+var GetPoints = function (triangle, quantity, stepRate, out)
+{
+    if (out === undefined) { out = []; }
+
+    var line1 = triangle.getLineA();
+    var line2 = triangle.getLineB();
+    var line3 = triangle.getLineC();
+
+    var length1 = Length(line1);
+    var length2 = Length(line2);
+    var length3 = Length(line3);
+
+    var perimeter = length1 + length2 + length3;
+
+    //  If quantity is a falsey value (false, null, 0, undefined, etc) then we calculate it based on the stepRate instead.
+    if (!quantity)
+    {
+        quantity = perimeter / stepRate;
+    }
+
+    for (var i = 0; i < quantity; i++)
+    {
+        var p = perimeter * (i / quantity);
+        var localPosition = 0;
+
+        var point = new Point();
+
+        //  Which line is it on?
+
+        if (p < length1)
+        {
+            //  Line 1
+            localPosition = p / length1;
+
+            point.x = line1.x1 + (line1.x2 - line1.x1) * localPosition;
+            point.y = line1.y1 + (line1.y2 - line1.y1) * localPosition;
+        }
+        else if (p > length1 + length2)
+        {
+            //  Line 3
