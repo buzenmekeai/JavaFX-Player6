@@ -68946,3 +68946,217 @@ var Star = new Class({
      *
      * @name Phaser.GameObjects.Star#innerRadius
      * @type {number}
+     * @default 32
+     * @since 3.13.0
+     */
+    innerRadius: {
+
+        get: function ()
+        {
+            return this._innerRadius;
+        },
+
+        set: function (value)
+        {
+            this._innerRadius = value;
+
+            this.updateData();
+        }
+
+    },
+
+    /**
+     * The outer radius of the Star shape.
+     *
+     * @name Phaser.GameObjects.Star#outerRadius
+     * @type {number}
+     * @default 64
+     * @since 3.13.0
+     */
+    outerRadius: {
+
+        get: function ()
+        {
+            return this._outerRadius;
+        },
+
+        set: function (value)
+        {
+            this._outerRadius = value;
+
+            this.updateData();
+        }
+
+    },
+
+    /**
+     * Internal method that updates the data and path values.
+     *
+     * @method Phaser.GameObjects.Star#updateData
+     * @private
+     * @since 3.13.0
+     *
+     * @return {this} This Game Object instance.
+     */
+    updateData: function ()
+    {
+        var path = [];
+
+        var points = this._points;
+        var innerRadius = this._innerRadius;
+        var outerRadius = this._outerRadius;
+
+        var rot = Math.PI / 2 * 3;
+        var step = Math.PI / points;
+
+        //  So origin 0.5 = the center of the star
+        var x = outerRadius;
+        var y = outerRadius;
+    
+        path.push(x, y + -outerRadius);
+
+        for (var i = 0; i < points; i++)
+        {
+            path.push(x + Math.cos(rot) * outerRadius, y + Math.sin(rot) * outerRadius);
+
+            rot += step;
+
+            path.push(x + Math.cos(rot) * innerRadius, y + Math.sin(rot) * innerRadius);
+    
+            rot += step;
+        }
+
+        path.push(x, y + -outerRadius);
+
+        this.pathIndexes = Earcut(path);
+        this.pathData = path;
+
+        return this;
+    }
+
+});
+
+module.exports = Star;
+
+
+/***/ }),
+/* 281 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var GeomRectangle = __webpack_require__(9);
+var Shape = __webpack_require__(27);
+var RectangleRender = __webpack_require__(778);
+
+/**
+ * @classdesc
+ * The Rectangle Shape is a Game Object that can be added to a Scene, Group or Container. You can
+ * treat it like any other Game Object in your game, such as tweening it, scaling it, or enabling
+ * it for input or physics. It provides a quick and easy way for you to render this shape in your
+ * game without using a texture, while still taking advantage of being fully batched in WebGL.
+ * 
+ * This shape supports both fill and stroke colors.
+ * 
+ * You can change the size of the rectangle by changing the `width` and `height` properties.
+ *
+ * @class Rectangle
+ * @extends Phaser.GameObjects.Shape
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @since 3.13.0
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Game Object belongs. A Game Object can only belong to one Scene at a time.
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {number} [width=128] - The width of the rectangle.
+ * @param {number} [height=128] - The height of the rectangle.
+ * @param {number} [fillColor] - The color the rectangle will be filled with, i.e. 0xff0000 for red.
+ * @param {number} [fillAlpha] - The alpha the rectangle will be filled with. You can also set the alpha of the overall Shape using its `alpha` property.
+ */
+var Rectangle = new Class({
+
+    Extends: Shape,
+
+    Mixins: [
+        RectangleRender
+    ],
+
+    initialize:
+
+    function Rectangle (scene, x, y, width, height, fillColor, fillAlpha)
+    {
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = 0; }
+        if (width === undefined) { width = 128; }
+        if (height === undefined) { height = 128; }
+
+        Shape.call(this, scene, 'Rectangle', new GeomRectangle(0, 0, width, height));
+
+        this.setPosition(x, y);
+        this.setSize(width, height);
+
+        if (fillColor !== undefined)
+        {
+            this.setFillStyle(fillColor, fillAlpha);
+        }
+
+        this.updateDisplayOrigin();
+        this.updateData();
+    },
+
+    /**
+     * Internal method that updates the data and path values.
+     *
+     * @method Phaser.GameObjects.Rectangle#updateData
+     * @private
+     * @since 3.13.0
+     *
+     * @return {this} This Game Object instance.
+     */
+    updateData: function ()
+    {
+        var path = [];
+        var rect = this.geom;
+        var line = this._tempLine;
+
+        rect.getLineA(line);
+
+        path.push(line.x1, line.y1, line.x2, line.y2);
+
+        rect.getLineB(line);
+
+        path.push(line.x2, line.y2);
+
+        rect.getLineC(line);
+
+        path.push(line.x2, line.y2);
+
+        rect.getLineD(line);
+
+        path.push(line.x2, line.y2);
+
+        this.pathData = path;
+
+        return this;
+    }
+
+});
+
+module.exports = Rectangle;
+
+
+/***/ }),
+/* 282 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Igor Ognichenko <ognichenko.igor@gmail.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
