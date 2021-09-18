@@ -69160,3 +69160,214 @@ module.exports = Rectangle;
  * @author       Igor Ognichenko <ognichenko.igor@gmail.com>
  * @copyright    2018 Photon Storm Ltd.
  * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var copy = function (out, a)
+{
+    out[0] = a[0];
+    out[1] = a[1];
+  
+    return out;
+};
+
+/**
+ * Takes a Polygon object and applies Chaikin's smoothing algorithm on its points.
+ *
+ * @function Phaser.Geom.Polygon.Smooth
+ * @since 3.13.0
+ *
+ * @generic {Phaser.Geom.Polygon} O - [polygon,$return]
+ *
+ * @param {Phaser.Geom.Polygon} polygon - The polygon to be smoothed. The polygon will be modified in-place and returned.
+ *
+ * @return {Phaser.Geom.Polygon} The input polygon.
+ */
+var Smooth = function (polygon)
+{
+    var i;
+    var points = [];
+    var data = polygon.points;
+
+    for (i = 0; i < data.length; i++)
+    {
+        points.push([ data[i].x, data[i].y ]);
+    }
+
+    var output = [];
+  
+    if (points.length > 0)
+    {
+        output.push(copy([ 0, 0 ], points[0]));
+    }
+  
+    for (i = 0; i < points.length - 1; i++)
+    {
+        var p0 = points[i];
+        var p1 = points[i + 1];
+        var p0x = p0[0];
+        var p0y = p0[1];
+        var p1x = p1[0];
+        var p1y = p1[1];
+
+        output.push([ 0.85 * p0x + 0.15 * p1x, 0.85 * p0y + 0.15 * p1y ]);
+        output.push([ 0.15 * p0x + 0.85 * p1x, 0.15 * p0y + 0.85 * p1y ]);
+    }
+  
+    if (points.length > 1)
+    {
+        output.push(copy([ 0, 0 ], points[points.length - 1]));
+    }
+  
+    return polygon.setTo(output);
+};
+
+module.exports = Smooth;
+
+
+/***/ }),
+/* 283 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Length = __webpack_require__(65);
+var Line = __webpack_require__(54);
+
+/**
+ * Returns the perimeter of the given Polygon.
+ *
+ * @function Phaser.Geom.Polygon.Perimeter
+ * @since 3.12.0
+ *
+ * @param {Phaser.Geom.Polygon} polygon - The Polygon to get the perimeter of.
+ *
+ * @return {number} The perimeter of the Polygon.
+ */
+var Perimeter = function (polygon)
+{
+    var points = polygon.points;
+    var perimeter = 0;
+
+    for (var i = 0; i < points.length; i++)
+    {
+        var pointA = points[i];
+        var pointB = points[(i + 1) % points.length];
+        var line = new Line(
+            pointA.x,
+            pointA.y,
+            pointB.x,
+            pointB.y
+        );
+
+        perimeter += Length(line);
+    }
+
+    return perimeter;
+};
+
+module.exports = Perimeter;
+
+
+/***/ }),
+/* 284 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Length = __webpack_require__(65);
+var Line = __webpack_require__(54);
+var Perimeter = __webpack_require__(283);
+
+/**
+ * Returns an array of Point objects containing the coordinates of the points around the perimeter of the Polygon,
+ * based on the given quantity or stepRate values.
+ *
+ * @function Phaser.Geom.Polygon.GetPoints
+ * @since 3.12.0
+ *
+ * @param {Phaser.Geom.Polygon} polygon - The Polygon to get the points from.
+ * @param {integer} quantity - The amount of points to return. If a falsey value the quantity will be derived from the `stepRate` instead.
+ * @param {number} [stepRate] - Sets the quantity by getting the perimeter of the Polygon and dividing it by the stepRate.
+ * @param {array} [output] - An array to insert the points in to. If not provided a new array will be created.
+ *
+ * @return {Phaser.Geom.Point[]} An array of Point objects pertaining to the points around the perimeter of the Polygon.
+ */
+var GetPoints = function (polygon, quantity, stepRate, out)
+{
+    if (out === undefined) { out = []; }
+
+    var points = polygon.points;
+    var perimeter = Perimeter(polygon);
+
+    //  If quantity is a falsey value (false, null, 0, undefined, etc) then we calculate it based on the stepRate instead.
+    if (!quantity)
+    {
+        quantity = perimeter / stepRate;
+    }
+
+    for (var i = 0; i < quantity; i++)
+    {
+        var position = perimeter * (i / quantity);
+        var accumulatedPerimeter = 0;
+
+        for (var j = 0; j < points.length; j++)
+        {
+            var pointA = points[j];
+            var pointB = points[(j + 1) % points.length];
+            var line = new Line(
+                pointA.x,
+                pointA.y,
+                pointB.x,
+                pointB.y
+            );
+            var length = Length(line);
+
+            if (position < accumulatedPerimeter || position > accumulatedPerimeter + length)
+            {
+                accumulatedPerimeter += length;
+                continue;
+            }
+
+            var point = line.getPoint((position - accumulatedPerimeter) / length);
+            out.push(point);
+
+            break;
+        }
+    }
+
+    return out;
+};
+
+module.exports = GetPoints;
+
+
+/***/ }),
+/* 285 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Rectangle = __webpack_require__(9);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Polygon.GetAABB
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Polygon} polygon - [description]
+ * @param {(Phaser.Geom.Rectangle|object)} [out] - [description]
