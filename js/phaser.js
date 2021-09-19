@@ -70028,3 +70028,204 @@ var IsoBox = new Class({
          * @type {integer}
          * @default 4
          * @since 3.13.0
+         */
+        this.projection = 4;
+
+        /**
+         * The color used to fill in the top of the iso box.
+         *
+         * @name Phaser.GameObjects.IsoBox#fillTop
+         * @type {number}
+         * @since 3.13.0
+         */
+        this.fillTop = fillTop;
+
+        /**
+         * The color used to fill in the left-facing side of the iso box.
+         *
+         * @name Phaser.GameObjects.IsoBox#fillLeft
+         * @type {number}
+         * @since 3.13.0
+         */
+        this.fillLeft = fillLeft;
+
+        /**
+         * The color used to fill in the right-facing side of the iso box.
+         *
+         * @name Phaser.GameObjects.IsoBox#fillRight
+         * @type {number}
+         * @since 3.13.0
+         */
+        this.fillRight = fillRight;
+
+        /**
+         * Controls if the top-face of the iso box be rendered.
+         *
+         * @name Phaser.GameObjects.IsoBox#showTop
+         * @type {boolean}
+         * @default true
+         * @since 3.13.0
+         */
+        this.showTop = true;
+
+        /**
+         * Controls if the left-face of the iso box be rendered.
+         *
+         * @name Phaser.GameObjects.IsoBox#showLeft
+         * @type {boolean}
+         * @default true
+         * @since 3.13.0
+         */
+        this.showLeft = true;
+
+        /**
+         * Controls if the right-face of the iso box be rendered.
+         *
+         * @name Phaser.GameObjects.IsoBox#showRight
+         * @type {boolean}
+         * @default true
+         * @since 3.13.0
+         */
+        this.showRight = true;
+
+        this.isFilled = true;
+
+        this.setPosition(x, y);
+        this.setSize(size, height);
+
+        this.updateDisplayOrigin();
+    },
+
+    /**
+     * Sets the projection level of the iso box. Change this to change the 'angle' at which you are looking at the box.
+     * This call can be chained.
+     *
+     * @method Phaser.GameObjects.IsoBox#setProjection
+     * @since 3.13.0
+     * 
+     * @param {integer} value - The value to set the projection to.
+     *
+     * @return {this} This Game Object instance.
+     */
+    setProjection: function (value)
+    {
+        this.projection = value;
+
+        return this;
+    },
+
+    /**
+     * Sets which faces of the iso box will be rendered.
+     * This call can be chained.
+     *
+     * @method Phaser.GameObjects.IsoBox#setFaces
+     * @since 3.13.0
+     * 
+     * @param {boolean} [showTop=true] - Show the top-face of the iso box.
+     * @param {boolean} [showLeft=true] - Show the left-face of the iso box.
+     * @param {boolean} [showRight=true] - Show the right-face of the iso box.
+     *
+     * @return {this} This Game Object instance.
+     */
+    setFaces: function (showTop, showLeft, showRight)
+    {
+        if (showTop === undefined) { showTop = true; }
+        if (showLeft === undefined) { showLeft = true; }
+        if (showRight === undefined) { showRight = true; }
+
+        this.showTop = showTop;
+        this.showLeft = showLeft;
+        this.showRight = showRight;
+
+        return this;
+    },
+
+    /**
+     * Sets the fill colors for each face of the iso box.
+     * This call can be chained.
+     *
+     * @method Phaser.GameObjects.IsoBox#setFillStyle
+     * @since 3.13.0
+     * 
+     * @param {number} [fillTop] - The color used to fill the top of the iso box.
+     * @param {number} [fillLeft] - The color used to fill in the left-facing side of the iso box.
+     * @param {number} [fillRight] - The color used to fill in the right-facing side of the iso box.
+     *
+     * @return {this} This Game Object instance.
+     */
+    setFillStyle: function (fillTop, fillLeft, fillRight)
+    {
+        this.fillTop = fillTop;
+        this.fillLeft = fillLeft;
+        this.fillRight = fillRight;
+
+        this.isFilled = true;
+
+        return this;
+    }
+
+});
+
+module.exports = IsoBox;
+
+
+/***/ }),
+/* 290 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Shape = __webpack_require__(27);
+var GridRender = __webpack_require__(793);
+
+/**
+ * @classdesc
+ * The Grid Shape is a Game Object that can be added to a Scene, Group or Container. You can
+ * treat it like any other Game Object in your game, such as tweening it, scaling it, or enabling
+ * it for input or physics. It provides a quick and easy way for you to render this shape in your
+ * game without using a texture, while still taking advantage of being fully batched in WebGL.
+ * 
+ * This shape supports only fill colors and cannot be stroked.
+ * 
+ * A Grid Shape allows you to display a grid in your game, where you can control the size of the
+ * grid as well as the width and height of the grid cells. You can set a fill color for each grid
+ * cell as well as an alternate fill color. When the alternate fill color is set then the grid
+ * cells will alternate the fill colors as they render, creating a chess-board effect. You can
+ * also optionally have an outline fill color. If set, this draws lines between the grid cells
+ * in the given color. If you specify an outline color with an alpha of zero, then it will draw
+ * the cells spaced out, but without the lines between them.
+ *
+ * @class Grid
+ * @extends Phaser.GameObjects.Shape
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @since 3.13.0
+ *
+ * @param {Phaser.Scene} scene - The Scene to which this Game Object belongs. A Game Object can only belong to one Scene at a time.
+ * @param {number} [x=0] - The horizontal position of this Game Object in the world.
+ * @param {number} [y=0] - The vertical position of this Game Object in the world.
+ * @param {number} [width=128] - The width of the grid.
+ * @param {number} [height=128] - The height of the grid.
+ * @param {number} [cellWidth=32] - The width of one cell in the grid.
+ * @param {number} [cellHeight=32] - The height of one cell in the grid.
+ * @param {number} [fillColor] - The color the grid cells will be filled with, i.e. 0xff0000 for red.
+ * @param {number} [fillAlpha] - The alpha the grid cells will be filled with. You can also set the alpha of the overall Shape using its `alpha` property.
+ * @param {number} [outlineFillColor] - The color of the lines between the grid cells. See the `setOutline` method.
+ * @param {number} [outlineFillAlpha] - The alpha of the lines between the grid cells.
+ */
+var Grid = new Class({
+
+    Extends: Shape,
+
+    Mixins: [
+        GridRender
+    ],
+
+    initialize:
+
+    function Grid (scene, x, y, width, height, cellWidth, cellHeight, fillColor, fillAlpha, outlineFillColor, outlineFillAlpha)
