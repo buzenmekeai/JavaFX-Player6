@@ -71074,3 +71074,224 @@ var Arc = new Class({
      * @param {number} value - The value to set the radius to.
      *
      * @return {this} This Game Object instance.
+     */
+    setRadius: function (value)
+    {
+        this.radius = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the number of iterations used when drawing the arc.
+     * Increase this value for smoother arcs, at the cost of more polygons being rendered.
+     * Modify this value by small amounts, such as 0.01.
+     * This call can be chained.
+     *
+     * @method Phaser.GameObjects.Arc#setIterations
+     * @since 3.13.0
+     * 
+     * @param {number} value - The value to set the iterations to.
+     *
+     * @return {this} This Game Object instance.
+     */
+    setIterations: function (value)
+    {
+        if (value === undefined) { value = 0.01; }
+
+        this.iterations = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the starting angle of the arc, in degrees.
+     * This call can be chained.
+     *
+     * @method Phaser.GameObjects.Arc#setStartAngle
+     * @since 3.13.0
+     * 
+     * @param {integer} value - The value to set the starting angle to.
+     *
+     * @return {this} This Game Object instance.
+     */
+    setStartAngle: function (angle, anticlockwise)
+    {
+        this._startAngle = angle;
+
+        if (anticlockwise !== undefined)
+        {
+            this._anticlockwise = anticlockwise;
+        }
+
+        return this.updateData();
+    },
+
+    /**
+     * Sets the ending angle of the arc, in degrees.
+     * This call can be chained.
+     *
+     * @method Phaser.GameObjects.Arc#setEndAngle
+     * @since 3.13.0
+     * 
+     * @param {integer} value - The value to set the ending angle to.
+     *
+     * @return {this} This Game Object instance.
+     */
+    setEndAngle: function (angle, anticlockwise)
+    {
+        this._endAngle = angle;
+
+        if (anticlockwise !== undefined)
+        {
+            this._anticlockwise = anticlockwise;
+        }
+
+        return this.updateData();
+    },
+
+    /**
+     * Internal method that updates the data and path values.
+     *
+     * @method Phaser.GameObjects.Arc#updateData
+     * @private
+     * @since 3.13.0
+     *
+     * @return {this} This Game Object instance.
+     */
+    updateData: function ()
+    {
+        var step = this._iterations;
+        var iteration = step;
+
+        var radius = this.geom.radius;
+        var startAngle = DegToRad(this._startAngle);
+        var endAngle = DegToRad(this._endAngle);
+        var anticlockwise = this._anticlockwise;
+
+        var x = radius / 2;
+        var y = radius / 2;
+
+        endAngle -= startAngle;
+
+        if (anticlockwise)
+        {
+            if (endAngle < -MATH_CONST.PI2)
+            {
+                endAngle = -MATH_CONST.PI2;
+            }
+            else if (endAngle > 0)
+            {
+                endAngle = -MATH_CONST.PI2 + endAngle % MATH_CONST.PI2;
+            }
+        }
+        else if (endAngle > MATH_CONST.PI2)
+        {
+            endAngle = MATH_CONST.PI2;
+        }
+        else if (endAngle < 0)
+        {
+            endAngle = MATH_CONST.PI2 + endAngle % MATH_CONST.PI2;
+        }
+
+        var path = [ x + Math.cos(startAngle) * radius, y + Math.sin(startAngle) * radius ];
+
+        var ta;
+
+        while (iteration < 1)
+        {
+            ta = endAngle * iteration + startAngle;
+
+            path.push(x + Math.cos(ta) * radius, y + Math.sin(ta) * radius);
+
+            iteration += step;
+        }
+
+        ta = endAngle + startAngle;
+
+        path.push(x + Math.cos(ta) * radius, y + Math.sin(ta) * radius);
+
+        path.push(x + Math.cos(startAngle) * radius, y + Math.sin(startAngle) * radius);
+
+        this.pathIndexes = Earcut(path);
+        this.pathData = path;
+
+        return this;
+    }
+
+});
+
+module.exports = Arc;
+
+
+/***/ }),
+/* 294 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Returns the nearest power of 2 to the given `value`.
+ *
+ * @function Phaser.Math.Pow2.GetPowerOfTwo
+ * @since 3.0.0
+ *
+ * @param {number} value - The value.
+ *
+ * @return {integer} The nearest power of 2 to `value`.
+ */
+var GetPowerOfTwo = function (value)
+{
+    var index = Math.log(value) / 0.6931471805599453;
+
+    return (1 << Math.ceil(index));
+};
+
+module.exports = GetPowerOfTwo;
+
+
+/***/ }),
+/* 295 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Creates and returns an RFC4122 version 4 compliant UUID.
+ * 
+ * The string is in the form: `xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx` where each `x` is replaced with a random
+ * hexadecimal digit from 0 to f, and `y` is replaced with a random hexadecimal digit from 8 to b.
+ *
+ * @function Phaser.Utils.String.UUID
+ * @since 3.12.0
+ *
+ * @return {string} The UUID string.
+ */
+var UUID = function ()
+{
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c)
+    {
+        var r = Math.random() * 16 | 0;
+        var v = (c === 'x') ? r : (r & 0x3 | 0x8);
+
+        return v.toString(16);
+    });
+};
+
+module.exports = UUID;
+
+
+/***/ }),
+/* 296 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
