@@ -71714,3 +71714,233 @@ var PathFollower = new Class({
             }
 
             if (this.rotateToPath)
+            {
+                this.rotation = Math.atan2(speedY, speedX) + DegToRad(this.pathRotationOffset);
+
+                if (this.pathRotationVerticalAdjust)
+                {
+                    this.flipY = (this.rotation !== 0 && tweenData.state === TWEEN_CONST.PLAYING_BACKWARD);
+                }
+            }
+        }
+    }
+
+});
+
+module.exports = PathFollower;
+
+
+/***/ }),
+/* 297 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Vector2 = __webpack_require__(3);
+
+/**
+ * @callback RandomZoneSourceCallback
+ *
+ * @param {Phaser.Math.Vector2} point - A point to modify.
+ */
+
+/**
+ * @typedef {object} RandomZoneSource
+ *
+ * @property {RandomZoneSourceCallback} getRandomPoint - A function modifying its point argument.
+ *
+ * @see Phaser.Geom.Circle
+ * @see Phaser.Geom.Ellipse
+ * @see Phaser.Geom.Line
+ * @see Phaser.Geom.Polygon
+ * @see Phaser.Geom.Rectangle
+ * @see Phaser.Geom.Triangle
+ */
+
+/**
+ * @classdesc
+ * A zone that places particles randomly within a shape's area.
+ *
+ * @class RandomZone
+ * @memberof Phaser.GameObjects.Particles.Zones
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {RandomZoneSource} source - An object instance with a `getRandomPoint(point)` method.
+ */
+var RandomZone = new Class({
+
+    initialize:
+
+    function RandomZone (source)
+    {
+        /**
+         * An object instance with a `getRandomPoint(point)` method.
+         *
+         * @name Phaser.GameObjects.Particles.Zones.RandomZone#source
+         * @type {RandomZoneSource}
+         * @since 3.0.0
+         */
+        this.source = source;
+
+        /**
+         * Internal calculation vector.
+         *
+         * @name Phaser.GameObjects.Particles.Zones.RandomZone#_tempVec
+         * @type {Phaser.Math.Vector2}
+         * @private
+         * @since 3.0.0
+         */
+        this._tempVec = new Vector2();
+    },
+
+    /**
+     * Get the next point in the Zone and set its coordinates on the given Particle.
+     *
+     * @method Phaser.GameObjects.Particles.Zones.RandomZone#getPoint
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Particles.Particle} particle - The Particle.
+     */
+    getPoint: function (particle)
+    {
+        var vec = this._tempVec;
+
+        this.source.getRandomPoint(vec);
+
+        particle.x = vec.x;
+        particle.y = vec.y;
+    }
+
+});
+
+module.exports = RandomZone;
+
+
+/***/ }),
+/* 298 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Verifies that an object contains at least one of the requested keys
+ *
+ * @function Phaser.Utils.Objects.HasAny
+ * @since 3.0.0
+ *
+ * @param {object} source - an object on which to check for key existence
+ * @param {string[]} keys - an array of keys to search the object for
+ *
+ * @return {boolean} true if the source object contains at least one of the keys, false otherwise
+ */
+var HasAny = function (source, keys)
+{
+    for (var i = 0; i < keys.length; i++)
+    {
+        if (source.hasOwnProperty(keys[i]))
+        {
+            return true;
+        }
+    }
+
+    return false;
+};
+
+module.exports = HasAny;
+
+
+/***/ }),
+/* 299 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Generate a random floating point number between the two given bounds, minimum inclusive, maximum exclusive.
+ *
+ * @function Phaser.Math.FloatBetween
+ * @since 3.0.0
+ *
+ * @param {number} min - The lower bound for the float, inclusive.
+ * @param {number} max - The upper bound for the float exclusive.
+ *
+ * @return {number} A random float within the given range.
+ */
+var FloatBetween = function (min, max)
+{
+    return Math.random() * (max - min) + min;
+};
+
+module.exports = FloatBetween;
+
+
+/***/ }),
+/* 300 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+
+/**
+ * @callback EdgeZoneSourceCallback
+ *
+ * @param {integer} quantity - The number of particles to place on the source edge. If 0, `stepRate` should be used instead.
+ * @param {number} [stepRate] - The distance between each particle. When set, `quantity` is implied and should be set to `0`.
+ *
+ * @return {Phaser.Geom.Point[]} - The points placed on the source edge.
+ */
+
+/**
+ * @typedef {object} EdgeZoneSource
+ *
+ * @property {EdgeZoneSourceCallback} getPoints - A function placing points on the source's edge or edges.
+ *
+ * @see Phaser.Curves.Curve
+ * @see Phaser.Curves.Path
+ * @see Phaser.Geom.Circle
+ * @see Phaser.Geom.Ellipse
+ * @see Phaser.Geom.Line
+ * @see Phaser.Geom.Polygon
+ * @see Phaser.Geom.Rectangle
+ * @see Phaser.Geom.Triangle
+ */
+
+/**
+ * @classdesc
+ * A zone that places particles on a shape's edges.
+ *
+ * @class EdgeZone
+ * @memberof Phaser.GameObjects.Particles.Zones
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {EdgeZoneSource} source - An object instance with a `getPoints(quantity, stepRate)` method returning an array of points.
+ * @param {integer} quantity - The number of particles to place on the source edge. Set to 0 to use `stepRate` instead.
+ * @param {number} stepRate - The distance between each particle. When set, `quantity` is implied and should be set to 0.
+ * @param {boolean} [yoyo=false] - Whether particles are placed from start to end and then end to start.
+ * @param {boolean} [seamless=true] - Whether one endpoint will be removed if it's identical to the other.
+ */
+var EdgeZone = new Class({
+
+    initialize:
+
+    function EdgeZone (source, quantity, stepRate, yoyo, seamless)
