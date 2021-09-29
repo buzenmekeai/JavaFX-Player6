@@ -72827,3 +72827,247 @@ var ParticleEmitter = new Class({
 
         /**
          * A function to call when a particle dies.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#deathCallback
+         * @type {?ParticleDeathCallback}
+         * @default null
+         * @since 3.0.0
+         */
+        this.deathCallback = null;
+
+        /**
+         * The calling context for {@link Phaser.GameObjects.Particles.ParticleEmitter#deathCallback}.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#deathCallbackScope
+         * @type {?*}
+         * @default null
+         * @since 3.0.0
+         */
+        this.deathCallbackScope = null;
+
+        /**
+         * Set to hard limit the amount of particle objects this emitter is allowed to create.
+         * 0 means unlimited.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#maxParticles
+         * @type {integer}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.maxParticles = 0;
+
+        /**
+         * How many particles are emitted each time particles are emitted (one explosion or one flow cycle).
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#quantity
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 1
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setFrequency
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setQuantity
+         */
+        this.quantity = new EmitterOp(config, 'quantity', 1, true);
+
+        /**
+         * How many ms to wait after emission before the particles start updating.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#delay
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.delay = new EmitterOp(config, 'delay', 0, true);
+
+        /**
+         * For a flow emitter, the time interval (>= 0) between particle flow cycles in ms.
+         * A value of 0 means there is one particle flow cycle for each logic update (the maximum flow frequency). This is the default setting.
+         * For an exploding emitter, this value will be -1.
+         * Calling {@link Phaser.GameObjects.Particles.ParticleEmitter#flow} also puts the emitter in flow mode (frequency >= 0).
+         * Calling {@link Phaser.GameObjects.Particles.ParticleEmitter#explode} also puts the emitter in explode mode (frequency = -1).
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#frequency
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setFrequency
+         */
+        this.frequency = 0;
+
+        /**
+         * Controls if the emitter is currently emitting a particle flow (when frequency >= 0).
+         * Already alive particles will continue to update until they expire.
+         * Controlled by {@link Phaser.GameObjects.Particles.ParticleEmitter#start} and {@link Phaser.GameObjects.Particles.ParticleEmitter#stop}.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#on
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.on = true;
+
+        /**
+         * Newly emitted particles are added to the top of the particle list, i.e. rendered above those already alive.
+         * Set to false to send them to the back.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#particleBringToTop
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.particleBringToTop = true;
+
+        /**
+         * The time rate applied to active particles, affecting lifespan, movement, and tweens. Values larger than 1 are faster than normal.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#timeScale
+         * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.timeScale = 1;
+
+        /**
+         * An object describing a shape to emit particles from.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#emitZone
+         * @type {?Phaser.GameObjects.Particles.Zones.EdgeZone|Phaser.GameObjects.Particles.Zones.RandomZone}
+         * @default null
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setEmitZone
+         */
+        this.emitZone = null;
+
+        /**
+         * An object describing a shape that deactivates particles when they interact with it.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#deathZone
+         * @type {?Phaser.GameObjects.Particles.Zones.DeathZone}
+         * @default null
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setDeathZone
+         */
+        this.deathZone = null;
+
+        /**
+         * A rectangular boundary constraining particle movement.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#bounds
+         * @type {?Phaser.Geom.Rectangle}
+         * @default null
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setBounds
+         */
+        this.bounds = null;
+
+        /**
+         * Whether particles interact with the left edge of the emitter {@link Phaser.GameObjects.Particles.ParticleEmitter#bounds}.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#collideLeft
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.collideLeft = true;
+
+        /**
+         * Whether particles interact with the right edge of the emitter {@link Phaser.GameObjects.Particles.ParticleEmitter#bounds}.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#collideRight
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.collideRight = true;
+
+        /**
+         * Whether particles interact with the top edge of the emitter {@link Phaser.GameObjects.Particles.ParticleEmitter#bounds}.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#collideTop
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.collideTop = true;
+
+        /**
+         * Whether particles interact with the bottom edge of the emitter {@link Phaser.GameObjects.Particles.ParticleEmitter#bounds}.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#collideBottom
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.collideBottom = true;
+
+        /**
+         * Whether this emitter updates itself and its particles.
+         *
+         * Controlled by {@link Phaser.GameObjects.Particles.ParticleEmitter#pause}
+         * and {@link Phaser.GameObjects.Particles.ParticleEmitter#resume}.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#active
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.active = true;
+
+        /**
+         * Set this to false to hide any active particles.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#visible
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setVisible
+         */
+        this.visible = true;
+
+        /**
+         * The blend mode of this emitter's particles.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#blendMode
+         * @type {integer}
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setBlendMode
+         */
+        this.blendMode = BlendModes.NORMAL;
+
+        /**
+         * A Game Object whose position is used as the particle origin.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#follow
+         * @type {?Phaser.GameObjects.GameObject}
+         * @default null
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#startFollow
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#stopFollow
+         */
+        this.follow = null;
+
+        /**
+         * The offset of the particle origin from the {@link Phaser.GameObjects.Particles.ParticleEmitter#follow} target.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#followOffset
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#startFollow
+         */
+        this.followOffset = new Vector2();
+
+        /**
+         * Whether the emitter's {@link Phaser.GameObjects.Particles.ParticleEmitter#visible} state will track
+         * the {@link Phaser.GameObjects.Particles.ParticleEmitter#follow} target's visibility state.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#trackVisible
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#startFollow
+         */
+        this.trackVisible = false;
+
+        /**
+         * The current texture frame, as an index of {@link Phaser.GameObjects.Particles.ParticleEmitter#frames}.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#currentFrame
