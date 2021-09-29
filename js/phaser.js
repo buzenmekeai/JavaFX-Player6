@@ -72618,3 +72618,212 @@ var ParticleEmitter = new Class({
 
         /**
          * Whether accelerationX and accelerationY are non-zero. Set automatically during configuration.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#acceleration
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.acceleration = false;
+
+        /**
+         * Horizontal acceleration applied to emitted particles, in pixels per second squared.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#accelerationX
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.accelerationX = new EmitterOp(config, 'accelerationX', 0, true);
+
+        /**
+         * Vertical acceleration applied to emitted particles, in pixels per second squared.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#accelerationY
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.accelerationY = new EmitterOp(config, 'accelerationY', 0, true);
+
+        /**
+         * The maximum horizontal velocity of emitted particles, in pixels per second squared.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#maxVelocityX
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 10000
+         * @since 3.0.0
+         */
+        this.maxVelocityX = new EmitterOp(config, 'maxVelocityX', 10000, true);
+
+        /**
+         * The maximum vertical velocity of emitted particles, in pixels per second squared.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#maxVelocityY
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 10000
+         * @since 3.0.0
+         */
+        this.maxVelocityY = new EmitterOp(config, 'maxVelocityY', 10000, true);
+
+        /**
+         * The initial horizontal speed of emitted particles, in pixels per second.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#speedX
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 0
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setSpeedX
+         */
+        this.speedX = new EmitterOp(config, 'speedX', 0, true);
+
+        /**
+         * The initial vertical speed of emitted particles, in pixels per second.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#speedY
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 0
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setSpeedY
+         */
+        this.speedY = new EmitterOp(config, 'speedY', 0, true);
+
+        /**
+         * Whether moveToX and moveToY are nonzero. Set automatically during configuration.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#moveTo
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.moveTo = false;
+
+        /**
+         * The x-coordinate emitted particles move toward, when {@link Phaser.GameObjects.Particles.ParticleEmitter#moveTo} is true.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#moveToX
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.moveToX = new EmitterOp(config, 'moveToX', 0, true);
+
+        /**
+         * The y-coordinate emitted particles move toward, when {@link Phaser.GameObjects.Particles.ParticleEmitter#moveTo} is true.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#moveToY
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.moveToY = new EmitterOp(config, 'moveToY', 0, true);
+
+        /**
+         * Whether particles will rebound when they meet the emitter bounds.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#bounce
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.bounce = new EmitterOp(config, 'bounce', 0, true);
+
+        /**
+         * The horizontal scale of emitted particles.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#scaleX
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 1
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setScale
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setScaleX
+         */
+        this.scaleX = new EmitterOp(config, 'scaleX', 1);
+
+        /**
+         * The vertical scale of emitted particles.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#scaleY
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 1
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setScale
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setScaleY
+         */
+        this.scaleY = new EmitterOp(config, 'scaleY', 1);
+
+        /**
+         * Color tint applied to emitted particles. Any alpha component (0xAA000000) is ignored.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#tint
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 0xffffffff
+         * @since 3.0.0
+         */
+        this.tint = new EmitterOp(config, 'tint', 0xffffffff);
+
+        /**
+         * The alpha (transparency) of emitted particles.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#alpha
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 1
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setAlpha
+         */
+        this.alpha = new EmitterOp(config, 'alpha', 1);
+
+        /**
+         * The lifespan of emitted particles, in ms.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#lifespan
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 1000
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setLifespan
+         */
+        this.lifespan = new EmitterOp(config, 'lifespan', 1000);
+
+        /**
+         * The angle of the initial velocity of emitted particles, in degrees.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#angle
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default { min: 0, max: 360 }
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setAngle
+         */
+        this.angle = new EmitterOp(config, 'angle', { min: 0, max: 360 });
+
+        /**
+         * The rotation of emitted particles, in degrees.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#rotate
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.rotate = new EmitterOp(config, 'rotate', 0);
+
+        /**
+         * A function to call when a particle is emitted.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#emitCallback
+         * @type {?ParticleEmitterCallback}
+         * @default null
+         * @since 3.0.0
+         */
+        this.emitCallback = null;
+
+        /**
+         * The calling context for {@link Phaser.GameObjects.Particles.ParticleEmitter#emitCallback}.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#emitCallbackScope
+         * @type {?*}
+         * @default null
+         * @since 3.0.0
+         */
+        this.emitCallbackScope = null;
+
+        /**
+         * A function to call when a particle dies.
