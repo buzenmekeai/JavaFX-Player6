@@ -72410,3 +72410,211 @@ var Wrap = __webpack_require__(53);
 /**
  * @classdesc
  * A particle emitter represents a single particle stream.
+ * It controls a pool of {@link Phaser.GameObjects.Particles.Particle Particles} and is controlled by a {@link Phaser.GameObjects.Particles.ParticleEmitterManager Particle Emitter Manager}.
+ *
+ * @class ParticleEmitter
+ * @memberof Phaser.GameObjects.Particles
+ * @constructor
+ * @since 3.0.0
+ *
+ * @extends Phaser.GameObjects.Components.BlendMode
+ * @extends Phaser.GameObjects.Components.Mask
+ * @extends Phaser.GameObjects.Components.ScrollFactor
+ * @extends Phaser.GameObjects.Components.Visible
+ *
+ * @param {Phaser.GameObjects.Particles.ParticleEmitterManager} manager - The Emitter Manager this Emitter belongs to.
+ * @param {ParticleEmitterConfig} config - Settings for this emitter.
+ */
+var ParticleEmitter = new Class({
+
+    Mixins: [
+        Components.BlendMode,
+        Components.Mask,
+        Components.ScrollFactor,
+        Components.Visible
+    ],
+
+    initialize:
+
+    function ParticleEmitter (manager, config)
+    {
+        /**
+         * The Emitter Manager this Emitter belongs to.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#manager
+         * @type {Phaser.GameObjects.Particles.ParticleEmitterManager}
+         * @since 3.0.0
+         */
+        this.manager = manager;
+
+        /**
+         * The texture assigned to particles.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#texture
+         * @type {Phaser.Textures.Texture}
+         * @since 3.0.0
+         */
+        this.texture = manager.texture;
+
+        /**
+         * The texture frames assigned to particles.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#frames
+         * @type {Phaser.Textures.Frame[]}
+         * @since 3.0.0
+         */
+        this.frames = [ manager.defaultFrame ];
+
+        /**
+         * The default texture frame assigned to particles.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#defaultFrame
+         * @type {Phaser.Textures.Frame}
+         * @since 3.0.0
+         */
+        this.defaultFrame = manager.defaultFrame;
+
+        /**
+         * Names of simple configuration properties.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#configFastMap
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.configFastMap = [
+            'active',
+            'blendMode',
+            'collideBottom',
+            'collideLeft',
+            'collideRight',
+            'collideTop',
+            'deathCallback',
+            'deathCallbackScope',
+            'emitCallback',
+            'emitCallbackScope',
+            'follow',
+            'frequency',
+            'gravityX',
+            'gravityY',
+            'maxParticles',
+            'name',
+            'on',
+            'particleBringToTop',
+            'particleClass',
+            'radial',
+            'timeScale',
+            'trackVisible',
+            'visible'
+        ];
+
+        /**
+         * Names of complex configuration properties.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#configOpMap
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.configOpMap = [
+            'accelerationX',
+            'accelerationY',
+            'angle',
+            'alpha',
+            'bounce',
+            'delay',
+            'lifespan',
+            'maxVelocityX',
+            'maxVelocityY',
+            'moveToX',
+            'moveToY',
+            'quantity',
+            'rotate',
+            'scaleX',
+            'scaleY',
+            'speedX',
+            'speedY',
+            'tint',
+            'x',
+            'y'
+        ];
+
+        /**
+         * The name of this Particle Emitter.
+         *
+         * Empty by default and never populated by Phaser, this is left for developers to use.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#name
+         * @type {string}
+         * @default ''
+         * @since 3.0.0
+         */
+        this.name = '';
+
+        /**
+         * The Particle Class which will be emitted by this Emitter.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#particleClass
+         * @type {Phaser.GameObjects.Particles.Particle}
+         * @default Phaser.GameObjects.Particles.Particle
+         * @since 3.0.0
+         */
+        this.particleClass = Particle;
+
+        /**
+         * The x-coordinate of the particle origin (where particles will be emitted).
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#x
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 0
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setPosition
+         */
+        this.x = new EmitterOp(config, 'x', 0);
+
+        /**
+         * The y-coordinate of the particle origin (where particles will be emitted).
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#y
+         * @type {Phaser.GameObjects.Particles.EmitterOp}
+         * @default 0
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setPosition
+         */
+        this.y = new EmitterOp(config, 'y', 0);
+
+        /**
+         * A radial emitter will emit particles in all directions between angle min and max,
+         * using {@link Phaser.GameObjects.Particles.ParticleEmitter#speed} as the value. If set to false then this acts as a point Emitter.
+         * A point emitter will emit particles only in the direction derived from the speedX and speedY values.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#radial
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setRadial
+         */
+        this.radial = true;
+
+        /**
+         * Horizontal acceleration applied to emitted particles, in pixels per second squared.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#gravityX
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setGravity
+         */
+        this.gravityX = 0;
+
+        /**
+         * Vertical acceleration applied to emitted particles, in pixels per second squared.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#gravityY
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setGravity
+         */
+        this.gravityY = 0;
+
+        /**
+         * Whether accelerationX and accelerationY are non-zero. Set automatically during configuration.
