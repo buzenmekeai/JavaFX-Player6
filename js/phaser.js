@@ -73308,3 +73308,228 @@ var ParticleEmitter = new Class({
      * @method Phaser.GameObjects.Particles.ParticleEmitter#startFollow
      * @since 3.0.0
      *
+     * @param {Phaser.GameObjects.GameObject} target - The Game Object to follow.
+     * @param {number} [offsetX=0] - Horizontal offset of the particle origin from the Game Object.
+     * @param {number} [offsetY=0] - Vertical offset of the particle origin from the Game Object.
+     * @param {boolean} [trackVisible=false] - Whether the emitter's visible state will track the target's visible state.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    startFollow: function (target, offsetX, offsetY, trackVisible)
+    {
+        if (offsetX === undefined) { offsetX = 0; }
+        if (offsetY === undefined) { offsetY = 0; }
+        if (trackVisible === undefined) { trackVisible = false; }
+
+        this.follow = target;
+        this.followOffset.set(offsetX, offsetY);
+        this.trackVisible = trackVisible;
+
+        return this;
+    },
+
+    /**
+     * Stops following a Game Object.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#stopFollow
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    stopFollow: function ()
+    {
+        this.follow = null;
+        this.followOffset.set(0, 0);
+        this.trackVisible = false;
+
+        return this;
+    },
+
+    /**
+     * Chooses a texture frame from {@link Phaser.GameObjects.Particles.ParticleEmitter#frames}.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#getFrame
+     * @since 3.0.0
+     *
+     * @return {Phaser.Textures.Frame} The texture frame.
+     */
+    getFrame: function ()
+    {
+        if (this.frames.length === 1)
+        {
+            return this.defaultFrame;
+        }
+        else if (this.randomFrame)
+        {
+            return GetRandom(this.frames);
+        }
+        else
+        {
+            var frame = this.frames[this.currentFrame];
+
+            this._frameCounter++;
+
+            if (this._frameCounter === this.frameQuantity)
+            {
+                this._frameCounter = 0;
+                this.currentFrame = Wrap(this.currentFrame + 1, 0, this._frameLength);
+            }
+
+            return frame;
+        }
+    },
+
+    // frame: 0
+    // frame: 'red'
+    // frame: [ 0, 1, 2, 3 ]
+    // frame: [ 'red', 'green', 'blue', 'pink', 'white' ]
+    // frame: { frames: [ 'red', 'green', 'blue', 'pink', 'white' ], [cycle: bool], [quantity: int] }
+
+    /**
+     * Sets a pattern for assigning texture frames to emitted particles.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setFrame
+     * @since 3.0.0
+     *
+     * @param {(array|string|integer|ParticleEmitterFrameConfig)} frames - One or more texture frames, or a configuration object.
+     * @param {boolean} [pickRandom=true] - Whether frames should be assigned at random from `frames`.
+     * @param {integer} [quantity=1] - The number of consecutive particles that will receive each frame.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setFrame: function (frames, pickRandom, quantity)
+    {
+        if (pickRandom === undefined) { pickRandom = true; }
+        if (quantity === undefined) { quantity = 1; }
+
+        this.randomFrame = pickRandom;
+        this.frameQuantity = quantity;
+        this.currentFrame = 0;
+        this._frameCounter = 0;
+
+        var t = typeof (frames);
+
+        if (Array.isArray(frames) || t === 'string' || t === 'number')
+        {
+            this.manager.setEmitterFrames(frames, this);
+        }
+        else if (t === 'object')
+        {
+            var frameConfig = frames;
+
+            frames = GetFastValue(frameConfig, 'frames', null);
+
+            if (frames)
+            {
+                this.manager.setEmitterFrames(frames, this);
+            }
+
+            var isCycle = GetFastValue(frameConfig, 'cycle', false);
+
+            this.randomFrame = (isCycle) ? false : true;
+
+            this.frameQuantity = GetFastValue(frameConfig, 'quantity', quantity);
+        }
+
+        this._frameLength = this.frames.length;
+
+        if (this._frameLength === 1)
+        {
+            this.frameQuantity = 1;
+            this.randomFrame = false;
+        }
+
+        return this;
+    },
+
+    /**
+     * Turns {@link Phaser.GameObjects.Particles.ParticleEmitter#radial} particle movement on or off.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setRadial
+     * @since 3.0.0
+     *
+     * @param {boolean} [value=true] - Radial mode (true) or point mode (true).
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setRadial: function (value)
+    {
+        if (value === undefined) { value = true; }
+
+        this.radial = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the position of the emitter's particle origin.
+     * New particles will be emitted here.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setPosition
+     * @since 3.0.0
+     *
+     * @param {number|float[]|EmitterOpOnEmitCallback|object} x - The x-coordinate of the particle origin.
+     * @param {number|float[]|EmitterOpOnEmitCallback|object} y - The y-coordinate of the particle origin.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setPosition: function (x, y)
+    {
+        this.x.onChange(x);
+        this.y.onChange(y);
+
+        return this;
+    },
+
+    /**
+     * Sets or modifies a rectangular boundary constraining the particles.
+     *
+     * To remove the boundary, set {@link Phaser.GameObjects.Particles.ParticleEmitter#bounds} to null.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setBounds
+     * @since 3.0.0
+     *
+     * @param {(number|ParticleEmitterBounds|ParticleEmitterBoundsAlt)} x - The x-coordinate of the left edge of the boundary, or an object representing a rectangle.
+     * @param {number} y - The y-coordinate of the top edge of the boundary.
+     * @param {number} width - The width of the boundary.
+     * @param {number} height - The height of the boundary.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setBounds: function (x, y, width, height)
+    {
+        if (typeof x === 'object')
+        {
+            var obj = x;
+
+            x = obj.x;
+            y = obj.y;
+            width = (HasValue(obj, 'w')) ? obj.w : obj.width;
+            height = (HasValue(obj, 'h')) ? obj.h : obj.height;
+        }
+
+        if (this.bounds)
+        {
+            this.bounds.setTo(x, y, width, height);
+        }
+        else
+        {
+            this.bounds = new Rectangle(x, y, width, height);
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets the initial horizontal speed of emitted particles.
+     * Changes the emitter to point mode.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setSpeedX
+     * @since 3.0.0
+     *
+     * @param {number|float[]|EmitterOpOnEmitCallback|object} value - The speed, in pixels per second.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setSpeedX: function (value)
+    {
