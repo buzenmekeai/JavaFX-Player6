@@ -73071,3 +73071,240 @@ var ParticleEmitter = new Class({
          * The current texture frame, as an index of {@link Phaser.GameObjects.Particles.ParticleEmitter#frames}.
          *
          * @name Phaser.GameObjects.Particles.ParticleEmitter#currentFrame
+         * @type {integer}
+         * @default 0
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setFrame
+         */
+        this.currentFrame = 0;
+
+        /**
+         * Whether texture {@link Phaser.GameObjects.Particles.ParticleEmitter#frames} are selected at random.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#randomFrame
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setFrame
+         */
+        this.randomFrame = true;
+
+        /**
+         * The number of consecutive particles that receive a single texture frame (per frame cycle).
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#frameQuantity
+         * @type {integer}
+         * @default 1
+         * @since 3.0.0
+         * @see Phaser.GameObjects.Particles.ParticleEmitter#setFrame
+         */
+        this.frameQuantity = 1;
+
+        /**
+         * Inactive particles.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#dead
+         * @type {Phaser.GameObjects.Particles.Particle[]}
+         * @private
+         * @since 3.0.0
+         */
+        this.dead = [];
+
+        /**
+         * Active particles
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#alive
+         * @type {Phaser.GameObjects.Particles.Particle[]}
+         * @private
+         * @since 3.0.0
+         */
+        this.alive = [];
+
+        /**
+         * The time until the next flow cycle.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#_counter
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.0.0
+         */
+        this._counter = 0;
+
+        /**
+         * Counts up to {@link Phaser.GameObjects.Particles.ParticleEmitter#frameQuantity}.
+         *
+         * @name Phaser.GameObjects.Particles.ParticleEmitter#_frameCounter
+         * @type {integer}
+         * @private
+         * @default 0
+         * @since 3.0.0
+         */
+        this._frameCounter = 0;
+
+        if (config)
+        {
+            this.fromJSON(config);
+        }
+    },
+
+    /**
+     * Merges configuration settings into the emitter's current settings.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#fromJSON
+     * @since 3.0.0
+     *
+     * @param {ParticleEmitterConfig} config - Settings for this emitter.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    fromJSON: function (config)
+    {
+        if (!config)
+        {
+            return this;
+        }
+
+        //  Only update properties from their current state if they exist in the given config
+
+        var i = 0;
+        var key = '';
+
+        for (i = 0; i < this.configFastMap.length; i++)
+        {
+            key = this.configFastMap[i];
+
+            if (HasValue(config, key))
+            {
+                this[key] = GetFastValue(config, key);
+            }
+        }
+
+        for (i = 0; i < this.configOpMap.length; i++)
+        {
+            key = this.configOpMap[i];
+
+            if (HasValue(config, key))
+            {
+                this[key].loadConfig(config);
+            }
+        }
+
+        this.acceleration = (this.accelerationX.propertyValue !== 0 || this.accelerationY.propertyValue !== 0);
+
+        this.moveTo = (this.moveToX.propertyValue !== 0 || this.moveToY.propertyValue !== 0);
+
+        //  Special 'speed' override
+
+        if (HasValue(config, 'speed'))
+        {
+            this.speedX.loadConfig(config, 'speed');
+            this.speedY = null;
+        }
+
+        //  If you specify speedX, speedY or moveTo then it changes the emitter from radial to a point emitter
+        if (HasAny(config, [ 'speedX', 'speedY' ]) || this.moveTo)
+        {
+            this.radial = false;
+        }
+
+        //  Special 'scale' override
+
+        if (HasValue(config, 'scale'))
+        {
+            this.scaleX.loadConfig(config, 'scale');
+            this.scaleY = null;
+        }
+
+        if (HasValue(config, 'callbackScope'))
+        {
+            var callbackScope = GetFastValue(config, 'callbackScope', null);
+
+            this.emitCallbackScope = callbackScope;
+            this.deathCallbackScope = callbackScope;
+        }
+
+        if (HasValue(config, 'emitZone'))
+        {
+            this.setEmitZone(config.emitZone);
+        }
+
+        if (HasValue(config, 'deathZone'))
+        {
+            this.setDeathZone(config.deathZone);
+        }
+
+        if (HasValue(config, 'bounds'))
+        {
+            this.setBounds(config.bounds);
+        }
+
+        if (HasValue(config, 'followOffset'))
+        {
+            this.followOffset.setFromObject(GetFastValue(config, 'followOffset', 0));
+        }
+
+        if (HasValue(config, 'frame'))
+        {
+            this.setFrame(config.frame);
+        }
+
+        return this;
+    },
+
+    /**
+     * Creates a description of this emitter suitable for JSON serialization.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#toJSON
+     * @since 3.0.0
+     *
+     * @param {object} [output] - An object to copy output into.
+     *
+     * @return {object} - The output object.
+     */
+    toJSON: function (output)
+    {
+        if (output === undefined) { output = {}; }
+
+        var i = 0;
+        var key = '';
+
+        for (i = 0; i < this.configFastMap.length; i++)
+        {
+            key = this.configFastMap[i];
+
+            output[key] = this[key];
+        }
+
+        for (i = 0; i < this.configOpMap.length; i++)
+        {
+            key = this.configOpMap[i];
+
+            if (this[key])
+            {
+                output[key] = this[key].toJSON();
+            }
+        }
+
+        //  special handlers
+        if (!this.speedY)
+        {
+            delete output.speedX;
+            output.speed = this.speedX.toJSON();
+        }
+
+        if (!this.scaleY)
+        {
+            delete output.scaleX;
+            output.scale = this.scaleX.toJSON();
+        }
+
+        return output;
+    },
+
+    /**
+     * Continuously moves the particle origin to follow a Game Object's position.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#startFollow
+     * @since 3.0.0
+     *
