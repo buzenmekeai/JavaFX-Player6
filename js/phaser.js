@@ -73533,3 +73533,243 @@ var ParticleEmitter = new Class({
      */
     setSpeedX: function (value)
     {
+        this.speedX.onChange(value);
+
+        //  If you specify speedX and Y then it changes the emitter from radial to a point emitter
+        this.radial = false;
+
+        return this;
+    },
+
+    /**
+     * Sets the initial vertical speed of emitted particles.
+     * Changes the emitter to point mode.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setSpeedY
+     * @since 3.0.0
+     *
+     * @param {number|float[]|EmitterOpOnEmitCallback|object} value - The speed, in pixels per second.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setSpeedY: function (value)
+    {
+        if (this.speedY)
+        {
+            this.speedY.onChange(value);
+
+            //  If you specify speedX and Y then it changes the emitter from radial to a point emitter
+            this.radial = false;
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets the initial radial speed of emitted particles.
+     * Changes the emitter to radial mode.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setSpeed
+     * @since 3.0.0
+     *
+     * @param {number|float[]|EmitterOpOnEmitCallback|object} value - The speed, in pixels per second.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setSpeed: function (value)
+    {
+        this.speedX.onChange(value);
+        this.speedY = null;
+
+        //  If you specify speedX and Y then it changes the emitter from radial to a point emitter
+        this.radial = true;
+
+        return this;
+    },
+
+    /**
+     * Sets the horizontal scale of emitted particles.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setScaleX
+     * @since 3.0.0
+     *
+     * @param {number|float[]|EmitterOpOnUpdateCallback|object} value - The scale, relative to 1.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setScaleX: function (value)
+    {
+        this.scaleX.onChange(value);
+
+        return this;
+    },
+
+    /**
+     * Sets the vertical scale of emitted particles.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setScaleY
+     * @since 3.0.0
+     *
+     * @param {number|float[]|EmitterOpOnUpdateCallback|object} value - The scale, relative to 1.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setScaleY: function (value)
+    {
+        this.scaleY.onChange(value);
+
+        return this;
+    },
+
+    /**
+     * Sets the scale of emitted particles.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setScale
+     * @since 3.0.0
+     *
+     * @param {number|float[]|EmitterOpOnUpdateCallback|object} value - The scale, relative to 1.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setScale: function (value)
+    {
+        this.scaleX.onChange(value);
+        this.scaleY = null;
+
+        return this;
+    },
+
+    /**
+     * Sets the horizontal gravity applied to emitted particles.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setGravityX
+     * @since 3.0.0
+     *
+     * @param {number} value - Acceleration due to gravity, in pixels per second squared.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setGravityX: function (value)
+    {
+        this.gravityX = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the vertical gravity applied to emitted particles.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setGravityY
+     * @since 3.0.0
+     *
+     * @param {number} value - Acceleration due to gravity, in pixels per second squared.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setGravityY: function (value)
+    {
+        this.gravityY = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the gravity applied to emitted particles.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setGravity
+     * @since 3.0.0
+     *
+     * @param {number} x - Horizontal acceleration due to gravity, in pixels per second squared.
+     * @param {number} y - Vertical acceleration due to gravity, in pixels per second squared.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setGravity: function (x, y)
+    {
+        this.gravityX = x;
+        this.gravityY = y;
+
+        return this;
+    },
+
+    /**
+     * Sets the opacity of emitted particles.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setAlpha
+     * @since 3.0.0
+     *
+     * @param {number|float[]|EmitterOpOnUpdateCallback|object} value - A value between 0 (transparent) and 1 (opaque).
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setAlpha: function (value)
+    {
+        this.alpha.onChange(value);
+
+        return this;
+    },
+
+    /**
+     * Sets the angle of a {@link Phaser.GameObjects.Particles.ParticleEmitter#radial} particle stream.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setEmitterAngle
+     * @since 3.0.0
+     *
+     * @param {number|float[]|EmitterOpOnEmitCallback|object} value - The angle of the initial velocity of emitted particles.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setEmitterAngle: function (value)
+    {
+        this.angle.onChange(value);
+
+        return this;
+    },
+
+    /**
+     * Sets the angle of a {@link Phaser.GameObjects.Particles.ParticleEmitter#radial} particle stream.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setAngle
+     * @since 3.0.0
+     *
+     * @param {number|float[]|EmitterOpOnEmitCallback|object} value - The angle of the initial velocity of emitted particles.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setAngle: function (value)
+    {
+        this.angle.onChange(value);
+
+        return this;
+    },
+
+    /**
+     * Sets the lifespan of newly emitted particles.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setLifespan
+     * @since 3.0.0
+     *
+     * @param {number|float[]|EmitterOpOnEmitCallback|object} value - The particle lifespan, in ms.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setLifespan: function (value)
+    {
+        this.lifespan.onChange(value);
+
+        return this;
+    },
+
+    /**
+     * Sets the number of particles released at each flow cycle or explosion.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setQuantity
+     * @since 3.0.0
+     *
+     * @param {number|float[]|EmitterOpOnEmitCallback|object} quantity - The number of particles to release at each flow cycle or explosion.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setQuantity: function (quantity)
+    {
+        this.quantity.onChange(quantity);
