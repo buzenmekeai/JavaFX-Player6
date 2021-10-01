@@ -73988,3 +73988,237 @@ var ParticleEmitter = new Class({
         else if (typeof callback === 'function')
         {
             this.emitCallback = callback;
+
+            if (context)
+            {
+                this.emitCallbackScope = context;
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets a function to call for each particle death.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#onParticleDeath
+     * @since 3.0.0
+     *
+     * @param {ParticleDeathCallback} callback - The function.
+     * @param {*} [context] - The function's calling context.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    onParticleDeath: function (callback, context)
+    {
+        if (callback === undefined)
+        {
+            //  Clear any previously set callback
+            this.deathCallback = null;
+            this.deathCallbackScope = null;
+        }
+        else if (typeof callback === 'function')
+        {
+            this.deathCallback = callback;
+
+            if (context)
+            {
+                this.deathCallbackScope = context;
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Deactivates every particle in this emitter.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#killAll
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    killAll: function ()
+    {
+        var dead = this.dead;
+        var alive = this.alive;
+
+        while (alive.length > 0)
+        {
+            dead.push(alive.pop());
+        }
+
+        return this;
+    },
+
+    /**
+     * Calls a function for each active particle in this emitter.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#forEachAlive
+     * @since 3.0.0
+     *
+     * @param {ParticleEmitterCallback} callback - The function.
+     * @param {*} context - The function's calling context.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    forEachAlive: function (callback, context)
+    {
+        var alive = this.alive;
+        var length = alive.length;
+
+        for (var index = 0; index < length; ++index)
+        {
+            //  Sends the Particle and the Emitter
+            callback.call(context, alive[index], this);
+        }
+
+        return this;
+    },
+
+    /**
+     * Calls a function for each inactive particle in this emitter.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#forEachDead
+     * @since 3.0.0
+     *
+     * @param {ParticleEmitterCallback} callback - The function.
+     * @param {*} context - The function's calling context.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    forEachDead: function (callback, context)
+    {
+        var dead = this.dead;
+        var length = dead.length;
+
+        for (var index = 0; index < length; ++index)
+        {
+            //  Sends the Particle and the Emitter
+            callback.call(context, dead[index], this);
+        }
+
+        return this;
+    },
+
+    /**
+     * Turns {@link Phaser.GameObjects.Particles.ParticleEmitter#on} the emitter and resets the flow counter.
+     *
+     * If this emitter is in flow mode (frequency >= 0; the default), the particle flow will start (or restart).
+     *
+     * If this emitter is in explode mode (frequency = -1), nothing will happen.
+     * Use {@link Phaser.GameObjects.Particles.ParticleEmitter#explode} or {@link Phaser.GameObjects.Particles.ParticleEmitter#flow} instead.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#start
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    start: function ()
+    {
+        this.on = true;
+
+        this._counter = 0;
+
+        return this;
+    },
+
+    /**
+     * Turns {@link Phaser.GameObjects.Particles.ParticleEmitter#on off} the emitter.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#stop
+     * @since 3.11.0
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    stop: function ()
+    {
+        this.on = false;
+
+        return this;
+    },
+
+    /**
+     * {@link Phaser.GameObjects.Particles.ParticleEmitter#active Deactivates} the emitter.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#pause
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    pause: function ()
+    {
+        this.active = false;
+
+        return this;
+    },
+
+    /**
+     * {@link Phaser.GameObjects.Particles.ParticleEmitter#active Activates} the emitter.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#resume
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    resume: function ()
+    {
+        this.active = true;
+
+        return this;
+    },
+
+    /**
+     * Sorts active particles with {@link Phaser.GameObjects.Particles.ParticleEmitter#depthSortCallback}.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#depthSort
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    depthSort: function ()
+    {
+        StableSort.inplace(this.alive, this.depthSortCallback);
+
+        return this;
+    },
+
+    /**
+     * Puts the emitter in flow mode (frequency >= 0) and starts (or restarts) a particle flow.
+     *
+     * To resume a flow at the current frequency and quantity, use {@link Phaser.GameObjects.Particles.ParticleEmitter#start} instead.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#flow
+     * @since 3.0.0
+     *
+     * @param {number} frequency - The time interval (>= 0) of each flow cycle, in ms.
+     * @param {number|float[]|EmitterOpOnEmitCallback|object} [count=1] - The number of particles to emit at each flow cycle.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    flow: function (frequency, count)
+    {
+        if (count === undefined) { count = 1; }
+
+        this.frequency = frequency;
+
+        this.quantity.onChange(count);
+
+        return this.start();
+    },
+
+    /**
+     * Puts the emitter in explode mode (frequency = -1), stopping any current particle flow, and emits several particles all at once.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#explode
+     * @since 3.0.0
+     *
+     * @param {integer} count - The amount of Particles to emit.
+     * @param {number} x - The x coordinate to emit the Particles from.
+     * @param {number} y - The y coordinate to emit the Particles from.
+     *
+     * @return {Phaser.GameObjects.Particles.Particle} The most recently emitted Particle.
+     */
+    explode: function (count, x, y)
+    {
+        this.frequency = -1;
