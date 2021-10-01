@@ -73773,3 +73773,218 @@ var ParticleEmitter = new Class({
     setQuantity: function (quantity)
     {
         this.quantity.onChange(quantity);
+
+        return this;
+    },
+
+    /**
+     * Sets the emitter's {@link Phaser.GameObjects.Particles.ParticleEmitter#frequency}
+     * and {@link Phaser.GameObjects.Particles.ParticleEmitter#quantity}.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setFrequency
+     * @since 3.0.0
+     *
+     * @param {number} frequency - The time interval (>= 0) of each flow cycle, in ms; or -1 to put the emitter in explosion mode.
+     * @param {number|float[]|EmitterOpOnEmitCallback|object} [quantity] - The number of particles to release at each flow cycle or explosion.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setFrequency: function (frequency, quantity)
+    {
+        this.frequency = frequency;
+
+        this._counter = 0;
+
+        if (quantity)
+        {
+            this.quantity.onChange(quantity);
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets or removes the {@link Phaser.GameObjects.Particles.ParticleEmitter#emitZone}.
+     *
+     * An {@link ParticleEmitterEdgeZoneConfig EdgeZone} places particles on its edges. Its {@link EdgeZoneSource source} can be a Curve, Path, Circle, Ellipse, Line, Polygon, Rectangle, or Triangle; or any object with a suitable {@link EdgeZoneSourceCallback getPoints} method.
+     *
+     * A {@link ParticleEmitterRandomZoneConfig RandomZone} places randomly within its interior. Its {@link RandomZoneSource source} can be a Circle, Ellipse, Line, Polygon, Rectangle, or Triangle; or any object with a suitable {@link RandomZoneSourceCallback getRandomPoint} method.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setEmitZone
+     * @since 3.0.0
+     *
+     * @param {ParticleEmitterEdgeZoneConfig|ParticleEmitterRandomZoneConfig} [zoneConfig] - An object describing the zone, or `undefined` to remove any current emit zone.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setEmitZone: function (zoneConfig)
+    {
+        if (zoneConfig === undefined)
+        {
+            this.emitZone = null;
+        }
+        else
+        {
+            //  Where source = Geom like Circle, or a Path or Curve
+            //  emitZone: { type: 'random', source: X }
+            //  emitZone: { type: 'edge', source: X, quantity: 32, [stepRate=0], [yoyo=false], [seamless=true] }
+
+            var type = GetFastValue(zoneConfig, 'type', 'random');
+            var source = GetFastValue(zoneConfig, 'source', null);
+
+            switch (type)
+            {
+                case 'random':
+
+                    this.emitZone = new RandomZone(source);
+
+                    break;
+
+                case 'edge':
+
+                    var quantity = GetFastValue(zoneConfig, 'quantity', 1);
+                    var stepRate = GetFastValue(zoneConfig, 'stepRate', 0);
+                    var yoyo = GetFastValue(zoneConfig, 'yoyo', false);
+                    var seamless = GetFastValue(zoneConfig, 'seamless', true);
+
+                    this.emitZone = new EdgeZone(source, quantity, stepRate, yoyo, seamless);
+
+                    break;
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets or removes the {@link Phaser.GameObjects.Particles.ParticleEmitter#deathZone}.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#setDeathZone
+     * @since 3.0.0
+     *
+     * @param {ParticleEmitterDeathZoneConfig} [zoneConfig] - An object describing the zone, or `undefined` to remove any current death zone.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    setDeathZone: function (zoneConfig)
+    {
+        if (zoneConfig === undefined)
+        {
+            this.deathZone = null;
+        }
+        else
+        {
+            //  Where source = Geom like Circle or Rect that supports a 'contains' function
+            //  deathZone: { type: 'onEnter', source: X }
+            //  deathZone: { type: 'onLeave', source: X }
+
+            var type = GetFastValue(zoneConfig, 'type', 'onEnter');
+            var source = GetFastValue(zoneConfig, 'source', null);
+
+            if (source && typeof source.contains === 'function')
+            {
+                var killOnEnter = (type === 'onEnter') ? true : false;
+
+                this.deathZone = new DeathZone(source, killOnEnter);
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Creates inactive particles and adds them to this emitter's pool.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#reserve
+     * @since 3.0.0
+     *
+     * @param {integer} particleCount - The number of particles to create.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    reserve: function (particleCount)
+    {
+        var dead = this.dead;
+
+        for (var i = 0; i < particleCount; i++)
+        {
+            dead.push(new this.particleClass(this));
+        }
+
+        return this;
+    },
+
+    /**
+     * Gets the number of active (in-use) particles in this emitter.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#getAliveParticleCount
+     * @since 3.0.0
+     *
+     * @return {integer} The number of particles with `active=true`.
+     */
+    getAliveParticleCount: function ()
+    {
+        return this.alive.length;
+    },
+
+    /**
+     * Gets the number of inactive (available) particles in this emitter.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#getDeadParticleCount
+     * @since 3.0.0
+     *
+     * @return {integer} The number of particles with `active=false`.
+     */
+    getDeadParticleCount: function ()
+    {
+        return this.dead.length;
+    },
+
+    /**
+     * Gets the total number of particles in this emitter.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#getParticleCount
+     * @since 3.0.0
+     *
+     * @return {integer} The number of particles, including both alive and dead.
+     */
+    getParticleCount: function ()
+    {
+        return this.getAliveParticleCount() + this.getDeadParticleCount();
+    },
+
+    /**
+     * Whether this emitter is at its limit (if set).
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#atLimit
+     * @since 3.0.0
+     *
+     * @return {boolean} Returns `true` if this Emitter is at its limit, or `false` if no limit, or below the `maxParticles` level.
+     */
+    atLimit: function ()
+    {
+        return (this.maxParticles > 0 && this.getParticleCount() === this.maxParticles);
+    },
+
+    /**
+     * Sets a function to call for each newly emitted particle.
+     *
+     * @method Phaser.GameObjects.Particles.ParticleEmitter#onParticleEmit
+     * @since 3.0.0
+     *
+     * @param {ParticleEmitterCallback} callback - The function.
+     * @param {*} [context] - The calling context.
+     *
+     * @return {Phaser.GameObjects.Particles.ParticleEmitter} This Particle Emitter.
+     */
+    onParticleEmit: function (callback, context)
+    {
+        if (callback === undefined)
+        {
+            //  Clear any previously set callback
+            this.emitCallback = null;
+            this.emitCallbackScope = null;
+        }
+        else if (typeof callback === 'function')
+        {
+            this.emitCallback = callback;
