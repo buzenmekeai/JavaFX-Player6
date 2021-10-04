@@ -74615,3 +74615,195 @@ var Particle = new Class({
          *
          * @name Phaser.GameObjects.Particles.Particle#alpha
          * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.alpha = 1;
+
+        /**
+         * The angle of this Particle in degrees.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#angle
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.angle = 0;
+
+        /**
+         * The angle of this Particle in radians.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#rotation
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.rotation = 0;
+
+        /**
+         * The tint applied to this Particle.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#tint
+         * @type {integer}
+         * @webglOnly
+         * @since 3.0.0
+         */
+        this.tint = 0xffffff;
+
+        /**
+         * The lifespan of this Particle in ms.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#life
+         * @type {number}
+         * @default 1000
+         * @since 3.0.0
+         */
+        this.life = 1000;
+
+        /**
+         * The current life of this Particle in ms.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#lifeCurrent
+         * @type {number}
+         * @default 1000
+         * @since 3.0.0
+         */
+        this.lifeCurrent = 1000;
+
+        /**
+         * The delay applied to this Particle upon emission, in ms.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#delayCurrent
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.delayCurrent = 0;
+
+        /**
+         * The normalized lifespan T value, where 0 is the start and 1 is the end.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#lifeT
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.lifeT = 0;
+
+        /**
+         * The data used by the ease equation.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#data
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.data = {
+            tint: { min: 0xffffff, max: 0xffffff, current: 0xffffff },
+            alpha: { min: 1, max: 1 },
+            rotate: { min: 0, max: 0 },
+            scaleX: { min: 1, max: 1 },
+            scaleY: { min: 1, max: 1 }
+        };
+    },
+
+    /**
+     * Checks to see if this Particle is alive and updating.
+     *
+     * @method Phaser.GameObjects.Particles.Particle#isAlive
+     * @since 3.0.0
+     *
+     * @return {boolean} `true` if this Particle is alive and updating, otherwise `false`.
+     */
+    isAlive: function ()
+    {
+        return (this.lifeCurrent > 0);
+    },
+
+    /**
+     * Starts this Particle from the given coordinates.
+     *
+     * @method Phaser.GameObjects.Particles.Particle#fire
+     * @since 3.0.0
+     *
+     * @param {number} x - The x coordinate to launch this Particle from.
+     * @param {number} y - The y coordinate to launch this Particle from.
+     */
+    fire: function (x, y)
+    {
+        var emitter = this.emitter;
+
+        this.frame = emitter.getFrame();
+
+        if (emitter.emitZone)
+        {
+            //  Updates particle.x and particle.y during this call
+            emitter.emitZone.getPoint(this);
+        }
+
+        if (x === undefined)
+        {
+            if (emitter.follow)
+            {
+                this.x += emitter.follow.x + emitter.followOffset.x;
+            }
+
+            this.x += emitter.x.onEmit(this, 'x');
+        }
+        else
+        {
+            this.x += x;
+        }
+
+        if (y === undefined)
+        {
+            if (emitter.follow)
+            {
+                this.y += emitter.follow.y + emitter.followOffset.y;
+            }
+
+            this.y += emitter.y.onEmit(this, 'y');
+        }
+        else
+        {
+            this.y += y;
+        }
+
+        this.life = emitter.lifespan.onEmit(this, 'lifespan');
+        this.lifeCurrent = this.life;
+        this.lifeT = 0;
+
+        var sx = emitter.speedX.onEmit(this, 'speedX');
+        var sy = (emitter.speedY) ? emitter.speedY.onEmit(this, 'speedY') : sx;
+
+        if (emitter.radial)
+        {
+            var rad = DegToRad(emitter.angle.onEmit(this, 'angle'));
+
+            this.velocityX = Math.cos(rad) * Math.abs(sx);
+            this.velocityY = Math.sin(rad) * Math.abs(sy);
+        }
+        else if (emitter.moveTo)
+        {
+            var mx = emitter.moveToX.onEmit(this, 'moveToX');
+            var my = (emitter.moveToY) ? emitter.moveToY.onEmit(this, 'moveToY') : mx;
+
+            var angle = Math.atan2(my - this.y, mx - this.x);
+
+            var speed = DistanceBetween(this.x, this.y, mx, my) / (this.life / 1000);
+
+            //  We know how many pixels we need to move, but how fast?
+            // var speed = this.distanceToXY(displayObject, x, y) / (maxTime / 1000);
+
+            this.velocityX = Math.cos(angle) * speed;
+            this.velocityY = Math.sin(angle) * speed;
+        }
+        else
+        {
+            this.velocityX = sx;
+            this.velocityY = sy;
+        }
+
+        if (emitter.acceleration)
+        {
+            this.accelerationX = emitter.accelerationX.onEmit(this, 'accelerationX');
+            this.accelerationY = emitter.accelerationY.onEmit(this, 'accelerationY');
