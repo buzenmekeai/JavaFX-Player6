@@ -74426,3 +74426,192 @@ var ParticleEmitter = new Class({
      * @param {object} b - The second particle.
      *
      * @return {integer} The difference of a and b's `index` properties.
+     */
+    indexSortCallback: function (a, b)
+    {
+        return a.index - b.index;
+    }
+
+});
+
+module.exports = ParticleEmitter;
+
+
+/***/ }),
+/* 303 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var DegToRad = __webpack_require__(31);
+var DistanceBetween = __webpack_require__(52);
+
+/**
+ * @classdesc
+ * A Particle is a simple Game Object controlled by a Particle Emitter and Manager, and rendered by the Manager.
+ * It uses its own lightweight physics system, and can interact only with its Emitter's bounds and zones.
+ *
+ * @class Particle
+ * @memberof Phaser.GameObjects.Particles
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.GameObjects.Particles.ParticleEmitter} emitter - The Emitter to which this Particle belongs.
+ */
+var Particle = new Class({
+
+    initialize:
+
+    function Particle (emitter)
+    {
+        /**
+         * The Emitter to which this Particle belongs.
+         *
+         * A Particle can only belong to a single Emitter and is created, updated and destroyed via it.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#emitter
+         * @type {Phaser.GameObjects.Particles.ParticleEmitter}
+         * @since 3.0.0
+         */
+        this.emitter = emitter;
+
+        /**
+         * The texture frame used to render this Particle.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#frame
+         * @type {Phaser.Textures.Frame}
+         * @default null
+         * @since 3.0.0
+         */
+        this.frame = null;
+
+        /**
+         * The position of this Particle within its Emitter's particle pool.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#index
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.index = 0;
+
+        /**
+         * The x coordinate of this Particle.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#x
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.x = 0;
+
+        /**
+         * The y coordinate of this Particle.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#y
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.y = 0;
+
+        /**
+         * The x velocity of this Particle.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#velocityX
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.velocityX = 0;
+
+        /**
+         * The y velocity of this Particle.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#velocityY
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.velocityY = 0;
+
+        /**
+         * The x acceleration of this Particle.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#accelerationX
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.accelerationX = 0;
+
+        /**
+         * The y acceleration of this Particle.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#accelerationY
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.accelerationY = 0;
+
+        /**
+         * The maximum horizontal velocity this Particle can travel at.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#maxVelocityX
+         * @type {number}
+         * @default 10000
+         * @since 3.0.0
+         */
+        this.maxVelocityX = 10000;
+
+        /**
+         * The maximum vertical velocity this Particle can travel at.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#maxVelocityY
+         * @type {number}
+         * @default 10000
+         * @since 3.0.0
+         */
+        this.maxVelocityY = 10000;
+
+        /**
+         * The bounciness, or restitution, of this Particle.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#bounce
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.bounce = 0;
+
+        /**
+         * The horizontal scale of this Particle.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#scaleX
+         * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.scaleX = 1;
+
+        /**
+         * The vertical scale of this Particle.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#scaleY
+         * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.scaleY = 1;
+
+        /**
+         * The alpha value of this Particle.
+         *
+         * @name Phaser.GameObjects.Particles.Particle#alpha
+         * @type {number}
