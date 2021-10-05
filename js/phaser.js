@@ -74807,3 +74807,204 @@ var Particle = new Class({
         {
             this.accelerationX = emitter.accelerationX.onEmit(this, 'accelerationX');
             this.accelerationY = emitter.accelerationY.onEmit(this, 'accelerationY');
+        }
+
+        this.maxVelocityX = emitter.maxVelocityX.onEmit(this, 'maxVelocityX');
+        this.maxVelocityY = emitter.maxVelocityY.onEmit(this, 'maxVelocityY');
+
+        this.delayCurrent = emitter.delay.onEmit(this, 'delay');
+
+        this.scaleX = emitter.scaleX.onEmit(this, 'scaleX');
+        this.scaleY = (emitter.scaleY) ? emitter.scaleY.onEmit(this, 'scaleY') : this.scaleX;
+
+        this.angle = emitter.rotate.onEmit(this, 'rotate');
+        this.rotation = DegToRad(this.angle);
+
+        this.bounce = emitter.bounce.onEmit(this, 'bounce');
+
+        this.alpha = emitter.alpha.onEmit(this, 'alpha');
+
+        this.tint = emitter.tint.onEmit(this, 'tint');
+
+        this.index = emitter.alive.length;
+    },
+
+    /**
+     * An internal method that calculates the velocity of the Particle.
+     *
+     * @method Phaser.GameObjects.Particles.Particle#computeVelocity
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Particles.ParticleEmitter} emitter - The Emitter that is updating this Particle.
+     * @param {number} delta - The delta time in ms.
+     * @param {number} step - The delta value divided by 1000.
+     * @param {array} processors - Particle processors (gravity wells).
+     */
+    computeVelocity: function (emitter, delta, step, processors)
+    {
+        var vx = this.velocityX;
+        var vy = this.velocityY;
+
+        var ax = this.accelerationX;
+        var ay = this.accelerationY;
+
+        var mx = this.maxVelocityX;
+        var my = this.maxVelocityY;
+
+        vx += (emitter.gravityX * step);
+        vy += (emitter.gravityY * step);
+
+        if (ax)
+        {
+            vx += (ax * step);
+        }
+
+        if (ay)
+        {
+            vy += (ay * step);
+        }
+
+        if (vx > mx)
+        {
+            vx = mx;
+        }
+        else if (vx < -mx)
+        {
+            vx = -mx;
+        }
+
+        if (vy > my)
+        {
+            vy = my;
+        }
+        else if (vy < -my)
+        {
+            vy = -my;
+        }
+
+        this.velocityX = vx;
+        this.velocityY = vy;
+
+        //  Apply any additional processors
+        for (var i = 0; i < processors.length; i++)
+        {
+            processors[i].update(this, delta, step);
+        }
+    },
+
+    /**
+     * Checks if this Particle is still within the bounds defined by the given Emitter.
+     *
+     * If not, and depending on the Emitter collision flags, the Particle may either stop or rebound.
+     *
+     * @method Phaser.GameObjects.Particles.Particle#checkBounds
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Particles.ParticleEmitter} emitter - The Emitter to check the bounds against.
+     */
+    checkBounds: function (emitter)
+    {
+        var bounds = emitter.bounds;
+        var bounce = -this.bounce;
+
+        if (this.x < bounds.x && emitter.collideLeft)
+        {
+            this.x = bounds.x;
+            this.velocityX *= bounce;
+        }
+        else if (this.x > bounds.right && emitter.collideRight)
+        {
+            this.x = bounds.right;
+            this.velocityX *= bounce;
+        }
+
+        if (this.y < bounds.y && emitter.collideTop)
+        {
+            this.y = bounds.y;
+            this.velocityY *= bounce;
+        }
+        else if (this.y > bounds.bottom && emitter.collideBottom)
+        {
+            this.y = bounds.bottom;
+            this.velocityY *= bounce;
+        }
+    },
+
+    /**
+     * The main update method for this Particle.
+     *
+     * Updates its life values, computes the velocity and repositions the Particle.
+     *
+     * @method Phaser.GameObjects.Particles.Particle#update
+     * @since 3.0.0
+     *
+     * @param {number} delta - The delta time in ms.
+     * @param {number} step - The delta value divided by 1000.
+     * @param {array} processors - An optional array of update processors.
+     *
+     * @return {boolean} Returns `true` if this Particle has now expired and should be removed, otherwise `false` if still active.
+     */
+    update: function (delta, step, processors)
+    {
+        if (this.delayCurrent > 0)
+        {
+            this.delayCurrent -= delta;
+
+            return false;
+        }
+
+        var emitter = this.emitter;
+
+        //  How far along in life is this particle? (t = 0 to 1)
+        var t = 1 - (this.lifeCurrent / this.life);
+
+        this.lifeT = t;
+
+        this.computeVelocity(emitter, delta, step, processors);
+
+        this.x += this.velocityX * step;
+        this.y += this.velocityY * step;
+
+        if (emitter.bounds)
+        {
+            this.checkBounds(emitter);
+        }
+
+        if (emitter.deathZone && emitter.deathZone.willKill(this))
+        {
+            this.lifeCurrent = 0;
+
+            //  No need to go any further, particle has been killed
+            return true;
+        }
+
+        this.scaleX = emitter.scaleX.onUpdate(this, 'scaleX', t, this.scaleX);
+
+        if (emitter.scaleY)
+        {
+            this.scaleY = emitter.scaleY.onUpdate(this, 'scaleY', t, this.scaleY);
+        }
+        else
+        {
+            this.scaleY = this.scaleX;
+        }
+
+        this.angle = emitter.rotate.onUpdate(this, 'rotate', t, this.angle);
+        this.rotation = DegToRad(this.angle);
+
+        this.alpha = emitter.alpha.onUpdate(this, 'alpha', t, this.alpha);
+
+        this.tint = emitter.tint.onUpdate(this, 'tint', t, this.tint);
+
+        this.lifeCurrent -= delta;
+
+        return (this.lifeCurrent <= 0);
+    }
+
+});
+
+module.exports = Particle;
+
+
+/***/ }),
+/* 304 */
