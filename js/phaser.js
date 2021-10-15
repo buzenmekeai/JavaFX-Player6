@@ -75469,3 +75469,229 @@ var GraphicsCanvasRenderer = function (renderer, src, interpolationPercentage, c
             case Commands.GRADIENT_LINE_STYLE:
                 index += 6;
                 break;
+
+            case Commands.SET_TEXTURE:
+                index += 2;
+                break;
+        }
+    }
+
+    ctx.restore();
+};
+
+module.exports = GraphicsCanvasRenderer;
+
+
+/***/ }),
+/* 306 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Returns the circumference of the given Ellipse.
+ *
+ * @function Phaser.Geom.Ellipse.Circumference
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Ellipse} ellipse - The Ellipse to get the circumference of.
+ *
+ * @return {number} The circumference of th Ellipse.
+ */
+var Circumference = function (ellipse)
+{
+    var rx = ellipse.width / 2;
+    var ry = ellipse.height / 2;
+    var h = Math.pow((rx - ry), 2) / Math.pow((rx + ry), 2);
+
+    return (Math.PI * (rx + ry)) * (1 + ((3 * h) / (10 + Math.sqrt(4 - (3 * h)))));
+};
+
+module.exports = Circumference;
+
+
+/***/ }),
+/* 307 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Circumference = __webpack_require__(306);
+var CircumferencePoint = __webpack_require__(156);
+var FromPercent = __webpack_require__(93);
+var MATH_CONST = __webpack_require__(16);
+
+/**
+ * Returns an array of Point objects containing the coordinates of the points around the circumference of the Ellipse,
+ * based on the given quantity or stepRate values.
+ *
+ * @function Phaser.Geom.Ellipse.GetPoints
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point[]} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Ellipse} ellipse - The Ellipse to get the points from.
+ * @param {integer} quantity - The amount of points to return. If a falsey value the quantity will be derived from the `stepRate` instead.
+ * @param {number} [stepRate] - Sets the quantity by getting the circumference of the ellipse and dividing it by the stepRate.
+ * @param {(array|Phaser.Geom.Point[])} [out] - An array to insert the points in to. If not provided a new array will be created.
+ *
+ * @return {(array|Phaser.Geom.Point[])} An array of Point objects pertaining to the points around the circumference of the ellipse.
+ */
+var GetPoints = function (ellipse, quantity, stepRate, out)
+{
+    if (out === undefined) { out = []; }
+
+    //  If quantity is a falsey value (false, null, 0, undefined, etc) then we calculate it based on the stepRate instead.
+    if (!quantity)
+    {
+        quantity = Circumference(ellipse) / stepRate;
+    }
+
+    for (var i = 0; i < quantity; i++)
+    {
+        var angle = FromPercent(i / quantity, 0, MATH_CONST.PI2);
+
+        out.push(CircumferencePoint(ellipse, angle));
+    }
+
+    return out;
+};
+
+module.exports = GetPoints;
+
+
+/***/ }),
+/* 308 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CircumferencePoint = __webpack_require__(156);
+var FromPercent = __webpack_require__(93);
+var MATH_CONST = __webpack_require__(16);
+var Point = __webpack_require__(6);
+
+/**
+ * Returns a Point object containing the coordinates of a point on the circumference of the Ellipse
+ * based on the given angle normalized to the range 0 to 1. I.e. a value of 0.5 will give the point
+ * at 180 degrees around the circle.
+ *
+ * @function Phaser.Geom.Ellipse.GetPoint
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Ellipse} ellipse - The Ellipse to get the circumference point on.
+ * @param {number} position - A value between 0 and 1, where 0 equals 0 degrees, 0.5 equals 180 degrees and 1 equals 360 around the ellipse.
+ * @param {(Phaser.Geom.Point|object)} [out] - An object to store the return values in. If not given a Point object will be created.
+ *
+ * @return {(Phaser.Geom.Point|object)} A Point, or point-like object, containing the coordinates of the point around the ellipse.
+ */
+var GetPoint = function (ellipse, position, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    var angle = FromPercent(position, 0, MATH_CONST.PI2);
+
+    return CircumferencePoint(ellipse, angle, out);
+};
+
+module.exports = GetPoint;
+
+
+/***/ }),
+/* 309 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Rectangle = __webpack_require__(9);
+
+/**
+ * Creates a new Rectangle or repositions and/or resizes an existing Rectangle so that it encompasses the two given Rectangles, i.e. calculates their union.
+ *
+ * @function Phaser.Geom.Rectangle.Union
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rectA - The first Rectangle to use.
+ * @param {Phaser.Geom.Rectangle} rectB - The second Rectangle to use.
+ * @param {Phaser.Geom.Rectangle} [out] - The Rectangle to store the union in.
+ *
+ * @return {Phaser.Geom.Rectangle} The modified `out` Rectangle, or a new Rectangle if none was provided.
+ */
+var Union = function (rectA, rectB, out)
+{
+    if (out === undefined) { out = new Rectangle(); }
+
+    //  Cache vars so we can use one of the input rects as the output rect
+    var x = Math.min(rectA.x, rectB.x);
+    var y = Math.min(rectA.y, rectB.y);
+    var w = Math.max(rectA.right, rectB.right) - x;
+    var h = Math.max(rectA.bottom, rectB.bottom) - y;
+
+    return out.setTo(x, y, w, h);
+};
+
+module.exports = Union;
+
+
+/***/ }),
+/* 310 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Read an integer value from an XML Node.
+ *
+ * @function getValue
+ * @since 3.0.0
+ * @private
+ *
+ * @param {Node} node - The XML Node.
+ * @param {string} attribute - The attribute to read.
+ *
+ * @return {integer} The parsed value.
+ */
+function getValue (node, attribute)
+{
+    return parseInt(node.getAttribute(attribute), 10);
+}
+
+/**
+ * Parse an XML font to Bitmap Font data for the Bitmap Font cache.
+ *
+ * @function ParseXMLBitmapFont
+ * @since 3.0.0
+ * @private
+ *
+ * @param {XMLDocument} xml - The XML Document to parse the font from.
+ * @param {integer} [xSpacing=0] - The x-axis spacing to add between each letter.
+ * @param {integer} [ySpacing=0] - The y-axis spacing to add to the line height.
+ * @param {Phaser.Textures.Frame} [frame] - The texture frame to take into account while parsing.
+ *
+ * @return {BitmapFontData} The parsed Bitmap Font data.
+ */
+var ParseXMLBitmapFont = function (xml, xSpacing, ySpacing, frame)
