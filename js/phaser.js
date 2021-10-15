@@ -75695,3 +75695,231 @@ function getValue (node, attribute)
  * @return {BitmapFontData} The parsed Bitmap Font data.
  */
 var ParseXMLBitmapFont = function (xml, xSpacing, ySpacing, frame)
+{
+    if (xSpacing === undefined) { xSpacing = 0; }
+    if (ySpacing === undefined) { ySpacing = 0; }
+
+    var data = {};
+    var info = xml.getElementsByTagName('info')[0];
+    var common = xml.getElementsByTagName('common')[0];
+
+    data.font = info.getAttribute('face');
+    data.size = getValue(info, 'size');
+    data.lineHeight = getValue(common, 'lineHeight') + ySpacing;
+    data.chars = {};
+
+    var letters = xml.getElementsByTagName('char');
+
+    var adjustForTrim = (frame !== undefined && frame.trimmed);
+
+    if (adjustForTrim)
+    {
+        var top = frame.height;
+        var left = frame.width;
+    }
+
+    for (var i = 0; i < letters.length; i++)
+    {
+        var node = letters[i];
+
+        var charCode = getValue(node, 'id');
+        var gx = getValue(node, 'x');
+        var gy = getValue(node, 'y');
+        var gw = getValue(node, 'width');
+        var gh = getValue(node, 'height');
+
+        //  Handle frame trim issues
+
+        if (adjustForTrim)
+        {
+            if (gx < left)
+            {
+                left = gx;
+            }
+
+            if (gy < top)
+            {
+                top = gy;
+            }
+        }
+
+        data.chars[charCode] =
+        {
+            x: gx,
+            y: gy,
+            width: gw,
+            height: gh,
+            centerX: Math.floor(gw / 2),
+            centerY: Math.floor(gh / 2),
+            xOffset: getValue(node, 'xoffset'),
+            yOffset: getValue(node, 'yoffset'),
+            xAdvance: getValue(node, 'xadvance') + xSpacing,
+            data: {},
+            kerning: {}
+        };
+    }
+
+    if (adjustForTrim && top !== 0 && left !== 0)
+    {
+        // console.log('top and left', top, left, frame.x, frame.y);
+
+        //  Now we know the top and left coordinates of the glyphs in the original data
+        //  so we can work out how much to adjust the glyphs by
+
+        for (var code in data.chars)
+        {
+            var glyph = data.chars[code];
+
+            glyph.x -= frame.x;
+            glyph.y -= frame.y;
+        }
+    }
+
+    var kernings = xml.getElementsByTagName('kerning');
+
+    for (i = 0; i < kernings.length; i++)
+    {
+        var kern = kernings[i];
+
+        var first = getValue(kern, 'first');
+        var second = getValue(kern, 'second');
+        var amount = getValue(kern, 'amount');
+
+        data.chars[second].kerning[first] = amount;
+    }
+
+    return data;
+};
+
+module.exports = ParseXMLBitmapFont;
+
+
+/***/ }),
+/* 311 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetAdvancedValue = __webpack_require__(12);
+
+/**
+ * Adds an Animation component to a Sprite and populates it based on the given config.
+ *
+ * @function Phaser.GameObjects.BuildGameObjectAnimation
+ * @since 3.0.0
+ *
+ * @param {Phaser.GameObjects.Sprite} sprite - The sprite to add an Animation component to.
+ * @param {object} config - The animation config.
+ *
+ * @return {Phaser.GameObjects.Sprite} The updated Sprite.
+ */
+var BuildGameObjectAnimation = function (sprite, config)
+{
+    var animConfig = GetAdvancedValue(config, 'anims', null);
+
+    if (animConfig === null)
+    {
+        return sprite;
+    }
+
+    if (typeof animConfig === 'string')
+    {
+        //  { anims: 'key' }
+        sprite.anims.play(animConfig);
+    }
+    else if (typeof animConfig === 'object')
+    {
+        //  { anims: {
+        //              key: string
+        //              startFrame: [string|integer]
+        //              delay: [float]
+        //              repeat: [integer]
+        //              repeatDelay: [float]
+        //              yoyo: [boolean]
+        //              play: [boolean]
+        //              delayedPlay: [boolean]
+        //           }
+        //  }
+
+        var anims = sprite.anims;
+
+        var key = GetAdvancedValue(animConfig, 'key', undefined);
+        var startFrame = GetAdvancedValue(animConfig, 'startFrame', undefined);
+
+        var delay = GetAdvancedValue(animConfig, 'delay', 0);
+        var repeat = GetAdvancedValue(animConfig, 'repeat', 0);
+        var repeatDelay = GetAdvancedValue(animConfig, 'repeatDelay', 0);
+        var yoyo = GetAdvancedValue(animConfig, 'yoyo', false);
+
+        var play = GetAdvancedValue(animConfig, 'play', false);
+        var delayedPlay = GetAdvancedValue(animConfig, 'delayedPlay', 0);
+
+        anims.setDelay(delay);
+        anims.setRepeat(repeat);
+        anims.setRepeatDelay(repeatDelay);
+        anims.setYoyo(yoyo);
+
+        if (play)
+        {
+            anims.play(key, startFrame);
+        }
+        else if (delayedPlay > 0)
+        {
+            anims.delayedPlay(delayedPlay, key, startFrame);
+        }
+        else
+        {
+            anims.load(key);
+        }
+    }
+
+    return sprite;
+};
+
+module.exports = BuildGameObjectAnimation;
+
+
+/***/ }),
+/* 312 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetValue = __webpack_require__(4);
+var Shuffle = __webpack_require__(122);
+
+var BuildChunk = function (a, b, qty)
+{
+    var out = [];
+
+    for (var aIndex = 0; aIndex < a.length; aIndex++)
+    {
+        for (var bIndex = 0; bIndex < b.length; bIndex++)
+        {
+            for (var i = 0; i < qty; i++)
+            {
+                out.push({ a: a[aIndex], b: b[bIndex] });
+            }
+        }
+    }
+
+    return out;
+};
+
+//  options = repeat, random, randomB, yoyo, max, qty
+
+//  Range ([a,b,c], [1,2,3]) =
+//  a1, a2, a3, b1, b2, b3, c1, c2, c3
+
+//  Range ([a,b], [1,2,3], qty = 3) =
+//  a1, a1, a1, a2, a2, a2, a3, a3, a3, b1, b1, b1, b2, b2, b2, b3, b3, b3
+
+//  Range ([a,b,c], [1,2,3], repeat x1) =
