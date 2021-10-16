@@ -75923,3 +75923,230 @@ var BuildChunk = function (a, b, qty)
 //  a1, a1, a1, a2, a2, a2, a3, a3, a3, b1, b1, b1, b2, b2, b2, b3, b3, b3
 
 //  Range ([a,b,c], [1,2,3], repeat x1) =
+//  a1, a2, a3, b1, b2, b3, c1, c2, c3, a1, a2, a3, b1, b2, b3, c1, c2, c3
+
+//  Range ([a,b], [1,2], repeat -1 = endless, max = 14) =
+//  Maybe if max is set then repeat goes to -1 automatically?
+//  a1, a2, b1, b2, a1, a2, b1, b2, a1, a2, b1, b2, a1, a2 (capped at 14 elements)
+
+//  Range ([a], [1,2,3,4,5], random = true) =
+//  a4, a1, a5, a2, a3
+
+//  Range ([a, b], [1,2,3], random = true) =
+//  b3, a2, a1, b1, a3, b2
+
+//  Range ([a, b, c], [1,2,3], randomB = true) =
+//  a3, a1, a2, b2, b3, b1, c1, c3, c2
+
+//  Range ([a], [1,2,3,4,5], yoyo = true) =
+//  a1, a2, a3, a4, a5, a5, a4, a3, a2, a1
+
+//  Range ([a, b], [1,2,3], yoyo = true) =
+//  a1, a2, a3, b1, b2, b3, b3, b2, b1, a3, a2, a1
+
+/**
+ * [description]
+ *
+ * @function Phaser.Utils.Array.Range
+ * @since 3.0.0
+ *
+ * @param {array} a - [description]
+ * @param {array} b - [description]
+ * @param {object} options - [description]
+ *
+ * @return {array} [description]
+ */
+var Range = function (a, b, options)
+{
+    var max = GetValue(options, 'max', 0);
+    var qty = GetValue(options, 'qty', 1);
+    var random = GetValue(options, 'random', false);
+    var randomB = GetValue(options, 'randomB', false);
+    var repeat = GetValue(options, 'repeat', 0);
+    var yoyo = GetValue(options, 'yoyo', false);
+
+    var out = [];
+
+    if (randomB)
+    {
+        Shuffle(b);
+    }
+
+    //  Endless repeat, so limit by max
+    if (repeat === -1)
+    {
+        if (max === 0)
+        {
+            repeat = 0;
+        }
+        else
+        {
+            //  Work out how many repeats we need
+            var total = (a.length * b.length) * qty;
+
+            if (yoyo)
+            {
+                total *= 2;
+            }
+
+            repeat = Math.ceil(max / total);
+        }
+    }
+
+    for (var i = 0; i <= repeat; i++)
+    {
+        var chunk = BuildChunk(a, b, qty);
+
+        if (random)
+        {
+            Shuffle(chunk);
+        }
+
+        out = out.concat(chunk);
+
+        if (yoyo)
+        {
+            chunk.reverse();
+
+            out = out.concat(chunk);
+        }
+    }
+
+    if (max)
+    {
+        out.splice(max);
+    }
+
+    return out;
+};
+
+module.exports = Range;
+
+
+/***/ }),
+/* 313 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  This is from the quickselect npm package: https://www.npmjs.com/package/quickselect
+//  Coded by https://www.npmjs.com/~mourner (Vladimir Agafonkin)
+
+// https://en.wikipedia.org/wiki/Floyd%E2%80%93Rivest_algorithm
+
+// Floyd-Rivest selection algorithm:
+// Rearrange items so that all items in the [left, k] range are smaller than all items in (k, right];
+// The k-th element will have the (k - left + 1)th smallest value in [left, right]
+
+/**
+ * [description]
+ *
+ * @function Phaser.Utils.Array.QuickSelect
+ * @since 3.0.0
+ *
+ * @param {array} arr - [description]
+ * @param {number} k - [description]
+ * @param {number} left - [description]
+ * @param {number} right - [description]
+ * @param {function} compare - [description]
+ */
+var QuickSelect = function (arr, k, left, right, compare)
+{
+    left = left || 0;
+    right = right || (arr.length - 1);
+    compare = compare || defaultCompare;
+
+    while (right > left)
+    {
+        if (right - left > 600)
+        {
+            var n = right - left + 1;
+            var m = k - left + 1;
+            var z = Math.log(n);
+            var s = 0.5 * Math.exp(2 * z / 3);
+            var sd = 0.5 * Math.sqrt(z * s * (n - s) / n) * (m - n / 2 < 0 ? -1 : 1);
+            var newLeft = Math.max(left, Math.floor(k - m * s / n + sd));
+            var newRight = Math.min(right, Math.floor(k + (n - m) * s / n + sd));
+
+            QuickSelect(arr, k, newLeft, newRight, compare);
+        }
+
+        var t = arr[k];
+        var i = left;
+        var j = right;
+
+        swap(arr, left, k);
+
+        if (compare(arr[right], t) > 0)
+        {
+            swap(arr, left, right);
+        }
+
+        while (i < j)
+        {
+            swap(arr, i, j);
+
+            i++;
+            j--;
+
+            while (compare(arr[i], t) < 0)
+            {
+                i++;
+            }
+
+            while (compare(arr[j], t) > 0)
+            {
+                j--;
+            }
+        }
+
+        if (compare(arr[left], t) === 0)
+        {
+            swap(arr, left, j);
+        }
+        else
+        {
+            j++;
+            swap(arr, j, right);
+        }
+
+        if (j <= k)
+        {
+            left = j + 1;
+        }
+
+        if (k <= j)
+        {
+            right = j - 1;
+        }
+    }
+};
+
+function swap (arr, i, j)
+{
+    var tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+}
+
+function defaultCompare (a, b)
+{
+    return a < b ? -1 : a > b ? 1 : 0;
+}
+
+module.exports = QuickSelect;
+
+
+/***/ }),
+/* 314 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
