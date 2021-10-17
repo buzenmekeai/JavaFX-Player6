@@ -76384,3 +76384,208 @@ var TextureSource = new Class({
         /**
          * Is the source image a Render Texture?
          *
+         * @name Phaser.Textures.TextureSource#isRenderTexture
+         * @type {boolean}
+         * @since 3.12.0
+         */
+        this.isRenderTexture = (source.type === 'RenderTexture');
+
+        /**
+         * Are the source image dimensions a power of two?
+         *
+         * @name Phaser.Textures.TextureSource#isPowerOf2
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.isPowerOf2 = IsSizePowerOfTwo(this.width, this.height);
+
+        /**
+         * The WebGL Texture of the source image.
+         *
+         * @name Phaser.Textures.TextureSource#glTexture
+         * @type {?WebGLTexture}
+         * @default null
+         * @since 3.0.0
+         */
+        this.glTexture = null;
+
+        this.init(game);
+    },
+
+    /**
+     * Creates a WebGL Texture, if required, and sets the Texture filter mode.
+     *
+     * @method Phaser.Textures.TextureSource#init
+     * @since 3.0.0
+     *
+     * @param {Phaser.Game} game - A reference to the Phaser Game instance.
+     */
+    init: function (game)
+    {
+        if (this.renderer)
+        {
+            if (this.renderer.gl)
+            {
+                if (this.isCanvas)
+                {
+                    this.glTexture = this.renderer.canvasToTexture(this.image);
+                }
+                else if (this.isRenderTexture)
+                {
+                    this.image = this.source.canvas;
+                 
+                    this.glTexture = this.renderer.createTextureFromSource(null, this.width, this.height, this.scaleMode);
+                }
+                else
+                {
+                    this.glTexture = this.renderer.createTextureFromSource(this.image, this.width, this.height, this.scaleMode);
+                }
+            }
+            else if (this.isRenderTexture)
+            {
+                this.image = this.source.canvas;
+            }
+        }
+
+        if (!game.config.antialias)
+        {
+            this.setFilter(1);
+        }
+    },
+
+    /**
+     * Sets the Filter Mode for this Texture.
+     *
+     * The mode can be either Linear, the default, or Nearest.
+     *
+     * For pixel-art you should use Nearest.
+     *
+     * @method Phaser.Textures.TextureSource#setFilter
+     * @since 3.0.0
+     *
+     * @param {Phaser.Textures.FilterMode} filterMode - The Filter Mode.
+     */
+    setFilter: function (filterMode)
+    {
+        if (this.renderer.gl)
+        {
+            this.renderer.setTextureFilter(this.glTexture, filterMode);
+        }
+    },
+
+    /**
+     * If this TextureSource is backed by a Canvas and is running under WebGL,
+     * it updates the WebGLTexture using the canvas data.
+     *
+     * @method Phaser.Textures.TextureSource#update
+     * @since 3.7.0
+     */
+    update: function ()
+    {
+        if (this.renderer.gl && this.isCanvas)
+        {
+            this.glTexture = this.renderer.canvasToTexture(this.image, this.glTexture);
+
+            //  Update all the Frames using this TextureSource
+
+            /*
+            var index = this.texture.getTextureSourceIndex(this);
+            
+            var frames = this.texture.getFramesFromTextureSource(index, true);
+
+            for (var i = 0; i < frames.length; i++)
+            {
+                frames[i].glTexture = this.glTexture;
+            }
+            */
+        }
+    },
+
+    /**
+     * Destroys this Texture Source and nulls the references.
+     *
+     * @method Phaser.Textures.TextureSource#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        if (this.glTexture)
+        {
+            this.renderer.deleteTexture(this.glTexture);
+        }
+
+        if (this.isCanvas)
+        {
+            CanvasPool.remove(this.image);
+        }
+
+        this.renderer = null;
+        this.texture = null;
+        this.source = null;
+        this.image = null;
+        this.glTexture = null;
+    }
+
+});
+
+module.exports = TextureSource;
+
+
+/***/ }),
+/* 318 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CanvasPool = __webpack_require__(24);
+var CanvasTexture = __webpack_require__(887);
+var Class = __webpack_require__(0);
+var Color = __webpack_require__(37);
+var CONST = __webpack_require__(26);
+var EventEmitter = __webpack_require__(11);
+var GenerateTexture = __webpack_require__(357);
+var GetValue = __webpack_require__(4);
+var Parser = __webpack_require__(316);
+var Texture = __webpack_require__(165);
+
+/**
+ * @callback EachTextureCallback
+ *
+ * @param {Phaser.Textures.Texture} texture - Each texture in Texture Manager.
+ * @param {...*} [args] - Additional arguments that will be passed to the callback, after the child.
+ */
+
+/**
+ * @classdesc
+ * Textures are managed by the global TextureManager. This is a singleton class that is
+ * responsible for creating and delivering Textures and their corresponding Frames to Game Objects.
+ *
+ * Sprites and other Game Objects get the texture data they need from the TextureManager.
+ *
+ * Access it via `scene.textures`.
+ *
+ * @class TextureManager
+ * @extends Phaser.Events.EventEmitter
+ * @memberof Phaser.Textures
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Game} game - The Phaser.Game instance this Texture Manager belongs to.
+ */
+var TextureManager = new Class({
+
+    Extends: EventEmitter,
+
+    initialize:
+
+    function TextureManager (game)
+    {
+        EventEmitter.call(this);
+
+        /**
+         * The Game that this TextureManager belongs to.
+         *
