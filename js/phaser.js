@@ -76150,3 +76150,237 @@ module.exports = QuickSelect;
  * @copyright    2018 Photon Storm Ltd.
  * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
  */
+
+/**
+ * Round a given number so it is further away from zero. That is, positive numbers are rounded up, and negative numbers are rounded down.
+ *
+ * @function Phaser.Math.RoundAwayFromZero
+ * @since 3.0.0
+ *
+ * @param {number} value - The number to round.
+ *
+ * @return {number} The rounded number, rounded away from zero.
+ */
+var RoundAwayFromZero = function (value)
+{
+    // "Opposite" of truncate.
+    return (value > 0) ? Math.ceil(value) : Math.floor(value);
+};
+
+module.exports = RoundAwayFromZero;
+
+
+/***/ }),
+/* 315 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+// Transposes the elements of the given matrix (array of arrays).
+// The transpose of a matrix is a new matrix whose rows are the columns of the original.
+
+/**
+ * [description]
+ *
+ * @function Phaser.Utils.Array.Matrix.TransposeMatrix
+ * @since 3.0.0
+ *
+ * @param {array} array - The array matrix to transpose.
+ *
+ * @return {array} A new array matrix which is a transposed version of the given array.
+ */
+var TransposeMatrix = function (array)
+{
+    var sourceRowCount = array.length;
+    var sourceColCount = array[0].length;
+
+    var result = new Array(sourceColCount);
+
+    for (var i = 0; i < sourceColCount; i++)
+    {
+        result[i] = new Array(sourceRowCount);
+
+        for (var j = sourceRowCount - 1; j > -1; j--)
+        {
+            result[i][j] = array[j][i];
+        }
+    }
+
+    return result;
+};
+
+module.exports = TransposeMatrix;
+
+
+/***/ }),
+/* 316 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Textures.Parsers
+ */
+
+module.exports = {
+
+    AtlasXML: __webpack_require__(886),
+    Canvas: __webpack_require__(885),
+    Image: __webpack_require__(884),
+    JSONArray: __webpack_require__(883),
+    JSONHash: __webpack_require__(882),
+    SpriteSheet: __webpack_require__(881),
+    SpriteSheetFromAtlas: __webpack_require__(880),
+    UnityYAML: __webpack_require__(879)
+
+};
+
+
+/***/ }),
+/* 317 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CanvasPool = __webpack_require__(24);
+var Class = __webpack_require__(0);
+var IsSizePowerOfTwo = __webpack_require__(117);
+var ScaleModes = __webpack_require__(94);
+
+/**
+ * @classdesc
+ * A Texture Source is the encapsulation of the actual source data for a Texture.
+ * This is typically an Image Element, loaded from the file system or network, or a Canvas Element.
+ *
+ * A Texture can contain multiple Texture Sources, which only happens when a multi-atlas is loaded.
+ *
+ * @class TextureSource
+ * @memberof Phaser.Textures
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Textures.Texture} texture - The Texture this TextureSource belongs to.
+ * @param {(HTMLImageElement|HTMLCanvasElement)} source - The source image data.
+ * @param {integer} [width] - Optional width of the source image. If not given it's derived from the source itself.
+ * @param {integer} [height] - Optional height of the source image. If not given it's derived from the source itself.
+ */
+var TextureSource = new Class({
+
+    initialize:
+
+    function TextureSource (texture, source, width, height)
+    {
+        var game = texture.manager.game;
+
+        /**
+         * The Texture this TextureSource belongs to.
+         *
+         * @name Phaser.Textures.TextureSource#renderer
+         * @type {(Phaser.Renderer.Canvas.CanvasRenderer|Phaser.Renderer.WebGL.WebGLRenderer)}
+         * @since 3.7.0
+         */
+        this.renderer = game.renderer;
+
+        /**
+         * The Texture this TextureSource belongs to.
+         *
+         * @name Phaser.Textures.TextureSource#texture
+         * @type {Phaser.Textures.Texture}
+         * @since 3.0.0
+         */
+        this.texture = texture;
+
+        /**
+         * The source of the image data.
+         * This is either an Image Element, a Canvas Element or a RenderTexture.
+         *
+         * @name Phaser.Textures.TextureSource#source
+         * @type {(HTMLImageElement|HTMLCanvasElement|Phaser.GameObjects.RenderTexture)}
+         * @since 3.12.0
+         */
+        this.source = source;
+
+        /**
+         * The image data.
+         * This is either an Image element or a Canvas element.
+         *
+         * @name Phaser.Textures.TextureSource#image
+         * @type {(HTMLImageElement|HTMLCanvasElement)}
+         * @since 3.0.0
+         */
+        this.image = source;
+
+        /**
+         * Currently un-used.
+         *
+         * @name Phaser.Textures.TextureSource#compressionAlgorithm
+         * @type {integer}
+         * @default null
+         * @since 3.0.0
+         */
+        this.compressionAlgorithm = null;
+
+        /**
+         * The resolution of the source image.
+         *
+         * @name Phaser.Textures.TextureSource#resolution
+         * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.resolution = 1;
+
+        /**
+         * The width of the source image. If not specified in the constructor it will check
+         * the `naturalWidth` and then `width` properties of the source image.
+         *
+         * @name Phaser.Textures.TextureSource#width
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.width = width || source.naturalWidth || source.width || 0;
+
+        /**
+         * The height of the source image. If not specified in the constructor it will check
+         * the `naturalHeight` and then `height` properties of the source image.
+         *
+         * @name Phaser.Textures.TextureSource#height
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.height = height || source.naturalHeight || source.height || 0;
+
+        /**
+         * The Scale Mode the image will use when rendering.
+         * Either Linear or Nearest.
+         *
+         * @name Phaser.Textures.TextureSource#scaleMode
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.scaleMode = ScaleModes.DEFAULT;
+
+        /**
+         * Is the source image a Canvas Element?
+         *
+         * @name Phaser.Textures.TextureSource#isCanvas
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.isCanvas = (source instanceof HTMLCanvasElement);
+
+        /**
+         * Is the source image a Render Texture?
+         *
