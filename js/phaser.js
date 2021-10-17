@@ -76589,3 +76589,215 @@ var TextureManager = new Class({
         /**
          * The Game that this TextureManager belongs to.
          *
+         * @name Phaser.Textures.TextureManager#game
+         * @type {Phaser.Game}
+         * @since 3.0.0
+         */
+        this.game = game;
+
+        /**
+         * The name of this manager.
+         *
+         * @name Phaser.Textures.TextureManager#name
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.name = 'TextureManager';
+
+        /**
+         * An object that has all of textures that Texture Manager creates.
+         * Textures are assigned to keys so we can access to any texture that this object has directly by key value without iteration.
+         *
+         * @name Phaser.Textures.TextureManager#list
+         * @type {object}
+         * @default {}
+         * @since 3.0.0
+         */
+        this.list = {};
+
+        /**
+         * The temporary canvas element to save an pixel data of an arbitrary texture in getPixel() and getPixelAlpha() method.
+         *
+         * @name Phaser.Textures.TextureManager#_tempCanvas
+         * @type {HTMLCanvasElement}
+         * @private
+         * @since 3.0.0
+         */
+        this._tempCanvas = CanvasPool.create2D(this, 1, 1);
+
+        /**
+         * The context of the temporary canvas element made to save an pixel data in getPixel() and getPixelAlpha() method.
+         *
+         * @name Phaser.Textures.TextureManager#_tempContext
+         * @type {CanvasRenderingContext2D}
+         * @private
+         * @since 3.0.0
+         */
+        this._tempContext = this._tempCanvas.getContext('2d');
+
+        /**
+         * An counting value used for emitting 'ready' event after all of managers in game is loaded.
+         *
+         * @name Phaser.Textures.TextureManager#_pending
+         * @type {integer}
+         * @private
+         * @default 0
+         * @since 3.0.0
+         */
+        this._pending = 0;
+
+        game.events.once('boot', this.boot, this);
+    },
+
+    /**
+     * The Boot Handler called by Phaser.Game when it first starts up.
+     *
+     * @method Phaser.Textures.TextureManager#boot
+     * @private
+     * @since 3.0.0
+     */
+    boot: function ()
+    {
+        this._pending = 2;
+
+        this.on('onload', this.updatePending, this);
+        this.on('onerror', this.updatePending, this);
+
+        this.addBase64('__DEFAULT', this.game.config.defaultImage);
+        this.addBase64('__MISSING', this.game.config.missingImage);
+
+        this.game.events.once('destroy', this.destroy, this);
+    },
+
+    /**
+     * After 'onload' or 'onerror' invoked twice, emit 'ready' event.
+     *
+     * @method Phaser.Textures.TextureManager#updatePending
+     * @private
+     * @since 3.0.0
+     */
+    updatePending: function ()
+    {
+        this._pending--;
+
+        if (this._pending === 0)
+        {
+            this.off('onload');
+            this.off('onerror');
+
+            this.game.events.emit('texturesready');
+        }
+    },
+
+    /**
+     * Checks the given texture key and throws a console.warn if the key is already in use, then returns false.
+     * If you wish to avoid the console.warn then use `TextureManager.exists` instead.
+     *
+     * @method Phaser.Textures.TextureManager#checkKey
+     * @since 3.7.0
+     *
+     * @param {string} key - The texture key to check.
+     *
+     * @return {boolean} `true` if it's safe to use the texture key, otherwise `false`.
+     */
+    checkKey: function (key)
+    {
+        if (this.exists(key))
+        {
+            // eslint-disable-next-line no-console
+            console.error('Texture key already in use: ' + key);
+
+            return false;
+        }
+
+        return true;
+    },
+
+    /**
+     * Removes a Texture from the Texture Manager and destroys it. This will immediately
+     * clear all references to it from the Texture Manager, and if it has one, destroy its
+     * WebGLTexture. This will emit a `removetexture` event.
+     *
+     * Note: If you have any Game Objects still using this texture they will start throwing
+     * errors the next time they try to render. Make sure that removing the texture is the final
+     * step when clearing down to avoid this.
+     *
+     * @method Phaser.Textures.TextureManager#remove
+     * @since 3.7.0
+     *
+     * @param {(string|Phaser.Textures.Texture)} key - The key of the Texture to remove, or a reference to it.
+     *
+     * @return {Phaser.Textures.TextureManager} The Texture Manager.
+     */
+    remove: function (key)
+    {
+        if (typeof key === 'string')
+        {
+            if (this.exists(key))
+            {
+                key = this.get(key);
+            }
+            else
+            {
+                console.warn('No texture found matching key: ' + key);
+                return this;
+            }
+        }
+
+        //  By this point key should be a Texture, if not, the following fails anyway
+        if (this.list.hasOwnProperty(key.key))
+        {
+            delete this.list[key.key];
+
+            key.destroy();
+
+            this.emit('removetexture', key.key);
+        }
+
+        return this;
+    },
+
+    /**
+     * Adds a new Texture to the Texture Manager created from the given Base64 encoded data.
+     *
+     * @method Phaser.Textures.TextureManager#addBase64
+     * @since 3.0.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {*} data - The Base64 encoded data.
+     * 
+     * @return {this} This Texture Manager instance.
+     */
+    addBase64: function (key, data)
+    {
+        if (this.checkKey(key))
+        {
+            var _this = this;
+
+            var image = new Image();
+
+            image.onerror = function ()
+            {
+                _this.emit('onerror', key);
+            };
+
+            image.onload = function ()
+            {
+                var texture = _this.create(key, image);
+
+                Parser.Image(texture, 0);
+
+                _this.emit('addtexture', key, texture);
+
+                _this.emit('onload', key, texture);
+            };
+
+            image.src = data;
+        }
+
+        return this;
+    },
+
+    /**
+     * Gets an existing texture frame and converts it into a base64 encoded image and returns the base64 data.
+     * 
