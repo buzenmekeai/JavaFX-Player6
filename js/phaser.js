@@ -77239,3 +77239,201 @@ var TextureManager = new Class({
             var height = texture.source[0].height;
 
             Parser.SpriteSheet(texture, 0, 0, 0, width, height, config);
+
+            this.emit('addtexture', key, texture);
+        }
+
+        return texture;
+    },
+
+    /**
+     * @typedef {object} SpriteSheetFromAtlasConfig
+     * 
+     * @property {string} atlas - The key of the Texture Atlas in which this Sprite Sheet can be found.
+     * @property {string} frame - The key of the Texture Atlas Frame in which this Sprite Sheet can be found.
+     * @property {integer} frameWidth - The fixed width of each frame.
+     * @property {integer} [frameHeight] - The fixed height of each frame. If not set it will use the frameWidth as the height.
+     * @property {integer} [startFrame=0] - Skip a number of frames. Useful when there are multiple sprite sheets in one Texture.
+     * @property {integer} [endFrame=-1] - The total number of frames to extract from the Sprite Sheet. The default value of -1 means "extract all frames".
+     * @property {integer} [margin=0] - If the frames have been drawn with a margin, specify the amount here.
+     * @property {integer} [spacing=0] - If the frames have been drawn with spacing between them, specify the amount here.
+     */
+
+    /**
+     * Adds a Sprite Sheet to this Texture Manager, where the Sprite Sheet exists as a Frame within a Texture Atlas.
+     *
+     * In Phaser terminology a Sprite Sheet is a texture containing different frames, but each frame is the exact
+     * same size and cannot be trimmed or rotated.
+     *
+     * @method Phaser.Textures.TextureManager#addSpriteSheetFromAtlas
+     * @since 3.0.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {SpriteSheetFromAtlasConfig} config - The configuration object for this Sprite Sheet.
+     *
+     * @return {?Phaser.Textures.Texture} The Texture that was created, or `null` if the key is already in use.
+     */
+    addSpriteSheetFromAtlas: function (key, config)
+    {
+        if (!this.checkKey(key))
+        {
+            return null;
+        }
+
+        var atlasKey = GetValue(config, 'atlas', null);
+        var atlasFrame = GetValue(config, 'frame', null);
+
+        if (!atlasKey || !atlasFrame)
+        {
+            return;
+        }
+
+        var atlas = this.get(atlasKey);
+        var sheet = atlas.get(atlasFrame);
+
+        if (sheet)
+        {
+            var texture = this.create(key, sheet.source.image);
+
+            if (sheet.trimmed)
+            {
+                //  If trimmed we need to help the parser adjust
+                Parser.SpriteSheetFromAtlas(texture, sheet, config);
+            }
+            else
+            {
+                Parser.SpriteSheet(texture, 0, sheet.cutX, sheet.cutY, sheet.cutWidth, sheet.cutHeight, config);
+            }
+
+            this.emit('addtexture', key, texture);
+
+            return texture;
+        }
+    },
+
+    /**
+     * Creates a new Texture using the given source and dimensions.
+     *
+     * @method Phaser.Textures.TextureManager#create
+     * @since 3.0.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {HTMLImageElement} source - The source Image element.
+     * @param {integer} width - The width of the Texture.
+     * @param {integer} height - The height of the Texture.
+     *
+     * @return {?Phaser.Textures.Texture} The Texture that was created, or `null` if the key is already in use.
+     */
+    create: function (key, source, width, height)
+    {
+        var texture = null;
+
+        if (this.checkKey(key))
+        {
+            texture = new Texture(this, key, source, width, height);
+
+            this.list[key] = texture;
+        }
+
+        return texture;
+    },
+
+    /**
+     * Checks the given key to see if a Texture using it exists within this Texture Manager.
+     *
+     * @method Phaser.Textures.TextureManager#exists
+     * @since 3.0.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     *
+     * @return {boolean} Returns `true` if a Texture matching the given key exists in this Texture Manager.
+     */
+    exists: function (key)
+    {
+        return (this.list.hasOwnProperty(key));
+    },
+
+    /**
+     * Returns a Texture from the Texture Manager that matches the given key.
+     * If the key is undefined it will return the `__DEFAULT` Texture.
+     * If the key is given, but not found, it will return the `__MISSING` Texture.
+     *
+     * @method Phaser.Textures.TextureManager#get
+     * @since 3.0.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     *
+     * @return {Phaser.Textures.Texture} The Texture that was created.
+     */
+    get: function (key)
+    {
+        if (key === undefined) { key = '__DEFAULT'; }
+
+        if (this.list[key])
+        {
+            return this.list[key];
+        }
+        else
+        {
+            return this.list['__MISSING'];
+        }
+    },
+
+    /**
+     * Takes a Texture key and Frame name and returns a clone of that Frame if found.
+     *
+     * @method Phaser.Textures.TextureManager#cloneFrame
+     * @since 3.0.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {(string|integer)} frame - The string or index of the Frame to be cloned.
+     *
+     * @return {Phaser.Textures.Frame} A Clone of the given Frame.
+     */
+    cloneFrame: function (key, frame)
+    {
+        if (this.list[key])
+        {
+            return this.list[key].get(frame).clone();
+        }
+    },
+
+    /**
+     * Takes a Texture key and Frame name and returns a reference to that Frame, if found.
+     *
+     * @method Phaser.Textures.TextureManager#getFrame
+     * @since 3.0.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {(string|integer)} [frame] - The string-based name, or integer based index, of the Frame to get from the Texture.
+     *
+     * @return {Phaser.Textures.Frame} A Texture Frame object.
+     */
+    getFrame: function (key, frame)
+    {
+        if (this.list[key])
+        {
+            return this.list[key].get(frame);
+        }
+    },
+
+    /**
+     * Returns an array with all of the keys of all Textures in this Texture Manager.
+     * The output array will exclude the `__DEFAULT` and `__MISSING` keys.
+     *
+     * @method Phaser.Textures.TextureManager#getTextureKeys
+     * @since 3.0.0
+     *
+     * @return {string[]} An array containing all of the Texture keys stored in this Texture Manager.
+     */
+    getTextureKeys: function ()
+    {
+        var output = [];
+
+        for (var key in this.list)
+        {
+            if (key !== '__DEFAULT' && key !== '__MISSING')
+            {
+                output.push(key);
+            }
+        }
