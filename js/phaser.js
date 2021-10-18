@@ -77013,3 +77013,229 @@ var TextureManager = new Class({
      * @method Phaser.Textures.TextureManager#addAtlas
      * @since 3.0.0
      *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {HTMLImageElement} source - The source Image element.
+     * @param {object} data - The Texture Atlas data.
+     * @param {HTMLImageElement} [dataSource] - An optional data Image element.
+     *
+     * @return {?Phaser.Textures.Texture} The Texture that was created, or `null` if the key is already in use.
+     */
+    addAtlas: function (key, source, data, dataSource)
+    {
+        //  New Texture Packer format?
+        if (Array.isArray(data.textures) || Array.isArray(data.frames))
+        {
+            return this.addAtlasJSONArray(key, source, data, dataSource);
+        }
+        else
+        {
+            return this.addAtlasJSONHash(key, source, data, dataSource);
+        }
+    },
+
+    /**
+     * Adds a Texture Atlas to this Texture Manager.
+     * The frame data of the atlas must be stored in an Array within the JSON.
+     * This is known as a JSON Array in software such as Texture Packer.
+     *
+     * @method Phaser.Textures.TextureManager#addAtlasJSONArray
+     * @since 3.0.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {(HTMLImageElement|HTMLImageElement[])} source - The source Image element/s.
+     * @param {(object|object[])} data - The Texture Atlas data/s.
+     * @param {HTMLImageElement} [dataSource] - An optional data Image element.
+     *
+     * @return {?Phaser.Textures.Texture} The Texture that was created, or `null` if the key is already in use.
+     */
+    addAtlasJSONArray: function (key, source, data, dataSource)
+    {
+        var texture = null;
+
+        if (this.checkKey(key))
+        {
+            texture = this.create(key, source);
+
+            //  Multi-Atlas?
+            if (Array.isArray(data))
+            {
+                var singleAtlasFile = (data.length === 1); // multi-pack with one atlas file for all images
+
+                //  !! Assumes the textures are in the same order in the source array as in the json data !!
+                for (var i = 0; i < texture.source.length; i++)
+                {
+                    var atlasData = singleAtlasFile ? data[0] : data[i];
+
+                    Parser.JSONArray(texture, i, atlasData);
+                }
+            }
+            else
+            {
+                Parser.JSONArray(texture, 0, data);
+            }
+
+            if (dataSource)
+            {
+                texture.setDataSource(dataSource);
+            }
+
+            this.emit('addtexture', key, texture);
+        }
+
+        return texture;
+    },
+
+    /**
+     * Adds a Texture Atlas to this Texture Manager.
+     * The frame data of the atlas must be stored in an Object within the JSON.
+     * This is known as a JSON Hash in software such as Texture Packer.
+     *
+     * @method Phaser.Textures.TextureManager#addAtlasJSONHash
+     * @since 3.0.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {HTMLImageElement} source - The source Image element.
+     * @param {object} data - The Texture Atlas data.
+     * @param {HTMLImageElement} [dataSource] - An optional data Image element.
+     *
+     * @return {?Phaser.Textures.Texture} The Texture that was created, or `null` if the key is already in use.
+     */
+    addAtlasJSONHash: function (key, source, data, dataSource)
+    {
+        var texture = null;
+
+        if (this.checkKey(key))
+        {
+            texture = this.create(key, source);
+
+            if (Array.isArray(data))
+            {
+                for (var i = 0; i < data.length; i++)
+                {
+                    Parser.JSONHash(texture, i, data[i]);
+                }
+            }
+            else
+            {
+                Parser.JSONHash(texture, 0, data);
+            }
+
+            if (dataSource)
+            {
+                texture.setDataSource(dataSource);
+            }
+
+            this.emit('addtexture', key, texture);
+        }
+
+        return texture;
+    },
+
+    /**
+     * Adds a Texture Atlas to this Texture Manager, where the atlas data is given
+     * in the XML format.
+     *
+     * @method Phaser.Textures.TextureManager#addAtlasXML
+     * @since 3.7.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {HTMLImageElement} source - The source Image element.
+     * @param {object} data - The Texture Atlas XML data.
+     * @param {HTMLImageElement} [dataSource] - An optional data Image element.
+     *
+     * @return {?Phaser.Textures.Texture} The Texture that was created, or `null` if the key is already in use.
+     */
+    addAtlasXML: function (key, source, data, dataSource)
+    {
+        var texture = null;
+
+        if (this.checkKey(key))
+        {
+            texture = this.create(key, source);
+            
+            Parser.AtlasXML(texture, 0, data);
+
+            if (dataSource)
+            {
+                texture.setDataSource(dataSource);
+            }
+
+            this.emit('addtexture', key, texture);
+        }
+
+        return texture;
+    },
+
+    /**
+     * Adds a Unity Texture Atlas to this Texture Manager.
+     * The data must be in the form of a Unity YAML file.
+     *
+     * @method Phaser.Textures.TextureManager#addUnityAtlas
+     * @since 3.0.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {HTMLImageElement} source - The source Image element.
+     * @param {object} data - The Texture Atlas data.
+     * @param {HTMLImageElement} [dataSource] - An optional data Image element.
+     *
+     * @return {?Phaser.Textures.Texture} The Texture that was created, or `null` if the key is already in use.
+     */
+    addUnityAtlas: function (key, source, data, dataSource)
+    {
+        var texture = null;
+
+        if (this.checkKey(key))
+        {
+            texture = this.create(key, source);
+
+            Parser.UnityYAML(texture, 0, data);
+
+            if (dataSource)
+            {
+                texture.setDataSource(dataSource);
+            }
+
+            this.emit('addtexture', key, texture);
+        }
+
+        return texture;
+    },
+
+    /**
+     * @typedef {object} SpriteSheetConfig
+     * 
+     * @property {integer} frameWidth - The fixed width of each frame.
+     * @property {integer} [frameHeight] - The fixed height of each frame. If not set it will use the frameWidth as the height.
+     * @property {integer} [startFrame=0] - Skip a number of frames. Useful when there are multiple sprite sheets in one Texture.
+     * @property {integer} [endFrame=-1] - The total number of frames to extract from the Sprite Sheet. The default value of -1 means "extract all frames".
+     * @property {integer} [margin=0] - If the frames have been drawn with a margin, specify the amount here.
+     * @property {integer} [spacing=0] - If the frames have been drawn with spacing between them, specify the amount here.
+     */
+
+    /**
+     * Adds a Sprite Sheet to this Texture Manager.
+     *
+     * In Phaser terminology a Sprite Sheet is a texture containing different frames, but each frame is the exact
+     * same size and cannot be trimmed or rotated.
+     *
+     * @method Phaser.Textures.TextureManager#addSpriteSheet
+     * @since 3.0.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {HTMLImageElement} source - The source Image element.
+     * @param {SpriteSheetConfig} config - The configuration object for this Sprite Sheet.
+     *
+     * @return {?Phaser.Textures.Texture} The Texture that was created, or `null` if the key is already in use.
+     */
+    addSpriteSheet: function (key, source, config)
+    {
+        var texture = null;
+
+        if (this.checkKey(key))
+        {
+            texture = this.create(key, source);
+
+            var width = texture.source[0].width;
+            var height = texture.source[0].height;
+
+            Parser.SpriteSheet(texture, 0, 0, 0, width, height, config);
