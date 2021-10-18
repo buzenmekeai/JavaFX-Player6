@@ -76801,3 +76801,215 @@ var TextureManager = new Class({
     /**
      * Gets an existing texture frame and converts it into a base64 encoded image and returns the base64 data.
      * 
+     * You can also provide the image type and encoder options.
+     *
+     * @method Phaser.Textures.TextureManager#getBase64
+     * @since 3.12.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {(string|integer)} [frame] - The string-based name, or integer based index, of the Frame to get from the Texture.
+     * @param {string} [type='image/png'] - [description]
+     * @param {number} [encoderOptions=0.92] - [description]
+     * 
+     * @return {string} The base64 encoded data, or an empty string if the texture frame could not be found.
+     */
+    getBase64: function (key, frame, type, encoderOptions)
+    {
+        if (type === undefined) { type = 'image/png'; }
+        if (encoderOptions === undefined) { encoderOptions = 0.92; }
+
+        var data = '';
+
+        var textureFrame = this.getFrame(key, frame);
+
+        if (textureFrame)
+        {
+            var cd = textureFrame.canvasData;
+
+            var canvas = CanvasPool.create2D(this, cd.width, cd.height);
+            var ctx = canvas.getContext('2d');
+
+            ctx.drawImage(
+                textureFrame.source.image,
+                cd.x,
+                cd.y,
+                cd.width,
+                cd.height,
+                0,
+                0,
+                cd.width,
+                cd.height
+            );
+
+            data = canvas.toDataURL(type, encoderOptions);
+
+            CanvasPool.remove(canvas);
+        }
+
+        return data;
+    },
+
+    /**
+     * Adds a new Texture to the Texture Manager created from the given Image element.
+     *
+     * @method Phaser.Textures.TextureManager#addImage
+     * @since 3.0.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {HTMLImageElement} source - The source Image element.
+     * @param {HTMLImageElement} [dataSource] - An optional data Image element.
+     *
+     * @return {?Phaser.Textures.Texture} The Texture that was created, or `null` if the key is already in use.
+     */
+    addImage: function (key, source, dataSource)
+    {
+        var texture = null;
+
+        if (this.checkKey(key))
+        {
+            texture = this.create(key, source);
+
+            Parser.Image(texture, 0);
+
+            if (dataSource)
+            {
+                texture.setDataSource(dataSource);
+            }
+
+            this.emit('addtexture', key, texture);
+        }
+        
+        return texture;
+    },
+
+    /**
+     * Adds a Render Texture to the Texture Manager using the given key.
+     * This allows you to then use the Render Texture as a normal texture for texture based Game Objects like Sprites.
+     *
+     * @method Phaser.Textures.TextureManager#addRenderTexture
+     * @since 3.12.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {Phaser.GameObjects.RenderTexture} renderTexture - The source Render Texture.
+     *
+     * @return {?Phaser.Textures.Texture} The Texture that was created, or `null` if the key is already in use.
+     */
+    addRenderTexture: function (key, renderTexture)
+    {
+        var texture = null;
+
+        if (this.checkKey(key))
+        {
+            texture = this.create(key, renderTexture);
+
+            texture.add('__BASE', 0, 0, 0, renderTexture.width, renderTexture.height);
+
+            this.emit('addtexture', key, texture);
+        }
+        
+        return texture;
+    },
+
+    /**
+     * Creates a new Texture using the given config values.
+     * Generated textures consist of a Canvas element to which the texture data is drawn.
+     * See the Phaser.Create function for the more direct way to create textures.
+     *
+     * @method Phaser.Textures.TextureManager#generate
+     * @since 3.0.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {object} config - The configuration object needed to generate the texture.
+     *
+     * @return {?Phaser.Textures.Texture} The Texture that was created, or `null` if the key is already in use.
+     */
+    generate: function (key, config)
+    {
+        if (this.checkKey(key))
+        {
+            var canvas = CanvasPool.create(this, 1, 1);
+
+            config.canvas = canvas;
+
+            GenerateTexture(config);
+
+            return this.addCanvas(key, canvas);
+        }
+        else
+        {
+            return null;
+        }
+    },
+
+    /**
+     * Creates a new Texture using a blank Canvas element of the size given.
+     *
+     * Canvas elements are automatically pooled and calling this method will
+     * extract a free canvas from the CanvasPool, or create one if none are available.
+     *
+     * @method Phaser.Textures.TextureManager#createCanvas
+     * @since 3.0.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {integer} [width=256]- The width of the Canvas element.
+     * @param {integer} [height=256] - The height of the Canvas element.
+     *
+     * @return {?Phaser.Textures.CanvasTexture} The Canvas Texture that was created, or `null` if the key is already in use.
+     */
+    createCanvas: function (key, width, height)
+    {
+        if (width === undefined) { width = 256; }
+        if (height === undefined) { height = 256; }
+
+        if (this.checkKey(key))
+        {
+            var canvas = CanvasPool.create(this, width, height, CONST.CANVAS, true);
+
+            return this.addCanvas(key, canvas);
+        }
+
+        return null;
+    },
+
+    /**
+     * Creates a new Canvas Texture object from an existing Canvas element
+     * and adds it to this Texture Manager, unless `skipCache` is true.
+     *
+     * @method Phaser.Textures.TextureManager#addCanvas
+     * @since 3.0.0
+     *
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {HTMLCanvasElement} source - The Canvas element to form the base of the new Texture.
+     * @param {boolean} [skipCache=false] - Skip adding this Texture into the Cache?
+     *
+     * @return {?Phaser.Textures.CanvasTexture} The Canvas Texture that was created, or `null` if the key is already in use.
+     */
+    addCanvas: function (key, source, skipCache)
+    {
+        if (skipCache === undefined) { skipCache = false; }
+
+        var texture = null;
+
+        if (skipCache)
+        {
+            texture = new CanvasTexture(this, key, source, source.width, source.height);
+        }
+        else if (this.checkKey(key))
+        {
+            texture = new CanvasTexture(this, key, source, source.width, source.height);
+
+            this.list[key] = texture;
+
+            this.emit('addtexture', key, texture);
+        }
+
+        return texture;
+    },
+
+    /**
+     * Adds a new Texture Atlas to this Texture Manager.
+     * It can accept either JSON Array or JSON Hash formats, as exported by Texture Packer and similar software.
+     *
+     * @method Phaser.Textures.TextureManager#addAtlas
+     * @since 3.0.0
+     *
