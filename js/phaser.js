@@ -77437,3 +77437,204 @@ var TextureManager = new Class({
                 output.push(key);
             }
         }
+
+        return output;
+    },
+
+    /**
+     * Given a Texture and an `x` and `y` coordinate this method will return a new
+     * Color object that has been populated with the color and alpha values of the pixel
+     * at that location in the Texture.
+     *
+     * @method Phaser.Textures.TextureManager#getPixel
+     * @since 3.0.0
+     *
+     * @param {integer} x - The x coordinate of the pixel within the Texture.
+     * @param {integer} y - The y coordinate of the pixel within the Texture.
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {(string|integer)} frame - The string or index of the Frame.
+     *
+     * @return {?Phaser.Display.Color} A Color object populated with the color values of the requested pixel,
+     * or `null` if the coordinates were out of bounds.
+     */
+    getPixel: function (x, y, key, frame)
+    {
+        var textureFrame = this.getFrame(key, frame);
+
+        if (textureFrame)
+        {
+            //  Adjust for trim (if not trimmed x and y are just zero)
+            x -= textureFrame.x;
+            y -= textureFrame.y;
+
+            var data = textureFrame.data.cut;
+
+            x += data.x;
+            y += data.y;
+
+            if (x >= data.x && x < data.r && y >= data.y && y < data.b)
+            {
+                var ctx = this._tempContext;
+
+                ctx.clearRect(0, 0, 1, 1);
+                ctx.drawImage(textureFrame.source.image, x, y, 1, 1, 0, 0, 1, 1);
+
+                var rgb = ctx.getImageData(0, 0, 1, 1);
+
+                return new Color(rgb.data[0], rgb.data[1], rgb.data[2], rgb.data[3]);
+            }
+        }
+
+        return null;
+    },
+
+    /**
+     * Given a Texture and an `x` and `y` coordinate this method will return a value between 0 and 255
+     * corresponding to the alpha value of the pixel at that location in the Texture. If the coordinate
+     * is out of bounds it will return null.
+     *
+     * @method Phaser.Textures.TextureManager#getPixelAlpha
+     * @since 3.10.0
+     *
+     * @param {integer} x - The x coordinate of the pixel within the Texture.
+     * @param {integer} y - The y coordinate of the pixel within the Texture.
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {(string|integer)} frame - The string or index of the Frame.
+     *
+     * @return {integer} A value between 0 and 255, or `null` if the coordinates were out of bounds.
+     */
+    getPixelAlpha: function (x, y, key, frame)
+    {
+        var textureFrame = this.getFrame(key, frame);
+
+        if (textureFrame)
+        {
+            //  Adjust for trim (if not trimmed x and y are just zero)
+            x -= textureFrame.x;
+            y -= textureFrame.y;
+
+            var data = textureFrame.data.cut;
+
+            x += data.x;
+            y += data.y;
+
+            if (x >= data.x && x < data.r && y >= data.y && y < data.b)
+            {
+                var ctx = this._tempContext;
+
+                ctx.clearRect(0, 0, 1, 1);
+                ctx.drawImage(textureFrame.source.image, x, y, 1, 1, 0, 0, 1, 1);
+    
+                var rgb = ctx.getImageData(0, 0, 1, 1);
+    
+                return rgb.data[3];
+            }
+        }
+
+        return null;
+    },
+
+    /**
+     * Sets the given Game Objects `texture` and `frame` properties so that it uses
+     * the Texture and Frame specified in the `key` and `frame` arguments to this method.
+     *
+     * @method Phaser.Textures.TextureManager#setTexture
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object the texture would be set on.
+     * @param {string} key - The unique string-based key of the Texture.
+     * @param {(string|integer)} frame - The string or index of the Frame.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object the texture was set on.
+     */
+    setTexture: function (gameObject, key, frame)
+    {
+        if (this.list[key])
+        {
+            gameObject.texture = this.list[key];
+            gameObject.frame = gameObject.texture.get(frame);
+        }
+
+        return gameObject;
+    },
+
+    /**
+     * Changes the key being used by a Texture to the new key provided.
+     * 
+     * The old key is removed, allowing it to be re-used.
+     * 
+     * Game Objects are linked to Textures by a reference to the Texture object, so
+     * all existing references will be retained.
+     *
+     * @method Phaser.Textures.TextureManager#renameTexture
+     * @since 3.12.0
+     *
+     * @param {string} currentKey - The current string-based key of the Texture you wish to rename.
+     * @param {string} newKey - The new unique string-based key to use for the Texture.
+     *
+     * @return {boolean} `true` if the Texture key was successfully renamed, otherwise `false`.
+     */
+    renameTexture: function (currentKey, newKey)
+    {
+        var texture = this.get(currentKey);
+
+        if (texture && currentKey !== newKey)
+        {
+            texture.key = newKey;
+
+            this.list[newKey] = texture;
+
+            delete this.list[currentKey];
+
+            return true;
+        }
+
+        return false;
+    },
+
+    /**
+     * Passes all Textures to the given callback.
+     *
+     * @method Phaser.Textures.TextureManager#each
+     * @since 3.0.0
+     *
+     * @param {EachTextureCallback} callback - The callback function to be sent the Textures.
+     * @param {object} scope - The value to use as `this` when executing the callback.
+     * @param {...*} [args] - Additional arguments that will be passed to the callback, after the child.
+     */
+    each: function (callback, scope)
+    {
+        var args = [ null ];
+
+        for (var i = 1; i < arguments.length; i++)
+        {
+            args.push(arguments[i]);
+        }
+
+        for (var texture in this.list)
+        {
+            args[0] = this.list[texture];
+
+            callback.apply(scope, args);
+        }
+    },
+
+    /**
+     * Destroys the Texture Manager and all Textures stored within it.
+     *
+     * @method Phaser.Textures.TextureManager#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        for (var texture in this.list)
+        {
+            this.list[texture].destroy();
+        }
+
+        this.list = {};
+
+        this.game = null;
+
+        CanvasPool.remove(this._tempCanvas);
+    }
