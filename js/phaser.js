@@ -77821,3 +77821,220 @@ var WebAudioSound = new Class({
         this.duration = this.audioBuffer.duration;
 
         this.totalDuration = this.audioBuffer.duration;
+
+        BaseSound.call(this, manager, key, config);
+    },
+
+    /**
+     * @event Phaser.Sound.WebAudioSound#playEvent
+     * @param {Phaser.Sound.WebAudioSound} sound - Reference to the Sound that emitted event.
+     */
+
+    /**
+     * Play this sound, or a marked section of it.
+     * 
+     * It always plays the sound from the start. If you want to start playback from a specific time
+     * you can set 'seek' setting of the config object, provided to this call, to that value.
+     *
+     * @method Phaser.Sound.WebAudioSound#play
+     * @fires Phaser.Sound.WebAudioSound#playEvent
+     * @since 3.0.0
+     *
+     * @param {string} [markerName=''] - If you want to play a marker then provide the marker name here, otherwise omit it to play the full sound.
+     * @param {SoundConfig} [config] - Optional sound config object to be applied to this marker or entire sound if no marker name is provided. It gets memorized for future plays of current section of the sound.
+     *
+     * @return {boolean} Whether the sound started playing successfully.
+     */
+    play: function (markerName, config)
+    {
+        if (!BaseSound.prototype.play.call(this, markerName, config))
+        {
+            return false;
+        }
+
+        //  \/\/\/ isPlaying = true, isPaused = false \/\/\/
+        this.stopAndRemoveBufferSource();
+        this.createAndStartBufferSource();
+
+        this.emit('play', this);
+
+        return true;
+    },
+
+    /**
+     * @event Phaser.Sound.WebAudioSound#pauseEvent
+     * @param {Phaser.Sound.WebAudioSound} sound - Reference to the Sound that emitted event.
+     */
+
+    /**
+     * Pauses the sound.
+     *
+     * @method Phaser.Sound.WebAudioSound#pause
+     * @fires Phaser.Sound.WebAudioSound#pauseEvent
+     * @since 3.0.0
+     *
+     * @return {boolean} Whether the sound was paused successfully.
+     */
+    pause: function ()
+    {
+        if (this.manager.context.currentTime < this.startTime)
+        {
+            return false;
+        }
+
+        if (!BaseSound.prototype.pause.call(this))
+        {
+            return false;
+        }
+
+        //  \/\/\/ isPlaying = false, isPaused = true \/\/\/
+        this.currentConfig.seek = this.getCurrentTime(); // Equivalent to setting paused time
+        this.stopAndRemoveBufferSource();
+
+        this.emit('pause', this);
+
+        return true;
+    },
+
+    /**
+     * @event Phaser.Sound.WebAudioSound#resumeEvent
+     * @param {Phaser.Sound.WebAudioSound} sound - Reference to the Sound that emitted event.
+     */
+
+    /**
+     * Resumes the sound.
+     *
+     * @method Phaser.Sound.WebAudioSound#resume
+     * @fires Phaser.Sound.WebAudioSound#resumeEvent
+     * @since 3.0.0
+     *
+     * @return {boolean} Whether the sound was resumed successfully.
+     */
+    resume: function ()
+    {
+        if (this.manager.context.currentTime < this.startTime)
+        {
+            return false;
+        }
+
+        if (!BaseSound.prototype.resume.call(this))
+        {
+            return false;
+        }
+
+        //  \/\/\/ isPlaying = true, isPaused = false \/\/\/
+        this.createAndStartBufferSource();
+
+        this.emit('resume', this);
+
+        return true;
+    },
+
+    /**
+     * @event Phaser.Sound.WebAudioSound#stopEvent
+     * @param {Phaser.Sound.WebAudioSound} sound - Reference to the Sound that emitted event.
+     */
+
+    /**
+     * Stop playing this sound.
+     *
+     * @method Phaser.Sound.WebAudioSound#stop
+     * @fires Phaser.Sound.WebAudioSound#stopEvent
+     * @since 3.0.0
+     *
+     * @return {boolean} Whether the sound was stopped successfully.
+     */
+    stop: function ()
+    {
+        if (!BaseSound.prototype.stop.call(this))
+        {
+            return false;
+        }
+
+        //  \/\/\/ isPlaying = false, isPaused = false \/\/\/
+        this.stopAndRemoveBufferSource();
+
+        this.emit('stop', this);
+
+        return true;
+    },
+
+    /**
+     * Used internally.
+     *
+     * @method Phaser.Sound.WebAudioSound#createAndStartBufferSource
+     * @private
+     * @since 3.0.0
+     */
+    createAndStartBufferSource: function ()
+    {
+        var seek = this.currentConfig.seek;
+        var delay = this.currentConfig.delay;
+        var when = this.manager.context.currentTime + delay;
+        var offset = (this.currentMarker ? this.currentMarker.start : 0) + seek;
+        var duration = this.duration - seek;
+
+        this.playTime = when - seek;
+        this.startTime = when;
+        this.source = this.createBufferSource();
+
+        this.applyConfig();
+
+        this.source.start(Math.max(0, when), Math.max(0, offset), Math.max(0, duration));
+
+        this.resetConfig();
+    },
+
+    /**
+     * Used internally.
+     *
+     * @method Phaser.Sound.WebAudioSound#createAndStartLoopBufferSource
+     * @private
+     * @since 3.0.0
+     */
+    createAndStartLoopBufferSource: function ()
+    {
+        var when = this.getLoopTime();
+        var offset = this.currentMarker ? this.currentMarker.start : 0;
+        var duration = this.duration;
+
+        this.loopTime = when;
+        this.loopSource = this.createBufferSource();
+        this.loopSource.playbackRate.setValueAtTime(this.totalRate, 0);
+        this.loopSource.start(Math.max(0, when), Math.max(0, offset), Math.max(0, duration));
+    },
+
+    /**
+     * Used internally.
+     *
+     * @method Phaser.Sound.WebAudioSound#createBufferSource
+     * @private
+     * @since 3.0.0
+     *
+     * @return {AudioBufferSourceNode}
+     */
+    createBufferSource: function ()
+    {
+        var _this = this;
+        var source = this.manager.context.createBufferSource();
+
+        source.buffer = this.audioBuffer;
+
+        source.connect(this.muteNode);
+
+        source.onended = function (ev)
+        {
+            if (ev.target === _this.source)
+            {
+                // sound ended
+                if (_this.currentConfig.loop)
+                {
+                    _this.hasLooped = true;
+                }
+                else
+                {
+                    _this.hasEnded = true;
+                }
+            }
+
+            // else was stopped
