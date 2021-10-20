@@ -77638,3 +77638,186 @@ var TextureManager = new Class({
 
         CanvasPool.remove(this._tempCanvas);
     }
+
+});
+
+module.exports = TextureManager;
+
+
+/***/ }),
+/* 319 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Pavle Goloskokovic <pgoloskokovic@gmail.com> (http://prunegames.com)
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var BaseSound = __webpack_require__(114);
+var Class = __webpack_require__(0);
+
+/**
+ * @classdesc
+ * Web Audio API implementation of the sound.
+ *
+ * @class WebAudioSound
+ * @extends Phaser.Sound.BaseSound
+ * @memberof Phaser.Sound
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Sound.WebAudioSoundManager} manager - Reference to the current sound manager instance.
+ * @param {string} key - Asset key for the sound.
+ * @param {SoundConfig} [config={}] - An optional config object containing default sound settings.
+ */
+var WebAudioSound = new Class({
+
+    Extends: BaseSound,
+
+    initialize:
+
+    function WebAudioSound (manager, key, config)
+    {
+        if (config === undefined) { config = {}; }
+
+        /**
+         * Audio buffer containing decoded data of the audio asset to be played.
+         *
+         * @name Phaser.Sound.WebAudioSound#audioBuffer
+         * @type {AudioBuffer}
+         * @private
+         * @since 3.0.0
+         */
+        this.audioBuffer = manager.game.cache.audio.get(key);
+
+        if (!this.audioBuffer)
+        {
+            // eslint-disable-next-line no-console
+            console.warn('Audio cache entry missing: ' + key);
+            return;
+        }
+
+        /**
+         * A reference to an audio source node used for playing back audio from
+         * audio data stored in Phaser.Sound.WebAudioSound#audioBuffer.
+         *
+         * @name Phaser.Sound.WebAudioSound#source
+         * @type {AudioBufferSourceNode}
+         * @private
+         * @default null
+         * @since 3.0.0
+         */
+        this.source = null;
+
+        /**
+         * A reference to a second audio source used for gapless looped playback.
+         *
+         * @name Phaser.Sound.WebAudioSound#loopSource
+         * @type {AudioBufferSourceNode}
+         * @private
+         * @default null
+         * @since 3.0.0
+         */
+        this.loopSource = null;
+
+        /**
+         * Gain node responsible for controlling this sound's muting.
+         *
+         * @name Phaser.Sound.WebAudioSound#muteNode
+         * @type {GainNode}
+         * @private
+         * @since 3.0.0
+         */
+        this.muteNode = manager.context.createGain();
+
+        /**
+         * Gain node responsible for controlling this sound's volume.
+         *
+         * @name Phaser.Sound.WebAudioSound#volumeNode
+         * @type {GainNode}
+         * @private
+         * @since 3.0.0
+         */
+        this.volumeNode = manager.context.createGain();
+
+        /**
+         * The time at which the sound should have started playback from the beginning.
+         * Based on BaseAudioContext.currentTime value.
+         *
+         * @name Phaser.Sound.WebAudioSound#playTime
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.0.0
+         */
+        this.playTime = 0;
+
+        /**
+         * The time at which the sound source should have actually started playback.
+         * Based on BaseAudioContext.currentTime value.
+         *
+         * @name Phaser.Sound.WebAudioSound#startTime
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.0.0
+         */
+        this.startTime = 0;
+
+        /**
+         * The time at which the sound loop source should actually start playback.
+         * Based on BaseAudioContext.currentTime value.
+         *
+         * @name Phaser.Sound.WebAudioSound#loopTime
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.0.0
+         */
+        this.loopTime = 0;
+
+        /**
+         * An array where we keep track of all rate updates during playback.
+         * Array of object types: { time: number, rate: number }
+         *
+         * @name Phaser.Sound.WebAudioSound#rateUpdates
+         * @type {array}
+         * @private
+         * @default []
+         * @since 3.0.0
+         */
+        this.rateUpdates = [];
+
+        /**
+         * Used for keeping track when sound source playback has ended
+         * so its state can be updated accordingly.
+         *
+         * @name Phaser.Sound.WebAudioSound#hasEnded
+         * @type {boolean}
+         * @private
+         * @default false
+         * @since 3.0.0
+         */
+        this.hasEnded = false;
+
+        /**
+         * Used for keeping track when sound source has looped
+         * so its state can be updated accordingly.
+         *
+         * @name Phaser.Sound.WebAudioSound#hasLooped
+         * @type {boolean}
+         * @private
+         * @default false
+         * @since 3.0.0
+         */
+        this.hasLooped = false;
+
+        this.muteNode.connect(this.volumeNode);
+
+        this.volumeNode.connect(manager.destination);
+
+        this.duration = this.audioBuffer.duration;
+
+        this.totalDuration = this.audioBuffer.duration;
