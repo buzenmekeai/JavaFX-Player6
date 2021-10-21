@@ -78272,3 +78272,227 @@ var WebAudioSound = new Class({
     /**
      * Rate at which this Sound will be played.
      * Value of 1.0 plays the audio at full speed, 0.5 plays the audio at half speed
+     * and 2.0 doubles the audios playback speed.
+     *
+     * @name Phaser.Sound.WebAudioSound#rate
+     * @type {number}
+     * @default 1
+     * @since 3.0.0
+     */
+    rate: {
+
+        get: function ()
+        {
+            return this.currentConfig.rate;
+        },
+
+        set: function (value)
+        {
+            this.currentConfig.rate = value;
+
+            this.calculateRate();
+
+            this.emit('rate', this, value);
+        }
+
+    },
+
+    /**
+     * Sets the playback rate of this Sound.
+     * 
+     * For example, a value of 1.0 plays the audio at full speed, 0.5 plays the audio at half speed
+     * and 2.0 doubles the audios playback speed.
+     *
+     * @method Phaser.Sound.WebAudioSound#setRate
+     * @fires Phaser.Sound.WebAudioSound#rateEvent
+     * @since 3.3.0
+     *
+     * @param {number} value - The playback rate at of this Sound.
+     *
+     * @return {Phaser.Sound.WebAudioSound} This Sound.
+     */
+    setRate: function (value)
+    {
+        this.rate = value;
+
+        return this;
+    },
+
+    /**
+     * @event Phaser.Sound.WebAudioSound#detuneEvent
+     * @param {Phaser.Sound.WebAudioSound} sound - Reference to the Sound that emitted event.
+     * @param {number} value - An updated value of Phaser.Sound.WebAudioSound#detune property.
+     */
+
+    /**
+     * The detune value of this Sound, given in [cents](https://en.wikipedia.org/wiki/Cent_%28music%29).
+     * The range of the value is -1200 to 1200, but we recommend setting it to [50](https://en.wikipedia.org/wiki/50_Cent).
+     *
+     * @name Phaser.Sound.WebAudioSound#detune
+     * @type {number}
+     * @default 0
+     * @since 3.0.0
+     */
+    detune: {
+
+        get: function ()
+        {
+            return this.currentConfig.detune;
+        },
+
+        set: function (value)
+        {
+            this.currentConfig.detune = value;
+
+            this.calculateRate();
+
+            this.emit('detune', this, value);
+        }
+
+    },
+
+    /**
+     * Sets the detune value of this Sound, given in [cents](https://en.wikipedia.org/wiki/Cent_%28music%29).
+     * The range of the value is -1200 to 1200, but we recommend setting it to [50](https://en.wikipedia.org/wiki/50_Cent).
+     *
+     * @method Phaser.Sound.WebAudioSound#setDetune
+     * @fires Phaser.Sound.WebAudioSound#detuneEvent
+     * @since 3.3.0
+     *
+     * @param {number} value - The range of the value is -1200 to 1200, but we recommend setting it to [50](https://en.wikipedia.org/wiki/50_Cent).
+     *
+     * @return {Phaser.Sound.WebAudioSound} This Sound.
+     */
+    setDetune: function (value)
+    {
+        this.detune = value;
+
+        return this;
+    },
+
+    /**
+     * @event Phaser.Sound.WebAudioSound#muteEvent
+     * @param {Phaser.Sound.WebAudioSound} sound - Reference to the sound that emitted event.
+     * @param {boolean} value - An updated value of Phaser.Sound.WebAudioSound#mute property.
+     */
+
+    /**
+     * Boolean indicating whether the sound is muted or not.
+     * Gets or sets the muted state of this sound.
+     * 
+     * @name Phaser.Sound.WebAudioSound#mute
+     * @type {boolean}
+     * @default false
+     * @since 3.0.0
+     */
+    mute: {
+
+        get: function ()
+        {
+            return (this.muteNode.gain.value === 0);
+        },
+
+        set: function (value)
+        {
+            this.currentConfig.mute = value;
+            this.muteNode.gain.setValueAtTime(value ? 0 : 1, 0);
+
+            this.emit('mute', this, value);
+        }
+
+    },
+
+    /**
+     * Sets the muted state of this Sound.
+     *
+     * @method Phaser.Sound.WebAudioSound#setMute
+     * @fires Phaser.Sound.WebAudioSound#muteEvent
+     * @since 3.4.0
+     *
+     * @param {boolean} value - `true` to mute this sound, `false` to unmute it.
+     *
+     * @return {Phaser.Sound.WebAudioSound} This Sound instance.
+     */
+    setMute: function (value)
+    {
+        this.mute = value;
+
+        return this;
+    },
+
+    /**
+     * @event Phaser.Sound.WebAudioSound#volumeEvent
+     * @param {Phaser.Sound.WebAudioSound} sound - Reference to the sound that emitted event.
+     * @param {number} value - An updated value of Phaser.Sound.WebAudioSound#volume property.
+     */
+
+    /**
+     * Gets or sets the volume of this sound, a value between 0 (silence) and 1 (full volume).
+     * 
+     * @name Phaser.Sound.WebAudioSound#volume
+     * @type {number}
+     * @default 1
+     * @since 3.0.0
+     */
+    volume: {
+
+        get: function ()
+        {
+            return this.volumeNode.gain.value;
+        },
+
+        set: function (value)
+        {
+            this.currentConfig.volume = value;
+            this.volumeNode.gain.setValueAtTime(value, 0);
+
+            this.emit('volume', this, value);
+        }
+    },
+
+    /**
+     * Sets the volume of this Sound.
+     *
+     * @method Phaser.Sound.WebAudioSound#setVolume
+     * @fires Phaser.Sound.WebAudioSound#volumeEvent
+     * @since 3.4.0
+     *
+     * @param {number} value - The volume of the sound.
+     *
+     * @return {Phaser.Sound.WebAudioSound} This Sound instance.
+     */
+    setVolume: function (value)
+    {
+        this.volume = value;
+
+        return this;
+    },
+
+    /**
+     * @event Phaser.Sound.WebAudioSound#seekEvent
+     * @param {Phaser.Sound.WebAudioSound} sound - Reference to the sound that emitted event.
+     * @param {number} value - An updated value of Phaser.Sound.WebAudioSound#seek property.
+     */
+
+    /**
+     * Property representing the position of playback for this sound, in seconds.
+     * Setting it to a specific value moves current playback to that position.
+     * The value given is clamped to the range 0 to current marker duration.
+     * Setting seek of a stopped sound has no effect.
+     * 
+     * @name Phaser.Sound.WebAudioSound#seek
+     * @type {number}
+     * @since 3.0.0
+     */
+    seek: {
+
+        get: function ()
+        {
+            if (this.isPlaying)
+            {
+                if (this.manager.context.currentTime < this.startTime)
+                {
+                    return this.startTime - this.playTime;
+                }
+
+                return this.getCurrentTime();
