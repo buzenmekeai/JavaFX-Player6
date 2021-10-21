@@ -78496,3 +78496,239 @@ var WebAudioSound = new Class({
                 }
 
                 return this.getCurrentTime();
+            }
+            else if (this.isPaused)
+            {
+                return this.currentConfig.seek;
+            }
+            else
+            {
+                return 0;
+            }
+        },
+
+        set: function (value)
+        {
+            if (this.manager.context.currentTime < this.startTime)
+            {
+                return;
+            }
+
+            if (this.isPlaying || this.isPaused)
+            {
+                value = Math.min(Math.max(0, value), this.duration);
+
+                this.currentConfig.seek = value;
+
+                if (this.isPlaying)
+                {
+                    this.stopAndRemoveBufferSource();
+                    this.createAndStartBufferSource();
+                }
+
+                this.emit('seek', this, value);
+            }
+        }
+    },
+
+    /**
+     * Seeks to a specific point in this sound.
+     *
+     * @method Phaser.Sound.WebAudioSound#setSeek
+     * @fires Phaser.Sound.WebAudioSound#seekEvent
+     * @since 3.4.0
+     *
+     * @param {number} value - The point in the sound to seek to.
+     *
+     * @return {Phaser.Sound.WebAudioSound} This Sound instance.
+     */
+    setSeek: function (value)
+    {
+        this.seek = value;
+
+        return this;
+    },
+
+    /**
+     * @event Phaser.Sound.WebAudioSound#loopEvent
+     * @param {Phaser.Sound.WebAudioSound} sound - Reference to the sound that emitted event.
+     * @param {boolean} value - An updated value of Phaser.Sound.WebAudioSound#loop property.
+     */
+
+    /**
+     * Flag indicating whether or not the sound or current sound marker will loop.
+     * 
+     * @name Phaser.Sound.WebAudioSound#loop
+     * @type {boolean}
+     * @default false
+     * @since 3.0.0
+     */
+    loop: {
+
+        get: function ()
+        {
+            return this.currentConfig.loop;
+        },
+
+        set: function (value)
+        {
+            this.currentConfig.loop = value;
+
+            if (this.isPlaying)
+            {
+                this.stopAndRemoveLoopBufferSource();
+
+                if (value)
+                {
+                    this.createAndStartLoopBufferSource();
+                }
+            }
+
+            this.emit('loop', this, value);
+        }
+    },
+
+    /**
+     * Sets the loop state of this Sound.
+     *
+     * @method Phaser.Sound.WebAudioSound#setLoop
+     * @fires Phaser.Sound.WebAudioSound#loopEvent
+     * @since 3.4.0
+     *
+     * @param {boolean} value - `true` to loop this sound, `false` to not loop it.
+     *
+     * @return {Phaser.Sound.WebAudioSound} This Sound instance.
+     */
+    setLoop: function (value)
+    {
+        this.loop = value;
+
+        return this;
+    }
+
+});
+
+module.exports = WebAudioSound;
+
+
+/***/ }),
+/* 320 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Pavle Goloskokovic <pgoloskokovic@gmail.com> (http://prunegames.com)
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var BaseSoundManager = __webpack_require__(115);
+var Class = __webpack_require__(0);
+var WebAudioSound = __webpack_require__(319);
+
+/**
+ * @classdesc
+ * Web Audio API implementation of the sound manager.
+ *
+ * @class WebAudioSoundManager
+ * @extends Phaser.Sound.BaseSoundManager
+ * @memberof Phaser.Sound
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Game} game - Reference to the current game instance.
+ */
+var WebAudioSoundManager = new Class({
+
+    Extends: BaseSoundManager,
+
+    initialize:
+
+    function WebAudioSoundManager (game)
+    {
+        /**
+         * The AudioContext being used for playback.
+         *
+         * @name Phaser.Sound.WebAudioSoundManager#context
+         * @type {AudioContext}
+         * @private
+         * @since 3.0.0
+         */
+        this.context = this.createAudioContext(game);
+
+        /**
+         * Gain node responsible for controlling global muting.
+         *
+         * @name Phaser.Sound.WebAudioSoundManager#masterMuteNode
+         * @type {GainNode}
+         * @private
+         * @since 3.0.0
+         */
+        this.masterMuteNode = this.context.createGain();
+
+        /**
+         * Gain node responsible for controlling global volume.
+         *
+         * @name Phaser.Sound.WebAudioSoundManager#masterVolumeNode
+         * @type {GainNode}
+         * @private
+         * @since 3.0.0
+         */
+        this.masterVolumeNode = this.context.createGain();
+
+        this.masterMuteNode.connect(this.masterVolumeNode);
+
+        this.masterVolumeNode.connect(this.context.destination);
+
+        /**
+         * Destination node for connecting individual sounds to.
+         *
+         * @name Phaser.Sound.WebAudioSoundManager#destination
+         * @type {AudioNode}
+         * @private
+         * @since 3.0.0
+         */
+        this.destination = this.masterMuteNode;
+
+        this.locked = this.context.state === 'suspended' && ('ontouchstart' in window || 'onclick' in window);
+
+        BaseSoundManager.call(this, game);
+
+        if (this.locked)
+        {
+            this.unlock();
+        }
+    },
+
+    /**
+     * Method responsible for instantiating and returning AudioContext instance.
+     * If an instance of an AudioContext class was provided through the game config,
+     * that instance will be returned instead. This can come in handy if you are reloading
+     * a Phaser game on a page that never properly refreshes (such as in an SPA project)
+     * and you want to reuse already instantiated AudioContext.
+     *
+     * @method Phaser.Sound.WebAudioSoundManager#createAudioContext
+     * @private
+     * @since 3.0.0
+     *
+     * @param {Phaser.Game} game - Reference to the current game instance.
+     *
+     * @return {AudioContext} The AudioContext instance to be used for playback.
+     */
+    createAudioContext: function (game)
+    {
+        var audioConfig = game.config.audio;
+
+        if (audioConfig && audioConfig.context)
+        {
+            audioConfig.context.resume();
+
+            return audioConfig.context;
+        }
+
+        return new AudioContext();
+    },
+
+    /**
+     * Adds a new sound into the sound manager.
+     *
