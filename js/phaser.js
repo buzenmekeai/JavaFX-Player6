@@ -78732,3 +78732,236 @@ var WebAudioSoundManager = new Class({
     /**
      * Adds a new sound into the sound manager.
      *
+     * @method Phaser.Sound.WebAudioSoundManager#add
+     * @since 3.0.0
+     *
+     * @param {string} key - Asset key for the sound.
+     * @param {SoundConfig} [config] - An optional config object containing default sound settings.
+     *
+     * @return {Phaser.Sound.WebAudioSound} The new sound instance.
+     */
+    add: function (key, config)
+    {
+        var sound = new WebAudioSound(this, key, config);
+
+        this.sounds.push(sound);
+
+        return sound;
+    },
+
+    /**
+     * Unlocks Web Audio API on the initial input event.
+     *
+     * Read more about how this issue is handled here in [this article](https://medium.com/@pgoloskokovic/unlocking-web-audio-the-smarter-way-8858218c0e09).
+     *
+     * @method Phaser.Sound.WebAudioSoundManager#unlock
+     * @since 3.0.0
+     */
+    unlock: function ()
+    {
+        var _this = this;
+
+        var unlock = function ()
+        {
+            _this.context.resume().then(function ()
+            {
+                document.body.removeEventListener('touchstart', unlock);
+                document.body.removeEventListener('touchend', unlock);
+                document.body.removeEventListener('click', unlock);
+
+                _this.unlocked = true;
+            });
+        };
+
+        if (document.body)
+        {
+            document.body.addEventListener('touchstart', unlock, false);
+            document.body.addEventListener('touchend', unlock, false);
+            document.body.addEventListener('click', unlock, false);
+        }
+    },
+
+    /**
+     * Method used internally for pausing sound manager if
+     * Phaser.Sound.WebAudioSoundManager#pauseOnBlur is set to true.
+     *
+     * @method Phaser.Sound.WebAudioSoundManager#onBlur
+     * @protected
+     * @since 3.0.0
+     */
+    onBlur: function ()
+    {
+        this.context.suspend();
+    },
+
+    /**
+     * Method used internally for resuming sound manager if
+     * Phaser.Sound.WebAudioSoundManager#pauseOnBlur is set to true.
+     *
+     * @method Phaser.Sound.WebAudioSoundManager#onFocus
+     * @protected
+     * @since 3.0.0
+     */
+    onFocus: function ()
+    {
+        this.context.resume();
+    },
+
+    /**
+     * Calls Phaser.Sound.BaseSoundManager#destroy method
+     * and cleans up all Web Audio API related stuff.
+     *
+     * @method Phaser.Sound.WebAudioSoundManager#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.destination = null;
+        this.masterVolumeNode.disconnect();
+        this.masterVolumeNode = null;
+        this.masterMuteNode.disconnect();
+        this.masterMuteNode = null;
+
+        if (this.game.config.audio && this.game.config.audio.context)
+        {
+            this.context.suspend();
+        }
+        else
+        {
+            var _this = this;
+
+            this.context.close().then(function ()
+            {
+
+                _this.context = null;
+
+            });
+        }
+
+        BaseSoundManager.prototype.destroy.call(this);
+    },
+
+    /**
+     * @event Phaser.Sound.WebAudioSoundManager#muteEvent
+     * @param {Phaser.Sound.WebAudioSoundManager} soundManager - Reference to the sound manager that emitted event.
+     * @param {boolean} value - An updated value of Phaser.Sound.WebAudioSoundManager#mute property.
+     */
+
+    /**
+     * Sets the muted state of all this Sound Manager.
+     *
+     * @method Phaser.Sound.WebAudioSoundManager#setMute
+     * @fires Phaser.Sound.WebAudioSoundManager#muteEvent
+     * @since 3.3.0
+     *
+     * @param {boolean} value - `true` to mute all sounds, `false` to unmute them.
+     *
+     * @return {Phaser.Sound.WebAudioSoundManager} This Sound Manager.
+     */
+    setMute: function (value)
+    {
+        this.mute = value;
+
+        return this;
+    },
+
+    /**
+     * @name Phaser.Sound.WebAudioSoundManager#mute
+     * @type {boolean}
+     * @fires Phaser.Sound.WebAudioSoundManager#MuteEvent
+     * @since 3.0.0
+     */
+    mute: {
+
+        get: function ()
+        {
+            return (this.masterMuteNode.gain.value === 0);
+        },
+
+        set: function (value)
+        {
+            this.masterMuteNode.gain.setValueAtTime(value ? 0 : 1, 0);
+
+            this.emit('mute', this, value);
+        }
+
+    },
+
+    /**
+     * @event Phaser.Sound.WebAudioSoundManager#VolumeEvent
+     * @param {Phaser.Sound.WebAudioSoundManager} soundManager - Reference to the sound manager that emitted event.
+     * @param {number} value - An updated value of Phaser.Sound.WebAudioSoundManager#volume property.
+     */
+
+    /**
+     * Sets the volume of this Sound Manager.
+     *
+     * @method Phaser.Sound.WebAudioSoundManager#setVolume
+     * @fires Phaser.Sound.WebAudioSoundManager#VolumeEvent
+     * @since 3.3.0
+     *
+     * @param {number} value - The global volume of this Sound Manager.
+     *
+     * @return {Phaser.Sound.WebAudioSoundManager} This Sound Manager.
+     */
+    setVolume: function (value)
+    {
+        this.volume = value;
+
+        return this;
+    },
+
+    /**
+     * @name Phaser.Sound.WebAudioSoundManager#volume
+     * @type {number}
+     * @fires Phaser.Sound.WebAudioSoundManager#VolumeEvent
+     * @since 3.0.0
+     */
+    volume: {
+
+        get: function ()
+        {
+            return this.masterVolumeNode.gain.value;
+        },
+
+        set: function (value)
+        {
+            this.masterVolumeNode.gain.setValueAtTime(value, 0);
+
+            this.emit('volume', this, value);
+        }
+
+    }
+
+});
+
+module.exports = WebAudioSoundManager;
+
+
+/***/ }),
+/* 321 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Pavle Goloskokovic <pgoloskokovic@gmail.com> (http://prunegames.com)
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var BaseSound = __webpack_require__(114);
+var Class = __webpack_require__(0);
+var EventEmitter = __webpack_require__(11);
+var Extend = __webpack_require__(20);
+
+/**
+ * @classdesc
+ * No audio implementation of the sound. It is used if audio has been
+ * disabled in the game config or the device doesn't support any audio.
+ *
+ * It represents a graceful degradation of sound logic that provides
+ * minimal functionality and prevents Phaser projects that use audio from
+ * breaking on devices that don't support any audio playback technologies.
+ *
+ * @class NoAudioSound
+ * @extends Phaser.Sound.BaseSound
