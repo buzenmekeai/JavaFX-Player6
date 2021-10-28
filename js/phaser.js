@@ -79851,3 +79851,228 @@ var HTML5AudioSound = new Class({
      * @param {Phaser.Sound.HTML5AudioSound} sound - Reference to the sound that emitted event.
      * @param {number} value - An updated value of Phaser.Sound.HTML5AudioSound#volume property.
      */
+
+    /**
+     * Gets or sets the volume of this sound, a value between 0 (silence) and 1 (full volume).
+     * 
+     * @name Phaser.Sound.HTML5AudioSound#volume
+     * @type {number}
+     * @default 1
+     * @since 3.0.0
+     */
+    volume: {
+
+        get: function ()
+        {
+            return this.currentConfig.volume;
+        },
+
+        set: function (value)
+        {
+            this.currentConfig.volume = value;
+
+            if (this.manager.isLocked(this, 'volume', value))
+            {
+                return;
+            }
+
+            this.emit('volume', this, value);
+        }
+    },
+
+    /**
+     * Sets the volume of this Sound.
+     *
+     * @method Phaser.Sound.HTML5AudioSound#setVolume
+     * @fires Phaser.Sound.HTML5AudioSound#volumeEvent
+     * @since 3.4.0
+     *
+     * @param {number} value - The volume of the sound.
+     *
+     * @return {Phaser.Sound.HTML5AudioSound} This Sound instance.
+     */
+    setVolume: function (value)
+    {
+        this.volume = value;
+
+        return this;
+    },
+
+    /**
+     * @event Phaser.Sound.HTML5AudioSound#rateEvent
+     * @param {Phaser.Sound.HTML5AudioSound} sound - Reference to the sound that emitted the event.
+     * @param {number} value - An updated value of Phaser.Sound.HTML5AudioSound#rate property.
+     */
+
+    /**
+     * Rate at which this Sound will be played.
+     * Value of 1.0 plays the audio at full speed, 0.5 plays the audio at half speed
+     * and 2.0 doubles the audios playback speed.
+     *
+     * @name Phaser.Sound.HTML5AudioSound#rate
+     * @type {number}
+     * @default 1
+     * @since 3.0.0
+     */
+    rate: {
+
+        get: function ()
+        {
+            return this.currentConfig.rate;
+        },
+
+        set: function (value)
+        {
+            this.currentConfig.rate = value;
+
+            if (this.manager.isLocked(this, 'rate', value))
+            {
+                return;
+            }
+            else
+            {
+                this.calculateRate();
+
+                this.emit('rate', this, value);
+            }
+        }
+
+    },
+
+    /**
+     * Sets the playback rate of this Sound.
+     * 
+     * For example, a value of 1.0 plays the audio at full speed, 0.5 plays the audio at half speed
+     * and 2.0 doubles the audios playback speed.
+     *
+     * @method Phaser.Sound.HTML5AudioSound#setRate
+     * @fires Phaser.Sound.HTML5AudioSound#rateEvent
+     * @since 3.3.0
+     *
+     * @param {number} value - The playback rate at of this Sound.
+     *
+     * @return {Phaser.Sound.HTML5AudioSound} This Sound.
+     */
+    setRate: function (value)
+    {
+        this.rate = value;
+
+        return this;
+    },
+
+    /**
+     * @event Phaser.Sound.HTML5AudioSound#detuneEvent
+     * @param {Phaser.Sound.HTML5AudioSound} sound - Reference to the Sound that emitted event.
+     * @param {number} value - An updated value of Phaser.Sound.HTML5AudioSound#detune property.
+     */
+
+    /**
+     * The detune value of this Sound, given in [cents](https://en.wikipedia.org/wiki/Cent_%28music%29).
+     * The range of the value is -1200 to 1200, but we recommend setting it to [50](https://en.wikipedia.org/wiki/50_Cent).
+     *
+     * @name Phaser.Sound.HTML5AudioSound#detune
+     * @type {number}
+     * @default 0
+     * @since 3.0.0
+     */
+    detune: {
+
+        get: function ()
+        {
+            return this.currentConfig.detune;
+        },
+
+        set: function (value)
+        {
+            this.currentConfig.detune = value;
+
+            if (this.manager.isLocked(this, 'detune', value))
+            {
+                return;
+            }
+            else
+            {
+                this.calculateRate();
+
+                this.emit('detune', this, value);
+            }
+        }
+
+    },
+
+    /**
+     * Sets the detune value of this Sound, given in [cents](https://en.wikipedia.org/wiki/Cent_%28music%29).
+     * The range of the value is -1200 to 1200, but we recommend setting it to [50](https://en.wikipedia.org/wiki/50_Cent).
+     *
+     * @method Phaser.Sound.HTML5AudioSound#setDetune
+     * @fires Phaser.Sound.HTML5AudioSound#detuneEvent
+     * @since 3.3.0
+     *
+     * @param {number} value - The range of the value is -1200 to 1200, but we recommend setting it to [50](https://en.wikipedia.org/wiki/50_Cent).
+     *
+     * @return {Phaser.Sound.HTML5AudioSound} This Sound.
+     */
+    setDetune: function (value)
+    {
+        this.detune = value;
+
+        return this;
+    },
+
+    /**
+     * @event Phaser.Sound.HTML5AudioSound#seekEvent
+     * @param {Phaser.Sound.HTML5AudioSound} sound - Reference to the sound that emitted event.
+     * @param {number} value - An updated value of Phaser.Sound.HTML5AudioSound#seek property.
+     */
+
+    /**
+     * Property representing the position of playback for this sound, in seconds.
+     * Setting it to a specific value moves current playback to that position.
+     * The value given is clamped to the range 0 to current marker duration.
+     * Setting seek of a stopped sound has no effect.
+     * 
+     * @name Phaser.Sound.HTML5AudioSound#seek
+     * @type {number}
+     * @since 3.0.0
+     */
+    seek: {
+
+        get: function ()
+        {
+            if (this.isPlaying)
+            {
+                return this.audio.currentTime - (this.currentMarker ? this.currentMarker.start : 0);
+            }
+            else if (this.isPaused)
+            {
+                return this.currentConfig.seek;
+            }
+            else
+            {
+                return 0;
+            }
+        },
+
+        set: function (value)
+        {
+            if (this.manager.isLocked(this, 'seek', value))
+            {
+                return;
+            }
+
+            if (this.startTime > 0)
+            {
+                return;
+            }
+
+            if (this.isPlaying || this.isPaused)
+            {
+                value = Math.min(Math.max(0, value), this.duration);
+
+                if (this.isPlaying)
+                {
+                    this.previousTime = value;
+                    this.audio.currentTime = value;
+                }
+                else if (this.isPaused)
+                {
