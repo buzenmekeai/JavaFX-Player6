@@ -79396,3 +79396,245 @@ var HTML5AudioSound = new Class({
         {
             return false;
         }
+
+        //  \/\/\/ isPlaying = true, isPaused = false \/\/\/
+        if (!this.pickAndPlayAudioTag())
+        {
+            return false;
+        }
+
+        this.emit('resume', this);
+
+        return true;
+    },
+
+    /**
+     * @event Phaser.Sound.HTML5AudioSound#stopEvent
+     * @param {Phaser.Sound.HTML5AudioSound} sound - Reference to the sound that emitted event.
+     */
+
+    /**
+     * Stop playing this sound.
+     *
+     * @method Phaser.Sound.HTML5AudioSound#stop
+     * @fires Phaser.Sound.HTML5AudioSound#stopEvent
+     * @since 3.0.0
+     *
+     * @return {boolean} Whether the sound was stopped successfully.
+     */
+    stop: function ()
+    {
+        if (this.manager.isLocked(this, 'stop'))
+        {
+            return false;
+        }
+
+        if (!BaseSound.prototype.stop.call(this))
+        {
+            return false;
+        }
+
+        //  \/\/\/ isPlaying = false, isPaused = false \/\/\/
+        this.stopAndReleaseAudioTag();
+
+        this.emit('stop', this);
+
+        return true;
+    },
+
+    /**
+     * Used internally to do what the name says.
+     *
+     * @method Phaser.Sound.HTML5AudioSound#pickAndPlayAudioTag
+     * @private
+     * @since 3.0.0
+     *
+     * @return {boolean} Whether the sound was assigned an audio tag successfully.
+     */
+    pickAndPlayAudioTag: function ()
+    {
+        if (!this.pickAudioTag())
+        {
+            this.reset();
+            return false;
+        }
+
+        var seek = this.currentConfig.seek;
+        var delay = this.currentConfig.delay;
+        var offset = (this.currentMarker ? this.currentMarker.start : 0) + seek;
+
+        this.previousTime = offset;
+        this.audio.currentTime = offset;
+        this.applyConfig();
+
+        if (delay === 0)
+        {
+            this.startTime = 0;
+
+            if (this.audio.paused)
+            {
+                this.playCatchPromise();
+            }
+        }
+        else
+        {
+            this.startTime = window.performance.now() + delay * 1000;
+
+            if (!this.audio.paused)
+            {
+                this.audio.pause();
+            }
+        }
+
+        this.resetConfig();
+
+        return true;
+    },
+
+    /**
+     * This method performs the audio tag pooling logic. It first looks for
+     * unused audio tag to assign to this sound object. If there are no unused
+     * audio tags, based on HTML5AudioSoundManager#override property value, it
+     * looks for sound with most advanced playback and hijacks its audio tag or
+     * does nothing.
+     *
+     * @method Phaser.Sound.HTML5AudioSound#pickAudioTag
+     * @private
+     * @since 3.0.0
+     *
+     * @return {boolean} Whether the sound was assigned an audio tag successfully.
+     */
+    pickAudioTag: function ()
+    {
+        if (this.audio)
+        {
+            return true;
+        }
+
+        for (var i = 0; i < this.tags.length; i++)
+        {
+            var audio = this.tags[i];
+
+            if (audio.dataset.used === 'false')
+            {
+                audio.dataset.used = 'true';
+                this.audio = audio;
+                return true;
+            }
+        }
+
+        if (!this.manager.override)
+        {
+            return false;
+        }
+
+        var otherSounds = [];
+
+        this.manager.forEachActiveSound(function (sound)
+        {
+            if (sound.key === this.key && sound.audio)
+            {
+                otherSounds.push(sound);
+            }
+        }, this);
+
+        otherSounds.sort(function (a1, a2)
+        {
+            if (a1.loop === a2.loop)
+            {
+                // sort by progress
+                return (a2.seek / a2.duration) - (a1.seek / a1.duration);
+            }
+            return a1.loop ? 1 : -1;
+        });
+
+        var selectedSound = otherSounds[0];
+
+        this.audio = selectedSound.audio;
+
+        selectedSound.reset();
+        selectedSound.audio = null;
+        selectedSound.startTime = 0;
+        selectedSound.previousTime = 0;
+
+        return true;
+    },
+
+    /**
+     * Method used for playing audio tag and catching possible exceptions
+     * thrown from rejected Promise returned from play method call.
+     *
+     * @method Phaser.Sound.HTML5AudioSound#playCatchPromise
+     * @private
+     * @since 3.0.0
+     */
+    playCatchPromise: function ()
+    {
+        var playPromise = this.audio.play();
+
+        if (playPromise)
+        {
+            // eslint-disable-next-line no-unused-vars
+            playPromise.catch(function (reason)
+            {
+                console.warn(reason);
+            });
+        }
+    },
+
+    /**
+     * Used internally to do what the name says.
+     *
+     * @method Phaser.Sound.HTML5AudioSound#stopAndReleaseAudioTag
+     * @private
+     * @since 3.0.0
+     */
+    stopAndReleaseAudioTag: function ()
+    {
+        this.audio.pause();
+        this.audio.dataset.used = 'false';
+        this.audio = null;
+        this.startTime = 0;
+        this.previousTime = 0;
+    },
+
+    /**
+     * Method used internally to reset sound state, usually when stopping sound
+     * or when hijacking audio tag from another sound.
+     *
+     * @method Phaser.Sound.HTML5AudioSound#reset
+     * @private
+     * @since 3.0.0
+     */
+    reset: function ()
+    {
+        BaseSound.prototype.stop.call(this);
+    },
+
+    /**
+     * Method used internally by sound manager for pausing sound if
+     * Phaser.Sound.HTML5AudioSoundManager#pauseOnBlur is set to true.
+     *
+     * @method Phaser.Sound.HTML5AudioSoundManager#onBlur
+     * @private
+     * @since 3.0.0
+     */
+    onBlur: function ()
+    {
+        this.isPlaying = false;
+        this.isPaused = true;
+
+        this.currentConfig.seek = this.audio.currentTime - (this.currentMarker ? this.currentMarker.start : 0);
+
+        this.currentConfig.delay = Math.max(0, (this.startTime - window.performance.now()) / 1000);
+
+        this.stopAndReleaseAudioTag();
+    },
+
+    /**
+     * Method used internally by sound manager for resuming sound if
+     * Phaser.Sound.HTML5AudioSoundManager#pauseOnBlur is set to true.
+     *
+     * @method Phaser.Sound.HTML5AudioSound#onFocus
+     * @private
+     * @since 3.0.0
