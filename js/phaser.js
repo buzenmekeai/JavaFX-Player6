@@ -80076,3 +80076,244 @@ var HTML5AudioSound = new Class({
                 }
                 else if (this.isPaused)
                 {
+                    this.currentConfig.seek = value;
+                }
+
+                this.emit('seek', this, value);
+            }
+        }
+    },
+
+    /**
+     * Seeks to a specific point in this sound.
+     *
+     * @method Phaser.Sound.HTML5AudioSound#setSeek
+     * @fires Phaser.Sound.HTML5AudioSound#seekEvent
+     * @since 3.4.0
+     *
+     * @param {number} value - The point in the sound to seek to.
+     *
+     * @return {Phaser.Sound.HTML5AudioSound} This Sound instance.
+     */
+    setSeek: function (value)
+    {
+        this.seek = value;
+
+        return this;
+    },
+
+    /**
+     * @event Phaser.Sound.HTML5AudioSound#loopEvent
+     * @param {Phaser.Sound.HTML5AudioSound} sound - Reference to the sound that emitted event.
+     * @param {boolean} value - An updated value of Phaser.Sound.HTML5AudioSound#loop property.
+     */
+
+    /**
+     * Flag indicating whether or not the sound or current sound marker will loop.
+     * 
+     * @name Phaser.Sound.HTML5AudioSound#loop
+     * @type {boolean}
+     * @default false
+     * @since 3.0.0
+     */
+    loop: {
+
+        get: function ()
+        {
+            return this.currentConfig.loop;
+        },
+
+        set: function (value)
+        {
+            this.currentConfig.loop = value;
+
+            if (this.manager.isLocked(this, 'loop', value))
+            {
+                return;
+            }
+
+            if (this.audio)
+            {
+                this.audio.loop = value;
+            }
+
+            this.emit('loop', this, value);
+        }
+
+    },
+
+    /**
+     * Sets the loop state of this Sound.
+     *
+     * @method Phaser.Sound.HTML5AudioSound#setLoop
+     * @fires Phaser.Sound.HTML5AudioSound#loopEvent
+     * @since 3.4.0
+     *
+     * @param {boolean} value - `true` to loop this sound, `false` to not loop it.
+     *
+     * @return {Phaser.Sound.HTML5AudioSound} This Sound instance.
+     */
+    setLoop: function (value)
+    {
+        this.loop = value;
+
+        return this;
+    }
+
+});
+
+module.exports = HTML5AudioSound;
+
+
+/***/ }),
+/* 324 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Pavle Goloskokovic <pgoloskokovic@gmail.com> (http://prunegames.com)
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var BaseSoundManager = __webpack_require__(115);
+var Class = __webpack_require__(0);
+var HTML5AudioSound = __webpack_require__(323);
+
+/**
+ * HTML5 Audio implementation of the Sound Manager.
+ *
+ * @class HTML5AudioSoundManager
+ * @extends Phaser.Sound.BaseSoundManager
+ * @memberof Phaser.Sound
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Game} game - Reference to the current game instance.
+ */
+var HTML5AudioSoundManager = new Class({
+
+    Extends: BaseSoundManager,
+
+    initialize:
+
+    function HTML5AudioSoundManager (game)
+    {
+        /**
+         * Flag indicating whether if there are no idle instances of HTML5 Audio tag,
+         * for any particular sound, if one of the used tags should be hijacked and used
+         * for succeeding playback or if succeeding Phaser.Sound.HTML5AudioSound#play
+         * call should be ignored.
+         *
+         * @name Phaser.Sound.HTML5AudioSoundManager#override
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.override = true;
+
+        /**
+         * Value representing time difference, in seconds, between calling
+         * play method on an audio tag and when it actually starts playing.
+         * It is used to achieve more accurate delayed sound playback.
+         *
+         * You might need to tweak this value to get the desired results
+         * since audio play delay varies depending on the browser/platform.
+         *
+         * @name Phaser.Sound.HTML5AudioSoundManager#audioPlayDelay
+         * @type {number}
+         * @default 0.1
+         * @since 3.0.0
+         */
+        this.audioPlayDelay = 0.1;
+
+        /**
+         * A value by which we should offset the loop end marker of the
+         * looping sound to compensate for lag, caused by changing audio
+         * tag playback position, in order to achieve gapless looping.
+         *
+         * You might need to tweak this value to get the desired results
+         * since loop lag varies depending on the browser/platform.
+         *
+         * @name Phaser.Sound.HTML5AudioSoundManager#loopEndOffset
+         * @type {number}
+         * @default 0.05
+         * @since 3.0.0
+         */
+        this.loopEndOffset = 0.05;
+
+        /**
+         * An array for keeping track of all the sounds
+         * that were paused when game lost focus.
+         *
+         * @name Phaser.Sound.HTML5AudioSoundManager#onBlurPausedSounds
+         * @type {Phaser.Sound.HTML5AudioSound[]}
+         * @private
+         * @default []
+         * @since 3.0.0
+         */
+        this.onBlurPausedSounds = [];
+
+        this.locked = 'ontouchstart' in window;
+
+        /**
+         * A queue of all actions performed on sound objects while audio was locked.
+         * Once the audio gets unlocked, after an explicit user interaction,
+         * all actions will be performed in chronological order.
+         * Array of object types: { sound: Phaser.Sound.HTML5AudioSound, name: string, value?: * }
+         *
+         * @name Phaser.Sound.HTML5AudioSoundManager#lockedActionsQueue
+         * @type {array}
+         * @private
+         * @since 3.0.0
+         */
+        this.lockedActionsQueue = this.locked ? [] : null;
+
+        /**
+         * Property that actually holds the value of global mute
+         * for HTML5 Audio sound manager implementation.
+         *
+         * @name Phaser.Sound.HTML5AudioSoundManager#_mute
+         * @type {boolean}
+         * @private
+         * @default false
+         * @since 3.0.0
+         */
+        this._mute = false;
+
+        /**
+         * Property that actually holds the value of global volume
+         * for HTML5 Audio sound manager implementation.
+         *
+         * @name Phaser.Sound.HTML5AudioSoundManager#_volume
+         * @type {boolean}
+         * @private
+         * @default 1
+         * @since 3.0.0
+         */
+        this._volume = 1;
+
+        BaseSoundManager.call(this, game);
+    },
+
+    /**
+     * Adds a new sound into the sound manager.
+     *
+     * @method Phaser.Sound.HTML5AudioSoundManager#add
+     * @since 3.0.0
+     *
+     * @param {string} key - Asset key for the sound.
+     * @param {SoundConfig} [config] - An optional config object containing default sound settings.
+     *
+     * @return {Phaser.Sound.HTML5AudioSound} The new sound instance.
+     */
+    add: function (key, config)
+    {
+        var sound = new HTML5AudioSound(this, key, config);
+
+        this.sounds.push(sound);
+
+        return sound;
+    },
+
+    /**
