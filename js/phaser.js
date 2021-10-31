@@ -80317,3 +80317,228 @@ var HTML5AudioSoundManager = new Class({
     },
 
     /**
+     * Unlocks HTML5 Audio loading and playback on mobile
+     * devices on the initial explicit user interaction.
+     *
+     * @method Phaser.Sound.HTML5AudioSoundManager#unlock
+     * @since 3.0.0
+     */
+    unlock: function ()
+    {
+        this.locked = false;
+
+        var _this = this;
+
+        this.game.cache.audio.entries.each(function (key, tags)
+        {
+            for (var i = 0; i < tags.length; i++)
+            {
+                if (tags[i].dataset.locked === 'true')
+                {
+                    _this.locked = true;
+
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        if (!this.locked)
+        {
+            return;
+        }
+
+        var moved = false;
+
+        var detectMove = function ()
+        {
+            moved = true;
+        };
+
+        var unlock = function ()
+        {
+            if (moved)
+            {
+                moved = false;
+                return;
+            }
+
+            document.body.removeEventListener('touchmove', detectMove);
+            document.body.removeEventListener('touchend', unlock);
+
+            var lockedTags = [];
+
+            _this.game.cache.audio.entries.each(function (key, tags)
+            {
+                for (var i = 0; i < tags.length; i++)
+                {
+                    var tag = tags[i];
+
+                    if (tag.dataset.locked === 'true')
+                    {
+                        lockedTags.push(tag);
+                    }
+                }
+
+                return true;
+            });
+
+            if (lockedTags.length === 0)
+            {
+                return;
+            }
+
+            var lastTag = lockedTags[lockedTags.length - 1];
+
+            lastTag.oncanplaythrough = function ()
+            {
+                lastTag.oncanplaythrough = null;
+
+                lockedTags.forEach(function (tag)
+                {
+                    tag.dataset.locked = 'false';
+                });
+
+                _this.unlocked = true;
+            };
+
+            lockedTags.forEach(function (tag)
+            {
+                tag.load();
+            });
+        };
+
+        this.once('unlocked', function ()
+        {
+            this.forEachActiveSound(function (sound)
+            {
+                if (sound.currentMarker === null && sound.duration === 0)
+                {
+                    sound.duration = sound.tags[0].duration;
+                }
+
+                sound.totalDuration = sound.tags[0].duration;
+            });
+
+            while (this.lockedActionsQueue.length)
+            {
+                var lockedAction = this.lockedActionsQueue.shift();
+
+                if (lockedAction.sound[lockedAction.prop].apply)
+                {
+                    lockedAction.sound[lockedAction.prop].apply(lockedAction.sound, lockedAction.value || []);
+                }
+                else
+                {
+                    lockedAction.sound[lockedAction.prop] = lockedAction.value;
+                }
+            }
+
+        }, this);
+
+        document.body.addEventListener('touchmove', detectMove, false);
+        document.body.addEventListener('touchend', unlock, false);
+    },
+
+    /**
+     * Method used internally for pausing sound manager if
+     * Phaser.Sound.HTML5AudioSoundManager#pauseOnBlur is set to true.
+     *
+     * @method Phaser.Sound.HTML5AudioSoundManager#onBlur
+     * @protected
+     * @since 3.0.0
+     */
+    onBlur: function ()
+    {
+        this.forEachActiveSound(function (sound)
+        {
+            if (sound.isPlaying)
+            {
+                this.onBlurPausedSounds.push(sound);
+                sound.onBlur();
+            }
+        });
+    },
+
+    /**
+     * Method used internally for resuming sound manager if
+     * Phaser.Sound.HTML5AudioSoundManager#pauseOnBlur is set to true.
+     *
+     * @method Phaser.Sound.HTML5AudioSoundManager#onFocus
+     * @protected
+     * @since 3.0.0
+     */
+    onFocus: function ()
+    {
+        this.onBlurPausedSounds.forEach(function (sound)
+        {
+            sound.onFocus();
+        });
+
+        this.onBlurPausedSounds.length = 0;
+    },
+
+    /**
+     * Calls Phaser.Sound.BaseSoundManager#destroy method
+     * and cleans up all HTML5 Audio related stuff.
+     *
+     * @method Phaser.Sound.HTML5AudioSoundManager#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        BaseSoundManager.prototype.destroy.call(this);
+
+        this.onBlurPausedSounds.length = 0;
+        this.onBlurPausedSounds = null;
+    },
+
+    /**
+     * Method used internally by Phaser.Sound.HTML5AudioSound class methods and property setters
+     * to check if sound manager is locked and then either perform action immediately or queue it
+     * to be performed once the sound manager gets unlocked.
+     *
+     * @method Phaser.Sound.HTML5AudioSoundManager#isLocked
+     * @protected
+     * @since 3.0.0
+     *
+     * @param {Phaser.Sound.HTML5AudioSound} sound - Sound object on which to perform queued action.
+     * @param {string} prop - Name of the method to be called or property to be assigned a value to.
+     * @param {*} [value] - An optional parameter that either holds an array of arguments to be passed to the method call or value to be set to the property.
+     *
+     * @return {boolean} Whether the sound manager is locked.
+     */
+    isLocked: function (sound, prop, value)
+    {
+        if (sound.tags[0].dataset.locked === 'true')
+        {
+            this.lockedActionsQueue.push({
+                sound: sound,
+                prop: prop,
+                value: value
+            });
+
+            return true;
+        }
+
+        return false;
+    },
+
+    /**
+     * @event Phaser.Sound.HTML5AudioSoundManager#muteEvent
+     * @param {Phaser.Sound.HTML5AudioSoundManager} soundManager - Reference to the sound manager that emitted event.
+     * @param {boolean} value - An updated value of Phaser.Sound.HTML5AudioSoundManager#mute property.
+     */
+
+    /**
+     * Sets the muted state of all this Sound Manager.
+     *
+     * @method Phaser.Sound.HTML5AudioSoundManager#setMute
+     * @fires Phaser.Sound.HTML5AudioSoundManager#muteEvent
+     * @since 3.3.0
+     *
+     * @param {boolean} value - `true` to mute all sounds, `false` to unmute them.
+     *
+     * @return {Phaser.Sound.HTML5AudioSoundManager} This Sound Manager.
+     */
