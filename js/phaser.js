@@ -80994,3 +80994,243 @@ var Scene = new Class({
          * A reference to the Scene Manager Plugin.
          * This property will only be available if defined in the Scene Injection Map.
          *
+         * @name Phaser.Scene#scene
+         * @type {Phaser.Scenes.ScenePlugin}
+         * @since 3.0.0
+         */
+        this.scene;
+
+        /**
+         * A scene level Game Object Display List.
+         * This property will only be available if defined in the Scene Injection Map.
+         *
+         * @name Phaser.Scene#children
+         * @type {Phaser.GameObjects.DisplayList}
+         * @since 3.0.0
+         */
+        this.children;
+
+        /**
+         * A scene level Lights Manager Plugin.
+         * This property will only be available if defined in the Scene Injection Map and the plugin is installed.
+         *
+         * @name Phaser.Scene#lights
+         * @type {Phaser.GameObjects.LightsManager}
+         * @since 3.0.0
+         */
+        this.lights;
+
+        /**
+         * A scene level Data Manager Plugin.
+         * This property will only be available if defined in the Scene Injection Map and the plugin is installed.
+         *
+         * @name Phaser.Scene#data
+         * @type {Phaser.Data.DataManager}
+         * @since 3.0.0
+         */
+        this.data;
+
+        /**
+         * A scene level Input Manager Plugin.
+         * This property will only be available if defined in the Scene Injection Map and the plugin is installed.
+         *
+         * @name Phaser.Scene#input
+         * @type {Phaser.Input.InputPlugin}
+         * @since 3.0.0
+         */
+        this.input;
+
+        /**
+         * A scene level Loader Plugin.
+         * This property will only be available if defined in the Scene Injection Map and the plugin is installed.
+         *
+         * @name Phaser.Scene#load
+         * @type {Phaser.Loader.LoaderPlugin}
+         * @since 3.0.0
+         */
+        this.load;
+
+        /**
+         * A scene level Time and Clock Plugin.
+         * This property will only be available if defined in the Scene Injection Map and the plugin is installed.
+         *
+         * @name Phaser.Scene#time
+         * @type {Phaser.Time.Clock}
+         * @since 3.0.0
+         */
+        this.time;
+
+        /**
+         * A scene level Tween Manager Plugin.
+         * This property will only be available if defined in the Scene Injection Map and the plugin is installed.
+         *
+         * @name Phaser.Scene#tweens
+         * @type {Phaser.Tweens.TweenManager}
+         * @since 3.0.0
+         */
+        this.tweens;
+
+        /**
+         * A scene level Arcade Physics Plugin.
+         * This property will only be available if defined in the Scene Injection Map, the plugin is installed and configured.
+         *
+         * @name Phaser.Scene#physics
+         * @type {Phaser.Physics.Arcade.ArcadePhysics}
+         * @since 3.0.0
+         */
+        this.physics;
+
+        /**
+         * A scene level Impact Physics Plugin.
+         * This property will only be available if defined in the Scene Injection Map, the plugin is installed and configured.
+         *
+         * @name Phaser.Scene#impact
+         * @type {Phaser.Physics.Impact.ImpactPhysics}
+         * @since 3.0.0
+         */
+        this.impact;
+
+        /**
+         * A scene level Matter Physics Plugin.
+         * This property will only be available if defined in the Scene Injection Map, the plugin is installed and configured.
+         *
+         * @name Phaser.Scene#matter
+         * @type {Phaser.Physics.Matter.MatterPhysics}
+         * @since 3.0.0
+         */
+        this.matter;
+    },
+
+    /**
+     * Should be overridden by your own Scenes.
+     *
+     * @method Phaser.Scene#update
+     * @override
+     * @since 3.0.0
+     *
+     * @param {number} time - The current time. Either a High Resolution Timer value if it comes from Request Animation Frame, or Date.now if using SetTimeout.
+     * @param {number} delta - The delta time in ms since the last frame. This is a smoothed and capped value based on the FPS rate.
+     */
+    update: function ()
+    {
+    }
+
+});
+
+module.exports = Scene;
+
+
+/***/ }),
+/* 329 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var CONST = __webpack_require__(116);
+var GetValue = __webpack_require__(4);
+var NOOP = __webpack_require__(1);
+var Scene = __webpack_require__(328);
+var Systems = __webpack_require__(166);
+
+/**
+ * @classdesc
+ * The Scene Manager.
+ *
+ * The Scene Manager is a Game level system, responsible for creating, processing and updating all of the
+ * Scenes in a Game instance.
+ *
+ *
+ * @class SceneManager
+ * @memberof Phaser.Scenes
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Game} game - The Phaser.Game instance this Scene Manager belongs to.
+ * @param {object} sceneConfig - Scene specific configuration settings.
+ */
+var SceneManager = new Class({
+
+    initialize:
+
+    function SceneManager (game, sceneConfig)
+    {
+        /**
+         * The Game that this SceneManager belongs to.
+         *
+         * @name Phaser.Scenes.SceneManager#game
+         * @type {Phaser.Game}
+         * @since 3.0.0
+         */
+        this.game = game;
+
+        /**
+         * An object that maps the keys to the scene so we can quickly get a scene from a key without iteration.
+         *
+         * @name Phaser.Scenes.SceneManager#keys
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.keys = {};
+
+        /**
+         * The array in which all of the scenes are kept.
+         *
+         * @name Phaser.Scenes.SceneManager#scenes
+         * @type {array}
+         * @since 3.0.0
+         */
+        this.scenes = [];
+
+        /**
+         * Scenes pending to be added are stored in here until the manager has time to add it.
+         *
+         * @name Phaser.Scenes.SceneManager#_pending
+         * @type {array}
+         * @private
+         * @since 3.0.0
+         */
+        this._pending = [];
+
+        /**
+         * An array of scenes waiting to be started once the game has booted.
+         *
+         * @name Phaser.Scenes.SceneManager#_start
+         * @type {array}
+         * @private
+         * @since 3.0.0
+         */
+        this._start = [];
+
+        /**
+         * An operations queue, because we don't manipulate the scenes array during processing.
+         *
+         * @name Phaser.Scenes.SceneManager#_queue
+         * @type {array}
+         * @private
+         * @since 3.0.0
+         */
+        this._queue = [];
+
+        /**
+         * Boot time data to merge.
+         *
+         * @name Phaser.Scenes.SceneManager#_data
+         * @type {object}
+         * @private
+         * @since 3.4.0
+         */
+        this._data = {};
+
+        /**
+         * Is the Scene Manager actively processing the Scenes list?
+         *
+         * @name Phaser.Scenes.SceneManager#isProcessing
+         * @type {boolean}
+         * @default false
+         * @readonly
+         * @since 3.0.0
