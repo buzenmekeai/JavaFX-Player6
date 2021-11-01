@@ -80783,3 +80783,214 @@ var Settings = {
             pack: GetValue(config, 'pack', false),
 
             //  Cameras
+
+            cameras: GetValue(config, 'cameras', null),
+
+            //  Scene Property Injection Map
+
+            map: GetValue(config, 'map', Merge(InjectionMap, GetValue(config, 'mapAdd', {}))),
+
+            //  Physics
+
+            physics: GetValue(config, 'physics', {}),
+
+            //  Loader
+
+            loader: GetValue(config, 'loader', {}),
+
+            //  Plugins
+
+            plugins: GetValue(config, 'plugins', false),
+
+            //  Input
+
+            input: GetValue(config, 'input', {})
+
+        };
+    }
+
+};
+
+module.exports = Settings;
+
+
+/***/ }),
+/* 327 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Capitalizes the first letter of a string if there is one.
+ * @example
+ * UppercaseFirst('abc');
+ * // returns 'Abc'
+ * @example
+ * UppercaseFirst('the happy family');
+ * // returns 'The happy family'
+ * @example
+ * UppercaseFirst('');
+ * // returns ''
+ *
+ * @function Phaser.Utils.String.UppercaseFirst
+ * @since 3.0.0
+ *
+ * @param {string} str - The string to capitalize.
+ *
+ * @return {string} A new string, same as the first, but with the first letter capitalized.
+ */
+var UppercaseFirst = function (str)
+{
+    return str && str[0].toUpperCase() + str.slice(1);
+};
+
+module.exports = UppercaseFirst;
+
+
+/***/ }),
+/* 328 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Systems = __webpack_require__(166);
+
+/**
+ * @classdesc
+ * [description]
+ *
+ * @class Scene
+ * @memberof Phaser
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {(string|Phaser.Scenes.Settings.Config)} config - Scene specific configuration settings.
+ */
+var Scene = new Class({
+
+    initialize:
+
+    function Scene (config)
+    {
+        /**
+         * The Scene Systems. You must never overwrite this property, or all hell will break lose.
+         *
+         * @name Phaser.Scene#sys
+         * @type {Phaser.Scenes.Systems}
+         * @since 3.0.0
+         */
+        this.sys = new Systems(this, config);
+
+        /**
+         * A reference to the Phaser.Game instance.
+         * This property will only be available if defined in the Scene Injection Map.
+         *
+         * @name Phaser.Scene#game
+         * @type {Phaser.Game}
+         * @since 3.0.0
+         */
+        this.game;
+
+        /**
+         * A reference to the global Animation Manager.
+         * This property will only be available if defined in the Scene Injection Map.
+         *
+         * @name Phaser.Scene#anims
+         * @type {Phaser.Animations.AnimationManager}
+         * @since 3.0.0
+         */
+        this.anims;
+
+        /**
+         * A reference to the global Cache.
+         * This property will only be available if defined in the Scene Injection Map.
+         *
+         * @name Phaser.Scene#cache
+         * @type {Phaser.Cache.CacheManager}
+         * @since 3.0.0
+         */
+        this.cache;
+
+        /**
+         * A reference to the game level Data Manager.
+         * This property will only be available if defined in the Scene Injection Map.
+         *
+         * @name Phaser.Scene#registry
+         * @type {Phaser.Data.DataManager}
+         * @since 3.0.0
+         */
+        this.registry;
+
+        /**
+         * A reference to the Sound Manager.
+         * This property will only be available if defined in the Scene Injection Map and the plugin is installed.
+         *
+         * @name Phaser.Scene#sound
+         * @type {Phaser.Sound.BaseSoundManager}
+         * @since 3.0.0
+         */
+        this.sound;
+
+        /**
+         * A reference to the Texture Manager.
+         * This property will only be available if defined in the Scene Injection Map.
+         *
+         * @name Phaser.Scene#textures
+         * @type {Phaser.Textures.TextureManager}
+         * @since 3.0.0
+         */
+        this.textures;
+
+        /**
+         * A scene level Event Emitter.
+         * This property will only be available if defined in the Scene Injection Map.
+         *
+         * @name Phaser.Scene#events
+         * @type {Phaser.Events.EventEmitter}
+         * @since 3.0.0
+         */
+        this.events;
+
+        /**
+         * A scene level Camera System.
+         * This property will only be available if defined in the Scene Injection Map.
+         *
+         * @name Phaser.Scene#cameras
+         * @type {Phaser.Cameras.Scene2D.CameraManager}
+         * @since 3.0.0
+         */
+        this.cameras;
+
+        /**
+         * A scene level Game Object Factory.
+         * This property will only be available if defined in the Scene Injection Map.
+         *
+         * @name Phaser.Scene#add
+         * @type {Phaser.GameObjects.GameObjectFactory}
+         * @since 3.0.0
+         */
+        this.add;
+
+        /**
+         * A scene level Game Object Creator.
+         * This property will only be available if defined in the Scene Injection Map.
+         *
+         * @name Phaser.Scene#make
+         * @type {Phaser.GameObjects.GameObjectCreator}
+         * @since 3.0.0
+         */
+        this.make;
+
+        /**
+         * A reference to the Scene Manager Plugin.
+         * This property will only be available if defined in the Scene Injection Map.
+         *
