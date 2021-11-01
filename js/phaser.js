@@ -80542,3 +80542,244 @@ var HTML5AudioSoundManager = new Class({
      *
      * @return {Phaser.Sound.HTML5AudioSoundManager} This Sound Manager.
      */
+    setMute: function (value)
+    {
+        this.mute = value;
+
+        return this;
+    },
+
+    /**
+     * @name Phaser.Sound.HTML5AudioSoundManager#mute
+     * @type {boolean}
+     * @fires Phaser.Sound.HTML5AudioSoundManager#muteEvent
+     * @since 3.0.0
+     */
+    mute: {
+
+        get: function ()
+        {
+            return this._mute;
+        },
+
+        set: function (value)
+        {
+            this._mute = value;
+
+            this.forEachActiveSound(function (sound)
+            {
+                sound.updateMute();
+            });
+
+            this.emit('mute', this, value);
+        }
+
+    },
+
+    /**
+     * @event Phaser.Sound.HTML5AudioSoundManager#volumeEvent
+     * @param {Phaser.Sound.HTML5AudioSoundManager} soundManager - Reference to the sound manager that emitted event.
+     * @param {number} value - An updated value of Phaser.Sound.HTML5AudioSoundManager#volume property.
+     */
+
+    /**
+     * Sets the volume of this Sound Manager.
+     *
+     * @method Phaser.Sound.HTML5AudioSoundManager#setVolume
+     * @fires Phaser.Sound.HTML5AudioSoundManager#volumeEvent
+     * @since 3.3.0
+     *
+     * @param {number} value - The global volume of this Sound Manager.
+     *
+     * @return {Phaser.Sound.HTML5AudioSoundManager} This Sound Manager.
+     */
+    setVolume: function (value)
+    {
+        this.volume = value;
+
+        return this;
+    },
+
+    /**
+     * @name Phaser.Sound.HTML5AudioSoundManager#volume
+     * @type {number}
+     * @fires Phaser.Sound.HTML5AudioSoundManager#volumeEvent
+     * @since 3.0.0
+     */
+    volume: {
+
+        get: function ()
+        {
+            return this._volume;
+        },
+
+        set: function (value)
+        {
+            this._volume = value;
+
+            this.forEachActiveSound(function (sound)
+            {
+                sound.updateVolume();
+            });
+
+            this.emit('volume', this, value);
+        }
+
+    }
+
+});
+
+module.exports = HTML5AudioSoundManager;
+
+
+/***/ }),
+/* 325 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Pavle Goloskokovic <pgoloskokovic@gmail.com> (http://prunegames.com)
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var HTML5AudioSoundManager = __webpack_require__(324);
+var NoAudioSoundManager = __webpack_require__(322);
+var WebAudioSoundManager = __webpack_require__(320);
+
+/**
+ * Creates a Web Audio, HTML5 Audio or No Audio Sound Manager based on config and device settings.
+ *
+ * Be aware of https://developers.google.com/web/updates/2017/09/autoplay-policy-changes
+ *
+ * @function Phaser.Sound.SoundManagerCreator
+ * @since 3.0.0
+ *
+ * @param {Phaser.Game} game - Reference to the current game instance.
+ */
+var SoundManagerCreator = {
+
+    create: function (game)
+    {
+        var audioConfig = game.config.audio;
+        var deviceAudio = game.device.audio;
+
+        if ((audioConfig && audioConfig.noAudio) || (!deviceAudio.webAudio && !deviceAudio.audioData))
+        {
+            return new NoAudioSoundManager(game);
+        }
+
+        if (deviceAudio.webAudio && !(audioConfig && audioConfig.disableWebAudio))
+        {
+            return new WebAudioSoundManager(game);
+        }
+
+        return new HTML5AudioSoundManager(game);
+    }
+
+};
+
+module.exports = SoundManagerCreator;
+
+
+/***/ }),
+/* 326 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CONST = __webpack_require__(116);
+var GetValue = __webpack_require__(4);
+var Merge = __webpack_require__(96);
+var InjectionMap = __webpack_require__(888);
+
+/**
+ * @namespace Phaser.Scenes.Settings
+ */
+
+/**
+ * @typedef {object} Phaser.Scenes.Settings.Config
+ *
+ * @property {string} [key] - [description]
+ * @property {boolean} [active=false] - [description]
+ * @property {boolean} [visible=true] - [description]
+ * @property {(false|Phaser.Loader.FileTypes.PackFileConfig)} [pack=false] - [description]
+ * @property {?(InputJSONCameraObject|InputJSONCameraObject[])} [cameras=null] - [description]
+ * @property {Object.<string, string>} [map] - Overwrites the default injection map for a scene.
+ * @property {Object.<string, string>} [mapAdd] - Extends the injection map for a scene.
+ * @property {object} [physics={}] - [description]
+ * @property {object} [loader={}] - [description]
+ * @property {(false|*)} [plugins=false] - [description]
+ */
+
+/**
+ * @typedef {object} Phaser.Scenes.Settings.Object
+ *
+ * @property {number} status - [description]
+ * @property {string} key - [description]
+ * @property {boolean} active - [description]
+ * @property {boolean} visible - [description]
+ * @property {boolean} isBooted - [description]
+ * @property {boolean} isTransition - [description]
+ * @property {?Phaser.Scene} transitionFrom - [description]
+ * @property {integer} transitionDuration - [description]
+ * @property {boolean} transitionAllowInput - [description]
+ * @property {object} data - [description]
+ * @property {(false|Phaser.Loader.FileTypes.PackFileConfig)} pack - [description]
+ * @property {?(InputJSONCameraObject|InputJSONCameraObject[])} cameras - [description]
+ * @property {Object.<string, string>} map - [description]
+ * @property {object} physics - [description]
+ * @property {object} loader - [description]
+ * @property {(false|*)} plugins - [description]
+ */
+
+var Settings = {
+
+    /**
+     * Takes a Scene configuration object and returns a fully formed Systems object.
+     *
+     * @function Phaser.Scenes.Settings.create
+     * @since 3.0.0
+     *
+     * @param {(string|Phaser.Scenes.Settings.Config)} config - [description]
+     *
+     * @return {Phaser.Scenes.Settings.Object} [description]
+     */
+    create: function (config)
+    {
+        if (typeof config === 'string')
+        {
+            config = { key: config };
+        }
+        else if (config === undefined)
+        {
+            //  Pass the 'hasOwnProperty' checks
+            config = {};
+        }
+
+        return {
+
+            status: CONST.PENDING,
+
+            key: GetValue(config, 'key', ''),
+            active: GetValue(config, 'active', false),
+            visible: GetValue(config, 'visible', true),
+
+            isBooted: false,
+
+            isTransition: false,
+            transitionFrom: null,
+            transitionDuration: 0,
+            transitionAllowInput: true,
+
+            //  Loader payload array
+
+            data: {},
+
+            pack: GetValue(config, 'pack', false),
+
+            //  Cameras
