@@ -81473,3 +81473,215 @@ var SceneManager = new Class({
             newScene = this.createSceneFromInstance(key, sceneConfig);
         }
         else if (typeof sceneConfig === 'object')
+        {
+            sceneConfig.key = key;
+
+            newScene = this.createSceneFromObject(key, sceneConfig);
+        }
+        else if (typeof sceneConfig === 'function')
+        {
+            newScene = this.createSceneFromFunction(key, sceneConfig);
+        }
+
+        //  Any data to inject?
+        newScene.sys.settings.data = data;
+
+        //  Replace key in case the scene changed it
+        key = newScene.sys.settings.key;
+
+        this.keys[key] = newScene;
+
+        this.scenes.push(newScene);
+
+        if (autoStart || newScene.sys.settings.active)
+        {
+            if (this._pending.length)
+            {
+                this._start.push(key);
+            }
+            else
+            {
+                this.start(key);
+            }
+        }
+
+        return newScene;
+    },
+
+    /**
+     * Removes a Scene from the SceneManager.
+     *
+     * The Scene is removed from the local scenes array, it's key is cleared from the keys
+     * cache and Scene.Systems.destroy is then called on it.
+     *
+     * If the SceneManager is processing the Scenes when this method is called it will
+     * queue the operation for the next update sequence.
+     *
+     * @method Phaser.Scenes.SceneManager#remove
+     * @since 3.2.0
+     *
+     * @param {(string|Phaser.Scene)} scene - The Scene to be removed.
+     *
+     * @return {Phaser.Scenes.SceneManager} This SceneManager.
+     */
+    remove: function (key)
+    {
+        if (this.isProcessing)
+        {
+            this._queue.push({ op: 'remove', keyA: key, keyB: null });
+        }
+        else
+        {
+            var sceneToRemove = this.getScene(key);
+
+            if (!sceneToRemove || sceneToRemove.sys.isTransitioning())
+            {
+                return this;
+            }
+
+            var index = this.scenes.indexOf(sceneToRemove);
+            var sceneKey = sceneToRemove.sys.settings.key;
+
+            if (index > -1)
+            {
+                delete this.keys[sceneKey];
+                this.scenes.splice(index, 1);
+
+                if (this._start.indexOf(sceneKey) > -1)
+                {
+                    index = this._start.indexOf(sceneKey);
+                    this._start.splice(index, 1);
+                }
+
+                sceneToRemove.sys.destroy();
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Boot the given Scene.
+     *
+     * @method Phaser.Scenes.SceneManager#bootScene
+     * @private
+     * @since 3.0.0
+     *
+     * @param {Phaser.Scene} scene - The Scene to boot.
+     */
+    bootScene: function (scene)
+    {
+        var sys = scene.sys;
+        var settings = sys.settings;
+
+        if (scene.init)
+        {
+            scene.init.call(scene, settings.data);
+
+            settings.status = CONST.INIT;
+
+            if (settings.isTransition)
+            {
+                sys.events.emit('transitioninit', settings.transitionFrom, settings.transitionDuration);
+            }
+        }
+
+        var loader;
+
+        if (sys.load)
+        {
+            loader = sys.load;
+
+            loader.reset();
+        }
+
+        if (loader && scene.preload)
+        {
+            scene.preload.call(scene);
+
+            //  Is the loader empty?
+            if (loader.list.size === 0)
+            {
+                this.create(scene);
+            }
+            else
+            {
+                settings.status = CONST.LOADING;
+
+                //  Start the loader going as we have something in the queue
+                loader.once('complete', this.loadComplete, this);
+
+                loader.start();
+            }
+        }
+        else
+        {
+            //  No preload? Then there was nothing to load either
+            this.create(scene);
+        }
+    },
+
+    /**
+     * Handles load completion for a Scene's Loader.
+     *
+     * Starts the Scene that the Loader belongs to.
+     *
+     * @method Phaser.Scenes.SceneManager#loadComplete
+     * @private
+     * @since 3.0.0
+     *
+     * @param {Phaser.Loader.LoaderPlugin} loader - The loader that has completed loading.
+     */
+    loadComplete: function (loader)
+    {
+        var scene = loader.scene;
+
+        // Try to unlock HTML5 sounds every time any loader completes
+        if (this.game.sound.onBlurPausedSounds)
+        {
+            this.game.sound.unlock();
+        }
+
+        this.create(scene);
+    },
+
+    /**
+     * Handle payload completion for a Scene.
+     *
+     * @method Phaser.Scenes.SceneManager#payloadComplete
+     * @private
+     * @since 3.0.0
+     *
+     * @param {Phaser.Loader.LoaderPlugin} loader - The loader that has completed loading its Scene's payload.
+     */
+    payloadComplete: function (loader)
+    {
+        this.bootScene(loader.scene);
+    },
+
+    /**
+     * Updates the Scenes.
+     *
+     * @method Phaser.Scenes.SceneManager#update
+     * @since 3.0.0
+     *
+     * @param {number} time - Time elapsed.
+     * @param {number} delta - Delta time from the last update.
+     */
+    update: function (time, delta)
+    {
+        this.processQueue();
+
+        this.isProcessing = true;
+
+        //  Loop through the active scenes in reverse order
+        for (var i = this.scenes.length - 1; i >= 0; i--)
+        {
+            var sys = this.scenes[i].sys;
+
+            if (sys.settings.status > CONST.START && sys.settings.status <= CONST.RUNNING)
+            {
+                sys.step(time, delta);
+            }
+        }
+    },
