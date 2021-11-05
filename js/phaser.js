@@ -81234,3 +81234,242 @@ var SceneManager = new Class({
          * @default false
          * @readonly
          * @since 3.0.0
+         */
+        this.isProcessing = false;
+
+        /**
+         * Has the Scene Manager properly started?
+         *
+         * @name Phaser.Scenes.SceneManager#isBooted
+         * @type {boolean}
+         * @default false
+         * @readonly
+         * @since 3.4.0
+         */
+        this.isBooted = false;
+
+        /**
+         * Do any of the Cameras in any of the Scenes require a custom viewport?
+         * If not we can skip scissor tests.
+         *
+         * @name Phaser.Scenes.SceneManager#customViewports
+         * @type {number}
+         * @default 0
+         * @since 3.12.0
+         */
+        this.customViewports = 0;
+
+        if (sceneConfig)
+        {
+            if (!Array.isArray(sceneConfig))
+            {
+                sceneConfig = [ sceneConfig ];
+            }
+
+            for (var i = 0; i < sceneConfig.length; i++)
+            {
+                //  The i === 0 part just autostarts the first Scene given (unless it says otherwise in its config)
+                this._pending.push({
+                    key: 'default',
+                    scene: sceneConfig[i],
+                    autoStart: (i === 0),
+                    data: {}
+                });
+            }
+        }
+
+        game.events.once('ready', this.bootQueue, this);
+    },
+
+    /**
+     * Internal first-time Scene boot handler.
+     *
+     * @method Phaser.Scenes.SceneManager#bootQueue
+     * @private
+     * @since 3.2.0
+     */
+    bootQueue: function ()
+    {
+        if (this.isBooted)
+        {
+            return;
+        }
+
+        var i;
+        var entry;
+        var key;
+        var sceneConfig;
+
+        for (i = 0; i < this._pending.length; i++)
+        {
+            entry = this._pending[i];
+
+            key = entry.key;
+            sceneConfig = entry.scene;
+
+            var newScene;
+
+            if (sceneConfig instanceof Scene)
+            {
+                newScene = this.createSceneFromInstance(key, sceneConfig);
+            }
+            else if (typeof sceneConfig === 'object')
+            {
+                newScene = this.createSceneFromObject(key, sceneConfig);
+            }
+            else if (typeof sceneConfig === 'function')
+            {
+                newScene = this.createSceneFromFunction(key, sceneConfig);
+            }
+
+            //  Replace key in case the scene changed it
+            key = newScene.sys.settings.key;
+
+            this.keys[key] = newScene;
+
+            this.scenes.push(newScene);
+
+            //  Any data to inject?
+            if (this._data[key])
+            {
+                newScene.sys.settings.data = this._data[key].data;
+
+                if (this._data[key].autoStart)
+                {
+                    entry.autoStart = true;
+                }
+            }
+
+            if (entry.autoStart || newScene.sys.settings.active)
+            {
+                this._start.push(key);
+            }
+        }
+
+        //  Clear the pending lists
+        this._pending.length = 0;
+
+        this._data = {};
+
+        this.isBooted = true;
+
+        //  _start might have been populated by the above
+        for (i = 0; i < this._start.length; i++)
+        {
+            entry = this._start[i];
+
+            this.start(entry);
+        }
+
+        this._start.length = 0;
+    },
+
+    /**
+     * Process the Scene operations queue.
+     *
+     * @method Phaser.Scenes.SceneManager#processQueue
+     * @since 3.0.0
+     */
+    processQueue: function ()
+    {
+        var pendingLength = this._pending.length;
+        var queueLength = this._queue.length;
+
+        if (pendingLength === 0 && queueLength === 0)
+        {
+            return;
+        }
+
+        var i;
+        var entry;
+
+        if (pendingLength)
+        {
+            for (i = 0; i < pendingLength; i++)
+            {
+                entry = this._pending[i];
+
+                this.add(entry.key, entry.scene, entry.autoStart, entry.data);
+            }
+
+            //  _start might have been populated by this.add
+            for (i = 0; i < this._start.length; i++)
+            {
+                entry = this._start[i];
+
+                this.start(entry);
+            }
+
+            //  Clear the pending lists
+            this._start.length = 0;
+            this._pending.length = 0;
+
+            return;
+        }
+
+        for (i = 0; i < this._queue.length; i++)
+        {
+            entry = this._queue[i];
+
+            this[entry.op](entry.keyA, entry.keyB);
+        }
+
+        this._queue.length = 0;
+    },
+
+    /**
+     * Adds a new Scene into the SceneManager.
+     * You must give each Scene a unique key by which you'll identify it.
+     *
+     * The `sceneConfig` can be:
+     *
+     * * A `Phaser.Scene` object, or an object that extends it.
+     * * A plain JavaScript object
+     * * A JavaScript ES6 Class that extends `Phaser.Scene`
+     * * A JavaScript ES5 prototype based Class
+     * * A JavaScript function
+     *
+     * If a function is given then a new Scene will be created by calling it.
+     *
+     * @method Phaser.Scenes.SceneManager#add
+     * @since 3.0.0
+     *
+     * @param {string} key - A unique key used to reference the Scene, i.e. `MainMenu` or `Level1`.
+     * @param {(Phaser.Scene|Phaser.Scenes.Settings.Config|function)} sceneConfig - The config for the Scene
+     * @param {boolean} [autoStart=false] - If `true` the Scene will be started immediately after being added.
+     * @param {object} [data] - Optional data object. This will be set as Scene.settings.data and passed to `Scene.init`.
+     *
+     * @return {?Phaser.Scene} The added Scene, if it was added immediately, otherwise `null`.
+     */
+    add: function (key, sceneConfig, autoStart, data)
+    {
+        if (autoStart === undefined) { autoStart = false; }
+        if (data === undefined) { data = {}; }
+
+        //  If processing or not booted then put scene into a holding pattern
+        if (this.isProcessing || !this.isBooted)
+        {
+            this._pending.push({
+                key: key,
+                scene: sceneConfig,
+                autoStart: autoStart,
+                data: data
+            });
+
+            if (!this.isBooted)
+            {
+                this._data[key] = { data: data };
+            }
+
+            return null;
+        }
+
+        key = this.getKey(key, sceneConfig);
+
+        var newScene;
+
+        if (sceneConfig instanceof Scene)
+        {
+            newScene = this.createSceneFromInstance(key, sceneConfig);
+        }
+        else if (typeof sceneConfig === 'object')
