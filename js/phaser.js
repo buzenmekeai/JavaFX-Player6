@@ -81685,3 +81685,239 @@ var SceneManager = new Class({
             }
         }
     },
+
+    /**
+     * Informs the Scenes of the Game being resized.
+     *
+     * @method Phaser.Scenes.SceneManager#resize
+     * @since 3.2.0
+     *
+     * @param {number} width - The new width of the game.
+     * @param {number} height - The new height of the game.
+     */
+    resize: function (width, height)
+    {
+        //  Loop through the scenes in forward order
+        for (var i = 0; i < this.scenes.length; i++)
+        {
+            var sys = this.scenes[i].sys;
+
+            sys.resize(width, height);
+        }
+    },
+
+    /**
+     * Renders the Scenes.
+     *
+     * @method Phaser.Scenes.SceneManager#render
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Renderer.Canvas.CanvasRenderer|Phaser.Renderer.WebGL.WebGLRenderer)} renderer - The renderer to use.
+     */
+    render: function (renderer)
+    {
+        //  Loop through the scenes in forward order
+        for (var i = 0; i < this.scenes.length; i++)
+        {
+            var sys = this.scenes[i].sys;
+
+            if (sys.settings.visible && sys.settings.status >= CONST.LOADING && sys.settings.status < CONST.SLEEPING)
+            {
+                sys.render(renderer);
+            }
+        }
+
+        this.isProcessing = false;
+    },
+
+    /**
+     * Calls the given Scene's {@link Phaser.Scene#create} method and updates its status.
+     *
+     * @method Phaser.Scenes.SceneManager#create
+     * @private
+     * @since 3.0.0
+     *
+     * @param {Phaser.Scene} scene - The Scene to create.
+     */
+    create: function (scene)
+    {
+        var sys = scene.sys;
+        var settings = sys.settings;
+
+        if (scene.create)
+        {
+            settings.status = CONST.CREATING;
+
+            scene.create.call(scene, settings.data);
+
+            if (settings.isTransition)
+            {
+                sys.events.emit('transitionstart', settings.transitionFrom, settings.transitionDuration);
+            }
+        }
+
+        //  If the Scene has an update function we'll set it now, otherwise it'll remain as NOOP
+        if (scene.update)
+        {
+            sys.sceneUpdate = scene.update;
+        }
+
+        settings.status = CONST.RUNNING;
+    },
+
+    /**
+     * Creates and initializes a Scene from a function.
+     *
+     * @method Phaser.Scenes.SceneManager#createSceneFromFunction
+     * @private
+     * @since 3.0.0
+     *
+     * @param {string} key - The key of the Scene.
+     * @param {function} scene - The function to create the Scene from.
+     *
+     * @return {Phaser.Scene} The created Scene.
+     */
+    createSceneFromFunction: function (key, scene)
+    {
+        var newScene = new scene();
+
+        if (newScene instanceof Scene)
+        {
+            var configKey = newScene.sys.settings.key;
+
+            if (configKey !== '')
+            {
+                key = configKey;
+            }
+
+            if (this.keys.hasOwnProperty(key))
+            {
+                throw new Error('Cannot add a Scene with duplicate key: ' + key);
+            }
+
+            return this.createSceneFromInstance(key, newScene);
+        }
+        else
+        {
+            newScene.sys = new Systems(newScene);
+
+            newScene.sys.settings.key = key;
+
+            newScene.sys.init(this.game);
+
+            return newScene;
+        }
+    },
+
+    /**
+     * Creates and initializes a Scene instance.
+     *
+     * @method Phaser.Scenes.SceneManager#createSceneFromInstance
+     * @private
+     * @since 3.0.0
+     *
+     * @param {string} key - The key of the Scene.
+     * @param {Phaser.Scene} newScene - The Scene instance.
+     *
+     * @return {Phaser.Scene} The created Scene.
+     */
+    createSceneFromInstance: function (key, newScene)
+    {
+        var configKey = newScene.sys.settings.key;
+
+        if (configKey !== '')
+        {
+            key = configKey;
+        }
+        else
+        {
+            newScene.sys.settings.key = key;
+        }
+
+        newScene.sys.init(this.game);
+
+        return newScene;
+    },
+
+    /**
+     * Creates and initializes a Scene from an Object definition.
+     *
+     * @method Phaser.Scenes.SceneManager#createSceneFromObject
+     * @private
+     * @since 3.0.0
+     *
+     * @param {string} key - The key of the Scene.
+     * @param {(string|Phaser.Scenes.Settings.Config)} sceneConfig - The Scene config.
+     *
+     * @return {Phaser.Scene} The created Scene.
+     */
+    createSceneFromObject: function (key, sceneConfig)
+    {
+        var newScene = new Scene(sceneConfig);
+
+        var configKey = newScene.sys.settings.key;
+
+        if (configKey !== '')
+        {
+            key = configKey;
+        }
+        else
+        {
+            newScene.sys.settings.key = key;
+        }
+
+        newScene.sys.init(this.game);
+
+        //  Extract callbacks
+
+        var defaults = [ 'init', 'preload', 'create', 'update', 'render' ];
+
+        for (var i = 0; i < defaults.length; i++)
+        {
+            var sceneCallback = GetValue(sceneConfig, defaults[i], null);
+
+            if (sceneCallback)
+            {
+                newScene[defaults[i]] = sceneCallback;
+            }
+        }
+
+        //  Now let's move across any other functions or properties that may exist in the extend object:
+
+        /*
+        scene: {
+            preload: preload,
+            create: create,
+            extend: {
+                hello: 1,
+                test: 'atari',
+                addImage: addImage
+            }
+        }
+        */
+
+        if (sceneConfig.hasOwnProperty('extend'))
+        {
+            for (var propertyKey in sceneConfig.extend)
+            {
+                var value = sceneConfig.extend[propertyKey];
+
+                if (propertyKey === 'data' && newScene.hasOwnProperty('data') && typeof value === 'object')
+                {
+                    //  Populate the DataManager
+                    newScene.data.merge(value);
+                }
+                else if (propertyKey !== 'sys')
+                {
+                    newScene[propertyKey] = value;
+                }
+            }
+        }
+
+        return newScene;
+    },
+
+    /**
+     * Retrieves the key of a Scene from a Scene config.
+     *
+     * @method Phaser.Scenes.SceneManager#getKey
