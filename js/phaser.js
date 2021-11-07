@@ -81921,3 +81921,216 @@ var SceneManager = new Class({
      * Retrieves the key of a Scene from a Scene config.
      *
      * @method Phaser.Scenes.SceneManager#getKey
+     * @private
+     * @since 3.0.0
+     *
+     * @param {string} key - The key to check in the Scene config.
+     * @param {(Phaser.Scene|Phaser.Scenes.Settings.Config|function)} sceneConfig - The Scene config.
+     *
+     * @return {string} The Scene key.
+     */
+    getKey: function (key, sceneConfig)
+    {
+        if (!key) { key = 'default'; }
+
+        if (typeof sceneConfig === 'function')
+        {
+            return key;
+        }
+        else if (sceneConfig instanceof Scene)
+        {
+            key = sceneConfig.sys.settings.key;
+        }
+        else if (typeof sceneConfig === 'object' && sceneConfig.hasOwnProperty('key'))
+        {
+            key = sceneConfig.key;
+        }
+
+        //  By this point it's either 'default' or extracted from the Scene
+
+        if (this.keys.hasOwnProperty(key))
+        {
+            throw new Error('Cannot add a Scene with duplicate key: ' + key);
+        }
+        else
+        {
+            return key;
+        }
+    },
+
+    /**
+     * Retrieves a Scene.
+     *
+     * @method Phaser.Scenes.SceneManager#getScene
+     * @since 3.0.0
+     *
+     * @param {string|Phaser.Scene} key - The Scene to retrieve.
+     *
+     * @return {?Phaser.Scene} The Scene.
+     */
+    getScene: function (key)
+    {
+        if (typeof key === 'string')
+        {
+            if (this.keys[key])
+            {
+                return this.keys[key];
+            }
+        }
+        else
+        {
+            for (var i = 0; i < this.scenes.length; i++)
+            {
+                if (key === this.scenes[i])
+                {
+                    return key;
+                }
+            }
+        }
+
+        return null;
+    },
+
+    /**
+     * Determines whether a Scene is active.
+     *
+     * @method Phaser.Scenes.SceneManager#isActive
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to check.
+     *
+     * @return {boolean} Whether the Scene is active.
+     */
+    isActive: function (key)
+    {
+        var scene = this.getScene(key);
+
+        if (scene)
+        {
+            return scene.sys.isActive();
+        }
+
+        return null;
+    },
+
+    /**
+     * Determines whether a Scene is visible.
+     *
+     * @method Phaser.Scenes.SceneManager#isVisible
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to check.
+     *
+     * @return {boolean} Whether the Scene is visible.
+     */
+    isVisible: function (key)
+    {
+        var scene = this.getScene(key);
+
+        if (scene)
+        {
+            return scene.sys.isVisible();
+        }
+
+        return null;
+    },
+
+    /**
+     * Determines whether a Scene is sleeping.
+     *
+     * @method Phaser.Scenes.SceneManager#isSleeping
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to check.
+     *
+     * @return {boolean} Whether the Scene is sleeping.
+     */
+    isSleeping: function (key)
+    {
+        var scene = this.getScene(key);
+
+        if (scene)
+        {
+            return scene.sys.isSleeping();
+        }
+
+        return null;
+    },
+
+    /**
+     * Pauses the given Scene.
+     *
+     * @method Phaser.Scenes.SceneManager#pause
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to pause.
+     * @param {object} [data] - An optional data object that will be passed to the Scene and emitted by its pause event.
+     *
+     * @return {Phaser.Scenes.SceneManager} This SceneManager.
+     */
+    pause: function (key, data)
+    {
+        var scene = this.getScene(key);
+
+        if (scene)
+        {
+            scene.sys.pause(data);
+        }
+
+        return this;
+    },
+
+    /**
+     * Resumes the given Scene.
+     *
+     * @method Phaser.Scenes.SceneManager#resume
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to resume.
+     * @param {object} [data] - An optional data object that will be passed to the Scene and emitted by its resume event.
+     *
+     * @return {Phaser.Scenes.SceneManager} This SceneManager.
+     */
+    resume: function (key, data)
+    {
+        var scene = this.getScene(key);
+
+        if (scene)
+        {
+            scene.sys.resume(data);
+        }
+
+        return this;
+    },
+
+    /**
+     * Puts the given Scene to sleep.
+     *
+     * @method Phaser.Scenes.SceneManager#sleep
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to put to sleep.
+     * @param {object} [data] - An optional data object that will be passed to the Scene and emitted by its sleep event.
+     *
+     * @return {Phaser.Scenes.SceneManager} This SceneManager.
+     */
+    sleep: function (key, data)
+    {
+        var scene = this.getScene(key);
+
+        if (scene && !scene.sys.isTransitioning())
+        {
+            scene.sys.sleep(data);
+        }
+
+        return this;
+    },
+
+    /**
+     * Awakens the given Scene.
+     *
+     * @method Phaser.Scenes.SceneManager#wake
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to wake up.
+     * @param {object} [data] - An optional data object that will be passed to the Scene and emitted by its wake event.
