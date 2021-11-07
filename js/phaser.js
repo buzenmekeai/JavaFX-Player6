@@ -82134,3 +82134,232 @@ var SceneManager = new Class({
      *
      * @param {string} key - The Scene to wake up.
      * @param {object} [data] - An optional data object that will be passed to the Scene and emitted by its wake event.
+     *
+     * @return {Phaser.Scenes.SceneManager} This SceneManager.
+     */
+    wake: function (key, data)
+    {
+        var scene = this.getScene(key);
+
+        if (scene)
+        {
+            scene.sys.wake(data);
+        }
+
+        return this;
+    },
+
+    /**
+     * Runs the given Scene, but does not change the state of this Scene.
+     *
+     * If the given Scene is paused, it will resume it. If sleeping, it will wake it.
+     * If not running at all, it will be started.
+     *
+     * Use this if you wish to open a modal Scene by calling `pause` on the current
+     * Scene, then `run` on the modal Scene.
+     *
+     * @method Phaser.Scenes.SceneManager#run
+     * @since 3.10.0
+     *
+     * @param {string} key - The Scene to run.
+     * @param {object} [data] - A data object that will be passed to the Scene on start, wake, or resume.
+     *
+     * @return {Phaser.Scenes.SceneManager} This Scene Manager.
+     */
+    run: function (key, data)
+    {
+        var scene = this.getScene(key);
+
+        if (!scene)
+        {
+            for (var i = 0; i < this._pending.length; i++)
+            {
+                if (this._pending[i].key === key)
+                {
+                    this.queueOp('start', key, data);
+                    break;
+                }
+            }
+            return this;
+        }
+
+        if (scene.sys.isSleeping())
+        {
+            //  Sleeping?
+            scene.sys.wake(data);
+        }
+        else if (scene.sys.isBooted && !scene.sys.isActive())
+        {
+            //  Paused?
+            scene.sys.resume(data);
+        }
+        else
+        {
+            //  Not actually running?
+            this.start(key, data);
+        }
+    },
+
+    /**
+     * Starts the given Scene.
+     *
+     * @method Phaser.Scenes.SceneManager#start
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to start.
+     * @param {object} [data] - Optional data object to pass to Scene.Settings and Scene.init.
+     *
+     * @return {Phaser.Scenes.SceneManager} This SceneManager.
+     */
+    start: function (key, data)
+    {
+        //  If the Scene Manager is not running, then put the Scene into a holding pattern
+        if (!this.isBooted)
+        {
+            this._data[key] = {
+                autoStart: true,
+                data: data
+            };
+
+            return this;
+        }
+
+        var scene = this.getScene(key);
+
+        if (scene)
+        {
+            //  If the Scene is already running (perhaps they called start from a launched sub-Scene?)
+            //  then we close it down before starting it again.
+            if (scene.sys.isActive() || scene.sys.isPaused())
+            {
+                scene.sys.shutdown();
+
+                scene.sys.start(data);
+            }
+            else
+            {
+                scene.sys.start(data);
+
+                var loader;
+    
+                if (scene.sys.load)
+                {
+                    loader = scene.sys.load;
+                }
+    
+                //  Files payload?
+                if (loader && scene.sys.settings.hasOwnProperty('pack'))
+                {
+                    loader.reset();
+    
+                    if (loader.addPack({ payload: scene.sys.settings.pack }))
+                    {
+                        scene.sys.settings.status = CONST.LOADING;
+    
+                        loader.once('complete', this.payloadComplete, this);
+    
+                        loader.start();
+    
+                        return this;
+                    }
+                }
+            }
+
+            this.bootScene(scene);
+        }
+
+        return this;
+    },
+
+    /**
+     * Stops the given Scene.
+     *
+     * @method Phaser.Scenes.SceneManager#stop
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to stop.
+     *
+     * @return {Phaser.Scenes.SceneManager} This SceneManager.
+     */
+    stop: function (key)
+    {
+        var scene = this.getScene(key);
+
+        if (scene && !scene.sys.isTransitioning())
+        {
+            scene.sys.shutdown();
+        }
+
+        return this;
+    },
+
+    /**
+     * Sleeps one one Scene and starts the other.
+     *
+     * @method Phaser.Scenes.SceneManager#switch
+     * @since 3.0.0
+     *
+     * @param {string} from - The Scene to sleep.
+     * @param {string} to - The Scene to start.
+     *
+     * @return {Phaser.Scenes.SceneManager} This SceneManager.
+     */
+    switch: function (from, to)
+    {
+        var sceneA = this.getScene(from);
+        var sceneB = this.getScene(to);
+
+        if (sceneA && sceneB && sceneA !== sceneB)
+        {
+            this.sleep(from);
+
+            if (this.isSleeping(to))
+            {
+                this.wake(to);
+            }
+            else
+            {
+                this.start(to);
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Retrieves a Scene by numeric index.
+     *
+     * @method Phaser.Scenes.SceneManager#getAt
+     * @since 3.0.0
+     *
+     * @param {integer} index - The index of the Scene to retrieve.
+     *
+     * @return {(Phaser.Scene|undefined)} The Scene.
+     */
+    getAt: function (index)
+    {
+        return this.scenes[index];
+    },
+
+    /**
+     * Retrieves the numeric index of a Scene.
+     *
+     * @method Phaser.Scenes.SceneManager#getIndex
+     * @since 3.0.0
+     *
+     * @param {(string|Phaser.Scene)} key - The key of the Scene.
+     *
+     * @return {integer} The index of the Scene.
+     */
+    getIndex: function (key)
+    {
+        var scene = this.getScene(key);
+
+        return this.scenes.indexOf(scene);
+    },
+
+    /**
+     * Brings a Scene to the top of the Scenes list.
+     *
+     * This means it will render above all other Scenes.
+     *
