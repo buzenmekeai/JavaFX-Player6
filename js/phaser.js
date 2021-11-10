@@ -82579,3 +82579,220 @@ var SceneManager = new Class({
                     this.scenes.unshift(tempScene);
                 }
                 else
+                {
+                    //  Add in new location
+                    this.scenes.splice(indexA, 0, tempScene);
+                }
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Queue a Scene operation for the next update.
+     *
+     * @method Phaser.Scenes.SceneManager#queueOp
+     * @private
+     * @since 3.0.0
+     *
+     * @param {string} op - The operation to perform.
+     * @param {(string|Phaser.Scene)} keyA - Scene A.
+     * @param {(string|Phaser.Scene)} [keyB] - Scene B.
+     *
+     * @return {Phaser.Scenes.SceneManager} This SceneManager.
+     */
+    queueOp: function (op, keyA, keyB)
+    {
+        this._queue.push({ op: op, keyA: keyA, keyB: keyB });
+
+        return this;
+    },
+
+    /**
+     * Swaps the positions of two Scenes in the Scenes list.
+     *
+     * @method Phaser.Scenes.SceneManager#swapPosition
+     * @since 3.0.0
+     *
+     * @param {(string|Phaser.Scene)} keyA - The first Scene to swap.
+     * @param {(string|Phaser.Scene)} keyB - The second Scene to swap.
+     *
+     * @return {Phaser.Scenes.SceneManager} This SceneManager.
+     */
+    swapPosition: function (keyA, keyB)
+    {
+        if (keyA === keyB)
+        {
+            return this;
+        }
+
+        if (this.isProcessing)
+        {
+            this._queue.push({ op: 'swapPosition', keyA: keyA, keyB: keyB });
+        }
+        else
+        {
+            var indexA = this.getIndex(keyA);
+            var indexB = this.getIndex(keyB);
+
+            if (indexA !== indexB && indexA !== -1 && indexB !== -1)
+            {
+                var tempScene = this.getAt(indexA);
+
+                this.scenes[indexA] = this.scenes[indexB];
+                this.scenes[indexB] = tempScene;
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Dumps debug information about each Scene to the developer console.
+     *
+     * @method Phaser.Scenes.SceneManager#dump
+     * @since 3.2.0
+     */
+    dump: function ()
+    {
+        var out = [];
+        var map = [ 'pending', 'init', 'start', 'loading', 'creating', 'running', 'paused', 'sleeping', 'shutdown', 'destroyed' ];
+
+        for (var i = 0; i < this.scenes.length; i++)
+        {
+            var sys = this.scenes[i].sys;
+
+            var key = (sys.settings.visible && (sys.settings.status === CONST.RUNNING || sys.settings.status === CONST.PAUSED)) ? '[*] ' : '[-] ';
+            key += sys.settings.key + ' (' + map[sys.settings.status] + ')';
+
+            out.push(key);
+        }
+
+        console.log(out.join('\n'));
+    },
+
+    /**
+     * Destroy the SceneManager and all of its Scene's systems.
+     *
+     * @method Phaser.Scenes.SceneManager#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        for (var i = 0; i < this.scenes.length; i++)
+        {
+            var sys = this.scenes[i].sys;
+
+            sys.destroy();
+        }
+
+        this.update = NOOP;
+
+        this.scenes = [];
+
+        this._pending = [];
+        this._start = [];
+        this._queue = [];
+
+        this.game = null;
+    }
+
+});
+
+module.exports = SceneManager;
+
+
+/***/ }),
+/* 330 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var SpliceOne = __webpack_require__(91);
+
+/**
+ * Removes the given item, or array of items, from the array.
+ * 
+ * The array is modified in-place.
+ * 
+ * You can optionally specify a callback to be invoked for each item successfully removed from the array.
+ *
+ * @function Phaser.Utils.Array.Remove
+ * @since 3.4.0
+ *
+ * @param {array} array - The array to be modified.
+ * @param {*|Array.<*>} item - The item, or array of items, to be removed from the array.
+ * @param {function} [callback] - A callback to be invoked for each item successfully removed from the array.
+ * @param {object} [context] - The context in which the callback is invoked.
+ *
+ * @return {*|Array.<*>} The item, or array of items, that were successfully removed from the array.
+ */
+var Remove = function (array, item, callback, context)
+{
+    if (context === undefined) { context = array; }
+
+    var index;
+
+    //  Fast path to avoid array mutation and iteration
+    if (!Array.isArray(item))
+    {
+        index = array.indexOf(item);
+
+        if (index !== -1)
+        {
+            SpliceOne(array, index);
+
+            if (callback)
+            {
+                callback.call(context, item);
+            }
+
+            return item;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    //  If we got this far, we have an array of items to remove
+
+    var itemLength = item.length - 1;
+
+    while (itemLength >= 0)
+    {
+        var entry = item[itemLength];
+
+        index = array.indexOf(entry);
+
+        if (index !== -1)
+        {
+            SpliceOne(array, index);
+
+            if (callback)
+            {
+                callback.call(context, entry);
+            }
+        }
+        else
+        {
+            //  Item wasn't found in the array, so remove it from our return results
+            item.pop();
+        }
+
+        itemLength--;
+    }
+
+    return item;
+};
+
+module.exports = Remove;
+
+
+/***/ }),
+/* 331 */
