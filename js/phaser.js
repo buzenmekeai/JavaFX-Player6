@@ -83217,3 +83217,233 @@ var PluginManager = new Class({
         {
             console.warn('Invalid Plugin: ' + key);
             return;
+        }
+
+        if (PluginCache.hasCustom(key))
+        {
+            console.warn('Plugin key in use: ' + key);
+            return;
+        }
+
+        if (mapping !== null)
+        {
+            start = true;
+        }
+
+        if (!this.game.isBooted)
+        {
+            this._pendingGlobal.push({ key: key, plugin: plugin, start: start, mapping: mapping, data: data });
+        }
+        else
+        {
+            //  Add it to the plugin store
+            PluginCache.registerCustom(key, plugin, mapping, data);
+
+            if (start)
+            {
+                return this.start(key);
+            }
+        }
+    },
+
+    /**
+     * Gets an index of a global plugin based on the given key.
+     *
+     * @method Phaser.Plugins.PluginManager#getIndex
+     * @protected
+     * @since 3.8.0
+     *
+     * @param {string} key - The unique plugin key.
+     *
+     * @return {integer} The index of the plugin within the plugins array.
+     */
+    getIndex: function (key)
+    {
+        var list = this.plugins;
+
+        for (var i = 0; i < list.length; i++)
+        {
+            var entry = list[i];
+
+            if (entry.key === key)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    },
+
+    /**
+     * Gets a global plugin based on the given key.
+     *
+     * @method Phaser.Plugins.PluginManager#getEntry
+     * @protected
+     * @since 3.8.0
+     *
+     * @param {string} key - The unique plugin key.
+     *
+     * @return {GlobalPlugin} The plugin entry.
+     */
+    getEntry: function (key)
+    {
+        var idx = this.getIndex(key);
+
+        if (idx !== -1)
+        {
+            return this.plugins[idx];
+        }
+    },
+
+    /**
+     * Checks if the given global plugin, based on its key, is active or not.
+     *
+     * @method Phaser.Plugins.PluginManager#isActive
+     * @since 3.8.0
+     *
+     * @param {string} key - The unique plugin key.
+     *
+     * @return {boolean} `true` if the plugin is active, otherwise `false`.
+     */
+    isActive: function (key)
+    {
+        var entry = this.getEntry(key);
+
+        return (entry && entry.active);
+    },
+
+    /**
+     * Starts a global plugin running.
+     *
+     * If the plugin was previously active then calling `start` will reset it to an active state and then
+     * call its `start` method.
+     *
+     * If the plugin has never been run before a new instance of it will be created within the Plugin Manager,
+     * its active state set and then both of its `init` and `start` methods called, in that order.
+     *
+     * If the plugin is already running under the given key then nothing happens.
+     *
+     * @method Phaser.Plugins.PluginManager#start
+     * @since 3.8.0
+     *
+     * @param {string} key - The key of the plugin to start.
+     * @param {string} [runAs] - Run the plugin under a new key. This allows you to run one plugin multiple times.
+     *
+     * @return {?Phaser.Plugins.BasePlugin} The plugin that was started, or `null` if invalid key given or plugin is already stopped.
+     */
+    start: function (key, runAs)
+    {
+        if (runAs === undefined) { runAs = key; }
+
+        var entry = this.getEntry(runAs);
+
+        //  Plugin already running under this key?
+        if (entry && !entry.active)
+        {
+            //  It exists, we just need to start it up again
+            entry.active = true;
+            entry.plugin.start();
+        }
+        else if (!entry)
+        {
+            entry = this.createEntry(key, runAs);
+        }
+
+        return (entry) ? entry.plugin : null;
+    },
+
+    /**
+     * Creates a new instance of a global plugin, adds an entry into the plugins array and returns it.
+     *
+     * @method Phaser.Plugins.PluginManager#createEntry
+     * @private
+     * @since 3.9.0
+     *
+     * @param {string} key - The key of the plugin to create an instance of.
+     * @param {string} [runAs] - Run the plugin under a new key. This allows you to run one plugin multiple times.
+     *
+     * @return {?Phaser.Plugins.BasePlugin} The plugin that was started, or `null` if invalid key given.
+     */
+    createEntry: function (key, runAs)
+    {
+        var entry = PluginCache.getCustom(key);
+
+        if (entry)
+        {
+            var instance = new entry.plugin(this);
+
+            entry = {
+                key: runAs,
+                plugin: instance,
+                active: true,
+                mapping: entry.mapping,
+                data: entry.data
+            };
+
+            this.plugins.push(entry);
+
+            instance.init(entry.data);
+            instance.start();
+        }
+
+        return entry;
+    },
+
+    /**
+     * Stops a global plugin from running.
+     *
+     * If the plugin is active then its active state will be set to false and the plugins `stop` method
+     * will be called.
+     *
+     * If the plugin is not already running, nothing will happen.
+     *
+     * @method Phaser.Plugins.PluginManager#stop
+     * @since 3.8.0
+     *
+     * @param {string} key - The key of the plugin to stop.
+     *
+     * @return {Phaser.Plugins.PluginManager} The Plugin Manager.
+     */
+    stop: function (key)
+    {
+        var entry = this.getEntry(key);
+
+        if (entry && entry.active)
+        {
+            entry.active = false;
+            entry.plugin.stop();
+        }
+
+        return this;
+    },
+
+    /**
+     * Gets a global plugin from the Plugin Manager based on the given key and returns it.
+     *
+     * If it cannot find an active plugin based on the key, but there is one in the Plugin Cache with the same key,
+     * then it will create a new instance of the cached plugin and return that.
+     *
+     * @method Phaser.Plugins.PluginManager#get
+     * @since 3.8.0
+     *
+     * @param {string} key - The key of the plugin to get.
+     * @param {boolean} [autoStart=true] - Automatically start a new instance of the plugin if found in the cache, but not actively running.
+     *
+     * @return {?(Phaser.Plugins.BasePlugin|function)} The plugin, or `null` if no plugin was found matching the key.
+     */
+    get: function (key, autoStart)
+    {
+        if (autoStart === undefined) { autoStart = true; }
+
+        var entry = this.getEntry(key);
+
+        if (entry)
+        {
+            return entry.plugin;
+        }
+        else
+        {
+            var plugin = this.getClass(key);
+
+            if (plugin && autoStart)
+            {
