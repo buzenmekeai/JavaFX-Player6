@@ -82796,3 +82796,201 @@ module.exports = Remove;
 
 /***/ }),
 /* 331 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var EventEmitter = __webpack_require__(11);
+var FileTypesManager = __webpack_require__(7);
+var GameObjectCreator = __webpack_require__(13);
+var GameObjectFactory = __webpack_require__(5);
+var GetFastValue = __webpack_require__(2);
+var PluginCache = __webpack_require__(15);
+var Remove = __webpack_require__(330);
+
+/**
+ * @typedef {object} GlobalPlugin
+ *
+ * @property {string} key - The unique name of this plugin within the plugin cache.
+ * @property {function} plugin - An instance of the plugin.
+ * @property {boolean} [active] - Is the plugin active or not?
+ * @property {string} [mapping] - If this plugin is to be injected into the Scene Systems, this is the property key map used.
+ */
+
+/**
+ * @classdesc
+ * The PluginManager is responsible for installing and adding plugins to Phaser.
+ *
+ * It is a global system and therefore belongs to the Game instance, not a specific Scene.
+ *
+ * It works in conjunction with the PluginCache. Core internal plugins automatically register themselves 
+ * with the Cache, but it's the Plugin Manager that is responsible for injecting them into the Scenes.
+ *
+ * There are two types of plugin:
+ *
+ * 1) A Global Plugin
+ * 2) A Scene Plugin
+ *
+ * A Global Plugin is a plugin that lives within the Plugin Manager rather than a Scene. You can get
+ * access to it by calling `PluginManager.get` and providing a key. Any Scene that requests a plugin in
+ * this way will all get access to the same plugin instance, allowing you to use a single plugin across
+ * multiple Scenes.
+ *
+ * A Scene Plugin is a plugin dedicated to running within a Scene. These are different to Global Plugins
+ * in that their instances do not live within the Plugin Manager, but within the Scene Systems class instead.
+ * And that every Scene created is given its own unique instance of a Scene Plugin. Examples of core Scene
+ * Plugins include the Input Plugin, the Tween Plugin and the physics Plugins.
+ *
+ * You can add a plugin to Phaser in three different ways:
+ *
+ * 1) Preload it
+ * 2) Include it in your source code and install it via the Game Config
+ * 3) Include it in your source code and install it within a Scene
+ *
+ * For examples of all of these approaches please see the Phaser 3 Examples Repo `plugins` folder.
+ *
+ * For information on creating your own plugin please see the Phaser 3 Plugin Template.
+ *
+ * @class PluginManager
+ * @memberof Phaser.Plugins
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Game} game - The game instance that owns this Plugin Manager.
+ */
+var PluginManager = new Class({
+
+    Extends: EventEmitter,
+
+    initialize:
+
+    function PluginManager (game)
+    {
+        EventEmitter.call(this);
+
+        /**
+         * The game instance that owns this Plugin Manager.
+         *
+         * @name Phaser.Plugins.PluginManager#game
+         * @type {Phaser.Game}
+         * @since 3.0.0
+         */
+        this.game = game;
+
+        /**
+         * The global plugins currently running and managed by this Plugin Manager.
+         * A plugin must have been started at least once in order to appear in this list.
+         *
+         * @name Phaser.Plugins.PluginManager#plugins
+         * @type {GlobalPlugin[]}
+         * @since 3.8.0
+         */
+        this.plugins = [];
+
+        /**
+         * A list of plugin keys that should be installed into Scenes as well as the Core Plugins.
+         *
+         * @name Phaser.Plugins.PluginManager#scenePlugins
+         * @type {string[]}
+         * @since 3.8.0
+         */
+        this.scenePlugins = [];
+
+        /**
+         * A temporary list of plugins to install when the game has booted.
+         *
+         * @name Phaser.Plugins.PluginManager#_pendingGlobal
+         * @private
+         * @type {array}
+         * @since 3.8.0
+         */
+        this._pendingGlobal = [];
+
+        /**
+         * A temporary list of scene plugins to install when the game has booted.
+         *
+         * @name Phaser.Plugins.PluginManager#_pendingScene
+         * @private
+         * @type {array}
+         * @since 3.8.0
+         */
+        this._pendingScene = [];
+
+        if (game.isBooted)
+        {
+            this.boot();
+        }
+        else
+        {
+            game.events.once('boot', this.boot, this);
+        }
+    },
+
+    /**
+     * Run once the game has booted and installs all of the plugins configured in the Game Config.
+     *
+     * @method Phaser.Plugins.PluginManager#boot
+     * @protected
+     * @since 3.0.0
+     */
+    boot: function ()
+    {
+        var i;
+        var entry;
+        var key;
+        var plugin;
+        var start;
+        var mapping;
+        var data;
+        var config = this.game.config;
+
+        //  Any plugins to install?
+        var list = config.installGlobalPlugins;
+
+        //  Any plugins added outside of the game config, but before the game booted?
+        list = list.concat(this._pendingGlobal);
+
+        for (i = 0; i < list.length; i++)
+        {
+            entry = list[i];
+
+            // { key: 'TestPlugin', plugin: TestPlugin, start: true, mapping: 'test', data: { msg: 'The plugin is alive' } }
+
+            key = GetFastValue(entry, 'key', null);
+            plugin = GetFastValue(entry, 'plugin', null);
+            start = GetFastValue(entry, 'start', false);
+            mapping = GetFastValue(entry, 'mapping', null);
+            data = GetFastValue(entry, 'data', null);
+
+            if (key && plugin)
+            {
+                this.install(key, plugin, start, mapping, data);
+            }
+        }
+
+        //  Any scene plugins to install?
+        list = config.installScenePlugins;
+
+        //  Any plugins added outside of the game config, but before the game booted?
+        list = list.concat(this._pendingScene);
+
+        for (i = 0; i < list.length; i++)
+        {
+            entry = list[i];
+
+            // { key: 'moveSpritePlugin', plugin: MoveSpritePlugin, , mapping: 'move' }
+
+            key = GetFastValue(entry, 'key', null);
+            plugin = GetFastValue(entry, 'plugin', null);
+            mapping = GetFastValue(entry, 'mapping', null);
+
+            if (key && plugin)
+            {
+                this.installScenePlugin(key, plugin, mapping);
+            }
+        }
