@@ -82994,3 +82994,226 @@ var PluginManager = new Class({
                 this.installScenePlugin(key, plugin, mapping);
             }
         }
+
+        this._pendingGlobal = [];
+        this._pendingScene = [];
+
+        this.game.events.once('destroy', this.destroy, this);
+    },
+
+    /**
+     * Called by the Scene Systems class. Tells the plugin manager to install all Scene plugins into it.
+     *
+     * First it will install global references, i.e. references from the Game systems into the Scene Systems (and Scene if mapped.)
+     * Then it will install Core Scene Plugins followed by Scene Plugins registered with the PluginManager.
+     * Finally it will install any references to Global Plugins that have a Scene mapping property into the Scene itself.
+     *
+     * @method Phaser.Plugins.PluginManager#addToScene
+     * @protected
+     * @since 3.8.0
+     *
+     * @param {Phaser.Scenes.Systems} sys - The Scene Systems class to install all the plugins in to.
+     * @param {array} globalPlugins - An array of global plugins to install.
+     * @param {array} scenePlugins - An array of scene plugins to install.
+     */
+    addToScene: function (sys, globalPlugins, scenePlugins)
+    {
+        var i;
+        var pluginKey;
+        var pluginList;
+        var game = this.game;
+        var scene = sys.scene;
+        var map = sys.settings.map;
+        var isBooted = sys.settings.isBooted;
+
+        //  Reference the GlobalPlugins from Game into Scene.Systems
+        for (i = 0; i < globalPlugins.length; i++)
+        {
+            pluginKey = globalPlugins[i];
+           
+            if (game[pluginKey])
+            {
+                sys[pluginKey] = game[pluginKey];
+
+                //  Scene level injection
+                if (map.hasOwnProperty(pluginKey))
+                {
+                    scene[map[pluginKey]] = sys[pluginKey];
+                }
+            }
+            else if (pluginKey === 'game' && map.hasOwnProperty(pluginKey))
+            {
+                scene[map[pluginKey]] = game;
+            }
+        }
+
+        for (var s = 0; s < scenePlugins.length; s++)
+        {
+            pluginList = scenePlugins[s];
+
+            for (i = 0; i < pluginList.length; i++)
+            {
+                pluginKey = pluginList[i];
+
+                if (!PluginCache.hasCore(pluginKey))
+                {
+                    continue;
+                }
+
+                var source = PluginCache.getCore(pluginKey);
+
+                var plugin = new source.plugin(scene, this);
+                
+                sys[source.mapping] = plugin;
+
+                //  Scene level injection
+                if (source.custom)
+                {
+                    scene[source.mapping] = plugin;
+                }
+                else if (map.hasOwnProperty(source.mapping))
+                {
+                    scene[map[source.mapping]] = plugin;
+                }
+
+                //  Scene is already booted, usually because this method is being called at run-time, so boot the plugin
+                if (isBooted)
+                {
+                    plugin.boot();
+                }
+            }
+        }
+
+        //  And finally, inject any 'global scene plugins'
+        pluginList = this.plugins;
+
+        for (i = 0; i < pluginList.length; i++)
+        {
+            var entry = pluginList[i];
+           
+            if (entry.mapping)
+            {
+                scene[entry.mapping] = entry.plugin;
+            }
+        }
+    },
+
+    /**
+     * Called by the Scene Systems class. Returns a list of plugins to be installed.
+     *
+     * @method Phaser.Plugins.PluginManager#getDefaultScenePlugins
+     * @protected
+     * @since 3.8.0
+     *
+     * @return {string[]} A list keys of all the Scene Plugins to install.
+     */
+    getDefaultScenePlugins: function ()
+    {
+        var list = this.game.config.defaultPlugins;
+
+        //  Merge in custom Scene plugins
+        list = list.concat(this.scenePlugins);
+
+        return list;
+    },
+
+    /**
+     * Installs a new Scene Plugin into the Plugin Manager and optionally adds it
+     * to the given Scene as well. A Scene Plugin added to the manager in this way
+     * will be automatically installed into all new Scenes using the key and mapping given.
+     *
+     * The `key` property is what the plugin is injected into Scene.Systems as.
+     * The `mapping` property is optional, and if specified is what the plugin is installed into
+     * the Scene as. For example:
+     *
+     * ```javascript
+     * this.plugins.installScenePlugin('powerupsPlugin', pluginCode, 'powerups');
+     * 
+     * // and from within the scene:
+     * this.sys.powerupsPlugin; // key value
+     * this.powerups; // mapping value
+     * ```
+     *
+     * This method is called automatically by Phaser if you install your plugins using either the
+     * Game Configuration object, or by preloading them via the Loader.
+     *
+     * @method Phaser.Plugins.PluginManager#installScenePlugin
+     * @since 3.8.0
+     *
+     * @param {string} key - The property key that will be used to add this plugin to Scene.Systems.
+     * @param {function} plugin - The plugin code. This should be the non-instantiated version.
+     * @param {string} [mapping] - If this plugin is injected into the Phaser.Scene class, this is the property key to use.
+     * @param {Phaser.Scene} [addToScene] - Optionally automatically add this plugin to the given Scene.
+     */
+    installScenePlugin: function (key, plugin, mapping, addToScene)
+    {
+        if (typeof plugin !== 'function')
+        {
+            console.warn('Invalid Scene Plugin: ' + key);
+            return;
+        }
+
+        if (PluginCache.hasCore(key))
+        {
+            console.warn('Scene Plugin key in use: ' + key);
+            return;
+        }
+
+        PluginCache.register(key, plugin, mapping, true);
+
+        this.scenePlugins.push(key);
+
+        if (addToScene)
+        {
+            var instance = new plugin(addToScene, this);
+
+            addToScene.sys[key] = instance;
+
+            if (mapping && mapping !== '')
+            {
+                addToScene[mapping] = instance;
+            }
+
+            instance.boot();
+        }
+    },
+
+    /**
+     * Installs a new Global Plugin into the Plugin Manager and optionally starts it running.
+     * A global plugin belongs to the Plugin Manager, rather than a specific Scene, and can be accessed
+     * and used by all Scenes in your game.
+     *
+     * The `key` property is what you use to access this plugin from the Plugin Manager.
+     *
+     * ```javascript
+     * this.plugins.install('powerupsPlugin', pluginCode);
+     * 
+     * // and from within the scene:
+     * this.plugins.get('powerupsPlugin');
+     * ```
+     *
+     * This method is called automatically by Phaser if you install your plugins using either the
+     * Game Configuration object, or by preloading them via the Loader.
+     *
+     * The same plugin can be installed multiple times into the Plugin Manager by simply giving each
+     * instance its own unique key.
+     *
+     * @method Phaser.Plugins.PluginManager#install
+     * @since 3.8.0
+     * 
+     * @param {string} key - The unique handle given to this plugin within the Plugin Manager.
+     * @param {function} plugin - The plugin code. This should be the non-instantiated version.
+     * @param {boolean} [start=false] - Automatically start the plugin running? This is always `true` if you provide a mapping value.
+     * @param {string} [mapping] - If this plugin is injected into the Phaser.Scene class, this is the property key to use.
+     * @param {any} [data] - A value passed to the plugin's `init` method.
+     */
+    install: function (key, plugin, start, mapping, data)
+    {
+        if (start === undefined) { start = false; }
+        if (mapping === undefined) { mapping = null; }
+        if (data === undefined) { data = null; }
+
+        if (typeof plugin !== 'function')
+        {
+            console.warn('Invalid Plugin: ' + key);
+            return;
