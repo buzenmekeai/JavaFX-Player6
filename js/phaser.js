@@ -83867,3 +83867,231 @@ var TouchManager = new Class({
 
         this.onTouchStart = function (event)
         {
+            if (event.defaultPrevented || !_this.enabled || !_this.manager)
+            {
+                //  Do nothing if event already handled
+                return;
+            }
+    
+            _this.manager.queueTouchStart(event);
+    
+            if (_this.capture)
+            {
+                event.preventDefault();
+            }
+        };
+
+        this.onTouchMove = function (event)
+        {
+            if (event.defaultPrevented || !_this.enabled || !_this.manager)
+            {
+                //  Do nothing if event already handled
+                return;
+            }
+    
+            _this.manager.queueTouchMove(event);
+    
+            if (_this.capture)
+            {
+                event.preventDefault();
+            }
+        };
+
+        this.onTouchEnd = function (event)
+        {
+            if (event.defaultPrevented || !_this.enabled || !_this.manager)
+            {
+                //  Do nothing if event already handled
+                return;
+            }
+    
+            _this.manager.queueTouchEnd(event);
+    
+            if (_this.capture)
+            {
+                event.preventDefault();
+            }
+        };
+
+        this.onTouchCancel = function (event)
+        {
+            if (event.defaultPrevented || !_this.enabled || !_this.manager)
+            {
+                //  Do nothing if event already handled
+                return;
+            }
+    
+            _this.manager.queueTouchCancel(event);
+    
+            if (_this.capture)
+            {
+                event.preventDefault();
+            }
+        };
+
+        var target = this.target;
+
+        if (!target)
+        {
+            return;
+        }
+
+        var passive = { passive: true };
+        var nonPassive = { passive: false };
+
+        if (this.capture)
+        {
+            target.addEventListener('touchstart', this.onTouchStart, nonPassive);
+            target.addEventListener('touchmove', this.onTouchMove, nonPassive);
+            target.addEventListener('touchend', this.onTouchEnd, nonPassive);
+            target.addEventListener('touchcancel', this.onTouchCancel, nonPassive);
+        }
+        else
+        {
+            target.addEventListener('touchstart', this.onTouchStart, passive);
+            target.addEventListener('touchmove', this.onTouchMove, passive);
+            target.addEventListener('touchend', this.onTouchEnd, passive);
+        }
+
+        this.enabled = true;
+    },
+
+    /**
+     * Stops the Touch Event listeners.
+     * This is called automatically and does not need to be manually invoked.
+     *
+     * @method Phaser.Input.Touch.TouchManager#stopListeners
+     * @since 3.0.0
+     */
+    stopListeners: function ()
+    {
+        var target = this.target;
+
+        target.removeEventListener('touchstart', this.onTouchStart);
+        target.removeEventListener('touchmove', this.onTouchMove);
+        target.removeEventListener('touchend', this.onTouchEnd);
+        target.removeEventListener('touchcancel', this.onTouchCancel);
+    },
+
+    /**
+     * Destroys this Touch Manager instance.
+     *
+     * @method Phaser.Input.Touch.TouchManager#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.stopListeners();
+
+        this.target = null;
+        this.enabled = false;
+        this.manager = null;
+    }
+
+});
+
+module.exports = TouchManager;
+
+
+/***/ }),
+/* 334 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var SmoothStep = __webpack_require__(181);
+
+/**
+ * A Smooth Step interpolation method.
+ *
+ * @function Phaser.Math.Interpolation.SmoothStep
+ * @since 3.9.0
+ * @see {@link https://en.wikipedia.org/wiki/Smoothstep}
+ *
+ * @param {number} t - The percentage of interpolation, between 0 and 1.
+ * @param {number} min - The minimum value, also known as the 'left edge', assumed smaller than the 'right edge'.
+ * @param {number} max - The maximum value, also known as the 'right edge', assumed greater than the 'left edge'.
+ *
+ * @return {number} The interpolated value.
+ */
+var SmoothStepInterpolation = function (t, min, max)
+{
+    return min + (max - min) * SmoothStep(t, 0, 1);
+};
+
+module.exports = SmoothStepInterpolation;
+
+
+/***/ }),
+/* 335 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Distance = __webpack_require__(52);
+var SmoothStepInterpolation = __webpack_require__(334);
+var Vector2 = __webpack_require__(3);
+
+/**
+ * @classdesc
+ * A Pointer object encapsulates both mouse and touch input within Phaser.
+ *
+ * By default, Phaser will create 2 pointers for your game to use. If you require more, i.e. for a multi-touch
+ * game, then use the `InputPlugin.addPointer` method to do so, rather than instantiating this class directly,
+ * otherwise it won't be managed by the input system.
+ *
+ * You can reference the current active pointer via `InputPlugin.activePointer`. You can also use the properties
+ * `InputPlugin.pointer1` through to `pointer10`, for each pointer you have enabled in your game.
+ *
+ * The properties of this object are set by the Input Plugin during processing. This object is then sent in all
+ * input related events that the Input Plugin emits, so you can reference properties from it directly in your
+ * callbacks.
+ *
+ * @class Pointer
+ * @memberof Phaser.Input
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Input.InputManager} manager - A reference to the Input Manager.
+ * @param {integer} id - The internal ID of this Pointer.
+ */
+var Pointer = new Class({
+
+    initialize:
+
+    function Pointer (manager, id)
+    {
+        /**
+         * A reference to the Input Manager.
+         *
+         * @name Phaser.Input.Pointer#manager
+         * @type {Phaser.Input.InputManager}
+         * @since 3.0.0
+         */
+        this.manager = manager;
+
+        /**
+         * The internal ID of this Pointer.
+         *
+         * @name Phaser.Input.Pointer#id
+         * @type {integer}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.id = id;
+
+        /**
+         * The most recent native DOM Event this Pointer has processed.
+         *
+         * @name Phaser.Input.Pointer#event
+         * @type {(TouchEvent|MouseEvent)}
+         * @since 3.0.0
