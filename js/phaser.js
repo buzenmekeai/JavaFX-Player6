@@ -84095,3 +84095,213 @@ var Pointer = new Class({
          * @name Phaser.Input.Pointer#event
          * @type {(TouchEvent|MouseEvent)}
          * @since 3.0.0
+         */
+        this.event;
+
+        /**
+         * The camera the Pointer interacted with during its last update.
+         * 
+         * A Pointer can only ever interact with one camera at once, which will be the top-most camera
+         * in the list should multiple cameras be positioned on-top of each other.
+         *
+         * @name Phaser.Input.Pointer#camera
+         * @type {Phaser.Cameras.Scene2D.Camera}
+         * @default null
+         * @since 3.0.0
+         */
+        this.camera = null;
+
+        /**
+         * 0: No button or un-initialized
+         * 1: Left button
+         * 2: Right button
+         * 4: Wheel button or middle button
+         * 8: 4th button (typically the "Browser Back" button)
+         * 16: 5th button (typically the "Browser Forward" button)
+         * 
+         * For a mouse configured for left-handed use, the button actions are reversed.
+         * In this case, the values are read from right to left.
+         *
+         * @name Phaser.Input.Pointer#buttons
+         * @type {integer}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.buttons = 0;
+
+        /**
+         * The position of the Pointer in screen space.
+         *
+         * @name Phaser.Input.Pointer#position
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.position = new Vector2();
+
+        /**
+         * The previous position of the Pointer in screen space.
+         * 
+         * The old x and y values are stored in here during the InputManager.transformPointer call.
+         * 
+         * You can use it to track how fast the pointer is moving, or to smoothly interpolate between the old and current position.
+         * See the `Pointer.getInterpolatedPosition` method to assist in this.
+         *
+         * @name Phaser.Input.Pointer#prevPosition
+         * @type {Phaser.Math.Vector2}
+         * @since 3.11.0
+         */
+        this.prevPosition = new Vector2();
+
+        /**
+         * The x position of this Pointer, translated into the coordinate space of the most recent Camera it interacted with.
+         *
+         * @name Phaser.Input.Pointer#worldX
+         * @type {number}
+         * @default 0
+         * @since 3.10.0
+         */
+        this.worldX = 0;
+
+        /**
+         * The y position of this Pointer, translated into the coordinate space of the most recent Camera it interacted with.
+         *
+         * @name Phaser.Input.Pointer#worldY
+         * @type {number}
+         * @default 0
+         * @since 3.10.0
+         */
+        this.worldY = 0;
+
+        /**
+         * X coordinate of the Pointer when Button 1 (left button), or Touch, was pressed, used for dragging objects.
+         *
+         * @name Phaser.Input.Pointer#downX
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.downX = 0;
+
+        /**
+         * Y coordinate of the Pointer when Button 1 (left button), or Touch, was pressed, used for dragging objects.
+         *
+         * @name Phaser.Input.Pointer#downY
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.downY = 0;
+
+        /**
+         * Time when Button 1 (left button), or Touch, was pressed, used for dragging objects.
+         *
+         * @name Phaser.Input.Pointer#downTime
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.downTime = 0;
+
+        /**
+         * X coordinate of the Pointer when Button 1 (left button), or Touch, was released, used for dragging objects.
+         *
+         * @name Phaser.Input.Pointer#upX
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.upX = 0;
+
+        /**
+         * Y coordinate of the Pointer when Button 1 (left button), or Touch, was released, used for dragging objects.
+         *
+         * @name Phaser.Input.Pointer#upY
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.upY = 0;
+
+        /**
+         * Time when Button 1 (left button), or Touch, was released, used for dragging objects.
+         *
+         * @name Phaser.Input.Pointer#upTime
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.upTime = 0;
+
+        /**
+         * Is the primary button down? (usually button 0, the left mouse button)
+         *
+         * @name Phaser.Input.Pointer#primaryDown
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.primaryDown = false;
+
+        /**
+         * The Drag State of the Pointer:
+         *
+         * 0 = Not dragging anything
+         * 1 = Being checked if dragging
+         * 2 = Dragging something
+         *
+         * @name Phaser.Input.Pointer#dragState
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.dragState = 0;
+
+        /**
+         * Is _any_ button on this pointer considered as being down?
+         *
+         * @name Phaser.Input.Pointer#isDown
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.isDown = false;
+
+        /**
+         * A dirty flag for this Pointer, used internally by the Input Plugin.
+         *
+         * @name Phaser.Input.Pointer#dirty
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.dirty = false;
+
+        /**
+         * Is this Pointer considered as being "just down" or not?
+         *
+         * @name Phaser.Input.Pointer#justDown
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.justDown = false;
+
+        /**
+         * Is this Pointer considered as being "just up" or not?
+         *
+         * @name Phaser.Input.Pointer#justUp
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.justUp = false;
+
+        /**
+         * Is this Pointer considered as being "just moved" or not?
+         *
+         * @name Phaser.Input.Pointer#justMoved
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.justMoved = false;
