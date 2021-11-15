@@ -84752,3 +84752,199 @@ var Pointer = new Class({
 
     /**
      * Takes the previous and current Pointer positions and then generates an array of interpolated values between
+     * the two. The array will be populated up to the size of the `steps` argument.
+     * 
+     * ```javaScript
+     * var points = pointer.getInterpolatedPosition(4);
+     * 
+     * // points[0] = { x: 0, y: 0 }
+     * // points[1] = { x: 2, y: 1 }
+     * // points[2] = { x: 3, y: 2 }
+     * // points[3] = { x: 6, y: 3 }
+     * ```
+     * 
+     * Use this if you need to get smoothed values between the previous and current pointer positions. DOM pointer
+     * events can often fire faster than the main browser loop, and this will help you avoid janky movement
+     * especially if you have an object following a Pointer.
+     * 
+     * Note that if you provide an output array it will only be populated up to the number of steps provided.
+     * It will not clear any previous data that may have existed beyond the range of the steps count.
+     * 
+     * Internally it uses the Smooth Step interpolation calculation.
+     *
+     * @method Phaser.Input.Pointer#getInterpolatedPosition
+     * @since 3.11.0
+     * 
+     * @param {integer} [steps=10] - The number of interpolation steps to use.
+     * @param {array} [out] - An array to store the results in. If not provided a new one will be created.
+     * 
+     * @return {array} An array of interpolated values.
+     */
+    getInterpolatedPosition: function (steps, out)
+    {
+        if (steps === undefined) { steps = 10; }
+        if (out === undefined) { out = []; }
+
+        var prevX = this.prevPosition.x;
+        var prevY = this.prevPosition.y;
+
+        var curX = this.position.x;
+        var curY = this.position.y;
+
+        for (var i = 0; i < steps; i++)
+        {
+            var t = (1 / steps) * i;
+
+            out[i] = { x: SmoothStepInterpolation(t, prevX, curX), y: SmoothStepInterpolation(t, prevY, curY) };
+        }
+
+        return out;
+    },
+
+    /**
+     * Destroys this Pointer instance and resets its external references.
+     *
+     * @method Phaser.Input.Pointer#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.camera = null;
+        this.manager = null;
+        this.position = null;
+    },
+
+    /**
+     * The x position of this Pointer.
+     * The value is in screen space.
+     * See `worldX` to get a camera converted position.
+     *
+     * @name Phaser.Input.Pointer#x
+     * @type {number}
+     * @since 3.0.0
+     */
+    x: {
+
+        get: function ()
+        {
+            return this.position.x;
+        },
+
+        set: function (value)
+        {
+            this.position.x = value;
+        }
+
+    },
+
+    /**
+     * The y position of this Pointer.
+     * The value is in screen space.
+     * See `worldY` to get a camera converted position.
+     *
+     * @name Phaser.Input.Pointer#y
+     * @type {number}
+     * @since 3.0.0
+     */
+    y: {
+
+        get: function ()
+        {
+            return this.position.y;
+        },
+
+        set: function (value)
+        {
+            this.position.y = value;
+        }
+
+    }
+
+});
+
+module.exports = Pointer;
+
+
+/***/ }),
+/* 336 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Features = __webpack_require__(168);
+
+//  https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
+//  https://github.com/WICG/EventListenerOptions/blob/gh-pages/explainer.md
+
+/**
+ * @classdesc
+ * The Mouse Manager is a helper class that belongs to the Input Manager.
+ * 
+ * Its role is to listen for native DOM Mouse Events and then pass them onto the Input Manager for further processing.
+ * 
+ * You do not need to create this class directly, the Input Manager will create an instance of it automatically.
+ *
+ * @class MouseManager
+ * @memberof Phaser.Input.Mouse
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Input.InputManager} inputManager - A reference to the Input Manager.
+ */
+var MouseManager = new Class({
+
+    initialize:
+
+    function MouseManager (inputManager)
+    {
+        /**
+         * A reference to the Input Manager.
+         *
+         * @name Phaser.Input.Mouse.MouseManager#manager
+         * @type {Phaser.Input.InputManager}
+         * @since 3.0.0
+         */
+        this.manager = inputManager;
+
+        /**
+         * If true the DOM mouse events will have event.preventDefault applied to them, if false they will propagate fully.
+         *
+         * @name Phaser.Input.Mouse.MouseManager#capture
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.capture = true;
+
+        /**
+         * A boolean that controls if the Mouse Manager is enabled or not.
+         * Can be toggled on the fly.
+         *
+         * @name Phaser.Input.Mouse.MouseManager#enabled
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.enabled = false;
+
+        /**
+         * The Touch Event target, as defined in the Game Config.
+         * Typically the canvas to which the game is rendering, but can be any interactive DOM element.
+         *
+         * @name Phaser.Input.Mouse.MouseManager#target
+         * @type {any}
+         * @since 3.0.0
+         */
+        this.target;
+
+        /**
+         * If the mouse has been pointer locked successfully this will be set to true.
+         *
+         * @name Phaser.Input.Mouse.MouseManager#locked
+         * @type {boolean}
+         * @default false
