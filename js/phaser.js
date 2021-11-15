@@ -84948,3 +84948,238 @@ var MouseManager = new Class({
          * @name Phaser.Input.Mouse.MouseManager#locked
          * @type {boolean}
          * @default false
+         * @since 3.0.0
+         */
+        this.locked = false;
+
+        inputManager.events.once('boot', this.boot, this);
+    },
+
+    /**
+     * The Touch Manager boot process.
+     *
+     * @method Phaser.Input.Mouse.MouseManager#boot
+     * @private
+     * @since 3.0.0
+     */
+    boot: function ()
+    {
+        var config = this.manager.config;
+
+        this.enabled = config.inputMouse;
+        this.target = config.inputMouseEventTarget;
+        this.capture = config.inputMouseCapture;
+
+        if (!this.target)
+        {
+            this.target = this.manager.game.canvas;
+        }
+
+        if (config.disableContextMenu)
+        {
+            this.disableContextMenu();
+        }
+
+        if (this.enabled)
+        {
+            this.startListeners();
+        }
+    },
+
+    /**
+     * Attempts to disable the context menu from appearing if you right-click on the browser.
+     * 
+     * Works by listening for the `contextmenu` event and prevent defaulting it.
+     * 
+     * Use this if you need to enable right-button mouse support in your game, and the browser
+     * menu keeps getting in the way.
+     *
+     * @method Phaser.Input.Mouse.MouseManager#disableContextMenu
+     * @since 3.0.0
+     *
+     * @return {Phaser.Input.Mouse.MouseManager} This Mouse Manager instance.
+     */
+    disableContextMenu: function ()
+    {
+        document.body.addEventListener('contextmenu', function (event)
+        {
+            event.preventDefault();
+            return false;
+        });
+
+        return this;
+    },
+
+    /**
+     * If the browser supports it, you can request that the pointer be locked to the browser window.
+     *
+     * This is classically known as 'FPS controls', where the pointer can't leave the browser until
+     * the user presses an exit key.
+     *
+     * If the browser successfully enters a locked state, a `POINTER_LOCK_CHANGE_EVENT` will be dispatched,
+     * from the games Input Manager, with an `isPointerLocked` property.
+     *
+     * It is important to note that pointer lock can only be enabled after an 'engagement gesture',
+     * see: https://w3c.github.io/pointerlock/#dfn-engagement-gesture.
+     *
+     * @method Phaser.Input.Mouse.MouseManager#requestPointerLock
+     * @since 3.0.0
+     */
+    requestPointerLock: function ()
+    {
+        if (Features.pointerLock)
+        {
+            var element = this.target;
+            element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
+            element.requestPointerLock();
+        }
+    },
+
+    /**
+     * Internal pointerLockChange handler.
+     *
+     * @method Phaser.Input.Mouse.MouseManager#pointerLockChange
+     * @since 3.0.0
+     *
+     * @param {MouseEvent} event - The native event from the browser.
+     */
+
+    /*
+    pointerLockChange: function (event)
+    {
+        var element = this.target;
+
+        this.locked = (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element) ? true : false;
+
+        this.manager.queue.push(event);
+    },
+    */
+
+    /**
+     * If the browser supports pointer lock, this will request that the pointer lock is released. If
+     * the browser successfully enters a locked state, a 'POINTER_LOCK_CHANGE_EVENT' will be
+     * dispatched - from the game's input manager - with an `isPointerLocked` property.
+     *
+     * @method Phaser.Input.Mouse.MouseManager#releasePointerLock
+     * @since 3.0.0
+     */
+    releasePointerLock: function ()
+    {
+        if (Features.pointerLock)
+        {
+            document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock || document.webkitExitPointerLock;
+            document.exitPointerLock();
+        }
+    },
+
+    /**
+     * The Mouse Move Event Handler.
+     *
+     * @method Phaser.Input.Mouse.MouseManager#onMouseMove
+     * @since 3.10.0
+     *
+     * @param {MouseEvent} event - The native DOM Mouse Move Event.
+     */
+
+    /*
+    onMouseMove: function (event)
+    {
+        if (event.defaultPrevented || !this.enabled || !this.manager)
+        {
+            // Do nothing if event already handled
+            return;
+        }
+
+        this.manager.queueMouseMove(event);
+
+        if (this.capture)
+        {
+            event.preventDefault();
+        }
+    },
+    */
+
+    /**
+     * The Mouse Down Event Handler.
+     *
+     * @method Phaser.Input.Mouse.MouseManager#onMouseDown
+     * @since 3.10.0
+     *
+     * @param {MouseEvent} event - The native DOM Mouse Down Event.
+     */
+
+    /*
+    onMouseDown: function (event)
+    {
+        if (event.defaultPrevented || !this.enabled)
+        {
+            // Do nothing if event already handled
+            return;
+        }
+
+        this.manager.queueMouseDown(event);
+
+        if (this.capture)
+        {
+            event.preventDefault();
+        }
+    },
+    */
+
+    /**
+     * The Mouse Up Event Handler.
+     *
+     * @method Phaser.Input.Mouse.MouseManager#onMouseUp
+     * @since 3.10.0
+     *
+     * @param {MouseEvent} event - The native DOM Mouse Up Event.
+     */
+
+    /*
+    onMouseUp: function (event)
+    {
+        if (event.defaultPrevented || !this.enabled)
+        {
+            // Do nothing if event already handled
+            return;
+        }
+
+        this.manager.queueMouseUp(event);
+
+        if (this.capture)
+        {
+            event.preventDefault();
+        }
+    },
+    */
+
+    /**
+     * Starts the Mouse Event listeners running.
+     * This is called automatically and does not need to be manually invoked.
+     *
+     * @method Phaser.Input.Mouse.MouseManager#startListeners
+     * @since 3.0.0
+     */
+    startListeners: function ()
+    {
+        var _this = this;
+
+        var onMouseMove = function (event)
+        {
+            if (event.defaultPrevented || !_this.enabled || !_this.manager)
+            {
+                // Do nothing if event already handled
+                return;
+            }
+    
+            _this.manager.queueMouseMove(event);
+    
+            if (_this.capture)
+            {
+                event.preventDefault();
+            }
+        };
+
+        var onMouseDown = function (event)
+        {
+            if (event.defaultPrevented || !_this.enabled || !_this.manager)
