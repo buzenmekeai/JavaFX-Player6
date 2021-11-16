@@ -85406,3 +85406,222 @@ var TransformXY = __webpack_require__(332);
  *
  * You rarely need to interact with the Input Manager directly, and as such, all of its properties and methods
  * should be considered private. Instead, you should use the Input Plugin, which is a Scene level system, responsible
+ * for dealing with all input events for a Scene.
+ *
+ * @class InputManager
+ * @memberof Phaser.Input
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Game} game - The Game instance that owns the Input Manager.
+ * @param {object} config - The Input Configuration object, as set in the Game Config.
+ */
+var InputManager = new Class({
+
+    initialize:
+
+    function InputManager (game, config)
+    {
+        /**
+         * The Game instance that owns the Input Manager.
+         * A Game only maintains on instance of the Input Manager at any time.
+         *
+         * @name Phaser.Input.InputManager#game
+         * @type {Phaser.Game}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.game = game;
+
+        /**
+         * The Canvas that is used for all DOM event input listeners.
+         *
+         * @name Phaser.Input.InputManager#canvas
+         * @type {HTMLCanvasElement}
+         * @since 3.0.0
+         */
+        this.canvas;
+
+        /**
+         * The Input Configuration object, as set in the Game Config.
+         *
+         * @name Phaser.Input.InputManager#config
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.config = config;
+
+        /**
+         * If set, the Input Manager will run its update loop every frame.
+         *
+         * @name Phaser.Input.InputManager#enabled
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.enabled = true;
+
+        /**
+         * The Event Emitter instance that the Input Manager uses to emit events from.
+         *
+         * @name Phaser.Input.InputManager#events
+         * @type {Phaser.Events.EventEmitter}
+         * @since 3.0.0
+         */
+        this.events = new EventEmitter();
+
+        /**
+         * A standard FIFO queue for the native DOM events waiting to be handled by the Input Manager.
+         *
+         * @name Phaser.Input.InputManager#queue
+         * @type {array}
+         * @default []
+         * @since 3.0.0
+         */
+        this.queue = [];
+
+        /**
+         * DOM Callbacks container.
+         *
+         * @name Phaser.Input.InputManager#domCallbacks
+         * @private
+         * @type {object}
+         * @since 3.10.0
+         */
+        this.domCallbacks = { up: [], down: [], move: [], upOnce: [], downOnce: [], moveOnce: [] };
+
+        /**
+         * Are there any up callbacks defined?
+         *
+         * @name Phaser.Input.InputManager#_hasUpCallback
+         * @private
+         * @type {boolean}
+         * @since 3.10.0
+         */
+        this._hasUpCallback = false;
+
+        /**
+         * Are there any down callbacks defined?
+         *
+         * @name Phaser.Input.InputManager#_hasDownCallback
+         * @private
+         * @type {boolean}
+         * @since 3.10.0
+         */
+        this._hasDownCallback = false;
+
+        /**
+         * Are there any move callbacks defined?
+         *
+         * @name Phaser.Input.InputManager#_hasMoveCallback
+         * @private
+         * @type {boolean}
+         * @since 3.10.0
+         */
+        this._hasMoveCallback = false;
+
+        /**
+         * Is a custom cursor currently set? (desktop only)
+         *
+         * @name Phaser.Input.InputManager#_customCursor
+         * @private
+         * @type {string}
+         * @since 3.10.0
+         */
+        this._customCursor = '';
+
+        /**
+         * Custom cursor tracking value.
+         *
+         * 0 - No change.
+         * 1 - Set new cursor.
+         * 2 - Reset cursor.
+         *
+         * @name Phaser.Input.InputManager#_setCursor
+         * @private
+         * @type {integer}
+         * @since 3.10.0
+         */
+        this._setCursor = 0;
+
+        /**
+         * The default CSS cursor to be used when interacting with your game.
+         *
+         * See the `setDefaultCursor` method for more details.
+         *
+         * @name Phaser.Input.InputManager#defaultCursor
+         * @type {string}
+         * @since 3.10.0
+         */
+        this.defaultCursor = '';
+
+        /**
+         * A reference to the Mouse Manager class, if enabled via the `input.mouse` Game Config property.
+         *
+         * @name Phaser.Input.InputManager#mouse
+         * @type {?Phaser.Input.Mouse.MouseManager}
+         * @since 3.0.0
+         */
+        this.mouse = (config.inputMouse) ? new Mouse(this) : null;
+
+        /**
+         * A reference to the Touch Manager class, if enabled via the `input.touch` Game Config property.
+         *
+         * @name Phaser.Input.InputManager#touch
+         * @type {Phaser.Input.Touch.TouchManager}
+         * @since 3.0.0
+         */
+        this.touch = (config.inputTouch) ? new Touch(this) : null;
+
+        /**
+         * An array of Pointers that have been added to the game.
+         * The first entry is reserved for the Mouse Pointer, the rest are Touch Pointers.
+         *
+         * By default there is 1 touch pointer enabled. If you need more use the `addPointer` method to start them,
+         * or set the `input.activePointers` property in the Game Config.
+         *
+         * @name Phaser.Input.InputManager#pointers
+         * @type {Phaser.Input.Pointer[]}
+         * @since 3.10.0
+         */
+        this.pointers = [];
+
+        /**
+         * The number of touch objects activated and being processed each update.
+         *
+         * You can change this by either calling `addPointer` at run-time, or by
+         * setting the `input.activePointers` property in the Game Config.
+         *
+         * @name Phaser.Input.InputManager#pointersTotal
+         * @type {integer}
+         * @readonly
+         * @since 3.10.0
+         */
+        this.pointersTotal = config.inputActivePointers;
+
+        if (config.inputTouch && this.pointersTotal === 1)
+        {
+            this.pointersTotal = 2;
+        }
+
+        for (var i = 0; i <= this.pointersTotal; i++)
+        {
+            this.pointers.push(new Pointer(this, i));
+        }
+
+        /**
+         * The mouse has its own unique Pointer object, which you can reference directly if making a _desktop specific game_.
+         * If you are supporting both desktop and touch devices then do not use this property, instead use `activePointer`
+         * which will always map to the most recently interacted pointer.
+         *
+         * @name Phaser.Input.InputManager#mousePointer
+         * @type {?Phaser.Input.Pointer}
+         * @since 3.10.0
+         */
+        this.mousePointer = (config.inputMouse) ? this.pointers[0] : null;
+
+        /**
+         * The most recently active Pointer object.
+         *
+         * If you've only 1 Pointer in your game then this will accurately be either the first finger touched, or the mouse.
+         *
