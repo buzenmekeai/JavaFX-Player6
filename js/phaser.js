@@ -85183,3 +85183,226 @@ var MouseManager = new Class({
         var onMouseDown = function (event)
         {
             if (event.defaultPrevented || !_this.enabled || !_this.manager)
+            {
+                // Do nothing if event already handled
+                return;
+            }
+    
+            _this.manager.queueMouseDown(event);
+    
+            if (_this.capture)
+            {
+                event.preventDefault();
+            }
+        };
+
+        var onMouseUp = function (event)
+        {
+            if (event.defaultPrevented || !_this.enabled || !_this.manager)
+            {
+                // Do nothing if event already handled
+                return;
+            }
+    
+            _this.manager.queueMouseUp(event);
+    
+            if (_this.capture)
+            {
+                event.preventDefault();
+            }
+        };
+
+        this.onMouseMove = onMouseMove;
+        this.onMouseDown = onMouseDown;
+        this.onMouseUp = onMouseUp;
+
+        var target = this.target;
+        var passive = { passive: true };
+        var nonPassive = { passive: false };
+
+        target.addEventListener('mousemove', onMouseMove, (this.capture) ? nonPassive : passive);
+        target.addEventListener('mousedown', onMouseDown, (this.capture) ? nonPassive : passive);
+        target.addEventListener('mouseup', onMouseUp, (this.capture) ? nonPassive : passive);
+
+        if (Features.pointerLock)
+        {
+            var onPointerLockChange = function (event)
+            {
+                var element = _this.target;
+
+                _this.locked = (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element) ? true : false;
+        
+                _this.manager.queue.push(event);
+            };
+
+            this.pointerLockChange = onPointerLockChange;
+
+            document.addEventListener('pointerlockchange', onPointerLockChange, true);
+            document.addEventListener('mozpointerlockchange', onPointerLockChange, true);
+            document.addEventListener('webkitpointerlockchange', onPointerLockChange, true);
+        }
+    },
+
+    /**
+     * Stops the Mouse Event listeners.
+     * This is called automatically and does not need to be manually invoked.
+     *
+     * @method Phaser.Input.Mouse.MouseManager#stopListeners
+     * @since 3.0.0
+     */
+    stopListeners: function ()
+    {
+        var target = this.target;
+
+        target.removeEventListener('mousemove', this.onMouseMove);
+        target.removeEventListener('mousedown', this.onMouseDown);
+        target.removeEventListener('mouseup', this.onMouseUp);
+
+        if (Features.pointerLock)
+        {
+            document.removeEventListener('pointerlockchange', this.pointerLockChange, true);
+            document.removeEventListener('mozpointerlockchange', this.pointerLockChange, true);
+            document.removeEventListener('webkitpointerlockchange', this.pointerLockChange, true);
+        }
+    },
+
+    /**
+     * Destroys this Mouse Manager instance.
+     *
+     * @method Phaser.Input.Mouse.MouseManager#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.stopListeners();
+
+        this.target = null;
+        this.manager = null;
+    }
+
+});
+
+module.exports = MouseManager;
+
+
+/***/ }),
+/* 337 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var INPUT_CONST = {
+
+    /**
+     * The mouse pointer is being held down.
+     * 
+     * @name Phaser.Input.MOUSE_DOWN
+     * @type {integer}
+     * @since 3.10.0
+     */
+    MOUSE_DOWN: 0,
+
+    /**
+     * The mouse pointer is being moved.
+     * 
+     * @name Phaser.Input.MOUSE_MOVE
+     * @type {integer}
+     * @since 3.10.0
+     */
+    MOUSE_MOVE: 1,
+
+    /**
+     * The mouse pointer is released.
+     * 
+     * @name Phaser.Input.MOUSE_UP
+     * @type {integer}
+     * @since 3.10.0
+     */
+    MOUSE_UP: 2,
+
+    /**
+     * A touch pointer has been started.
+     * 
+     * @name Phaser.Input.TOUCH_START
+     * @type {integer}
+     * @since 3.10.0
+     */
+    TOUCH_START: 3,
+
+    /**
+     * A touch pointer has been started.
+     * 
+     * @name Phaser.Input.TOUCH_MOVE
+     * @type {integer}
+     * @since 3.10.0
+     */
+    TOUCH_MOVE: 4,
+
+    /**
+     * A touch pointer has been started.
+     * 
+     * @name Phaser.Input.TOUCH_END
+     * @type {integer}
+     * @since 3.10.0
+     */
+    TOUCH_END: 5,
+
+    /**
+     * A touch pointer has been been cancelled by the browser.
+     * 
+     * @name Phaser.Input.TOUCH_CANCEL
+     * @type {integer}
+     * @since 3.15.0
+     */
+    TOUCH_CANCEL: 7,
+
+    /**
+     * The pointer lock has changed.
+     * 
+     * @name Phaser.Input.POINTER_LOCK_CHANGE
+     * @type {integer}
+     * @since 3.10.0
+     */
+    POINTER_LOCK_CHANGE: 6
+
+};
+
+module.exports = INPUT_CONST;
+
+
+/***/ }),
+/* 338 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var CONST = __webpack_require__(337);
+var EventEmitter = __webpack_require__(11);
+var Mouse = __webpack_require__(336);
+var Pointer = __webpack_require__(335);
+var Rectangle = __webpack_require__(9);
+var Touch = __webpack_require__(333);
+var TransformMatrix = __webpack_require__(38);
+var TransformXY = __webpack_require__(332);
+
+/**
+ * @classdesc
+ * The Input Manager is responsible for handling the pointer related systems in a single Phaser Game instance.
+ *
+ * Based on the Game Config it will create handlers for mouse and touch support.
+ *
+ * Keyboard and Gamepad are plugins, handled directly by the InputPlugin class.
+ *
+ * It then manages the event queue, pointer creation and general hit test related operations.
+ *
+ * You rarely need to interact with the Input Manager directly, and as such, all of its properties and methods
+ * should be considered private. Instead, you should use the Input Plugin, which is a Scene level system, responsible
