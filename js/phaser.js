@@ -85625,3 +85625,247 @@ var InputManager = new Class({
          *
          * If you've only 1 Pointer in your game then this will accurately be either the first finger touched, or the mouse.
          *
+         * If your game doesn't need to support multi-touch then you can safely use this property in all of your game
+         * code and it will adapt to be either the mouse or the touch, based on device.
+         *
+         * @name Phaser.Input.InputManager#activePointer
+         * @type {Phaser.Input.Pointer}
+         * @since 3.0.0
+         */
+        this.activePointer = this.pointers[0];
+
+        /**
+         * Reset every frame. Set to `true` if any of the Pointers are dirty this frame.
+         *
+         * @name Phaser.Input.InputManager#dirty
+         * @type {boolean}
+         * @since 3.10.0
+         */
+        this.dirty = false;
+
+        /**
+         * The Scale factor being applied to input coordinates.
+         *
+         * @name Phaser.Input.InputManager#scale
+         * @type { { x:number, y:number } }
+         * @since 3.0.0
+         */
+        this.scale = { x: 1, y: 1 };
+
+        /**
+         * If the top-most Scene in the Scene List receives an input it will stop input from
+         * propagating any lower down the scene list, i.e. if you have a UI Scene at the top
+         * and click something on it, that click will not then be passed down to any other
+         * Scene below. Disable this to have input events passed through all Scenes, all the time.
+         *
+         * @name Phaser.Input.InputManager#globalTopOnly
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.globalTopOnly = true;
+
+        /**
+         * An internal flag that controls if the Input Manager will ignore or process native DOM events this frame.
+         * Set via the InputPlugin.stopPropagation method.
+         *
+         * @name Phaser.Input.InputManager#ignoreEvents
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.ignoreEvents = false;
+
+        /**
+         * The bounds of the Input Manager, used for pointer hit test calculations.
+         *
+         * @name Phaser.Input.InputManager#bounds
+         * @type {Phaser.Geom.Rectangle}
+         * @since 3.0.0
+         */
+        this.bounds = new Rectangle();
+
+        /**
+         * A re-cycled point-like object to store hit test values in.
+         *
+         * @name Phaser.Input.InputManager#_tempPoint
+         * @type {{x:number,y:number}}
+         * @private
+         * @since 3.0.0
+         */
+        this._tempPoint = { x: 0, y: 0 };
+
+        /**
+         * A re-cycled array to store hit results in.
+         *
+         * @name Phaser.Input.InputManager#_tempHitTest
+         * @type {array}
+         * @private
+         * @default []
+         * @since 3.0.0
+         */
+        this._tempHitTest = [];
+
+        /**
+         * A re-cycled matrix used in hit test calculations.
+         *
+         * @name Phaser.Input.InputManager#_tempMatrix
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @private
+         * @since 3.4.0
+         */
+        this._tempMatrix = new TransformMatrix();
+
+        /**
+         * A re-cycled matrix used in hit test calculations.
+         *
+         * @name Phaser.Input.InputManager#_tempMatrix2
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @private
+         * @since 3.12.0
+         */
+        this._tempMatrix2 = new TransformMatrix();
+
+        game.events.once('boot', this.boot, this);
+    },
+
+    /**
+     * The Boot handler is called by Phaser.Game when it first starts up.
+     * The renderer is available by now.
+     *
+     * @method Phaser.Input.InputManager#boot
+     * @protected
+     * @since 3.0.0
+     */
+    boot: function ()
+    {
+        this.canvas = this.game.canvas;
+
+        this.updateBounds();
+
+        this.events.emit('boot');
+
+        this.game.events.on('prestep', this.update, this);
+        this.game.events.on('poststep', this.postUpdate, this);
+        this.game.events.once('destroy', this.destroy, this);
+    },
+
+    /**
+     * Updates the Input Manager bounds rectangle to match the bounding client rectangle of the
+     * canvas element being used to track input events.
+     *
+     * @method Phaser.Input.InputManager#updateBounds
+     * @since 3.0.0
+     */
+    updateBounds: function ()
+    {
+        var bounds = this.bounds;
+
+        var clientRect = this.canvas.getBoundingClientRect();
+
+        bounds.x = clientRect.left + window.pageXOffset - document.documentElement.clientLeft;
+        bounds.y = clientRect.top + window.pageYOffset - document.documentElement.clientTop;
+        bounds.width = clientRect.width;
+        bounds.height = clientRect.height;
+    },
+
+    /**
+     * Resizes the Input Manager internal values, including the bounds and scale factor.
+     *
+     * @method Phaser.Input.InputManager#resize
+     * @since 3.2.0
+     */
+    resize: function ()
+    {
+        this.updateBounds();
+
+        //  Game config size
+        var gw = this.game.config.width;
+        var gh = this.game.config.height;
+
+        //  Actual canvas size
+        var bw = this.bounds.width;
+        var bh = this.bounds.height;
+
+        //  Scale factor
+        this.scale.x = gw / bw;
+        this.scale.y = gh / bh;
+    },
+
+    /**
+     * Internal update loop, called automatically by the Game Step.
+     *
+     * @method Phaser.Input.InputManager#update
+     * @private
+     * @since 3.0.0
+     *
+     * @param {number} time - The time stamp value of this game step.
+     */
+    update: function (time)
+    {
+        var i;
+
+        this._setCursor = 0;
+
+        this.events.emit('update');
+
+        this.ignoreEvents = false;
+
+        this.dirty = false;
+
+        var len = this.queue.length;
+
+        var pointers = this.pointers;
+
+        for (i = 0; i < this.pointersTotal; i++)
+        {
+            pointers[i].reset();
+        }
+
+        if (!this.enabled || len === 0)
+        {
+            return;
+        }
+
+        this.dirty = true;
+
+        this.updateBounds();
+
+        this.scale.x = this.game.config.width / this.bounds.width;
+        this.scale.y = this.game.config.height / this.bounds.height;
+
+        //  Clears the queue array, and also means we don't work on array data that could potentially
+        //  be modified during the processing phase
+        var queue = this.queue.splice(0, len);
+        var mouse = this.mousePointer;
+
+        //  Process the event queue, dispatching all of the events that have stored up
+        for (i = 0; i < len; i += 2)
+        {
+            var type = queue[i];
+            var event = queue[i + 1];
+
+            switch (type)
+            {
+                case CONST.MOUSE_DOWN:
+                    mouse.down(event, time);
+                    break;
+
+                case CONST.MOUSE_MOVE:
+                    mouse.move(event, time);
+                    break;
+
+                case CONST.MOUSE_UP:
+                    mouse.up(event, time);
+                    break;
+
+                case CONST.TOUCH_START:
+                    this.startPointer(event, time);
+                    break;
+
+                case CONST.TOUCH_MOVE:
+                    this.updatePointer(event, time);
+                    break;
+
+                case CONST.TOUCH_END:
+                    this.stopPointer(event, time);
