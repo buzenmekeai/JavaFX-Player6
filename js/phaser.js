@@ -85869,3 +85869,233 @@ var InputManager = new Class({
 
                 case CONST.TOUCH_END:
                     this.stopPointer(event, time);
+                    break;
+
+                case CONST.TOUCH_CANCEL:
+                    this.cancelPointer(event, time);
+                    break;
+
+                case CONST.POINTER_LOCK_CHANGE:
+                    this.events.emit('pointerlockchange', event, this.mouse.locked);
+                    break;
+            }
+        }
+    },
+
+    /**
+     * Internal post-update, called automatically by the Game step.
+     *
+     * @method Phaser.Input.InputManager#postUpdate
+     * @private
+     * @since 3.10.0
+     */
+    postUpdate: function ()
+    {
+        if (this._setCursor === 1)
+        {
+            this.canvas.style.cursor = this._customCursor;
+        }
+        else if (this._setCursor === 2)
+        {
+            this.canvas.style.cursor = this.defaultCursor;
+        }
+    },
+
+    /**
+     * Tells the Input system to set a custom cursor.
+     * 
+     * This cursor will be the default cursor used when interacting with the game canvas.
+     *
+     * If an Interactive Object also sets a custom cursor, this is the cursor that is reset after its use.
+     *
+     * Any valid CSS cursor value is allowed, including paths to image files, i.e.:
+     *
+     * ```javascript
+     * this.input.setDefaultCursor('url(assets/cursors/sword.cur), pointer');
+     * ```
+     * 
+     * Please read about the differences between browsers when it comes to the file formats and sizes they support:
+     *
+     * https://developer.mozilla.org/en-US/docs/Web/CSS/cursor
+     * https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_User_Interface/Using_URL_values_for_the_cursor_property
+     *
+     * It's up to you to pick a suitable cursor format that works across the range of browsers you need to support.
+     *
+     * @method Phaser.Input.InputManager#setDefaultCursor
+     * @since 3.10.0
+     * 
+     * @param {string} cursor - The CSS to be used when setting the default cursor.
+     */
+    setDefaultCursor: function (cursor)
+    {
+        this.defaultCursor = cursor;
+
+        if (this.canvas.style.cursor !== cursor)
+        {
+            this.canvas.style.cursor = cursor;
+        }
+    },
+
+    /**
+     * Called by the InputPlugin when processing over and out events.
+     * 
+     * Tells the Input Manager to set a custom cursor during its postUpdate step.
+     *
+     * https://developer.mozilla.org/en-US/docs/Web/CSS/cursor
+     *
+     * @method Phaser.Input.InputManager#setCursor
+     * @private
+     * @since 3.10.0
+     * 
+     * @param {Phaser.Input.InteractiveObject} interactiveObject - The Interactive Object that called this method.
+     */
+    setCursor: function (interactiveObject)
+    {
+        if (interactiveObject.cursor)
+        {
+            this._setCursor = 1;
+            this._customCursor = interactiveObject.cursor;
+        }
+    },
+
+    /**
+     * Called by the InputPlugin when processing over and out events.
+     * 
+     * Tells the Input Manager to clear the hand cursor, if set, during its postUpdate step.
+     *
+     * @method Phaser.Input.InputManager#resetCursor
+     * @private
+     * @since 3.10.0
+     * 
+     * @param {Phaser.Input.InteractiveObject} interactiveObject - The Interactive Object that called this method.
+     */
+    resetCursor: function (interactiveObject)
+    {
+        if (interactiveObject.cursor)
+        {
+            this._setCursor = 2;
+        }
+    },
+
+    //  event.targetTouches = list of all touches on the TARGET ELEMENT (i.e. game dom element)
+    //  event.touches = list of all touches on the ENTIRE DOCUMENT, not just the target element
+    //  event.changedTouches = the touches that CHANGED in this event, not the total number of them
+
+    /**
+     * Called by the main update loop when a Touch Start Event is received.
+     *
+     * @method Phaser.Input.InputManager#startPointer
+     * @private
+     * @since 3.10.0
+     *
+     * @param {TouchEvent} event - The native DOM event to be processed.
+     * @param {number} time - The time stamp value of this game step.
+     */
+    startPointer: function (event, time)
+    {
+        var pointers = this.pointers;
+
+        for (var c = 0; c < event.changedTouches.length; c++)
+        {
+            var changedTouch = event.changedTouches[c];
+
+            for (var i = 1; i < this.pointersTotal; i++)
+            {
+                var pointer = pointers[i];
+
+                if (!pointer.active)
+                {
+                    pointer.touchstart(changedTouch, time);
+                    this.activePointer = pointer;
+                    break;
+                }
+            }
+        }
+    },
+
+    /**
+     * Called by the main update loop when a Touch Move Event is received.
+     *
+     * @method Phaser.Input.InputManager#updatePointer
+     * @private
+     * @since 3.10.0
+     *
+     * @param {TouchEvent} event - The native DOM event to be processed.
+     * @param {number} time - The time stamp value of this game step.
+     */
+    updatePointer: function (event, time)
+    {
+        var pointers = this.pointers;
+
+        for (var c = 0; c < event.changedTouches.length; c++)
+        {
+            var changedTouch = event.changedTouches[c];
+
+            for (var i = 1; i < this.pointersTotal; i++)
+            {
+                var pointer = pointers[i];
+
+                if (pointer.active && pointer.identifier === changedTouch.identifier)
+                {
+                    pointer.touchmove(changedTouch, time);
+                    this.activePointer = pointer;
+                    break;
+                }
+            }
+        }
+    },
+
+    //  For touch end its a list of the touch points that have been removed from the surface
+    //  https://developer.mozilla.org/en-US/docs/DOM/TouchList
+    //  event.changedTouches = the touches that CHANGED in this event, not the total number of them
+
+    /**
+     * Called by the main update loop when a Touch End Event is received.
+     *
+     * @method Phaser.Input.InputManager#stopPointer
+     * @private
+     * @since 3.10.0
+     *
+     * @param {TouchEvent} event - The native DOM event to be processed.
+     * @param {number} time - The time stamp value of this game step.
+     */
+    stopPointer: function (event, time)
+    {
+        var pointers = this.pointers;
+
+        for (var c = 0; c < event.changedTouches.length; c++)
+        {
+            var changedTouch = event.changedTouches[c];
+
+            for (var i = 1; i < this.pointersTotal; i++)
+            {
+                var pointer = pointers[i];
+
+                if (pointer.active && pointer.identifier === changedTouch.identifier)
+                {
+                    pointer.touchend(changedTouch, time);
+                    break;
+                }
+            }
+        }
+    },
+
+    /**
+     * Called by the main update loop when a Touch Cancel Event is received.
+     *
+     * @method Phaser.Input.InputManager#cancelPointer
+     * @private
+     * @since 3.15.0
+     *
+     * @param {TouchEvent} event - The native DOM event to be processed.
+     * @param {number} time - The time stamp value of this game step.
+     */
+    cancelPointer: function (event, time)
+    {
+        var pointers = this.pointers;
+
+        for (var c = 0; c < event.changedTouches.length; c++)
+        {
+            var changedTouch = event.changedTouches[c];
+
+            for (var i = 1; i < this.pointersTotal; i++)
