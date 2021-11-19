@@ -86099,3 +86099,227 @@ var InputManager = new Class({
             var changedTouch = event.changedTouches[c];
 
             for (var i = 1; i < this.pointersTotal; i++)
+            {
+                var pointer = pointers[i];
+
+                if (pointer.active && pointer.identifier === changedTouch.identifier)
+                {
+                    pointer.touchend(changedTouch, time);
+                    break;
+                }
+            }
+        }
+    },
+
+    /**
+     * Adds new Pointer objects to the Input Manager.
+     *
+     * By default Phaser creates 2 pointer objects: `mousePointer` and `pointer1`.
+     *
+     * You can create more either by calling this method, or by setting the `input.activePointers` property
+     * in the Game Config, up to a maximum of 10 pointers.
+     *
+     * The first 10 pointers are available via the `InputPlugin.pointerX` properties, once they have been added
+     * via this method.
+     *
+     * @method Phaser.Input.InputManager#addPointer
+     * @since 3.10.0
+     *
+     * @param {integer} [quantity=1] The number of new Pointers to create. A maximum of 10 is allowed in total.
+     *
+     * @return {Phaser.Input.Pointer[]} An array containing all of the new Pointer objects that were created.
+     */
+    addPointer: function (quantity)
+    {
+        if (quantity === undefined) { quantity = 1; }
+
+        var output = [];
+
+        if (this.pointersTotal + quantity > 10)
+        {
+            quantity = 10 - this.pointersTotal;
+        }
+
+        for (var i = 0; i < quantity; i++)
+        {
+            var id = this.pointers.length;
+
+            var pointer = new Pointer(this, id);
+
+            this.pointers.push(pointer);
+
+            this.pointersTotal++;
+
+            output.push(pointer);
+        }
+
+        return output;
+    },
+
+    /**
+     * Process any pending DOM callbacks.
+     *
+     * @method Phaser.Input.InputManager#processDomCallbacks
+     * @private
+     * @since 3.10.0
+     *
+     * @param {array} once - The isOnce callbacks to invoke.
+     * @param {array} every - The every frame callbacks to invoke.
+     * @param {any} event - The native DOM event that is passed to the callbacks.
+     *
+     * @return {boolean} `true` if there are callbacks still in the list, otherwise `false`.
+     */
+    processDomCallbacks: function (once, every, event)
+    {
+        var i = 0;
+
+        for (i = 0; i < once.length; i++)
+        {
+            once[i](event);
+        }
+
+        for (i = 0; i < every.length; i++)
+        {
+            every[i](event);
+        }
+
+        once = [];
+
+        return (every.length > 0);
+    },
+
+    /**
+     * Queues a touch start event, as passed in by the TouchManager.
+     * Also dispatches any DOM callbacks for this event.
+     *
+     * @method Phaser.Input.InputManager#queueTouchStart
+     * @private
+     * @since 3.10.0
+     *
+     * @param {TouchEvent} event - The native DOM Touch event.
+     */
+    queueTouchStart: function (event)
+    {
+        this.queue.push(CONST.TOUCH_START, event);
+
+        if (this._hasDownCallback)
+        {
+            var callbacks = this.domCallbacks;
+
+            this._hasDownCallback = this.processDomCallbacks(callbacks.downOnce, callbacks.down, event);
+        }
+    },
+
+    /**
+     * Queues a touch move event, as passed in by the TouchManager.
+     * Also dispatches any DOM callbacks for this event.
+     *
+     * @method Phaser.Input.InputManager#queueTouchMove
+     * @private
+     * @since 3.10.0
+     *
+     * @param {TouchEvent} event - The native DOM Touch event.
+     */
+    queueTouchMove: function (event)
+    {
+        this.queue.push(CONST.TOUCH_MOVE, event);
+
+        if (this._hasMoveCallback)
+        {
+            var callbacks = this.domCallbacks;
+
+            this._hasMoveCallback = this.processDomCallbacks(callbacks.moveOnce, callbacks.move, event);
+        }
+    },
+
+    /**
+     * Queues a touch end event, as passed in by the TouchManager.
+     * Also dispatches any DOM callbacks for this event.
+     *
+     * @method Phaser.Input.InputManager#queueTouchEnd
+     * @private
+     * @since 3.10.0
+     *
+     * @param {TouchEvent} event - The native DOM Touch event.
+     */
+    queueTouchEnd: function (event)
+    {
+        this.queue.push(CONST.TOUCH_END, event);
+
+        if (this._hasUpCallback)
+        {
+            var callbacks = this.domCallbacks;
+
+            this._hasUpCallback = this.processDomCallbacks(callbacks.upOnce, callbacks.up, event);
+        }
+    },
+
+    /**
+     * Queues a touch cancel event, as passed in by the TouchManager.
+     * Also dispatches any DOM callbacks for this event.
+     *
+     * @method Phaser.Input.InputManager#queueTouchCancel
+     * @private
+     * @since 3.15.0
+     *
+     * @param {TouchEvent} event - The native DOM Touch event.
+     */
+    queueTouchCancel: function (event)
+    {
+        this.queue.push(CONST.TOUCH_CANCEL, event);
+    },
+
+    /**
+     * Queues a mouse down event, as passed in by the MouseManager.
+     * Also dispatches any DOM callbacks for this event.
+     *
+     * @method Phaser.Input.InputManager#queueMouseDown
+     * @private
+     * @since 3.10.0
+     *
+     * @param {MouseEvent} event - The native DOM Mouse event.
+     */
+    queueMouseDown: function (event)
+    {
+        this.queue.push(CONST.MOUSE_DOWN, event);
+
+        if (this._hasDownCallback)
+        {
+            var callbacks = this.domCallbacks;
+
+            this._hasDownCallback = this.processDomCallbacks(callbacks.downOnce, callbacks.down, event);
+        }
+    },
+
+    /**
+     * Queues a mouse move event, as passed in by the MouseManager.
+     * Also dispatches any DOM callbacks for this event.
+     *
+     * @method Phaser.Input.InputManager#queueMouseMove
+     * @private
+     * @since 3.10.0
+     *
+     * @param {MouseEvent} event - The native DOM Mouse event.
+     */
+    queueMouseMove: function (event)
+    {
+        this.queue.push(CONST.MOUSE_MOVE, event);
+
+        if (this._hasMoveCallback)
+        {
+            var callbacks = this.domCallbacks;
+
+            this._hasMoveCallback = this.processDomCallbacks(callbacks.moveOnce, callbacks.move, event);
+        }
+    },
+
+    /**
+     * Queues a mouse up event, as passed in by the MouseManager.
+     * Also dispatches any DOM callbacks for this event.
+     *
+     * @method Phaser.Input.InputManager#queueMouseUp
+     * @private
+     * @since 3.10.0
+     *
+     * @param {MouseEvent} event - The native DOM Mouse event.
+     */
