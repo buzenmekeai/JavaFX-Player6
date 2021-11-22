@@ -86744,3 +86744,233 @@ var InputManager = new Class({
 
     /**
      * Returns the top offset of the Input bounds.
+     *
+     * @method Phaser.Input.InputManager#getOffsetY
+     * @since 3.0.0
+     *
+     * @return {number} The top bounds value.
+     */
+    getOffsetY: function ()
+    {
+        return this.bounds.top;
+    },
+
+    /**
+     * Returns the horizontal Input Scale value.
+     *
+     * @method Phaser.Input.InputManager#getScaleX
+     * @since 3.0.0
+     *
+     * @return {number} The horizontal scale factor of the input.
+     */
+    getScaleX: function ()
+    {
+        return this.game.config.width / this.bounds.width;
+    },
+
+    /**
+     * Returns the vertical Input Scale value.
+     *
+     * @method Phaser.Input.InputManager#getScaleY
+     * @since 3.0.0
+     *
+     * @return {number} The vertical scale factor of the input.
+     */
+    getScaleY: function ()
+    {
+        return this.game.config.height / this.bounds.height;
+    },
+
+    /**
+     * Destroys the Input Manager and all of its systems.
+     *
+     * There is no way to recover from doing this.
+     *
+     * @method Phaser.Input.InputManager#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.events.removeAllListeners();
+
+        if (this.mouse)
+        {
+            this.mouse.destroy();
+        }
+
+        if (this.touch)
+        {
+            this.touch.destroy();
+        }
+
+        for (var i = 0; i < this.pointers.length; i++)
+        {
+            this.pointers[i].destroy();
+        }
+
+        this.domCallbacks = {};
+        this.pointers = [];
+        this.queue = [];
+        this._tempHitTest = [];
+        this._tempMatrix.destroy();
+        this.canvas = null;
+        this.game = null;
+    }
+
+});
+
+module.exports = InputManager;
+
+
+/***/ }),
+/* 339 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CanvasPool = __webpack_require__(24);
+
+/**
+ * Determines the canvas features of the browser running this Phaser Game instance.
+ * These values are read-only and populated during the boot sequence of the game.
+ * They are then referenced by internal game systems and are available for you to access
+ * via `this.sys.game.device.canvasFeatures` from within any Scene.
+ * 
+ * @typedef {object} Phaser.Device.CanvasFeatures
+ * @since 3.0.0
+ * 
+ * @property {boolean} supportInverseAlpha - Set to true if the browser supports inversed alpha.
+ * @property {boolean} supportNewBlendModes - Set to true if the browser supports new canvas blend modes.
+ */
+var CanvasFeatures = {
+
+    supportInverseAlpha: false,
+    supportNewBlendModes: false
+
+};
+
+function checkBlendMode ()
+{
+    var pngHead = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAABAQMAAADD8p2OAAAAA1BMVEX/';
+    var pngEnd = 'AAAACklEQVQI12NgAAAAAgAB4iG8MwAAAABJRU5ErkJggg==';
+
+    var magenta = new Image();
+
+    magenta.onload = function ()
+    {
+        var yellow = new Image();
+
+        yellow.onload = function ()
+        {
+            var canvas = CanvasPool.create(yellow, 6, 1);
+            var context = canvas.getContext('2d');
+
+            context.globalCompositeOperation = 'multiply';
+
+            context.drawImage(magenta, 0, 0);
+            context.drawImage(yellow, 2, 0);
+
+            if (!context.getImageData(2, 0, 1, 1))
+            {
+                return false;
+            }
+
+            var data = context.getImageData(2, 0, 1, 1).data;
+
+            CanvasPool.remove(yellow);
+
+            CanvasFeatures.supportNewBlendModes = (data[0] === 255 && data[1] === 0 && data[2] === 0);
+        };
+
+        yellow.src = pngHead + '/wCKxvRF' + pngEnd;
+    };
+
+    magenta.src = pngHead + 'AP804Oa6' + pngEnd;
+
+    return false;
+}
+
+function checkInverseAlpha ()
+{
+    var canvas = CanvasPool.create(this, 2, 1);
+    var context = canvas.getContext('2d');
+
+    context.fillStyle = 'rgba(10, 20, 30, 0.5)';
+
+    //  Draw a single pixel
+    context.fillRect(0, 0, 1, 1);
+
+    //  Get the color values
+    var s1 = context.getImageData(0, 0, 1, 1);
+
+    if (s1 === null)
+    {
+        return false;
+    }
+
+    //  Plot them to x2
+    context.putImageData(s1, 1, 0);
+
+    //  Get those values
+    var s2 = context.getImageData(1, 0, 1, 1);
+
+    //  Compare and return
+    return (s2.data[0] === s1.data[0] && s2.data[1] === s1.data[1] && s2.data[2] === s1.data[2] && s2.data[3] === s1.data[3]);
+}
+
+function init ()
+{
+    if (document !== undefined)
+    {
+        CanvasFeatures.supportNewBlendModes = checkBlendMode();
+        CanvasFeatures.supportInverseAlpha = checkInverseAlpha();
+    }
+
+    return CanvasFeatures;
+}
+
+module.exports = init();
+
+
+/***/ }),
+/* 340 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  This singleton is instantiated as soon as Phaser loads,
+//  before a Phaser.Game instance has even been created.
+//  Which means all instances of Phaser Games can share it,
+//  without having to re-poll the device all over again
+
+/**
+ * @namespace Phaser.Device
+ * @since 3.0.0
+ */
+
+/**
+ * @typedef {object} Phaser.DeviceConf
+ *
+ * @property {Phaser.Device.OS} os - The OS Device functions.
+ * @property {Phaser.Device.Browser} browser - The Browser Device functions.
+ * @property {Phaser.Device.Features} features - The Features Device functions.
+ * @property {Phaser.Device.Input} input - The Input Device functions.
+ * @property {Phaser.Device.Audio} audio - The Audio Device functions.
+ * @property {Phaser.Device.Video} video - The Video Device functions.
+ * @property {Phaser.Device.Fullscreen} fullscreen - The Fullscreen Device functions.
+ * @property {Phaser.Device.CanvasFeatures} canvasFeatures - The Canvas Device functions.
+ */
+
+module.exports = {
+
+    os: __webpack_require__(92),
+    browser: __webpack_require__(118),
+    features: __webpack_require__(168),
