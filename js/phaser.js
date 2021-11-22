@@ -86549,3 +86549,198 @@ var InputManager = new Class({
         if (output === undefined) { output = this._tempHitTest; }
 
         var tempPoint = this._tempPoint;
+
+        var csx = camera.scrollX;
+        var csy = camera.scrollY;
+
+        output.length = 0;
+
+        var x = pointer.x;
+        var y = pointer.y;
+
+        if (camera.resolution !== 1)
+        {
+            x += camera._x;
+            y += camera._y;
+        }
+
+        //  Stores the world point inside of tempPoint
+        camera.getWorldPoint(x, y, tempPoint);
+
+        pointer.worldX = tempPoint.x;
+        pointer.worldY = tempPoint.y;
+
+        var point = { x: 0, y: 0 };
+
+        var matrix = this._tempMatrix;
+        var parentMatrix = this._tempMatrix2;
+
+        for (var i = 0; i < gameObjects.length; i++)
+        {
+            var gameObject = gameObjects[i];
+
+            //  Checks if the Game Object can receive input (isn't being ignored by the camera, invisible, etc)
+            //  and also checks all of its parents, if any
+            if (!this.inputCandidate(gameObject, camera))
+            {
+                continue;
+            }
+
+            var px = tempPoint.x + (csx * gameObject.scrollFactorX) - csx;
+            var py = tempPoint.y + (csy * gameObject.scrollFactorY) - csy;
+
+            if (gameObject.parentContainer)
+            {
+                gameObject.getWorldTransformMatrix(matrix, parentMatrix);
+
+                matrix.applyInverse(px, py, point);
+            }
+            else
+            {
+                TransformXY(px, py, gameObject.x, gameObject.y, gameObject.rotation, gameObject.scaleX, gameObject.scaleY, point);
+            }
+    
+            if (this.pointWithinHitArea(gameObject, point.x, point.y))
+            {
+                output.push(gameObject);
+            }
+        }
+
+        return output;
+    },
+
+    /**
+     * Checks if the given x and y coordinate are within the hit area of the Game Object.
+     *
+     * This method assumes that the coordinate values have already been translated into the space of the Game Object.
+     *
+     * If the coordinates are within the hit area they are set into the Game Objects Input `localX` and `localY` properties.
+     *
+     * @method Phaser.Input.InputManager#pointWithinHitArea
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} gameObject - The interactive Game Object to check against.
+     * @param {number} x - The translated x coordinate for the hit test.
+     * @param {number} y - The translated y coordinate for the hit test.
+     *
+     * @return {boolean} `true` if the coordinates were inside the Game Objects hit area, otherwise `false`.
+     */
+    pointWithinHitArea: function (gameObject, x, y)
+    {
+        //  Normalize the origin
+        x += gameObject.displayOriginX;
+        y += gameObject.displayOriginY;
+
+        var input = gameObject.input;
+
+        if (input && input.hitAreaCallback(input.hitArea, x, y, gameObject))
+        {
+            input.localX = x;
+            input.localY = y;
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    },
+
+    /**
+     * Checks if the given x and y coordinate are within the hit area of the Interactive Object.
+     *
+     * This method assumes that the coordinate values have already been translated into the space of the Interactive Object.
+     *
+     * If the coordinates are within the hit area they are set into the Interactive Objects Input `localX` and `localY` properties.
+     *
+     * @method Phaser.Input.InputManager#pointWithinInteractiveObject
+     * @since 3.0.0
+     *
+     * @param {Phaser.Input.InteractiveObject} object - The Interactive Object to check against.
+     * @param {number} x - The translated x coordinate for the hit test.
+     * @param {number} y - The translated y coordinate for the hit test.
+     *
+     * @return {boolean} `true` if the coordinates were inside the Game Objects hit area, otherwise `false`.
+     */
+    pointWithinInteractiveObject: function (object, x, y)
+    {
+        if (!object.hitArea)
+        {
+            return false;
+        }
+
+        //  Normalize the origin
+        x += object.gameObject.displayOriginX;
+        y += object.gameObject.displayOriginY;
+
+        object.localX = x;
+        object.localY = y;
+
+        return object.hitAreaCallback(object.hitArea, x, y, object);
+    },
+
+    /**
+     * Transforms the pageX and pageY values of a Pointer into the scaled coordinate space of the Input Manager.
+     *
+     * @method Phaser.Input.InputManager#transformPointer
+     * @since 3.10.0
+     *
+     * @param {Phaser.Input.Pointer} pointer - The Pointer to transform the values for.
+     * @param {number} pageX - The Page X value.
+     * @param {number} pageY - The Page Y value.
+     */
+    transformPointer: function (pointer, pageX, pageY)
+    {
+        //  Store the previous position
+        pointer.prevPosition.x = pointer.x;
+        pointer.prevPosition.y = pointer.y;
+
+        pointer.x = (pageX - this.bounds.left) * this.scale.x;
+        pointer.y = (pageY - this.bounds.top) * this.scale.y;
+    },
+
+    /**
+     * Transforms the pageX value into the scaled coordinate space of the Input Manager.
+     *
+     * @method Phaser.Input.InputManager#transformX
+     * @since 3.0.0
+     *
+     * @param {number} pageX - The DOM pageX value.
+     *
+     * @return {number} The translated value.
+     */
+    transformX: function (pageX)
+    {
+        return (pageX - this.bounds.left) * this.scale.x;
+    },
+
+    /**
+     * Transforms the pageY value into the scaled coordinate space of the Input Manager.
+     *
+     * @method Phaser.Input.InputManager#transformY
+     * @since 3.0.0
+     *
+     * @param {number} pageY - The DOM pageY value.
+     *
+     * @return {number} The translated value.
+     */
+    transformY: function (pageY)
+    {
+        return (pageY - this.bounds.top) * this.scale.y;
+    },
+
+    /**
+     * Returns the left offset of the Input bounds.
+     *
+     * @method Phaser.Input.InputManager#getOffsetX
+     * @since 3.0.0
+     *
+     * @return {number} The left bounds value.
+     */
+    getOffsetX: function ()
+    {
+        return this.bounds.left;
+    },
+
+    /**
+     * Returns the top offset of the Input bounds.
