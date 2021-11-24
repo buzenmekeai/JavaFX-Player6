@@ -87165,3 +87165,231 @@ var RequestAnimationFrame = new Class({
     /**
      * Stops the step from running and clears the callback reference.
      *
+     * @method Phaser.DOM.RequestAnimationFrame#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.stop();
+
+        this.callback = NOOP;
+    }
+
+});
+
+module.exports = RequestAnimationFrame;
+
+
+/***/ }),
+/* 342 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Attempts to remove the element from its parentNode in the DOM.
+ *
+ * @function Phaser.DOM.RemoveFromDOM
+ * @since 3.0.0
+ *
+ * @param {HTMLElement} element - The DOM element to remove from its parent node.
+ */
+var RemoveFromDOM = function (element)
+{
+    if (element.parentNode)
+    {
+        element.parentNode.removeChild(element);
+    }
+};
+
+module.exports = RemoveFromDOM;
+
+
+/***/ }),
+/* 343 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Takes the given data string and parses it as XML.
+ * First tries to use the window.DOMParser and reverts to the Microsoft.XMLDOM if that fails.
+ * The parsed XML object is returned, or `null` if there was an error while parsing the data.
+ *
+ * @function Phaser.DOM.ParseXML
+ * @since 3.0.0
+ *
+ * @param {string} data - The XML source stored in a string.
+ *
+ * @return {?(DOMParser|ActiveXObject)} The parsed XML data, or `null` if the data could not be parsed.
+ */
+var ParseXML = function (data)
+{
+    var xml = '';
+
+    try
+    {
+        if (window['DOMParser'])
+        {
+            var domparser = new DOMParser();
+            xml = domparser.parseFromString(data, 'text/xml');
+        }
+        else
+        {
+            xml = new ActiveXObject('Microsoft.XMLDOM');
+            xml.loadXML(data);
+        }
+    }
+    catch (e)
+    {
+        xml = null;
+    }
+
+    if (!xml || !xml.documentElement || xml.getElementsByTagName('parsererror').length)
+    {
+        return null;
+    }
+    else
+    {
+        return xml;
+    }
+};
+
+module.exports = ParseXML;
+
+
+/***/ }),
+/* 344 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var OS = __webpack_require__(92);
+
+/**
+ * @callback ContentLoadedCallback
+ */
+
+/**
+ * Inspects the readyState of the document. If the document is already complete then it invokes the given callback.
+ * If not complete it sets up several event listeners such as `deviceready`, and once those fire, it invokes the callback.
+ * Called automatically by the Phaser.Game instance. Should not usually be accessed directly.
+ *
+ * @function Phaser.DOM.DOMContentLoaded
+ * @since 3.0.0
+ *
+ * @param {ContentLoadedCallback} callback - The callback to be invoked when the device is ready and the DOM content is loaded.
+ */
+var DOMContentLoaded = function (callback)
+{
+    if (document.readyState === 'complete' || document.readyState === 'interactive')
+    {
+        callback();
+
+        return;
+    }
+
+    var check = function ()
+    {
+        document.removeEventListener('deviceready', check, true);
+        document.removeEventListener('DOMContentLoaded', check, true);
+        window.removeEventListener('load', check, true);
+
+        callback();
+    };
+
+    if (!document.body)
+    {
+        window.setTimeout(check, 20);
+    }
+    else if (OS.cordova && !OS.cocoonJS)
+    {
+        //  Ref. http://docs.phonegap.com/en/3.5.0/cordova_events_events.md.html#deviceready
+        document.addEventListener('deviceready', check, false);
+    }
+    else
+    {
+        document.addEventListener('DOMContentLoaded', check, true);
+        window.addEventListener('load', check, true);
+    }
+};
+
+module.exports = DOMContentLoaded;
+
+
+/***/ }),
+/* 345 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Converts a hue to an RGB color.
+ * Based on code by Michael Jackson (https://github.com/mjijackson)
+ *
+ * @function Phaser.Display.Color.HueToComponent
+ * @since 3.0.0
+ *
+ * @param {number} p
+ * @param {number} q
+ * @param {number} t
+ *
+ * @return {number} The combined color value.
+ */
+var HueToComponent = function (p, q, t)
+{
+    if (t < 0)
+    {
+        t += 1;
+    }
+
+    if (t > 1)
+    {
+        t -= 1;
+    }
+
+    if (t < 1 / 6)
+    {
+        return p + (q - p) * 6 * t;
+    }
+
+    if (t < 1 / 2)
+    {
+        return q;
+    }
+
+    if (t < 2 / 3)
+    {
+        return p + (q - p) * (2 / 3 - t) * 6;
+    }
+
+    return p;
+};
+
+module.exports = HueToComponent;
+
+
+/***/ }),
+/* 346 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
