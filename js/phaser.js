@@ -87393,3 +87393,232 @@ module.exports = HueToComponent;
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2018 Photon Storm Ltd.
  * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Returns a string containing a hex representation of the given color component.
+ *
+ * @function Phaser.Display.Color.ComponentToHex
+ * @since 3.0.0
+ *
+ * @param {integer} color - The color channel to get the hex value for, must be a value between 0 and 255.
+ *
+ * @return {string} A string of length 2 characters, i.e. 255 = ff, 100 = 64.
+ */
+var ComponentToHex = function (color)
+{
+    var hex = color.toString(16);
+
+    return (hex.length === 1) ? '0' + hex : hex;
+};
+
+module.exports = ComponentToHex;
+
+
+/***/ }),
+/* 347 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @typedef {object} InputColorObject
+ *
+ * @property {number} [r] - The red color value in the range 0 to 255.
+ * @property {number} [g] - The green color value in the range 0 to 255.
+ * @property {number} [b] - The blue color value in the range 0 to 255.
+ * @property {number} [a] - The alpha color value in the range 0 to 255.
+ */
+
+/**
+ * @typedef {Object} ColorObject
+ * @property {number} r - The red color value in the range 0 to 255.
+ * @property {number} g - The green color value in the range 0 to 255.
+ * @property {number} b - The blue color value in the range 0 to 255.
+ * @property {number} a - The alpha color value in the range 0 to 255.
+ */
+
+var Color = __webpack_require__(37);
+
+Color.ColorToRGBA = __webpack_require__(915);
+Color.ComponentToHex = __webpack_require__(346);
+Color.GetColor = __webpack_require__(177);
+Color.GetColor32 = __webpack_require__(376);
+Color.HexStringToColor = __webpack_require__(377);
+Color.HSLToColor = __webpack_require__(914);
+Color.HSVColorWheel = __webpack_require__(913);
+Color.HSVToRGB = __webpack_require__(176);
+Color.HueToComponent = __webpack_require__(345);
+Color.IntegerToColor = __webpack_require__(374);
+Color.IntegerToRGB = __webpack_require__(373);
+Color.Interpolate = __webpack_require__(912);
+Color.ObjectToColor = __webpack_require__(372);
+Color.RandomRGB = __webpack_require__(911);
+Color.RGBStringToColor = __webpack_require__(371);
+Color.RGBToHSV = __webpack_require__(375);
+Color.RGBToString = __webpack_require__(910);
+Color.ValueToColor = __webpack_require__(178);
+
+module.exports = Color;
+
+
+/***/ }),
+/* 348 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Display.Canvas.CanvasInterpolation
+ * @since 3.0.0
+ */
+var CanvasInterpolation = {
+
+    /**
+     * Sets the CSS image-rendering property on the given canvas to be 'crisp' (aka 'optimize contrast' on webkit).
+     *
+     * @function Phaser.Display.Canvas.CanvasInterpolation.setCrisp
+     * @since 3.0.0
+     * 
+     * @param {HTMLCanvasElement} canvas - The canvas object to have the style set on.
+     * 
+     * @return {HTMLCanvasElement} The canvas.
+     */
+    setCrisp: function (canvas)
+    {
+        var types = [ 'optimizeSpeed', 'crisp-edges', '-moz-crisp-edges', '-webkit-optimize-contrast', 'optimize-contrast', 'pixelated' ];
+
+        types.forEach(function (type)
+        {
+            canvas.style['image-rendering'] = type;
+        });
+
+        canvas.style.msInterpolationMode = 'nearest-neighbor';
+
+        return canvas;
+    },
+
+    /**
+     * Sets the CSS image-rendering property on the given canvas to be 'bicubic' (aka 'auto').
+     *
+     * @function Phaser.Display.Canvas.CanvasInterpolation.setBicubic
+     * @since 3.0.0
+     * 
+     * @param {HTMLCanvasElement} canvas - The canvas object to have the style set on.
+     * 
+     * @return {HTMLCanvasElement} The canvas.
+     */
+    setBicubic: function (canvas)
+    {
+        canvas.style['image-rendering'] = 'auto';
+        canvas.style.msInterpolationMode = 'bicubic';
+
+        return canvas;
+    }
+
+};
+
+module.exports = CanvasInterpolation;
+
+
+/***/ }),
+/* 349 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  Based on the three.js Curve classes created by [zz85](http://www.lab4games.net/zz85/blog)
+
+var CatmullRom = __webpack_require__(171);
+var Class = __webpack_require__(0);
+var Curve = __webpack_require__(70);
+var Vector2 = __webpack_require__(3);
+
+/**
+ * @classdesc
+ * [description]
+ *
+ * @class Spline
+ * @extends Phaser.Curves.Curve
+ * @memberof Phaser.Curves
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Math.Vector2[]} [points] - [description]
+ */
+var SplineCurve = new Class({
+
+    Extends: Curve,
+
+    initialize:
+
+    function SplineCurve (points)
+    {
+        if (points === undefined) { points = []; }
+
+        Curve.call(this, 'SplineCurve');
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Curves.Spline#points
+         * @type {Phaser.Math.Vector2[]}
+         * @default []
+         * @since 3.0.0
+         */
+        this.points = [];
+
+        this.addPoints(points);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Spline#addPoints
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Vector2[]|number[]|number[][])} points - [description]
+     *
+     * @return {Phaser.Curves.Spline} This curve object.
+     */
+    addPoints: function (points)
+    {
+        for (var i = 0; i < points.length; i++)
+        {
+            var p = new Vector2();
+
+            if (typeof points[i] === 'number')
+            {
+                p.x = points[i];
+                p.y = points[i + 1];
+                i++;
+            }
+            else if (Array.isArray(points[i]))
+            {
+                //  An array of arrays?
+                p.x = points[i][0];
+                p.y = points[i][1];
+            }
+            else
+            {
+                p.x = points[i].x;
+                p.y = points[i].y;
+            }
+
+            this.points.push(p);
+        }
+
+        return this;
+    },
