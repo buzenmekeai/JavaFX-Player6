@@ -87622,3 +87622,218 @@ var SplineCurve = new Class({
 
         return this;
     },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Spline#addPoint
+     * @since 3.0.0
+     *
+     * @param {number} x - [description]
+     * @param {number} y - [description]
+     *
+     * @return {Phaser.Math.Vector2} [description]
+     */
+    addPoint: function (x, y)
+    {
+        var vec = new Vector2(x, y);
+
+        this.points.push(vec);
+
+        return vec;
+    },
+
+    /**
+     * Gets the starting point on the curve.
+     *
+     * @method Phaser.Curves.Spline#getStartPoint
+     * @since 3.0.0
+     *
+     * @generic {Phaser.Math.Vector2} O - [out,$return]
+     *
+     * @param {Phaser.Math.Vector2} [out] - A Vector2 object to store the result in. If not given will be created.
+     *
+     * @return {Phaser.Math.Vector2} The coordinates of the point on the curve. If an `out` object was given this will be returned.
+     */
+    getStartPoint: function (out)
+    {
+        if (out === undefined) { out = new Vector2(); }
+
+        return out.copy(this.points[0]);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Spline#getResolution
+     * @since 3.0.0
+     *
+     * @param {number} divisions - [description]
+     *
+     * @return {number} [description]
+     */
+    getResolution: function (divisions)
+    {
+        return divisions * this.points.length;
+    },
+
+    /**
+     * Get point at relative position in curve according to length.
+     *
+     * @method Phaser.Curves.Spline#getPoint
+     * @since 3.0.0
+     *
+     * @generic {Phaser.Math.Vector2} O - [out,$return]
+     *
+     * @param {number} t - The position along the curve to return. Where 0 is the start and 1 is the end.
+     * @param {Phaser.Math.Vector2} [out] - A Vector2 object to store the result in. If not given will be created.
+     *
+     * @return {Phaser.Math.Vector2} The coordinates of the point on the curve. If an `out` object was given this will be returned.
+     */
+    getPoint: function (t, out)
+    {
+        if (out === undefined) { out = new Vector2(); }
+
+        var points = this.points;
+
+        var point = (points.length - 1) * t;
+
+        var intPoint = Math.floor(point);
+
+        var weight = point - intPoint;
+
+        var p0 = points[(intPoint === 0) ? intPoint : intPoint - 1];
+        var p1 = points[intPoint];
+        var p2 = points[(intPoint > points.length - 2) ? points.length - 1 : intPoint + 1];
+        var p3 = points[(intPoint > points.length - 3) ? points.length - 1 : intPoint + 2];
+
+        return out.set(CatmullRom(weight, p0.x, p1.x, p2.x, p3.x), CatmullRom(weight, p0.y, p1.y, p2.y, p3.y));
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Spline#toJSON
+     * @since 3.0.0
+     *
+     * @return {JSONCurve} The JSON object containing this curve data.
+     */
+    toJSON: function ()
+    {
+        var points = [];
+
+        for (var i = 0; i < this.points.length; i++)
+        {
+            points.push(this.points[i].x);
+            points.push(this.points[i].y);
+        }
+
+        return {
+            type: this.type,
+            points: points
+        };
+    }
+
+});
+
+/**
+ * [description]
+ *
+ * @function Phaser.Curves.Spline.fromJSON
+ * @since 3.0.0
+ *
+ * @param {JSONCurve} data - The JSON object containing this curve data.
+ *
+ * @return {Phaser.Curves.Spline} [description]
+ */
+SplineCurve.fromJSON = function (data)
+{
+    return new SplineCurve(data.points);
+};
+
+module.exports = SplineCurve;
+
+
+/***/ }),
+/* 350 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+function P0 (t, p)
+{
+    var k = 1 - t;
+
+    return k * k * p;
+}
+
+function P1 (t, p)
+{
+    return 2 * (1 - t) * t * p;
+}
+
+function P2 (t, p)
+{
+    return t * t * p;
+}
+
+//  p0 = start point
+//  p1 = control point 1
+//  p2 = end point
+
+// https://github.com/mrdoob/three.js/blob/master/src/extras/core/Interpolations.js
+
+/**
+ * A quadratic bezier interpolation method.
+ *
+ * @function Phaser.Math.Interpolation.QuadraticBezier
+ * @since 3.2.0
+ *
+ * @param {number} t - The percentage of interpolation, between 0 and 1.
+ * @param {number} p0 - The start point.
+ * @param {number} p1 - The control point.
+ * @param {number} p2 - The end point.
+ *
+ * @return {number} The interpolated value.
+ */
+var QuadraticBezierInterpolation = function (t, p0, p1, p2)
+{
+    return P0(t, p0) + P1(t, p1) + P2(t, p2);
+};
+
+module.exports = QuadraticBezierInterpolation;
+
+
+/***/ }),
+/* 351 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var Curve = __webpack_require__(70);
+var QuadraticBezierInterpolation = __webpack_require__(350);
+var Vector2 = __webpack_require__(3);
+
+/**
+ * @classdesc
+ * [description]
+ *
+ * @class QuadraticBezier
+ * @extends Phaser.Curves.Curve
+ * @memberof Phaser.Curves
+ * @constructor
+ * @since 3.2.0
+ *
+ * @param {(Phaser.Math.Vector2|number[])} p0 - Start point, or an array of point pairs.
+ * @param {Phaser.Math.Vector2} p1 - Control Point 1.
+ * @param {Phaser.Math.Vector2} p2 - Control Point 2.
+ */
