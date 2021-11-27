@@ -88482,3 +88482,220 @@ var EllipseCurve = new Class({
      * @return {number} [description]
      */
     getResolution: function (divisions)
+    {
+        return divisions * 2;
+    },
+
+    /**
+     * Get point at relative position in curve according to length.
+     *
+     * @method Phaser.Curves.Ellipse#getPoint
+     * @since 3.0.0
+     *
+     * @generic {Phaser.Math.Vector2} O - [out,$return]
+     *
+     * @param {number} t - The position along the curve to return. Where 0 is the start and 1 is the end.
+     * @param {Phaser.Math.Vector2} [out] - A Vector2 object to store the result in. If not given will be created.
+     *
+     * @return {Phaser.Math.Vector2} The coordinates of the point on the curve. If an `out` object was given this will be returned.
+     */
+    getPoint: function (t, out)
+    {
+        if (out === undefined) { out = new Vector2(); }
+
+        var twoPi = Math.PI * 2;
+        var deltaAngle = this._endAngle - this._startAngle;
+        var samePoints = Math.abs(deltaAngle) < Number.EPSILON;
+
+        // ensures that deltaAngle is 0 .. 2 PI
+        while (deltaAngle < 0)
+        {
+            deltaAngle += twoPi;
+        }
+
+        while (deltaAngle > twoPi)
+        {
+            deltaAngle -= twoPi;
+        }
+
+        if (deltaAngle < Number.EPSILON)
+        {
+            if (samePoints)
+            {
+                deltaAngle = 0;
+            }
+            else
+            {
+                deltaAngle = twoPi;
+            }
+        }
+
+        if (this._clockwise && !samePoints)
+        {
+            if (deltaAngle === twoPi)
+            {
+                deltaAngle = - twoPi;
+            }
+            else
+            {
+                deltaAngle = deltaAngle - twoPi;
+            }
+        }
+
+        var angle = this._startAngle + t * deltaAngle;
+        var x = this.p0.x + this._xRadius * Math.cos(angle);
+        var y = this.p0.y + this._yRadius * Math.sin(angle);
+
+        if (this._rotation !== 0)
+        {
+            var cos = Math.cos(this._rotation);
+            var sin = Math.sin(this._rotation);
+
+            var tx = x - this.p0.x;
+            var ty = y - this.p0.y;
+
+            // Rotate the point about the center of the ellipse.
+            x = tx * cos - ty * sin + this.p0.x;
+            y = tx * sin + ty * cos + this.p0.y;
+        }
+
+        return out.set(x, y);
+    },
+
+    /**
+     * Sets the horizontal radius of this curve.
+     *
+     * @method Phaser.Curves.Ellipse#setXRadius
+     * @since 3.0.0
+     *
+     * @param {number} value - The horizontal radius of this curve.
+     *
+     * @return {Phaser.Curves.Ellipse} This curve object.
+     */
+    setXRadius: function (value)
+    {
+        this.xRadius = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the vertical radius of this curve.
+     *
+     * @method Phaser.Curves.Ellipse#setYRadius
+     * @since 3.0.0
+     *
+     * @param {number} value - The vertical radius of this curve.
+     *
+     * @return {Phaser.Curves.Ellipse} This curve object.
+     */
+    setYRadius: function (value)
+    {
+        this.yRadius = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the width of this curve.
+     *
+     * @method Phaser.Curves.Ellipse#setWidth
+     * @since 3.0.0
+     *
+     * @param {number} value - The width of this curve.
+     *
+     * @return {Phaser.Curves.Ellipse} This curve object.
+     */
+    setWidth: function (value)
+    {
+        this.xRadius = value * 2;
+
+        return this;
+    },
+
+    /**
+     * Sets the height of this curve.
+     *
+     * @method Phaser.Curves.Ellipse#setHeight
+     * @since 3.0.0
+     *
+     * @param {number} value - The height of this curve.
+     *
+     * @return {Phaser.Curves.Ellipse} This curve object.
+     */
+    setHeight: function (value)
+    {
+        this.yRadius = value * 2;
+
+        return this;
+    },
+
+    /**
+     * Sets the start angle of this curve.
+     *
+     * @method Phaser.Curves.Ellipse#setStartAngle
+     * @since 3.0.0
+     *
+     * @param {number} value - The start angle of this curve, in radians.
+     *
+     * @return {Phaser.Curves.Ellipse} This curve object.
+     */
+    setStartAngle: function (value)
+    {
+        this.startAngle = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the end angle of this curve.
+     *
+     * @method Phaser.Curves.Ellipse#setEndAngle
+     * @since 3.0.0
+     *
+     * @param {number} value - The end angle of this curve, in radians.
+     *
+     * @return {Phaser.Curves.Ellipse} This curve object.
+     */
+    setEndAngle: function (value)
+    {
+        this.endAngle = value;
+
+        return this;
+    },
+
+    /**
+     * Sets if this curve extends clockwise or anti-clockwise.
+     *
+     * @method Phaser.Curves.Ellipse#setClockwise
+     * @since 3.0.0
+     *
+     * @param {boolean} value - The clockwise state of this curve.
+     *
+     * @return {Phaser.Curves.Ellipse} This curve object.
+     */
+    setClockwise: function (value)
+    {
+        this.clockwise = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the rotation of this curve.
+     *
+     * @method Phaser.Curves.Ellipse#setRotation
+     * @since 3.0.0
+     *
+     * @param {number} value - The rotation of this curve, in radians.
+     *
+     * @return {Phaser.Curves.Ellipse} This curve object.
+     */
+    setRotation: function (value)
+    {
+        this.rotation = value;
+
+        return this;
+    },
+
+    /**
