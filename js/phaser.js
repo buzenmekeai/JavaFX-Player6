@@ -88253,3 +88253,232 @@ var LineCurve = new Class({
             ]
         };
     }
+
+});
+
+/**
+ * [description]
+ *
+ * @function Phaser.Curves.Line.fromJSON
+ * @since 3.0.0
+ *
+ * @param {JSONCurve} data - The JSON object containing this curve data.
+ *
+ * @return {Phaser.Curves.Line} [description]
+ */
+LineCurve.fromJSON = function (data)
+{
+    var points = data.points;
+
+    var p0 = new Vector2(points[0], points[1]);
+    var p1 = new Vector2(points[2], points[3]);
+
+    return new LineCurve(p0, p1);
+};
+
+module.exports = LineCurve;
+
+
+/***/ }),
+/* 353 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  Based on the three.js Curve classes created by [zz85](http://www.lab4games.net/zz85/blog)
+
+var Class = __webpack_require__(0);
+var Curve = __webpack_require__(70);
+var DegToRad = __webpack_require__(31);
+var GetValue = __webpack_require__(4);
+var RadToDeg = __webpack_require__(172);
+var Vector2 = __webpack_require__(3);
+
+/**
+ * @typedef {object} JSONEllipseCurve
+ *
+ * @property {string} type - The of the curve.
+ * @property {number} x - The x coordinate of the ellipse.
+ * @property {number} y - The y coordinate of the ellipse.
+ * @property {number} xRadius - The horizontal radius of ellipse.
+ * @property {number} yRadius - The vertical radius of ellipse.
+ * @property {integer} startAngle - The start angle of the ellipse, in degrees.
+ * @property {integer} endAngle - The end angle of the ellipse, in degrees.
+ * @property {boolean} clockwise - Sets if the the ellipse rotation is clockwise (true) or anti-clockwise (false)
+ * @property {integer} rotation - The rotation of ellipse, in degrees.
+ */
+
+/**
+ * @typedef {object} EllipseCurveConfig
+ *
+ * @property {number} [x=0] - The x coordinate of the ellipse.
+ * @property {number} [y=0] - The y coordinate of the ellipse.
+ * @property {number} [xRadius=0] - The horizontal radius of the ellipse.
+ * @property {number} [yRadius=0] - The vertical radius of the ellipse.
+ * @property {integer} [startAngle=0] - The start angle of the ellipse, in degrees.
+ * @property {integer} [endAngle=360] - The end angle of the ellipse, in degrees.
+ * @property {boolean} [clockwise=false] - Sets if the the ellipse rotation is clockwise (true) or anti-clockwise (false)
+ * @property {integer} [rotation=0] - The rotation of the ellipse, in degrees.
+  */
+
+/**
+ * @classdesc
+ * An Elliptical Curve derived from the Base Curve class.
+ * 
+ * See https://en.wikipedia.org/wiki/Elliptic_curve for more details.
+ *
+ * @class Ellipse
+ * @extends Phaser.Curves.Curve
+ * @memberof Phaser.Curves
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {(number|EllipseCurveConfig)} [x=0] - The x coordinate of the ellipse, or an Ellipse Curve configuration object.
+ * @param {number} [y=0] - The y coordinate of the ellipse.
+ * @param {number} [xRadius=0] - The horizontal radius of ellipse.
+ * @param {number} [yRadius=0] - The vertical radius of ellipse.
+ * @param {integer} [startAngle=0] - The start angle of the ellipse, in degrees.
+ * @param {integer} [endAngle=360] - The end angle of the ellipse, in degrees.
+ * @param {boolean} [clockwise=false] - Sets if the the ellipse rotation is clockwise (true) or anti-clockwise (false)
+ * @param {integer} [rotation=0] - The rotation of the ellipse, in degrees.
+ */
+var EllipseCurve = new Class({
+
+    Extends: Curve,
+
+    initialize:
+
+    function EllipseCurve (x, y, xRadius, yRadius, startAngle, endAngle, clockwise, rotation)
+    {
+        if (typeof x === 'object')
+        {
+            var config = x;
+
+            x = GetValue(config, 'x', 0);
+            y = GetValue(config, 'y', 0);
+            xRadius = GetValue(config, 'xRadius', 0);
+            yRadius = GetValue(config, 'yRadius', xRadius);
+            startAngle = GetValue(config, 'startAngle', 0);
+            endAngle = GetValue(config, 'endAngle', 360);
+            clockwise = GetValue(config, 'clockwise', false);
+            rotation = GetValue(config, 'rotation', 0);
+        }
+        else
+        {
+            if (yRadius === undefined) { yRadius = xRadius; }
+            if (startAngle === undefined) { startAngle = 0; }
+            if (endAngle === undefined) { endAngle = 360; }
+            if (clockwise === undefined) { clockwise = false; }
+            if (rotation === undefined) { rotation = 0; }
+        }
+
+        Curve.call(this, 'EllipseCurve');
+
+        //  Center point
+
+        /**
+         * The center point of the ellipse. Used for calculating rotation.
+         *
+         * @name Phaser.Curves.Ellipse#p0
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.p0 = new Vector2(x, y);
+
+        /**
+         * The horizontal radius of the ellipse.
+         *
+         * @name Phaser.Curves.Ellipse#_xRadius
+         * @type {number}
+         * @private
+         * @since 3.0.0
+         */
+        this._xRadius = xRadius;
+
+        /**
+         * The vertical radius of the ellipse.
+         *
+         * @name Phaser.Curves.Ellipse#_yRadius
+         * @type {number}
+         * @private
+         * @since 3.0.0
+         */
+        this._yRadius = yRadius;
+
+        //  Radians
+
+        /**
+         * The starting angle of the ellipse in radians.
+         *
+         * @name Phaser.Curves.Ellipse#_startAngle
+         * @type {number}
+         * @private
+         * @since 3.0.0
+         */
+        this._startAngle = DegToRad(startAngle);
+
+        /**
+         * The end angle of the ellipse in radians.
+         *
+         * @name Phaser.Curves.Ellipse#_endAngle
+         * @type {number}
+         * @private
+         * @since 3.0.0
+         */
+        this._endAngle = DegToRad(endAngle);
+
+        /**
+         * Anti-clockwise direction.
+         *
+         * @name Phaser.Curves.Ellipse#_clockwise
+         * @type {boolean}
+         * @private
+         * @since 3.0.0
+         */
+        this._clockwise = clockwise;
+
+        /**
+         * The rotation of the arc.
+         *
+         * @name Phaser.Curves.Ellipse#_rotation
+         * @type {number}
+         * @private
+         * @since 3.0.0
+         */
+        this._rotation = DegToRad(rotation);
+    },
+
+    /**
+     * Gets the starting point on the curve.
+     *
+     * @method Phaser.Curves.Ellipse#getStartPoint
+     * @since 3.0.0
+     *
+     * @generic {Phaser.Math.Vector2} O - [out,$return]
+     *
+     * @param {Phaser.Math.Vector2} [out] - A Vector2 object to store the result in. If not given will be created.
+     *
+     * @return {Phaser.Math.Vector2} The coordinates of the point on the curve. If an `out` object was given this will be returned.
+     */
+    getStartPoint: function (out)
+    {
+        if (out === undefined) { out = new Vector2(); }
+
+        return this.getPoint(0, out);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Curves.Ellipse#getResolution
+     * @since 3.0.0
+     *
+     * @param {number} divisions - [description]
+     *
+     * @return {number} [description]
+     */
+    getResolution: function (divisions)
