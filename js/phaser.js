@@ -88699,3 +88699,236 @@ var EllipseCurve = new Class({
     },
 
     /**
+     * The x coordinate of the center of the ellipse.
+     *
+     * @name Phaser.Curves.Ellipse#x
+     * @type {number}
+     * @since 3.0.0
+     */
+    x: {
+
+        get: function ()
+        {
+            return this.p0.x;
+        },
+
+        set: function (value)
+        {
+            this.p0.x = value;
+        }
+
+    },
+
+    /**
+     * The y coordinate of the center of the ellipse.
+     *
+     * @name Phaser.Curves.Ellipse#y
+     * @type {number}
+     * @since 3.0.0
+     */
+    y: {
+
+        get: function ()
+        {
+            return this.p0.y;
+        },
+
+        set: function (value)
+        {
+            this.p0.y = value;
+        }
+
+    },
+
+    /**
+     * The horizontal radius of the ellipse.
+     *
+     * @name Phaser.Curves.Ellipse#xRadius
+     * @type {number}
+     * @since 3.0.0
+     */
+    xRadius: {
+
+        get: function ()
+        {
+            return this._xRadius;
+        },
+
+        set: function (value)
+        {
+            this._xRadius = value;
+        }
+
+    },
+
+    /**
+     * The vertical radius of the ellipse.
+     *
+     * @name Phaser.Curves.Ellipse#yRadius
+     * @type {number}
+     * @since 3.0.0
+     */
+    yRadius: {
+
+        get: function ()
+        {
+            return this._yRadius;
+        },
+
+        set: function (value)
+        {
+            this._yRadius = value;
+        }
+
+    },
+
+    /**
+     * The start angle of the ellipse in degrees.
+     *
+     * @name Phaser.Curves.Ellipse#startAngle
+     * @type {number}
+     * @since 3.0.0
+     */
+    startAngle: {
+
+        get: function ()
+        {
+            return RadToDeg(this._startAngle);
+        },
+
+        set: function (value)
+        {
+            this._startAngle = DegToRad(value);
+        }
+
+    },
+
+    /**
+     * The end angle of the ellipse in degrees.
+     *
+     * @name Phaser.Curves.Ellipse#endAngle
+     * @type {number}
+     * @since 3.0.0
+     */
+    endAngle: {
+
+        get: function ()
+        {
+            return RadToDeg(this._endAngle);
+        },
+
+        set: function (value)
+        {
+            this._endAngle = DegToRad(value);
+        }
+
+    },
+
+    /**
+     * `true` if the ellipse rotation is clockwise or `false` if anti-clockwise.
+     *
+     * @name Phaser.Curves.Ellipse#clockwise
+     * @type {boolean}
+     * @since 3.0.0
+     */
+    clockwise: {
+
+        get: function ()
+        {
+            return this._clockwise;
+        },
+
+        set: function (value)
+        {
+            this._clockwise = value;
+        }
+
+    },
+
+    /**
+     * The rotation of the ellipse, relative to the center, in degrees.
+     *
+     * @name Phaser.Curves.Ellipse#angle
+     * @type {number}
+     * @since 3.14.0
+     */
+    angle: {
+
+        get: function ()
+        {
+            return RadToDeg(this._rotation);
+        },
+
+        set: function (value)
+        {
+            this._rotation = DegToRad(value);
+        }
+
+    },
+
+    /**
+     * The rotation of the ellipse, relative to the center, in radians.
+     *
+     * @name Phaser.Curves.Ellipse#rotation
+     * @type {number}
+     * @since 3.0.0
+     */
+    rotation: {
+
+        get: function ()
+        {
+            return this._rotation;
+        },
+
+        set: function (value)
+        {
+            this._rotation = value;
+        }
+
+    },
+
+    /**
+     * JSON serialization of the curve.
+     *
+     * @method Phaser.Curves.Ellipse#toJSON
+     * @since 3.0.0
+     *
+     * @return {JSONEllipseCurve} The JSON object containing this curve data.
+     */
+    toJSON: function ()
+    {
+        return {
+            type: this.type,
+            x: this.p0.x,
+            y: this.p0.y,
+            xRadius: this._xRadius,
+            yRadius: this._yRadius,
+            startAngle: RadToDeg(this._startAngle),
+            endAngle: RadToDeg(this._endAngle),
+            clockwise: this._clockwise,
+            rotation: RadToDeg(this._rotation)
+        };
+    }
+
+});
+
+/**
+ * Creates a curve from the provided Ellipse Curve Configuration object.
+ *
+ * @function Phaser.Curves.Ellipse.fromJSON
+ * @since 3.0.0
+ *
+ * @param {JSONEllipseCurve} data - The JSON object containing this curve data.
+ *
+ * @return {Phaser.Curves.Ellipse} The ellipse curve constructed from the configuration object.
+ */
+EllipseCurve.fromJSON = function (data)
+{
+    return new EllipseCurve(data);
+};
+
+module.exports = EllipseCurve;
+
+
+/***/ }),
+/* 354 */
