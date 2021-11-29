@@ -89143,3 +89143,242 @@ var CubicBezierCurve = new Class({
      * Draws this curve to the specified graphics object.
      *
      * @method Phaser.Curves.CubicBezier#draw
+     * @since 3.0.0
+     *
+     * @generic {Phaser.GameObjects.Graphics} G - [graphics,$return]
+     *
+     * @param {Phaser.GameObjects.Graphics} graphics - The graphics object this curve should be drawn to.
+     * @param {integer} [pointsTotal=32] - The number of intermediary points that make up this curve. A higher number of points will result in a smoother curve.
+     *
+     * @return {Phaser.GameObjects.Graphics} The graphics object this curve was drawn to. Useful for method chaining.
+     */
+    draw: function (graphics, pointsTotal)
+    {
+        if (pointsTotal === undefined) { pointsTotal = 32; }
+
+        var points = this.getPoints(pointsTotal);
+
+        graphics.beginPath();
+        graphics.moveTo(this.p0.x, this.p0.y);
+
+        for (var i = 1; i < points.length; i++)
+        {
+            graphics.lineTo(points[i].x, points[i].y);
+        }
+
+        graphics.strokePath();
+
+        //  So you can chain graphics calls
+        return graphics;
+    },
+
+    /**
+     * Returns a JSON object that describes this curve.
+     *
+     * @method Phaser.Curves.CubicBezier#toJSON
+     * @since 3.0.0
+     *
+     * @return {JSONCurve} The JSON object containing this curve data.
+     */
+    toJSON: function ()
+    {
+        return {
+            type: this.type,
+            points: [
+                this.p0.x, this.p0.y,
+                this.p1.x, this.p1.y,
+                this.p2.x, this.p2.y,
+                this.p3.x, this.p3.y
+            ]
+        };
+    }
+
+});
+
+/**
+ * Generates a curve from a JSON object.
+ *
+ * @function Phaser.Curves.CubicBezier.fromJSON
+ * @since 3.0.0
+ *
+ * @param {JSONCurve} data - The JSON object containing this curve data.
+ *
+ * @return {Phaser.Curves.CubicBezier} The curve generated from the JSON object.
+ */
+CubicBezierCurve.fromJSON = function (data)
+{
+    var points = data.points;
+
+    var p0 = new Vector2(points[0], points[1]);
+    var p1 = new Vector2(points[2], points[3]);
+    var p2 = new Vector2(points[4], points[5]);
+    var p3 = new Vector2(points[6], points[7]);
+
+    return new CubicBezierCurve(p0, p1, p2, p3);
+};
+
+module.exports = CubicBezierCurve;
+
+
+/***/ }),
+/* 356 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * A 16 color palette by [Arne](http://androidarts.com/palette/16pal.htm)
+ *
+ * @name Phaser.Create.Palettes.ARNE16
+ * @since 3.0.0
+ *
+ * @type {Palette}
+ */
+module.exports = {
+    0: '#000',
+    1: '#9D9D9D',
+    2: '#FFF',
+    3: '#BE2633',
+    4: '#E06F8B',
+    5: '#493C2B',
+    6: '#A46422',
+    7: '#EB8931',
+    8: '#F7E26B',
+    9: '#2F484E',
+    A: '#44891A',
+    B: '#A3CE27',
+    C: '#1B2632',
+    D: '#005784',
+    E: '#31A2F2',
+    F: '#B2DCEF'
+};
+
+
+/***/ }),
+/* 357 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Arne16 = __webpack_require__(356);
+var CanvasPool = __webpack_require__(24);
+var GetValue = __webpack_require__(4);
+
+/**
+ * @callback GenerateTextureRendererCallback
+ *
+ * @param {HTMLCanvasElement} canvas - [description]
+ * @param {CanvasRenderingContext2D} context - [description]
+ */
+
+/**
+ * @typedef {object} GenerateTextureConfig
+ *
+ * @property {array} [data=[]] - [description]
+ * @property {HTMLCanvasElement} [canvas=null] - [description]
+ * @property {Palette} [palette=Arne16] - [description]
+ * @property {number} [pixelWidth=1] - The width of each 'pixel' in the generated texture.
+ * @property {number} [pixelHeight=1] - The height of each 'pixel' in the generated texture.
+ * @property {boolean} [resizeCanvas=true] - [description]
+ * @property {boolean} [clearCanvas=true] - [description]
+ * @property {GenerateTextureRendererCallback} [preRender] - [description]
+ * @property {GenerateTextureRendererCallback} [postRender] - [description]
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Create.GenerateTexture
+ * @since 3.0.0
+ *
+ * @param {GenerateTextureConfig} config - [description]
+ *
+ * @return {HTMLCanvasElement} [description]
+ */
+var GenerateTexture = function (config)
+{
+    var data = GetValue(config, 'data', []);
+    var canvas = GetValue(config, 'canvas', null);
+    var palette = GetValue(config, 'palette', Arne16);
+    var pixelWidth = GetValue(config, 'pixelWidth', 1);
+    var pixelHeight = GetValue(config, 'pixelHeight', pixelWidth);
+    var resizeCanvas = GetValue(config, 'resizeCanvas', true);
+    var clearCanvas = GetValue(config, 'clearCanvas', true);
+    var preRender = GetValue(config, 'preRender', null);
+    var postRender = GetValue(config, 'postRender', null);
+
+    var width = Math.floor(Math.abs(data[0].length * pixelWidth));
+    var height = Math.floor(Math.abs(data.length * pixelHeight));
+
+    if (!canvas)
+    {
+        canvas = CanvasPool.create2D(this, width, height);
+        resizeCanvas = false;
+        clearCanvas = false;
+    }
+
+    if (resizeCanvas)
+    {
+        canvas.width = width;
+        canvas.height = height;
+    }
+
+    var ctx = canvas.getContext('2d');
+
+    if (clearCanvas)
+    {
+        ctx.clearRect(0, 0, width, height);
+    }
+
+    //  preRender Callback?
+    if (preRender)
+    {
+        preRender(canvas, ctx);
+    }
+
+    //  Draw it
+    for (var y = 0; y < data.length; y++)
+    {
+        var row = data[y];
+
+        for (var x = 0; x < row.length; x++)
+        {
+            var d = row[x];
+
+            if (d !== '.' && d !== ' ')
+            {
+                ctx.fillStyle = palette[d];
+                ctx.fillRect(x * pixelWidth, y * pixelHeight, pixelWidth, pixelHeight);
+            }
+        }
+    }
+
+    //  postRender Callback?
+    if (postRender)
+    {
+        postRender(canvas, ctx);
+    }
+
+    return canvas;
+};
+
+module.exports = GenerateTexture;
+
+
+/***/ }),
+/* 358 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
