@@ -88932,3 +88932,214 @@ module.exports = EllipseCurve;
 
 /***/ }),
 /* 354 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+function P0 (t, p)
+{
+    var k = 1 - t;
+
+    return k * k * k * p;
+}
+
+function P1 (t, p)
+{
+    var k = 1 - t;
+
+    return 3 * k * k * t * p;
+}
+
+function P2 (t, p)
+{
+    return 3 * (1 - t) * t * t * p;
+}
+
+function P3 (t, p)
+{
+    return t * t * t * p;
+}
+
+//  p0 = start point
+//  p1 = control point 1
+//  p2 = control point 2
+//  p3 = end point
+
+// https://medium.com/@adrian_cooney/bezier-interpolation-13b68563313a
+
+/**
+ * A cubic bezier interpolation method.
+ *
+ * @function Phaser.Math.Interpolation.CubicBezier
+ * @since 3.0.0
+ *
+ * @param {number} t - The percentage of interpolation, between 0 and 1.
+ * @param {number} p0 - The start point.
+ * @param {number} p1 - The first control point.
+ * @param {number} p2 - The second control point.
+ * @param {number} p3 - The end point.
+ *
+ * @return {number} The interpolated value.
+ */
+var CubicBezierInterpolation = function (t, p0, p1, p2, p3)
+{
+    return P0(t, p0) + P1(t, p1) + P2(t, p2) + P3(t, p3);
+};
+
+module.exports = CubicBezierInterpolation;
+
+
+/***/ }),
+/* 355 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  Based on the three.js Curve classes created by [zz85](http://www.lab4games.net/zz85/blog)
+
+var Class = __webpack_require__(0);
+var CubicBezier = __webpack_require__(354);
+var Curve = __webpack_require__(70);
+var Vector2 = __webpack_require__(3);
+
+/**
+ * @classdesc
+ * A higher-order Bézier curve constructed of four points.
+ *
+ * @class CubicBezier
+ * @extends Phaser.Curves.Curve
+ * @memberof Phaser.Curves
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {(Phaser.Math.Vector2|Phaser.Math.Vector2[])} p0 - Start point, or an array of point pairs.
+ * @param {Phaser.Math.Vector2} p1 - Control Point 1.
+ * @param {Phaser.Math.Vector2} p2 - Control Point 2.
+ * @param {Phaser.Math.Vector2} p3 - End Point.
+ */
+var CubicBezierCurve = new Class({
+
+    Extends: Curve,
+
+    initialize:
+
+    function CubicBezierCurve (p0, p1, p2, p3)
+    {
+        Curve.call(this, 'CubicBezierCurve');
+
+        if (Array.isArray(p0))
+        {
+            p3 = new Vector2(p0[6], p0[7]);
+            p2 = new Vector2(p0[4], p0[5]);
+            p1 = new Vector2(p0[2], p0[3]);
+            p0 = new Vector2(p0[0], p0[1]);
+        }
+
+        /**
+         * The start point of this curve.
+         *
+         * @name Phaser.Curves.CubicBezier#p0
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.p0 = p0;
+
+        /**
+         * The first control point of this curve.
+         *
+         * @name Phaser.Curves.CubicBezier#p1
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.p1 = p1;
+
+        /**
+         * The second control point of this curve.
+         *
+         * @name Phaser.Curves.CubicBezier#p2
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.p2 = p2;
+
+        /**
+         * The end point of this curve.
+         *
+         * @name Phaser.Curves.CubicBezier#p3
+         * @type {Phaser.Math.Vector2}
+         * @since 3.0.0
+         */
+        this.p3 = p3;
+    },
+
+    /**
+     * Gets the starting point on the curve.
+     *
+     * @method Phaser.Curves.CubicBezier#getStartPoint
+     * @since 3.0.0
+     *
+     * @generic {Phaser.Math.Vector2} O - [out,$return]
+     *
+     * @param {Phaser.Math.Vector2} [out] - A Vector2 object to store the result in. If not given will be created.
+     *
+     * @return {Phaser.Math.Vector2} The coordinates of the point on the curve. If an `out` object was given this will be returned.
+     */
+    getStartPoint: function (out)
+    {
+        if (out === undefined) { out = new Vector2(); }
+
+        return out.copy(this.p0);
+    },
+
+    /**
+     * Returns the resolution of this curve.
+     *
+     * @method Phaser.Curves.CubicBezier#getResolution
+     * @since 3.0.0
+     *
+     * @param {number} divisions - The amount of divisions used by this curve.
+     *
+     * @return {number} The resolution of the curve.
+     */
+    getResolution: function (divisions)
+    {
+        return divisions;
+    },
+
+    /**
+     * Get point at relative position in curve according to length.
+     *
+     * @method Phaser.Curves.CubicBezier#getPoint
+     * @since 3.0.0
+     *
+     * @generic {Phaser.Math.Vector2} O - [out,$return]
+     *
+     * @param {number} t - The position along the curve to return. Where 0 is the start and 1 is the end.
+     * @param {Phaser.Math.Vector2} [out] - A Vector2 object to store the result in. If not given will be created.
+     *
+     * @return {Phaser.Math.Vector2} The coordinates of the point on the curve. If an `out` object was given this will be returned.
+     */
+    getPoint: function (t, out)
+    {
+        if (out === undefined) { out = new Vector2(); }
+
+        var p0 = this.p0;
+        var p1 = this.p1;
+        var p2 = this.p2;
+        var p3 = this.p3;
+
+        return out.set(CubicBezier(t, p0.x, p1.x, p2.x, p3.x), CubicBezier(t, p0.y, p1.y, p2.y, p3.y));
+    },
+
+    /**
+     * Draws this curve to the specified graphics object.
+     *
+     * @method Phaser.Curves.CubicBezier#draw
