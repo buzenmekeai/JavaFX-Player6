@@ -89382,3 +89382,461 @@ module.exports = GenerateTexture;
  * @copyright    2018 Photon Storm Ltd.
  * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
  */
+
+/**
+ * @namespace Phaser.Math.Easing.Stepped
+ */
+
+module.exports = __webpack_require__(952);
+
+
+/***/ }),
+/* 359 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Easing.Sine
+ */
+
+module.exports = {
+
+    In: __webpack_require__(955),
+    Out: __webpack_require__(954),
+    InOut: __webpack_require__(953)
+
+};
+
+
+/***/ }),
+/* 360 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Easing.Quintic
+ */
+
+module.exports = {
+
+    In: __webpack_require__(958),
+    Out: __webpack_require__(957),
+    InOut: __webpack_require__(956)
+
+};
+
+
+/***/ }),
+/* 361 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Easing.Quartic
+ */
+
+module.exports = {
+
+    In: __webpack_require__(961),
+    Out: __webpack_require__(960),
+    InOut: __webpack_require__(959)
+
+};
+
+
+/***/ }),
+/* 362 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Easing.Quadratic
+ */
+
+module.exports = {
+
+    In: __webpack_require__(964),
+    Out: __webpack_require__(963),
+    InOut: __webpack_require__(962)
+
+};
+
+
+/***/ }),
+/* 363 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Easing.Linear
+ */
+
+module.exports = __webpack_require__(965);
+
+
+/***/ }),
+/* 364 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Easing.Expo
+ */
+
+module.exports = {
+
+    In: __webpack_require__(968),
+    Out: __webpack_require__(967),
+    InOut: __webpack_require__(966)
+
+};
+
+
+/***/ }),
+/* 365 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Easing.Elastic
+ */
+
+module.exports = {
+
+    In: __webpack_require__(971),
+    Out: __webpack_require__(970),
+    InOut: __webpack_require__(969)
+
+};
+
+
+/***/ }),
+/* 366 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Easing.Cubic
+ */
+
+module.exports = {
+
+    In: __webpack_require__(974),
+    Out: __webpack_require__(973),
+    InOut: __webpack_require__(972)
+
+};
+
+
+/***/ }),
+/* 367 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Easing.Circular
+ */
+
+module.exports = {
+
+    In: __webpack_require__(977),
+    Out: __webpack_require__(976),
+    InOut: __webpack_require__(975)
+
+};
+
+
+/***/ }),
+/* 368 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Easing.Bounce
+ */
+
+module.exports = {
+
+    In: __webpack_require__(980),
+    Out: __webpack_require__(979),
+    InOut: __webpack_require__(978)
+
+};
+
+
+/***/ }),
+/* 369 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Easing.Back
+ */
+
+module.exports = {
+
+    In: __webpack_require__(983),
+    Out: __webpack_require__(982),
+    InOut: __webpack_require__(981)
+
+};
+
+
+/***/ }),
+/* 370 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Cameras.Scene2D.Effects
+ */
+
+module.exports = {
+
+    Fade: __webpack_require__(986),
+    Flash: __webpack_require__(985),
+    Pan: __webpack_require__(984),
+    Shake: __webpack_require__(951),
+    Zoom: __webpack_require__(950)
+
+};
+
+
+/***/ }),
+/* 371 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Color = __webpack_require__(37);
+
+/**
+ * Converts a CSS 'web' string into a Phaser Color object.
+ * 
+ * The web string can be in the format `'rgb(r,g,b)'` or `'rgba(r,g,b,a)'` where r/g/b are in the range [0..255] and a is in the range [0..1].
+ *
+ * @function Phaser.Display.Color.RGBStringToColor
+ * @since 3.0.0
+ *
+ * @param {string} rgb - The CSS format color string, using the `rgb` or `rgba` format.
+ *
+ * @return {Phaser.Display.Color} A Color object.
+ */
+var RGBStringToColor = function (rgb)
+{
+    var color = new Color();
+
+    var result = (/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*(\d+(?:\.\d+)?))?\s*\)$/).exec(rgb.toLowerCase());
+
+    if (result)
+    {
+        var r = parseInt(result[1], 10);
+        var g = parseInt(result[2], 10);
+        var b = parseInt(result[3], 10);
+        var a = (result[4] !== undefined) ? parseFloat(result[4]) : 1;
+
+        color.setTo(r, g, b, a * 255);
+    }
+
+    return color;
+};
+
+module.exports = RGBStringToColor;
+
+
+/***/ }),
+/* 372 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Color = __webpack_require__(37);
+
+/**
+ * Converts an object containing `r`, `g`, `b` and `a` properties into a Color class instance.
+ *
+ * @function Phaser.Display.Color.ObjectToColor
+ * @since 3.0.0
+ *
+ * @param {InputColorObject} input - An object containing `r`, `g`, `b` and `a` properties in the range 0 to 255.
+ *
+ * @return {Phaser.Display.Color} A Color object.
+ */
+var ObjectToColor = function (input)
+{
+    return new Color(input.r, input.g, input.b, input.a);
+};
+
+module.exports = ObjectToColor;
+
+
+/***/ }),
+/* 373 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Return the component parts of a color as an Object with the properties alpha, red, green, blue.
+ *
+ * Alpha will only be set if it exists in the given color (0xAARRGGBB)
+ *
+ * @function Phaser.Display.Color.IntegerToRGB
+ * @since 3.0.0
+ *
+ * @param {integer} input - The color value to convert into a Color object.
+ *
+ * @return {ColorObject} An object with the red, green and blue values set in the r, g and b properties.
+ */
+var IntegerToRGB = function (color)
+{
+    if (color > 16777215)
+    {
+        //  The color value has an alpha component
+        return {
+            a: color >>> 24,
+            r: color >> 16 & 0xFF,
+            g: color >> 8 & 0xFF,
+            b: color & 0xFF
+        };
+    }
+    else
+    {
+        return {
+            a: 255,
+            r: color >> 16 & 0xFF,
+            g: color >> 8 & 0xFF,
+            b: color & 0xFF
+        };
+    }
+};
+
+module.exports = IntegerToRGB;
+
+
+/***/ }),
+/* 374 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Color = __webpack_require__(37);
+var IntegerToRGB = __webpack_require__(373);
+
+/**
+ * Converts the given color value into an instance of a Color object.
+ *
+ * @function Phaser.Display.Color.IntegerToColor
+ * @since 3.0.0
+ *
+ * @param {integer} input - The color value to convert into a Color object.
+ *
+ * @return {Phaser.Display.Color} A Color object.
+ */
+var IntegerToColor = function (input)
+{
+    var rgb = IntegerToRGB(input);
+
+    return new Color(rgb.r, rgb.g, rgb.b, rgb.a);
+};
+
+module.exports = IntegerToColor;
+
+
+/***/ }),
+/* 375 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @typedef {object} HSVColorObject
+ *
+ * @property {number} h - The hue color value. A number between 0 and 1
+ * @property {number} s - The saturation color value. A number between 0 and 1
+ * @property {number} v - The lightness color value. A number between 0 and 1
+ */
+
+/**
+ * Converts an RGB color value to HSV (hue, saturation and value).
+ * Conversion forumla from http://en.wikipedia.org/wiki/HSL_color_space.
