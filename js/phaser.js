@@ -89840,3 +89840,224 @@ module.exports = IntegerToColor;
 /**
  * Converts an RGB color value to HSV (hue, saturation and value).
  * Conversion forumla from http://en.wikipedia.org/wiki/HSL_color_space.
+ * Assumes RGB values are contained in the set [0, 255] and returns h, s and v in the set [0, 1].
+ * Based on code by Michael Jackson (https://github.com/mjijackson)
+ *
+ * @function Phaser.Display.Color.RGBToHSV
+ * @since 3.0.0
+ *
+ * @param {integer} r - The red color value. A number between 0 and 255.
+ * @param {integer} g - The green color value. A number between 0 and 255.
+ * @param {integer} b - The blue color value. A number between 0 and 255.
+ * @param {(HSVColorObject|Phaser.Display.Color)} [out] - An object to store the color values in. If not given an HSV Color Object will be created.
+ *
+ * @return {(HSVColorObject|Phaser.Display.Color)} An object with the properties `h`, `s` and `v` set.
+ */
+var RGBToHSV = function (r, g, b, out)
+{
+    if (out === undefined) { out = { h: 0, s: 0, v: 0 }; }
+
+    r /= 255;
+    g /= 255;
+    b /= 255;
+
+    var min = Math.min(r, g, b);
+    var max = Math.max(r, g, b);
+    var d = max - min;
+
+    // achromatic by default
+    var h = 0;
+    var s = (max === 0) ? 0 : d / max;
+    var v = max;
+
+    if (max !== min)
+    {
+        if (max === r)
+        {
+            h = (g - b) / d + ((g < b) ? 6 : 0);
+        }
+        else if (max === g)
+        {
+            h = (b - r) / d + 2;
+        }
+        else if (max === b)
+        {
+            h = (r - g) / d + 4;
+        }
+
+        h /= 6;
+    }
+
+    if (out.hasOwnProperty('_h'))
+    {
+        out._h = h;
+        out._s = s;
+        out._v = v;
+    }
+    else
+    {
+        out.h = h;
+        out.s = s;
+        out.v = v;
+    }
+
+    return out;
+};
+
+module.exports = RGBToHSV;
+
+
+/***/ }),
+/* 376 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Given an alpha and 3 color values this will return an integer representation of it.
+ *
+ * @function Phaser.Display.Color.GetColor32
+ * @since 3.0.0
+ *
+ * @param {integer} red - The red color value. A number between 0 and 255.
+ * @param {integer} green - The green color value. A number between 0 and 255.
+ * @param {integer} blue - The blue color value. A number between 0 and 255.
+ * @param {integer} alpha - The alpha color value. A number between 0 and 255.
+ *
+ * @return {number} The combined color value.
+ */
+var GetColor32 = function (red, green, blue, alpha)
+{
+    return alpha << 24 | red << 16 | green << 8 | blue;
+};
+
+module.exports = GetColor32;
+
+
+/***/ }),
+/* 377 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Color = __webpack_require__(37);
+
+/**
+ * Converts a hex string into a Phaser Color object.
+ * 
+ * The hex string can supplied as `'#0033ff'` or the short-hand format of `'#03f'`; it can begin with an optional "#" or "0x", or be unprefixed.
+ *
+ * An alpha channel is _not_ supported.
+ *
+ * @function Phaser.Display.Color.HexStringToColor
+ * @since 3.0.0
+ *
+ * @param {string} hex - The hex color value to convert, such as `#0033ff` or the short-hand format: `#03f`.
+ *
+ * @return {Phaser.Display.Color} A Color object populated by the values of the given string.
+ */
+var HexStringToColor = function (hex)
+{
+    var color = new Color();
+
+    // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+    hex = hex.replace(/^(?:#|0x)?([a-f\d])([a-f\d])([a-f\d])$/i, function (m, r, g, b)
+    {
+        return r + r + g + g + b + b;
+    });
+
+    var result = (/^(?:#|0x)?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i).exec(hex);
+
+    if (result)
+    {
+        var r = parseInt(result[1], 16);
+        var g = parseInt(result[2], 16);
+        var b = parseInt(result[3], 16);
+
+        color.setTo(r, g, b);
+    }
+
+    return color;
+};
+
+module.exports = HexStringToColor;
+
+
+/***/ }),
+/* 378 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var BaseCamera = __webpack_require__(121);
+var CanvasPool = __webpack_require__(24);
+var CenterOn = __webpack_require__(175);
+var Clamp = __webpack_require__(23);
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(14);
+var Effects = __webpack_require__(370);
+var Linear = __webpack_require__(119);
+var Rectangle = __webpack_require__(9);
+var Vector2 = __webpack_require__(3);
+
+/**
+ * @classdesc
+ * A Camera.
+ *
+ * The Camera is the way in which all games are rendered in Phaser. They provide a view into your game world,
+ * and can be positioned, rotated, zoomed and scrolled accordingly.
+ *
+ * A Camera consists of two elements: The viewport and the scroll values.
+ *
+ * The viewport is the physical position and size of the Camera within your game. Cameras, by default, are
+ * created the same size as your game, but their position and size can be set to anything. This means if you
+ * wanted to create a camera that was 320x200 in size, positioned in the bottom-right corner of your game,
+ * you'd adjust the viewport to do that (using methods like `setViewport` and `setSize`).
+ *
+ * If you wish to change where the Camera is looking in your game, then you scroll it. You can do this
+ * via the properties `scrollX` and `scrollY` or the method `setScroll`. Scrolling has no impact on the
+ * viewport, and changing the viewport has no impact on the scrolling.
+ *
+ * By default a Camera will render all Game Objects it can see. You can change this using the `ignore` method,
+ * allowing you to filter Game Objects out on a per-Camera basis.
+ *
+ * A Camera also has built-in special effects including Fade, Flash and Camera Shake.
+ *
+ * @class Camera
+ * @memberof Phaser.Cameras.Scene2D
+ * @constructor
+ * @since 3.0.0
+ * 
+ * @extends Phaser.Cameras.Scene2D.BaseCamera
+ * @extends Phaser.GameObjects.Components.Flip
+ * @extends Phaser.GameObjects.Components.Tint
+ *
+ * @param {number} x - The x position of the Camera, relative to the top-left of the game canvas.
+ * @param {number} y - The y position of the Camera, relative to the top-left of the game canvas.
+ * @param {number} width - The width of the Camera, in pixels.
+ * @param {number} height - The height of the Camera, in pixels.
+ */
+var Camera = new Class({
+
+    Extends: BaseCamera,
+
+    Mixins: [
+        Components.Flip,
+        Components.Tint
+    ],
+
+    initialize:
+
+    function Camera (x, y, width, height)
