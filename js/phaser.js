@@ -90298,3 +90298,220 @@ var Camera = new Class({
      * Then, it will emit the event `postrender`. This happens after all Game Object's have been drawn, but right before the
      * Camera texture is rendered to the main game canvas. It's the final point at which you can manipulate the texture before
      * it appears in-game.
+     * 
+     * You should not enable this unless you plan on actually using the texture it creates
+     * somehow, otherwise you're just doubling the work required to render your game.
+     * 
+     * To temporarily disable rendering to a texture, toggle the `renderToTexture` boolean.
+     * 
+     * If you no longer require the Camera to render to a texture, call the `clearRenderToTexture` method,
+     * which will delete the respective textures and free-up resources.
+     *
+     * @method Phaser.Cameras.Scene2D.Camera#setRenderToTexture
+     * @since 3.13.0
+     *
+     * @param {(string|Phaser.Renderer.WebGL.WebGLPipeline)} [pipeline] - An optional WebGL Pipeline to render with, can be either a string which is the name of the pipeline, or a pipeline reference.
+     *
+     * @return {Phaser.Cameras.Scene2D.Camera} This Camera instance.
+     */
+    setRenderToTexture: function (pipeline)
+    {
+        var renderer = this.scene.sys.game.renderer;
+
+        if (renderer.gl)
+        {
+            this.glTexture = renderer.createTextureFromSource(null, this.width, this.height, 0);
+            this.framebuffer = renderer.createFramebuffer(this.width, this.height, this.glTexture, false);
+        }
+        else
+        {
+            this.canvas = CanvasPool.create2D(this, this.width, this.height);
+            this.context = this.canvas.getContext('2d');
+        }
+
+        this.renderToTexture = true;
+
+        if (pipeline)
+        {
+            this.setPipeline(pipeline);
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets the WebGL pipeline this Camera is using when rendering to a texture.
+     * 
+     * You can pass either the string-based name of the pipeline, or a reference to the pipeline itself.
+     * 
+     * Call this method with no arguments to clear any previously set pipeline.
+     *
+     * @method Phaser.Cameras.Scene2D.Camera#setPipeline
+     * @since 3.13.0
+     *
+     * @param {(string|Phaser.Renderer.WebGL.WebGLPipeline)} [pipeline] - The WebGL Pipeline to render with, can be either a string which is the name of the pipeline, or a pipeline reference. Or if left empty it will clear the pipeline.
+     *
+     * @return {Phaser.Cameras.Scene2D.Camera} This Camera instance.
+     */
+    setPipeline: function (pipeline)
+    {
+        if (typeof pipeline === 'string')
+        {
+            var renderer = this.scene.sys.game.renderer;
+
+            if (renderer.gl && renderer.hasPipeline(pipeline))
+            {
+                this.pipeline = renderer.getPipeline(pipeline);
+            }
+        }
+        else
+        {
+            this.pipeline = pipeline;
+        }
+
+        return this;
+    },
+
+    /**
+     * If this Camera was set to render to a texture, this will clear the resources it was using and
+     * redirect it to render back to the primary Canvas again.
+     * 
+     * If you only wish to temporarily disable rendering to a texture then you can toggle the
+     * property `renderToTexture` instead.
+     *
+     * @method Phaser.Cameras.Scene2D.Camera#clearRenderToTexture
+     * @since 3.13.0
+     *
+     * @return {Phaser.Cameras.Scene2D.Camera} This Camera instance.
+     */
+    clearRenderToTexture: function ()
+    {
+        var renderer = this.scene.sys.game.renderer;
+
+        if (renderer.gl)
+        {
+            if (this.framebuffer)
+            {
+                renderer.deleteFramebuffer(this.framebuffer);
+            }
+
+            if (this.glTexture)
+            {
+                renderer.deleteTexture(this.glTexture);
+            }
+
+            this.framebuffer = null;
+            this.glTexture = null;
+            this.pipeline = null;
+        }
+        else
+        {
+            CanvasPool.remove(this);
+
+            this.canvas = null;
+            this.context = null;
+        }
+
+        this.renderToTexture = false;
+
+        return this;
+    },
+
+    /**
+     * Sets the Camera dead zone.
+     *
+     * The deadzone is only used when the camera is following a target.
+     *
+     * It defines a rectangular region within which if the target is present, the camera will not scroll.
+     * If the target moves outside of this area, the camera will begin scrolling in order to follow it.
+     *
+     * The deadzone rectangle is re-positioned every frame so that it is centered on the mid-point
+     * of the camera. This allows you to use the object for additional game related checks, such as
+     * testing if an object is within it or not via a Rectangle.contains call.
+     *
+     * The `lerp` values that you can set for a follower target also apply when using a deadzone.
+     *
+     * Calling this method with no arguments will reset an active deadzone.
+     *
+     * @method Phaser.Cameras.Scene2D.Camera#setDeadzone
+     * @since 3.11.0
+     *
+     * @param {number} [width] - The width of the deadzone rectangle in pixels. If not specified the deadzone is removed.
+     * @param {number} [height] - The height of the deadzone rectangle in pixels.
+     *
+     * @return {Phaser.Cameras.Scene2D.Camera} This Camera instance.
+     */
+    setDeadzone: function (width, height)
+    {
+        if (width === undefined)
+        {
+            this.deadzone = null;
+        }
+        else
+        {
+            if (this.deadzone)
+            {
+                this.deadzone.width = width;
+                this.deadzone.height = height;
+            }
+            else
+            {
+                this.deadzone = new Rectangle(0, 0, width, height);
+            }
+
+            if (this._follow)
+            {
+                var originX = this.width / 2;
+                var originY = this.height / 2;
+
+                var fx = this._follow.x - this.followOffset.x;
+                var fy = this._follow.y - this.followOffset.y;
+
+                this.midPoint.set(fx, fy);
+
+                this.scrollX = fx - originX;
+                this.scrollY = fy - originY;
+            }
+
+            CenterOn(this.deadzone, this.midPoint.x, this.midPoint.y);
+        }
+
+        return this;
+    },
+
+    /**
+     * Fades the Camera in from the given color over the duration specified.
+     *
+     * @method Phaser.Cameras.Scene2D.Camera#fadeIn
+     * @since 3.3.0
+     *
+     * @param {integer} [duration=1000] - The duration of the effect in milliseconds.
+     * @param {integer} [red=0] - The amount to fade the red channel towards. A value between 0 and 255.
+     * @param {integer} [green=0] - The amount to fade the green channel towards. A value between 0 and 255.
+     * @param {integer} [blue=0] - The amount to fade the blue channel towards. A value between 0 and 255.
+     * @param {function} [callback] - This callback will be invoked every frame for the duration of the effect.
+     * It is sent two arguments: A reference to the camera and a progress amount between 0 and 1 indicating how complete the effect is.
+     * @param {any} [context] - The context in which the callback is invoked. Defaults to the Scene to which the Camera belongs.
+     *
+     * @return {Phaser.Cameras.Scene2D.Camera} This Camera instance.
+     */
+    fadeIn: function (duration, red, green, blue, callback, context)
+    {
+        return this.fadeEffect.start(false, duration, red, green, blue, true, callback, context);
+    },
+
+    /**
+     * Fades the Camera out to the given color over the duration specified.
+     * This is an alias for Camera.fade that forces the fade to start, regardless of existing fades.
+     *
+     * @method Phaser.Cameras.Scene2D.Camera#fadeOut
+     * @since 3.3.0
+     *
+     * @param {integer} [duration=1000] - The duration of the effect in milliseconds.
+     * @param {integer} [red=0] - The amount to fade the red channel towards. A value between 0 and 255.
+     * @param {integer} [green=0] - The amount to fade the green channel towards. A value between 0 and 255.
+     * @param {integer} [blue=0] - The amount to fade the blue channel towards. A value between 0 and 255.
+     * @param {function} [callback] - This callback will be invoked every frame for the duration of the effect.
+     * It is sent two arguments: A reference to the camera and a progress amount between 0 and 1 indicating how complete the effect is.
+     * @param {any} [context] - The context in which the callback is invoked. Defaults to the Scene to which the Camera belongs.
+     *
