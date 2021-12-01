@@ -90061,3 +90061,240 @@ var Camera = new Class({
     initialize:
 
     function Camera (x, y, width, height)
+    {
+        BaseCamera.call(this, x, y, width, height);
+
+        /**
+         * Does this Camera allow the Game Objects it renders to receive input events?
+         *
+         * @name Phaser.Cameras.Scene2D.Camera#inputEnabled
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.inputEnabled = true;
+
+        /**
+         * The Camera Fade effect handler.
+         * To fade this camera see the `Camera.fade` methods.
+         *
+         * @name Phaser.Cameras.Scene2D.Camera#fadeEffect
+         * @type {Phaser.Cameras.Scene2D.Effects.Fade}
+         * @since 3.5.0
+         */
+        this.fadeEffect = new Effects.Fade(this);
+
+        /**
+         * The Camera Flash effect handler.
+         * To flash this camera see the `Camera.flash` method.
+         *
+         * @name Phaser.Cameras.Scene2D.Camera#flashEffect
+         * @type {Phaser.Cameras.Scene2D.Effects.Flash}
+         * @since 3.5.0
+         */
+        this.flashEffect = new Effects.Flash(this);
+
+        /**
+         * The Camera Shake effect handler.
+         * To shake this camera see the `Camera.shake` method.
+         *
+         * @name Phaser.Cameras.Scene2D.Camera#shakeEffect
+         * @type {Phaser.Cameras.Scene2D.Effects.Shake}
+         * @since 3.5.0
+         */
+        this.shakeEffect = new Effects.Shake(this);
+
+        /**
+         * The Camera Pan effect handler.
+         * To pan this camera see the `Camera.pan` method.
+         *
+         * @name Phaser.Cameras.Scene2D.Camera#panEffect
+         * @type {Phaser.Cameras.Scene2D.Effects.Pan}
+         * @since 3.11.0
+         */
+        this.panEffect = new Effects.Pan(this);
+
+        /**
+         * The Camera Zoom effect handler.
+         * To zoom this camera see the `Camera.zoom` method.
+         *
+         * @name Phaser.Cameras.Scene2D.Camera#zoomEffect
+         * @type {Phaser.Cameras.Scene2D.Effects.Zoom}
+         * @since 3.11.0
+         */
+        this.zoomEffect = new Effects.Zoom(this);
+
+        /**
+         * The linear interpolation value to use when following a target.
+         *
+         * Can also be set via `setLerp` or as part of the `startFollow` call.
+         *
+         * The default values of 1 means the camera will instantly snap to the target coordinates.
+         * A lower value, such as 0.1 means the camera will more slowly track the target, giving
+         * a smooth transition. You can set the horizontal and vertical values independently, and also
+         * adjust this value in real-time during your game.
+         *
+         * Be sure to keep the value between 0 and 1. A value of zero will disable tracking on that axis.
+         *
+         * @name Phaser.Cameras.Scene2D.Camera#lerp
+         * @type {Phaser.Math.Vector2}
+         * @since 3.9.0
+         */
+        this.lerp = new Vector2(1, 1);
+
+        /**
+         * The values stored in this property are subtracted from the Camera targets position, allowing you to
+         * offset the camera from the actual target x/y coordinates by this amount.
+         * Can also be set via `setFollowOffset` or as part of the `startFollow` call.
+         *
+         * @name Phaser.Cameras.Scene2D.Camera#followOffset
+         * @type {Phaser.Math.Vector2}
+         * @since 3.9.0
+         */
+        this.followOffset = new Vector2();
+
+        /**
+         * The Camera dead zone.
+         *
+         * The deadzone is only used when the camera is following a target.
+         *
+         * It defines a rectangular region within which if the target is present, the camera will not scroll.
+         * If the target moves outside of this area, the camera will begin scrolling in order to follow it.
+         *
+         * The `lerp` values that you can set for a follower target also apply when using a deadzone.
+         *
+         * You can directly set this property to be an instance of a Rectangle. Or, you can use the
+         * `setDeadzone` method for a chainable approach.
+         *
+         * The rectangle you provide can have its dimensions adjusted dynamically, however, please
+         * note that its position is updated every frame, as it is constantly re-centered on the cameras mid point.
+         *
+         * Calling `setDeadzone` with no arguments will reset an active deadzone, as will setting this property
+         * to `null`.
+         *
+         * @name Phaser.Cameras.Scene2D.Camera#deadzone
+         * @type {?Phaser.Geom.Rectangle}
+         * @since 3.11.0
+         */
+        this.deadzone = null;
+
+        /**
+         * Internal follow target reference.
+         *
+         * @name Phaser.Cameras.Scene2D.Camera#_follow
+         * @type {?any}
+         * @private
+         * @default null
+         * @since 3.0.0
+         */
+        this._follow = null;
+
+        /**
+         * Is this Camera rendering directly to the canvas or to a texture?
+         * 
+         * Enable rendering to texture with the method `setRenderToTexture` (just enabling this boolean won't be enough)
+         * 
+         * Once enabled you can toggle it by switching this property.
+         * 
+         * To properly remove a render texture you should call the `clearRenderToTexture()` method.
+         *
+         * @name Phaser.Cameras.Scene2D.Camera#renderToTexture
+         * @type {boolean}
+         * @default false
+         * @since 3.13.0
+         */
+        this.renderToTexture = false;
+
+        /**
+         * If this Camera has been set to render to a texture then this holds a reference
+         * to the HTML Canvas Element that the Camera is drawing to.
+         * 
+         * Enable texture rendering using the method `setRenderToTexture`.
+         * 
+         * This is only populated if Phaser is running with the Canvas Renderer.
+         *
+         * @name Phaser.Cameras.Scene2D.Camera#canvas
+         * @type {HTMLCanvasElement}
+         * @since 3.13.0
+         */
+        this.canvas = null;
+
+        /**
+         * If this Camera has been set to render to a texture then this holds a reference
+         * to the Rendering Context belonging to the Canvas element the Camera is drawing to.
+         * 
+         * Enable texture rendering using the method `setRenderToTexture`.
+         * 
+         * This is only populated if Phaser is running with the Canvas Renderer.
+         *
+         * @name Phaser.Cameras.Scene2D.Camera#context
+         * @type {CanvasRenderingContext2D}
+         * @since 3.13.0
+         */
+        this.context = null;
+
+        /**
+         * If this Camera has been set to render to a texture then this holds a reference
+         * to the GL Texture belonging the Camera is drawing to.
+         * 
+         * Enable texture rendering using the method `setRenderToTexture`.
+         * 
+         * This is only set if Phaser is running with the WebGL Renderer.
+         *
+         * @name Phaser.Cameras.Scene2D.Camera#framebuffer
+         * @type {?WebGLTexture}
+         * @since 3.13.0
+         */
+        this.glTexture = null;
+
+        /**
+         * If this Camera has been set to render to a texture then this holds a reference
+         * to the GL Frame Buffer belonging the Camera is drawing to.
+         * 
+         * Enable texture rendering using the method `setRenderToTexture`.
+         * 
+         * This is only set if Phaser is running with the WebGL Renderer.
+         *
+         * @name Phaser.Cameras.Scene2D.Camera#framebuffer
+         * @type {?WebGLFramebuffer}
+         * @since 3.13.0
+         */
+        this.framebuffer = null;
+
+        /**
+         * If this Camera has been set to render to a texture and to use a custom pipeline,
+         * then this holds a reference to the pipeline the Camera is drawing with.
+         * 
+         * Enable texture rendering using the method `setRenderToTexture`.
+         * 
+         * This is only set if Phaser is running with the WebGL Renderer.
+         *
+         * @name Phaser.Cameras.Scene2D.Camera#pipeline
+         * @type {any}
+         * @since 3.13.0
+         */
+        this.pipeline = null;
+    },
+
+    /**
+     * Sets the Camera to render to a texture instead of to the main canvas.
+     * 
+     * The Camera will redirect all Game Objects it's asked to render to this texture.
+     * 
+     * During the render sequence, the texture itself will then be rendered to the main canvas.
+     * 
+     * Doing this gives you the ability to modify the texture before this happens,
+     * allowing for special effects such as Camera specific shaders, or post-processing
+     * on the texture.
+     * 
+     * If running under Canvas the Camera will render to its `canvas` property.
+     * 
+     * If running under WebGL the Camera will create a frame buffer, which is stored in its `framebuffer` and `glTexture` properties.
+     * 
+     * If you set a camera to render to a texture then it will emit 2 events during the render loop:
+     * 
+     * First, it will emit the event `prerender`. This happens right before any Game Object's are drawn to the Camera texture.
+     * 
+     * Then, it will emit the event `postrender`. This happens after all Game Object's have been drawn, but right before the
+     * Camera texture is rendered to the main game canvas. It's the final point at which you can manipulate the texture before
+     * it appears in-game.
