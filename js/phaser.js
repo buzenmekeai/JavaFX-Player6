@@ -91598,3 +91598,219 @@ var AnimationManager = new Class({
 
             if (data.hasOwnProperty('globalTimeScale'))
             {
+                this.globalTimeScale = data.globalTimeScale;
+            }
+        }
+        else if (data.hasOwnProperty('key') && data.type === 'frame')
+        {
+            output.push(this.create(data));
+        }
+
+        return output;
+    },
+
+    /**
+     * @typedef {object} GenerateFrameNamesConfig
+     *
+     * @property {string} [prefix=''] - [description]
+     * @property {integer} [start=0] - [description]
+     * @property {integer} [end=0] - [description]
+     * @property {string} [suffix=''] - [description]
+     * @property {integer} [zeroPad=0] - [description]
+     * @property {AnimationFrameConfig[]} [outputArray=[]] - [description]
+     * @property {boolean} [frames=false] - [description]
+     */
+
+    /**
+     * Generate an array of {@link AnimationFrameConfig} objects from a texture key and configuration object.
+     *
+     * Generates objects with string frame names, as configured by the given {@link AnimationFrameConfig}.
+     *
+     * @method Phaser.Animations.AnimationManager#generateFrameNames
+     * @since 3.0.0
+     *
+     * @param {string} key - The key for the texture containing the animation frames.
+     * @param {GenerateFrameNamesConfig} [config] - The configuration object for the animation frame names.
+     *
+     * @return {AnimationFrameConfig[]} The array of {@link AnimationFrameConfig} objects.
+     */
+    generateFrameNames: function (key, config)
+    {
+        var prefix = GetValue(config, 'prefix', '');
+        var start = GetValue(config, 'start', 0);
+        var end = GetValue(config, 'end', 0);
+        var suffix = GetValue(config, 'suffix', '');
+        var zeroPad = GetValue(config, 'zeroPad', 0);
+        var out = GetValue(config, 'outputArray', []);
+        var frames = GetValue(config, 'frames', false);
+
+        var texture = this.textureManager.get(key);
+
+        if (!texture)
+        {
+            return out;
+        }
+
+        var diff = (start < end) ? 1 : -1;
+
+        //  Adjust because we use i !== end in the for loop
+        end += diff;
+
+        var i;
+        var frame;
+
+        if (!config)
+        {
+            //  Use every frame in the atlas?
+            frames = texture.getFrameNames();
+
+            for (i = 0; i < frames.length; i++)
+            {
+                out.push({ key: key, frame: frames[i] });
+            }
+        }
+        else if (Array.isArray(frames))
+        {
+            //  Have they provided their own custom frame sequence array?
+            for (i = 0; i < frames.length; i++)
+            {
+                frame = prefix + Pad(frames[i], zeroPad, '0', 1) + suffix;
+
+                if (texture.has(frame))
+                {
+                    out.push({ key: key, frame: frame });
+                }
+            }
+        }
+        else
+        {
+            for (i = start; i !== end; i += diff)
+            {
+                frame = prefix + Pad(i, zeroPad, '0', 1) + suffix;
+
+                if (texture.has(frame))
+                {
+                    out.push({ key: key, frame: frame });
+                }
+            }
+        }
+
+        return out;
+    },
+
+    /**
+     * @typedef {object} GenerateFrameNumbersConfig
+     *
+     * @property {integer} [start=0] - The starting frame of the animation.
+     * @property {integer} [end=-1] - The ending frame of the animation.
+     * @property {(boolean|integer)} [first=false] - A frame to put at the beginning of the animation, before `start` or `outputArray` or `frames`.
+     * @property {AnimationFrameConfig[]} [outputArray=[]] - An array to concatenate the output onto.
+     * @property {(boolean|integer[])} [frames=false] - A custom sequence of frames.
+     */
+
+    /**
+     * Generate an array of {@link AnimationFrameConfig} objects from a texture key and configuration object.
+     *
+     * Generates objects with numbered frame names, as configured by the given {@link GenerateFrameNumbersConfig}.
+     *
+     * @method Phaser.Animations.AnimationManager#generateFrameNumbers
+     * @since 3.0.0
+     *
+     * @param {string} key - The key for the texture containing the animation frames.
+     * @param {GenerateFrameNumbersConfig} config - The configuration object for the animation frames.
+     *
+     * @return {AnimationFrameConfig[]} The array of {@link AnimationFrameConfig} objects.
+     */
+    generateFrameNumbers: function (key, config)
+    {
+        var startFrame = GetValue(config, 'start', 0);
+        var endFrame = GetValue(config, 'end', -1);
+        var firstFrame = GetValue(config, 'first', false);
+        var out = GetValue(config, 'outputArray', []);
+        var frames = GetValue(config, 'frames', false);
+
+        var texture = this.textureManager.get(key);
+
+        if (!texture)
+        {
+            return out;
+        }
+
+        if (firstFrame && texture.has(firstFrame))
+        {
+            out.push({ key: key, frame: firstFrame });
+        }
+
+        var i;
+
+        //  Have they provided their own custom frame sequence array?
+        if (Array.isArray(frames))
+        {
+            for (i = 0; i < frames.length; i++)
+            {
+                if (texture.has(frames[i]))
+                {
+                    out.push({ key: key, frame: frames[i] });
+                }
+            }
+        }
+        else
+        {
+            //  No endFrame then see if we can get it
+            if (endFrame === -1)
+            {
+                endFrame = texture.frameTotal;
+            }
+
+            for (i = startFrame; i <= endFrame; i++)
+            {
+                if (texture.has(i))
+                {
+                    out.push({ key: key, frame: i });
+                }
+            }
+        }
+
+        return out;
+    },
+
+    /**
+     * Get an Animation.
+     *
+     * @method Phaser.Animations.AnimationManager#get
+     * @since 3.0.0
+     *
+     * @param {string} key - The key of the Animation to retrieve.
+     *
+     * @return {Phaser.Animations.Animation} The Animation.
+     */
+    get: function (key)
+    {
+        return this.anims.get(key);
+    },
+
+    /**
+     * Load an Animation into a Game Object's Animation Component.
+     *
+     * @method Phaser.Animations.AnimationManager#load
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} child - The Game Object to load the animation into.
+     * @param {string} key - The key of the animation to load.
+     * @param {(string|integer)} [startFrame] - The name of a start frame to set on the loaded animation.
+     *
+     * @return {Phaser.GameObjects.GameObject} [description]
+     */
+    load: function (child, key, startFrame)
+    {
+        var anim = this.get(key);
+
+        if (anim)
+        {
+            anim.load(child, startFrame);
+        }
+
+        return child;
+    },
+
+    /**
