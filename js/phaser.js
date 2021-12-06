@@ -92726,3 +92726,243 @@ var Animation = new Class({
             if (prev)
             {
                 prev.nextFrame = animationFrame;
+
+                animationFrame.prevFrame = prev;
+            }
+
+            out.push(animationFrame);
+
+            prev = animationFrame;
+
+            index++;
+        }
+
+        if (out.length > 0)
+        {
+            animationFrame.isLast = true;
+
+            //  Link them end-to-end, so they loop
+            animationFrame.nextFrame = out[0];
+
+            out[0].prevFrame = animationFrame;
+
+            //  Generate the progress data
+
+            var slice = 1 / (out.length - 1);
+
+            for (i = 0; i < out.length; i++)
+            {
+                out[i].progress = i * slice;
+            }
+        }
+
+        return out;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Animations.Animation#getNextTick
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Components.Animation} component - [description]
+     */
+    getNextTick: function (component)
+    {
+        // accumulator += delta * _timeScale
+        // after a large delta surge (perf issue for example) we need to adjust for it here
+
+        //  When is the next update due?
+        component.accumulator -= component.nextTick;
+
+        component.nextTick = component.msPerFrame + component.currentFrame.duration;
+    },
+
+    /**
+     * Loads the Animation values into the Animation Component.
+     *
+     * @method Phaser.Animations.Animation#load
+     * @private
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Components.Animation} component - The Animation Component to load values into.
+     * @param {integer} startFrame - The start frame of the animation to load.
+     */
+    load: function (component, startFrame)
+    {
+        if (startFrame >= this.frames.length)
+        {
+            startFrame = 0;
+        }
+
+        if (component.currentAnim !== this)
+        {
+            component.currentAnim = this;
+
+            component.frameRate = this.frameRate;
+            component.duration = this.duration;
+            component.msPerFrame = this.msPerFrame;
+            component.skipMissedFrames = this.skipMissedFrames;
+
+            component._delay = this.delay;
+            component._repeat = this.repeat;
+            component._repeatDelay = this.repeatDelay;
+            component._yoyo = this.yoyo;
+        }
+
+        var frame = this.frames[startFrame];
+
+        if (startFrame === 0 && !component.forward)
+        {
+            frame = this.getLastFrame();
+        }
+
+        component.updateFrame(frame);
+    },
+
+    /**
+     * Returns the frame closest to the given progress value between 0 and 1.
+     *
+     * @method Phaser.Animations.Animation#getFrameByProgress
+     * @since 3.4.0
+     *
+     * @param {number} value - A value between 0 and 1.
+     *
+     * @return {Phaser.Animations.AnimationFrame} The frame closest to the given progress value.
+     */
+    getFrameByProgress: function (value)
+    {
+        value = Clamp(value, 0, 1);
+
+        return FindClosestInSorted(value, this.frames, 'progress');
+    },
+
+    /**
+     * Advance the animation frame.
+     *
+     * @method Phaser.Animations.Animation#nextFrame
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Components.Animation} component - The Animation Component to advance.
+     */
+    nextFrame: function (component)
+    {
+        var frame = component.currentFrame;
+
+        //  TODO: Add frame skip support
+
+        if (frame.isLast)
+        {
+            //  We're at the end of the animation
+
+            //  Yoyo? (happens before repeat)
+            if (component._yoyo)
+            {
+                this.handleYoyoFrame(component, false);
+            }
+            else if (component.repeatCounter > 0)
+            {
+                //  Repeat (happens before complete)
+
+                if (component._reverse && component.forward)
+                {
+                    component.forward = false;
+                }
+                else
+                {
+                    this.repeatAnimation(component);
+                }
+            }
+            else
+            {
+                this.completeAnimation(component);
+            }
+        }
+        else
+        {
+            this.updateAndGetNextTick(component, frame.nextFrame);
+        }
+    },
+
+    /**
+     * Handle the yoyo functionality in nextFrame and previousFrame methods.
+     *
+     * @method Phaser.Animations.Animation#handleYoyoFrame
+     * @private
+     * @since 3.12.0
+     *
+     * @param {Phaser.GameObjects.Components.Animation} component - The Animation Component to advance.
+     * @param {boolean} isReverse - Is animation in reverse mode? (Default: false)
+     */
+    handleYoyoFrame: function (component, isReverse)
+    {
+        if (!isReverse) { isReverse = false; }
+
+        if (component._reverse === !isReverse && component.repeatCounter > 0)
+        {
+            component.forward = isReverse;
+
+            this.repeatAnimation(component);
+
+            return;
+        }
+
+        if (component._reverse !== isReverse && component.repeatCounter === 0)
+        {
+            this.completeAnimation(component);
+
+            return;
+        }
+        
+        component.forward = isReverse;
+
+        var frame = (isReverse) ? component.currentFrame.nextFrame : component.currentFrame.prevFrame;
+
+        this.updateAndGetNextTick(component, frame);
+    },
+
+    /**
+     * Returns the animation last frame.
+     *
+     * @method Phaser.Animations.Animation#getLastFrame
+     * @since 3.12.0
+     *
+     * @return {Phaser.Animations.AnimationFrame} component - The Animation Last Frame.
+     */
+    getLastFrame: function ()
+    {
+        return this.frames[this.frames.length - 1];
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Animations.Animation#previousFrame
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Components.Animation} component - [description]
+     */
+    previousFrame: function (component)
+    {
+        var frame = component.currentFrame;
+
+        //  TODO: Add frame skip support
+
+        if (frame.isFirst)
+        {
+            //  We're at the start of the animation
+
+            if (component._yoyo)
+            {
+                this.handleYoyoFrame(component, true);
+            }
+            else if (component.repeatCounter > 0)
+            {
+                if (component._reverse && !component.forward)
+                {
+                    component.currentFrame = this.getLastFrame();
+                    this.repeatAnimation(component);
+                }
+                else
+                {
+                    //  Repeat (happens before complete)
