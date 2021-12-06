@@ -92509,3 +92509,220 @@ var Animation = new Class({
          * Should sprite.visible = false when the animation finishes?
          *
          * @name Phaser.Animations.Animation#hideOnComplete
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.hideOnComplete = GetValue(config, 'hideOnComplete', false);
+
+        /**
+         * Global pause. All Game Objects using this Animation instance are impacted by this property.
+         *
+         * @name Phaser.Animations.Animation#paused
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.paused = false;
+
+        this.manager.on('pauseall', this.pause, this);
+        this.manager.on('resumeall', this.resume, this);
+    },
+
+    /**
+     * Add frames to the end of the animation.
+     *
+     * @method Phaser.Animations.Animation#addFrame
+     * @since 3.0.0
+     *
+     * @param {(string|AnimationFrameConfig[])} config - [description]
+     *
+     * @return {Phaser.Animations.Animation} This Animation object.
+     */
+    addFrame: function (config)
+    {
+        return this.addFrameAt(this.frames.length, config);
+    },
+
+    /**
+     * Add frame/s into the animation.
+     *
+     * @method Phaser.Animations.Animation#addFrameAt
+     * @since 3.0.0
+     *
+     * @param {integer} index - [description]
+     * @param {(string|AnimationFrameConfig[])} config - [description]
+     *
+     * @return {Phaser.Animations.Animation} This Animation object.
+     */
+    addFrameAt: function (index, config)
+    {
+        var newFrames = this.getFrames(this.manager.textureManager, config);
+
+        if (newFrames.length > 0)
+        {
+            if (index === 0)
+            {
+                this.frames = newFrames.concat(this.frames);
+            }
+            else if (index === this.frames.length)
+            {
+                this.frames = this.frames.concat(newFrames);
+            }
+            else
+            {
+                var pre = this.frames.slice(0, index);
+                var post = this.frames.slice(index);
+
+                this.frames = pre.concat(newFrames, post);
+            }
+
+            this.updateFrameSequence();
+        }
+
+        return this;
+    },
+
+    /**
+     * Check if the given frame index is valid.
+     *
+     * @method Phaser.Animations.Animation#checkFrame
+     * @since 3.0.0
+     *
+     * @param {integer} index - The index to be checked.
+     *
+     * @return {boolean} `true` if the index is valid, otherwise `false`.
+     */
+    checkFrame: function (index)
+    {
+        return (index >= 0 && index < this.frames.length);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Animations.Animation#completeAnimation
+     * @protected
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Components.Animation} component - [description]
+     */
+    completeAnimation: function (component)
+    {
+        if (this.hideOnComplete)
+        {
+            component.parent.visible = false;
+        }
+
+        component.stop();
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Animations.Animation#getFirstTick
+     * @protected
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Components.Animation} component - [description]
+     * @param {boolean} [includeDelay=true] - [description]
+     */
+    getFirstTick: function (component, includeDelay)
+    {
+        if (includeDelay === undefined) { includeDelay = true; }
+
+        //  When is the first update due?
+        component.accumulator = 0;
+        component.nextTick = component.msPerFrame + component.currentFrame.duration;
+
+        if (includeDelay)
+        {
+            component.nextTick += component._delay;
+        }
+    },
+
+    /**
+     * Returns the AnimationFrame at the provided index
+     *
+     * @method Phaser.Animations.Animation#getFrameAt
+     * @protected
+     * @since 3.0.0
+     *
+     * @param {integer} index - The index in the AnimationFrame array
+     *
+     * @return {Phaser.Animations.AnimationFrame} The frame at the index provided from the animation sequence
+     */
+    getFrameAt: function (index)
+    {
+        return this.frames[index];
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Animations.Animation#getFrames
+     * @since 3.0.0
+     *
+     * @param {Phaser.Textures.TextureManager} textureManager - [description]
+     * @param {(string|AnimationFrameConfig[])} frames - [description]
+     * @param {string} [defaultTextureKey] - [description]
+     *
+     * @return {Phaser.Animations.AnimationFrame[]} [description]
+     */
+    getFrames: function (textureManager, frames, defaultTextureKey)
+    {
+        var out = [];
+        var prev;
+        var animationFrame;
+        var index = 1;
+        var i;
+        var textureKey;
+
+        //  if frames is a string, we'll get all the frames from the texture manager as if it's a sprite sheet
+        if (typeof frames === 'string')
+        {
+            textureKey = frames;
+
+            var texture = textureManager.get(textureKey);
+            var frameKeys = texture.getFrameNames();
+
+            frames = [];
+
+            frameKeys.forEach(function (idx, value)
+            {
+                frames.push({ key: textureKey, frame: value });
+            });
+        }
+
+        if (!Array.isArray(frames) || frames.length === 0)
+        {
+            return out;
+        }
+
+        for (i = 0; i < frames.length; i++)
+        {
+            var item = frames[i];
+
+            var key = GetValue(item, 'key', defaultTextureKey);
+
+            if (!key)
+            {
+                continue;
+            }
+
+            //  Could be an integer or a string
+            var frame = GetValue(item, 'frame', 0);
+
+            //  The actual texture frame
+            var textureFrame = textureManager.getFrame(key, frame);
+
+            animationFrame = new Frame(key, frame, index, textureFrame);
+
+            animationFrame.duration = GetValue(item, 'duration', 0);
+
+            animationFrame.isFirst = (!prev);
+
+            //  The previously created animationFrame
+            if (prev)
+            {
+                prev.nextFrame = animationFrame;
