@@ -92966,3 +92966,200 @@ var Animation = new Class({
                 else
                 {
                     //  Repeat (happens before complete)
+                    component.forward = true;
+                    this.repeatAnimation(component);
+                }
+            }
+            else
+            {
+                this.completeAnimation(component);
+            }
+        }
+        else
+        {
+            this.updateAndGetNextTick(component, frame.prevFrame);
+        }
+    },
+
+    /**
+     * Update Frame and Wait next tick.
+     *
+     * @method Phaser.Animations.Animation#updateAndGetNextTick
+     * @private
+     * @since 3.12.0
+     *
+     * @param {Phaser.Animations.AnimationFrame} frame - An Animation frame.
+     */
+    updateAndGetNextTick: function (component, frame)
+    {
+        component.updateFrame(frame);
+
+        this.getNextTick(component);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Animations.Animation#removeFrame
+     * @since 3.0.0
+     *
+     * @param {Phaser.Animations.AnimationFrame} frame - [description]
+     *
+     * @return {Phaser.Animations.Animation} This Animation object.
+     */
+    removeFrame: function (frame)
+    {
+        var index = this.frames.indexOf(frame);
+
+        if (index !== -1)
+        {
+            this.removeFrameAt(index);
+        }
+
+        return this;
+    },
+
+    /**
+     * Removes a frame from the AnimationFrame array at the provided index
+     * and updates the animation accordingly.
+     *
+     * @method Phaser.Animations.Animation#removeFrameAt
+     * @since 3.0.0
+     *
+     * @param {integer} index - The index in the AnimationFrame array
+     *
+     * @return {Phaser.Animations.Animation} This Animation object.
+     */
+    removeFrameAt: function (index)
+    {
+        this.frames.splice(index, 1);
+
+        this.updateFrameSequence();
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Animations.Animation#repeatAnimation
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Components.Animation} component - [description]
+     */
+    repeatAnimation: function (component)
+    {
+        if (component._pendingStop === 2)
+        {
+            return this.completeAnimation(component);
+        }
+
+        if (component._repeatDelay > 0 && component.pendingRepeat === false)
+        {
+            component.pendingRepeat = true;
+            component.accumulator -= component.nextTick;
+            component.nextTick += component._repeatDelay;
+        }
+        else
+        {
+            component.repeatCounter--;
+
+            component.updateFrame(component.currentFrame[(component.forward) ? 'nextFrame' : 'prevFrame']);
+
+            if (component.isPlaying)
+            {
+                this.getNextTick(component);
+
+                component.pendingRepeat = false;
+
+                component.parent.emit('animationrepeat', this, component.currentFrame, component.repeatCounter, component.parent);
+            }
+        }
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Animations.Animation#setFrame
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Components.Animation} component - [description]
+     */
+    setFrame: function (component)
+    {
+        //  Work out which frame should be set next on the child, and set it
+        if (component.forward)
+        {
+            this.nextFrame(component);
+        }
+        else
+        {
+            this.previousFrame(component);
+        }
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Animations.Animation#toJSON
+     * @since 3.0.0
+     *
+     * @return {JSONAnimation} [description]
+     */
+    toJSON: function ()
+    {
+        var output = {
+            key: this.key,
+            type: this.type,
+            frames: [],
+            frameRate: this.frameRate,
+            duration: this.duration,
+            skipMissedFrames: this.skipMissedFrames,
+            delay: this.delay,
+            repeat: this.repeat,
+            repeatDelay: this.repeatDelay,
+            yoyo: this.yoyo,
+            showOnStart: this.showOnStart,
+            hideOnComplete: this.hideOnComplete
+        };
+
+        this.frames.forEach(function (frame)
+        {
+            output.frames.push(frame.toJSON());
+        });
+
+        return output;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Animations.Animation#updateFrameSequence
+     * @since 3.0.0
+     *
+     * @return {Phaser.Animations.Animation} This Animation object.
+     */
+    updateFrameSequence: function ()
+    {
+        var len = this.frames.length;
+        var slice = 1 / (len - 1);
+
+        for (var i = 0; i < len; i++)
+        {
+            var frame = this.frames[i];
+
+            frame.index = i + 1;
+            frame.isFirst = false;
+            frame.isLast = false;
+            frame.progress = i * slice;
+
+            if (i === 0)
+            {
+                frame.isFirst = true;
+                frame.isLast = (len === 1);
+                frame.prevFrame = this.frames[len - 1];
+                frame.nextFrame = this.frames[i + 1];
+            }
+            else if (i === len - 1)
+            {
+                frame.isLast = true;
