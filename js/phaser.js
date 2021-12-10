@@ -93163,3 +93163,229 @@ var Animation = new Class({
             else if (i === len - 1)
             {
                 frame.isLast = true;
+                frame.prevFrame = this.frames[len - 2];
+                frame.nextFrame = this.frames[0];
+            }
+            else if (len > 1)
+            {
+                frame.prevFrame = this.frames[i - 1];
+                frame.nextFrame = this.frames[i + 1];
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Animations.Animation#pause
+     * @since 3.0.0
+     *
+     * @return {Phaser.Animations.Animation} This Animation object.
+     */
+    pause: function ()
+    {
+        this.paused = true;
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Animations.Animation#resume
+     * @since 3.0.0
+     *
+     * @return {Phaser.Animations.Animation} This Animation object.
+     */
+    resume: function ()
+    {
+        this.paused = false;
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Animations.Animation#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.manager.off('pauseall', this.pause, this);
+        this.manager.off('resumeall', this.resume, this);
+
+        this.manager.remove(this.key);
+
+        for (var i = 0; i < this.frames.length; i++)
+        {
+            this.frames[i].destroy();
+        }
+
+        this.frames = [];
+
+        this.manager = null;
+    }
+
+});
+
+module.exports = Animation;
+
+
+/***/ }),
+/* 385 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Using Bresenham's line algorithm this will return an array of all coordinates on this line.
+ *
+ * The `start` and `end` points are rounded before this runs as the algorithm works on integers.
+ *
+ * @function Phaser.Geom.Line.BresenhamPoints
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} line - The line.
+ * @param {integer} [stepRate=1] - The optional step rate for the points on the line.
+ * @param {array} [results] - An optional array to push the resulting coordinates into.
+ *
+ * @return {object[]} The array of coordinates on the line.
+ */
+var BresenhamPoints = function (line, stepRate, results)
+{
+    if (stepRate === undefined) { stepRate = 1; }
+    if (results === undefined) { results = []; }
+
+    var x1 = Math.round(line.x1);
+    var y1 = Math.round(line.y1);
+    var x2 = Math.round(line.x2);
+    var y2 = Math.round(line.y2);
+
+    var dx = Math.abs(x2 - x1);
+    var dy = Math.abs(y2 - y1);
+    var sx = (x1 < x2) ? 1 : -1;
+    var sy = (y1 < y2) ? 1 : -1;
+    var err = dx - dy;
+
+    results.push({ x: x1, y: y1 });
+
+    var i = 1;
+
+    while (!((x1 === x2) && (y1 === y2)))
+    {
+        var e2 = err << 1;
+
+        if (e2 > -dy)
+        {
+            err -= dy;
+            x1 += sx;
+        }
+
+        if (e2 < dx)
+        {
+            err += dx;
+            y1 += sy;
+        }
+
+        if (i % stepRate === 0)
+        {
+            results.push({ x: x1, y: y1 });
+        }
+
+        i++;
+    }
+
+    return results;
+};
+
+module.exports = BresenhamPoints;
+
+
+/***/ }),
+/* 386 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Moves the element at the end of the array to the start, shifting all items in the process.
+ * The "rotation" happens to the right.
+ *
+ * @function Phaser.Utils.Array.RotateRight
+ * @since 3.0.0
+ *
+ * @param {array} array - The array to shift to the right. This array is modified in place.
+ * @param {integer} [total=1] - The number of times to shift the array.
+ *
+ * @return {*} The most recently shifted element.
+ */
+var RotateRight = function (array, total)
+{
+    if (total === undefined) { total = 1; }
+
+    var element = null;
+
+    for (var i = 0; i < total; i++)
+    {
+        element = array.pop();
+        array.unshift(element);
+    }
+
+    return element;
+};
+
+module.exports = RotateRight;
+
+
+/***/ }),
+/* 387 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Moves the element at the start of the array to the end, shifting all items in the process.
+ * The "rotation" happens to the left.
+ *
+ * @function Phaser.Utils.Array.RotateLeft
+ * @since 3.0.0
+ *
+ * @param {array} array - The array to shift to the left. This array is modified in place.
+ * @param {integer} [total=1] - The number of times to shift the array.
+ *
+ * @return {*} The most recently shifted element.
+ */
+var RotateLeft = function (array, total)
+{
+    if (total === undefined) { total = 1; }
+
+    var element = null;
+
+    for (var i = 0; i < total; i++)
+    {
+        element = array.shift();
+        array.push(element);
+    }
+
+    return element;
+};
+
+module.exports = RotateLeft;
+
+
+/***/ }),
