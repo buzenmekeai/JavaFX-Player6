@@ -93389,3 +93389,205 @@ module.exports = RotateLeft;
 
 
 /***/ }),
+/* 388 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Perimeter = __webpack_require__(124);
+var Point = __webpack_require__(6);
+
+//  Return an array of points from the perimeter of the rectangle
+//  each spaced out based on the quantity or step required
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Rectangle.MarchingAnts
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point[]} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rect - [description]
+ * @param {number} step - [description]
+ * @param {integer} quantity - [description]
+ * @param {(array|Phaser.Geom.Point[])} [out] - [description]
+ *
+ * @return {(array|Phaser.Geom.Point[])} [description]
+ */
+var MarchingAnts = function (rect, step, quantity, out)
+{
+    if (out === undefined) { out = []; }
+
+    if (!step && !quantity)
+    {
+        //  Bail out
+        return out;
+    }
+
+    //  If step is a falsey value (false, null, 0, undefined, etc) then we calculate
+    //  it based on the quantity instead, otherwise we always use the step value
+    if (!step)
+    {
+        step = Perimeter(rect) / quantity;
+    }
+    else
+    {
+        quantity = Math.round(Perimeter(rect) / step);
+    }
+
+    var x = rect.x;
+    var y = rect.y;
+    var face = 0;
+
+    //  Loop across each face of the rectangle
+
+    for (var i = 0; i < quantity; i++)
+    {
+        out.push(new Point(x, y));
+
+        switch (face)
+        {
+
+            //  Top face
+            case 0:
+                x += step;
+
+                if (x >= rect.right)
+                {
+                    face = 1;
+                    y += (x - rect.right);
+                    x = rect.right;
+                }
+                break;
+
+            //  Right face
+            case 1:
+                y += step;
+
+                if (y >= rect.bottom)
+                {
+                    face = 2;
+                    x -= (y - rect.bottom);
+                    y = rect.bottom;
+                }
+                break;
+
+            //  Bottom face
+            case 2:
+                x -= step;
+
+                if (x <= rect.left)
+                {
+                    face = 3;
+                    y -= (rect.left - x);
+                    x = rect.left;
+                }
+                break;
+
+            //  Left face
+            case 3:
+                y -= step;
+
+                if (y <= rect.top)
+                {
+                    face = 0;
+                    y = rect.top;
+                }
+                break;
+        }
+    }
+
+    return out;
+};
+
+module.exports = MarchingAnts;
+
+
+/***/ }),
+/* 389 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  bitmask flag for GameObject.renderMask
+var _FLAG = 1; // 0001
+
+/**
+ * Provides methods used for setting the visibility of a Game Object.
+ * Should be applied as a mixin and not used directly.
+ * 
+ * @name Phaser.GameObjects.Components.Visible
+ * @since 3.0.0
+ */
+
+var Visible = {
+
+    /**
+     * Private internal value. Holds the visible value.
+     * 
+     * @name Phaser.GameObjects.Components.Visible#_visible
+     * @type {boolean}
+     * @private
+     * @default true
+     * @since 3.0.0
+     */
+    _visible: true,
+
+    /**
+     * The visible state of the Game Object.
+     * 
+     * An invisible Game Object will skip rendering, but will still process update logic.
+     * 
+     * @name Phaser.GameObjects.Components.Visible#visible
+     * @type {boolean}
+     * @since 3.0.0
+     */
+    visible: {
+
+        get: function ()
+        {
+            return this._visible;
+        },
+
+        set: function (value)
+        {
+            if (value)
+            {
+                this._visible = true;
+                this.renderFlags |= _FLAG;
+            }
+            else
+            {
+                this._visible = false;
+                this.renderFlags &= ~_FLAG;
+            }
+        }
+
+    },
+
+    /**
+     * Sets the visibility of this Game Object.
+     * 
+     * An invisible Game Object will skip rendering, but will still process update logic.
+     *
+     * @method Phaser.GameObjects.Components.Visible#setVisible
+     * @since 3.0.0
+     *
+     * @param {boolean} value - The visible state of the Game Object.
+     * 
+     * @return {this} This Game Object instance.
+     */
+    setVisible: function (value)
+    {
+        this.visible = value;
+
+        return this;
