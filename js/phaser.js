@@ -93591,3 +93591,245 @@ var Visible = {
         this.visible = value;
 
         return this;
+    }
+};
+
+module.exports = Visible;
+
+
+/***/ }),
+/* 390 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var MATH_CONST = __webpack_require__(16);
+var TransformMatrix = __webpack_require__(38);
+var WrapAngle = __webpack_require__(199);
+var WrapAngleDegrees = __webpack_require__(198);
+
+//  global bitmask flag for GameObject.renderMask (used by Scale)
+var _FLAG = 4; // 0100
+
+/**
+ * Provides methods used for getting and setting the position, scale and rotation of a Game Object.
+ *
+ * @name Phaser.GameObjects.Components.Transform
+ * @since 3.0.0
+ */
+
+var Transform = {
+
+    /**
+     * Private internal value. Holds the horizontal scale value.
+     * 
+     * @name Phaser.GameObjects.Components.Transform#_scaleX
+     * @type {number}
+     * @private
+     * @default 1
+     * @since 3.0.0
+     */
+    _scaleX: 1,
+
+    /**
+     * Private internal value. Holds the vertical scale value.
+     * 
+     * @name Phaser.GameObjects.Components.Transform#_scaleY
+     * @type {number}
+     * @private
+     * @default 1
+     * @since 3.0.0
+     */
+    _scaleY: 1,
+
+    /**
+     * Private internal value. Holds the rotation value in radians.
+     * 
+     * @name Phaser.GameObjects.Components.Transform#_rotation
+     * @type {number}
+     * @private
+     * @default 0
+     * @since 3.0.0
+     */
+    _rotation: 0,
+
+    /**
+     * The x position of this Game Object.
+     *
+     * @name Phaser.GameObjects.Components.Transform#x
+     * @type {number}
+     * @default 0
+     * @since 3.0.0
+     */
+    x: 0,
+
+    /**
+     * The y position of this Game Object.
+     *
+     * @name Phaser.GameObjects.Components.Transform#y
+     * @type {number}
+     * @default 0
+     * @since 3.0.0
+     */
+    y: 0,
+
+    /**
+     * The z position of this Game Object.
+     * Note: Do not use this value to set the z-index, instead see the `depth` property.
+     *
+     * @name Phaser.GameObjects.Components.Transform#z
+     * @type {number}
+     * @default 0
+     * @since 3.0.0
+     */
+    z: 0,
+
+    /**
+     * The w position of this Game Object.
+     *
+     * @name Phaser.GameObjects.Components.Transform#w
+     * @type {number}
+     * @default 0
+     * @since 3.0.0
+     */
+    w: 0,
+
+    /**
+     * The horizontal scale of this Game Object.
+     *
+     * @name Phaser.GameObjects.Components.Transform#scaleX
+     * @type {number}
+     * @default 1
+     * @since 3.0.0
+     */
+    scaleX: {
+
+        get: function ()
+        {
+            return this._scaleX;
+        },
+
+        set: function (value)
+        {
+            this._scaleX = value;
+
+            if (this._scaleX === 0)
+            {
+                this.renderFlags &= ~_FLAG;
+            }
+            else
+            {
+                this.renderFlags |= _FLAG;
+            }
+        }
+
+    },
+
+    /**
+     * The vertical scale of this Game Object.
+     *
+     * @name Phaser.GameObjects.Components.Transform#scaleY
+     * @type {number}
+     * @default 1
+     * @since 3.0.0
+     */
+    scaleY: {
+
+        get: function ()
+        {
+            return this._scaleY;
+        },
+
+        set: function (value)
+        {
+            this._scaleY = value;
+
+            if (this._scaleY === 0)
+            {
+                this.renderFlags &= ~_FLAG;
+            }
+            else
+            {
+                this.renderFlags |= _FLAG;
+            }
+        }
+
+    },
+
+    /**
+     * The angle of this Game Object as expressed in degrees.
+     *
+     * Where 0 is to the right, 90 is down, 180 is left.
+     *
+     * If you prefer to work in radians, see the `rotation` property instead.
+     *
+     * @name Phaser.GameObjects.Components.Transform#angle
+     * @type {integer}
+     * @default 0
+     * @since 3.0.0
+     */
+    angle: {
+
+        get: function ()
+        {
+            return WrapAngleDegrees(this._rotation * MATH_CONST.RAD_TO_DEG);
+        },
+
+        set: function (value)
+        {
+            //  value is in degrees
+            this.rotation = WrapAngleDegrees(value) * MATH_CONST.DEG_TO_RAD;
+        }
+    },
+
+    /**
+     * The angle of this Game Object in radians.
+     *
+     * If you prefer to work in degrees, see the `angle` property instead.
+     *
+     * @name Phaser.GameObjects.Components.Transform#rotation
+     * @type {number}
+     * @default 1
+     * @since 3.0.0
+     */
+    rotation: {
+
+        get: function ()
+        {
+            return this._rotation;
+        },
+
+        set: function (value)
+        {
+            //  value is in radians
+            this._rotation = WrapAngle(value);
+        }
+    },
+
+    /**
+     * Sets the position of this Game Object.
+     *
+     * @method Phaser.GameObjects.Components.Transform#setPosition
+     * @since 3.0.0
+     *
+     * @param {number} [x=0] - The x position of this Game Object.
+     * @param {number} [y=x] - The y position of this Game Object. If not set it will use the `x` value.
+     * @param {number} [z=0] - The z position of this Game Object.
+     * @param {number} [w=0] - The w position of this Game Object.
+     *
+     * @return {this} This Game Object instance.
+     */
+    setPosition: function (x, y, z, w)
+    {
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = x; }
+        if (z === undefined) { z = 0; }
+        if (w === undefined) { w = 0; }
+
+        this.x = x;
+        this.y = y;
+        this.z = z;
