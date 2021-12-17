@@ -94693,3 +94693,223 @@ var Mask = {
      * @name Phaser.GameObjects.Components.Mask#mask
      * @type {Phaser.Display.Masks.BitmapMask|Phaser.Display.Masks.GeometryMask}
      * @since 3.0.0
+     */
+    mask: null,
+
+    /**
+     * Sets the mask that this Game Object will use to render with.
+     *
+     * The mask must have been previously created and can be either a GeometryMask or a BitmapMask.
+     * Note: Bitmap Masks only work on WebGL. Geometry Masks work on both WebGL and Canvas.
+     *
+     * If a mask is already set on this Game Object it will be immediately replaced.
+     * 
+     * Masks are positioned in global space and are not relative to the Game Object to which they
+     * are applied. The reason for this is that multiple Game Objects can all share the same mask.
+     * 
+     * Masks have no impact on physics or input detection. They are purely a rendering component
+     * that allows you to limit what is visible during the render pass.
+     *
+     * @method Phaser.GameObjects.Components.Mask#setMask
+     * @since 3.6.2
+     *
+     * @param {Phaser.Display.Masks.BitmapMask|Phaser.Display.Masks.GeometryMask} mask - The mask this Game Object will use when rendering.
+     *
+     * @return {this} This Game Object instance.
+     */
+    setMask: function (mask)
+    {
+        this.mask = mask;
+
+        return this;
+    },
+
+    /**
+     * Clears the mask that this Game Object was using.
+     *
+     * @method Phaser.GameObjects.Components.Mask#clearMask
+     * @since 3.6.2
+     *
+     * @param {boolean} [destroyMask=false] - Destroy the mask before clearing it?
+     *
+     * @return {this} This Game Object instance.
+     */
+    clearMask: function (destroyMask)
+    {
+        if (destroyMask === undefined) { destroyMask = false; }
+
+        if (destroyMask && this.mask)
+        {
+            this.mask.destroy();
+        }
+
+        this.mask = null;
+
+        return this;
+    },
+
+    /**
+     * Creates and returns a Bitmap Mask. This mask can be used by any Game Object,
+     * including this one.
+     *
+     * To create the mask you need to pass in a reference to a renderable Game Object.
+     * A renderable Game Object is one that uses a texture to render with, such as an
+     * Image, Sprite, Render Texture or BitmapText.
+     *
+     * If you do not provide a renderable object, and this Game Object has a texture,
+     * it will use itself as the object. This means you can call this method to create
+     * a Bitmap Mask from any renderable Game Object.
+     *
+     * @method Phaser.GameObjects.Components.Mask#createBitmapMask
+     * @since 3.6.2
+     * 
+     * @param {Phaser.GameObjects.GameObject} [renderable] - A renderable Game Object that uses a texture, such as a Sprite.
+     *
+     * @return {Phaser.Display.Masks.BitmapMask} This Bitmap Mask that was created.
+     */
+    createBitmapMask: function (renderable)
+    {
+        if (renderable === undefined && this.texture)
+        {
+            // eslint-disable-next-line consistent-this
+            renderable = this;
+        }
+
+        return new BitmapMask(this.scene, renderable);
+    },
+
+    /**
+     * Creates and returns a Geometry Mask. This mask can be used by any Game Object,
+     * including this one.
+     *
+     * To create the mask you need to pass in a reference to a Graphics Game Object.
+     *
+     * If you do not provide a graphics object, and this Game Object is an instance
+     * of a Graphics object, then it will use itself to create the mask.
+     * 
+     * This means you can call this method to create a Geometry Mask from any Graphics Game Object.
+     *
+     * @method Phaser.GameObjects.Components.Mask#createGeometryMask
+     * @since 3.6.2
+     * 
+     * @param {Phaser.GameObjects.Graphics} [graphics] - A Graphics Game Object. The geometry within it will be used as the mask.
+     *
+     * @return {Phaser.Display.Masks.GeometryMask} This Geometry Mask that was created.
+     */
+    createGeometryMask: function (graphics)
+    {
+        if (graphics === undefined && this.type === 'Graphics')
+        {
+            // eslint-disable-next-line consistent-this
+            graphics = this;
+        }
+
+        return new GeometryMask(this.scene, graphics);
+    }
+
+};
+
+module.exports = Mask;
+
+
+/***/ }),
+/* 396 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Rotate a `point` around `x` and `y` by the given `angle`.
+ *
+ * @function Phaser.Math.RotateAround
+ * @since 3.0.0
+ *
+ * @param {(Phaser.Geom.Point|object)} point - The point to be rotated.
+ * @param {number} x - The horizontal coordinate to rotate around.
+ * @param {number} y - The vertical coordinate to rotate around.
+ * @param {number} angle - The angle of rotation in radians.
+ *
+ * @return {Phaser.Geom.Point} The given point, rotated by the given angle around the given coordinates.
+ */
+var RotateAround = function (point, x, y, angle)
+{
+    var c = Math.cos(angle);
+    var s = Math.sin(angle);
+
+    var tx = point.x - x;
+    var ty = point.y - y;
+
+    point.x = tx * c - ty * s + x;
+    point.y = tx * s + ty * c + y;
+
+    return point;
+};
+
+module.exports = RotateAround;
+
+
+/***/ }),
+/* 397 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+/**
+ * Get a point on a line that's a given percentage along its length.
+ *
+ * @function Phaser.Geom.Line.GetPoint
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Line} line - The line.
+ * @param {number} position - A value between 0 and 1, where 0 is the start, 0.5 is the middle and 1 is the end of the line.
+ * @param {(Phaser.Geom.Point|object)} [out] - An optional point, or point-like object, to store the coordinates of the point on the line.
+ *
+ * @return {(Phaser.Geom.Point|object)} The point on the line.
+ */
+var GetPoint = function (line, position, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    out.x = line.x1 + (line.x2 - line.x1) * position;
+    out.y = line.y1 + (line.y2 - line.y1) * position;
+
+    return out;
+};
+
+module.exports = GetPoint;
+
+
+/***/ }),
+/* 398 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetPoint = __webpack_require__(190);
+var Perimeter = __webpack_require__(124);
+
+//  Return an array of points from the perimeter of the rectangle
+//  each spaced out based on the quantity or step required
+
+/**
+ * Return an array of points from the perimeter of the rectangle, each spaced out based on the quantity or step required.
+ *
+ * @function Phaser.Geom.Rectangle.GetPoints
+ * @since 3.0.0
+ *
