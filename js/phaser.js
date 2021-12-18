@@ -95349,3 +95349,220 @@ var Alpha = {
             var v = Clamp(value, 0, 1);
 
             this._alphaTL = v;
+
+            if (v !== 0)
+            {
+                this.renderFlags |= _FLAG;
+            }
+        }
+
+    },
+
+    /**
+     * The alpha value starting from the top-right of the Game Object.
+     * This value is interpolated from the corner to the center of the Game Object.
+     *
+     * @name Phaser.GameObjects.Components.Alpha#alphaTopRight
+     * @type {number}
+     * @webglOnly
+     * @since 3.0.0
+     */
+    alphaTopRight: {
+
+        get: function ()
+        {
+            return this._alphaTR;
+        },
+
+        set: function (value)
+        {
+            var v = Clamp(value, 0, 1);
+
+            this._alphaTR = v;
+
+            if (v !== 0)
+            {
+                this.renderFlags |= _FLAG;
+            }
+        }
+
+    },
+
+    /**
+     * The alpha value starting from the bottom-left of the Game Object.
+     * This value is interpolated from the corner to the center of the Game Object.
+     *
+     * @name Phaser.GameObjects.Components.Alpha#alphaBottomLeft
+     * @type {number}
+     * @webglOnly
+     * @since 3.0.0
+     */
+    alphaBottomLeft: {
+
+        get: function ()
+        {
+            return this._alphaBL;
+        },
+
+        set: function (value)
+        {
+            var v = Clamp(value, 0, 1);
+
+            this._alphaBL = v;
+
+            if (v !== 0)
+            {
+                this.renderFlags |= _FLAG;
+            }
+        }
+
+    },
+
+    /**
+     * The alpha value starting from the bottom-right of the Game Object.
+     * This value is interpolated from the corner to the center of the Game Object.
+     *
+     * @name Phaser.GameObjects.Components.Alpha#alphaBottomRight
+     * @type {number}
+     * @webglOnly
+     * @since 3.0.0
+     */
+    alphaBottomRight: {
+
+        get: function ()
+        {
+            return this._alphaBR;
+        },
+
+        set: function (value)
+        {
+            var v = Clamp(value, 0, 1);
+
+            this._alphaBR = v;
+
+            if (v !== 0)
+            {
+                this.renderFlags |= _FLAG;
+            }
+        }
+
+    }
+
+};
+
+module.exports = Alpha;
+
+
+/***/ }),
+/* 402 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Returns the circumference of the given Circle.
+ *
+ * @function Phaser.Geom.Circle.Circumference
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Circle} circle - The Circle to get the circumference of.
+ *
+ * @return {number} The circumference of the Circle.
+ */
+var Circumference = function (circle)
+{
+    return 2 * (Math.PI * circle.radius);
+};
+
+module.exports = Circumference;
+
+
+/***/ }),
+/* 403 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Circumference = __webpack_require__(402);
+var CircumferencePoint = __webpack_require__(192);
+var FromPercent = __webpack_require__(93);
+var MATH_CONST = __webpack_require__(16);
+
+/**
+ * Returns an array of Point objects containing the coordinates of the points around the circumference of the Circle,
+ * based on the given quantity or stepRate values.
+ *
+ * @function Phaser.Geom.Circle.GetPoints
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Circle} circle - The Circle to get the points from.
+ * @param {integer} quantity - The amount of points to return. If a falsey value the quantity will be derived from the `stepRate` instead.
+ * @param {number} [stepRate] - Sets the quantity by getting the circumference of the circle and dividing it by the stepRate.
+ * @param {array} [output] - An array to insert the points in to. If not provided a new array will be created.
+ *
+ * @return {Phaser.Geom.Point[]} An array of Point objects pertaining to the points around the circumference of the circle.
+ */
+var GetPoints = function (circle, quantity, stepRate, out)
+{
+    if (out === undefined) { out = []; }
+
+    //  If quantity is a falsey value (false, null, 0, undefined, etc) then we calculate it based on the stepRate instead.
+    if (!quantity)
+    {
+        quantity = Circumference(circle) / stepRate;
+    }
+
+    for (var i = 0; i < quantity; i++)
+    {
+        var angle = FromPercent(i / quantity, 0, MATH_CONST.PI2);
+
+        out.push(CircumferencePoint(circle, angle));
+    }
+
+    return out;
+};
+
+module.exports = GetPoints;
+
+
+/***/ }),
+/* 404 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+
+/**
+ * @classdesc
+ * A seeded Random Data Generator.
+ * 
+ * Access via `Phaser.Math.RND` which is an instance of this class pre-defined
+ * by Phaser. Or, create your own instance to use as you require.
+ * 
+ * The `Math.RND` generator is seeded by the Game Config property value `seed`.
+ * If no such config property exists, a random number is used.
+ * 
+ * If you create your own instance of this class you should provide a seed for it.
+ * If no seed is given it will use a 'random' one based on Date.now.
+ *
+ * @class RandomDataGenerator
+ * @memberof Phaser.Math
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {(string|string[])} [seeds] - The seeds to use for the random number generator.
+ */
+var RandomDataGenerator = new Class({
