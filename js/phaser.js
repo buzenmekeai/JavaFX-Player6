@@ -95566,3 +95566,254 @@ var Class = __webpack_require__(0);
  * @param {(string|string[])} [seeds] - The seeds to use for the random number generator.
  */
 var RandomDataGenerator = new Class({
+
+    initialize:
+
+    function RandomDataGenerator (seeds)
+    {
+        if (seeds === undefined) { seeds = [ (Date.now() * Math.random()).toString() ]; }
+
+        /**
+         * Internal var.
+         *
+         * @name Phaser.Math.RandomDataGenerator#c
+         * @type {number}
+         * @default 1
+         * @private
+         * @since 3.0.0
+         */
+        this.c = 1;
+
+        /**
+         * Internal var.
+         *
+         * @name Phaser.Math.RandomDataGenerator#s0
+         * @type {number}
+         * @default 0
+         * @private
+         * @since 3.0.0
+         */
+        this.s0 = 0;
+
+        /**
+         * Internal var.
+         *
+         * @name Phaser.Math.RandomDataGenerator#s1
+         * @type {number}
+         * @default 0
+         * @private
+         * @since 3.0.0
+         */
+        this.s1 = 0;
+
+        /**
+         * Internal var.
+         *
+         * @name Phaser.Math.RandomDataGenerator#s2
+         * @type {number}
+         * @default 0
+         * @private
+         * @since 3.0.0
+         */
+        this.s2 = 0;
+
+        /**
+         * Internal var.
+         *
+         * @name Phaser.Math.RandomDataGenerator#n
+         * @type {number}
+         * @default 0
+         * @private
+         * @since 3.2.0
+         */
+        this.n = 0;
+
+        /**
+         * Signs to choose from.
+         *
+         * @name Phaser.Math.RandomDataGenerator#signs
+         * @type {number[]}
+         * @since 3.0.0
+         */
+        this.signs = [ -1, 1 ];
+
+        if (seeds)
+        {
+            this.init(seeds);
+        }
+    },
+
+    /**
+     * Private random helper.
+     *
+     * @method Phaser.Math.RandomDataGenerator#rnd
+     * @since 3.0.0
+     * @private
+     *
+     * @return {number} A random number.
+     */
+    rnd: function ()
+    {
+        var t = 2091639 * this.s0 + this.c * 2.3283064365386963e-10; // 2^-32
+
+        this.c = t | 0;
+        this.s0 = this.s1;
+        this.s1 = this.s2;
+        this.s2 = t - this.c;
+
+        return this.s2;
+    },
+
+    /**
+     * Internal method that creates a seed hash.
+     *
+     * @method Phaser.Math.RandomDataGenerator#hash
+     * @since 3.0.0
+     * @private
+     *
+     * @param {string} data - The value to hash.
+     *
+     * @return {number} The hashed value.
+     */
+    hash: function (data)
+    {
+        var h;
+        var n = this.n;
+
+        data = data.toString();
+
+        for (var i = 0; i < data.length; i++)
+        {
+            n += data.charCodeAt(i);
+            h = 0.02519603282416938 * n;
+            n = h >>> 0;
+            h -= n;
+            h *= n;
+            n = h >>> 0;
+            h -= n;
+            n += h * 0x100000000;// 2^32
+        }
+
+        this.n = n;
+
+        return (n >>> 0) * 2.3283064365386963e-10;// 2^-32
+    },
+
+    /**
+     * Initialize the state of the random data generator.
+     *
+     * @method Phaser.Math.RandomDataGenerator#init
+     * @since 3.0.0
+     *
+     * @param {(string|string[])} seeds - The seeds to initialize the random data generator with.
+     */
+    init: function (seeds)
+    {
+        if (typeof seeds === 'string')
+        {
+            this.state(seeds);
+        }
+        else
+        {
+            this.sow(seeds);
+        }
+    },
+
+    /**
+     * Reset the seed of the random data generator.
+     *
+     * _Note_: the seed array is only processed up to the first `undefined` (or `null`) value, should such be present.
+     *
+     * @method Phaser.Math.RandomDataGenerator#sow
+     * @since 3.0.0
+     *
+     * @param {string[]} seeds - The array of seeds: the `toString()` of each value is used.
+     */
+    sow: function (seeds)
+    {
+        // Always reset to default seed
+        this.n = 0xefc8249d;
+        this.s0 = this.hash(' ');
+        this.s1 = this.hash(' ');
+        this.s2 = this.hash(' ');
+        this.c = 1;
+
+        if (!seeds)
+        {
+            return;
+        }
+
+        // Apply any seeds
+        for (var i = 0; i < seeds.length && (seeds[i] != null); i++)
+        {
+            var seed = seeds[i];
+
+            this.s0 -= this.hash(seed);
+            this.s0 += ~~(this.s0 < 0);
+            this.s1 -= this.hash(seed);
+            this.s1 += ~~(this.s1 < 0);
+            this.s2 -= this.hash(seed);
+            this.s2 += ~~(this.s2 < 0);
+        }
+    },
+
+    /**
+     * Returns a random integer between 0 and 2^32.
+     *
+     * @method Phaser.Math.RandomDataGenerator#integer
+     * @since 3.0.0
+     *
+     * @return {number} A random integer between 0 and 2^32.
+     */
+    integer: function ()
+    {
+        // 2^32
+        return this.rnd() * 0x100000000;
+    },
+
+    /**
+     * Returns a random real number between 0 and 1.
+     *
+     * @method Phaser.Math.RandomDataGenerator#frac
+     * @since 3.0.0
+     *
+     * @return {number} A random real number between 0 and 1.
+     */
+    frac: function ()
+    {
+        // 2^-53
+        return this.rnd() + (this.rnd() * 0x200000 | 0) * 1.1102230246251565e-16;
+    },
+
+    /**
+     * Returns a random real number between 0 and 2^32.
+     *
+     * @method Phaser.Math.RandomDataGenerator#real
+     * @since 3.0.0
+     *
+     * @return {number} A random real number between 0 and 2^32.
+     */
+    real: function ()
+    {
+        return this.integer() + this.frac();
+    },
+
+    /**
+     * Returns a random integer between and including min and max.
+     *
+     * @method Phaser.Math.RandomDataGenerator#integerInRange
+     * @since 3.0.0
+     *
+     * @param {number} min - The minimum value in the range.
+     * @param {number} max - The maximum value in the range.
+     *
+     * @return {number} A random number between min and max.
+     */
+    integerInRange: function (min, max)
+    {
+        return Math.floor(this.realInRange(0, max - min + 1) + min);
+    },
+
+    /**
+     * Returns a random integer between and including min and max.
+     * This method is an alias for RandomDataGenerator.integerInRange.
