@@ -96492,3 +96492,237 @@ var SetCenterX = __webpack_require__(74);
  *
  * @return {Phaser.GameObjects.GameObject} The Game Object that was aligned.
  */
+var BottomCenter = function (gameObject, alignIn, offsetX, offsetY)
+{
+    if (offsetX === undefined) { offsetX = 0; }
+    if (offsetY === undefined) { offsetY = 0; }
+
+    SetCenterX(gameObject, GetCenterX(alignIn) + offsetX);
+    SetBottom(gameObject, GetBottom(alignIn) + offsetY);
+
+    return gameObject;
+};
+
+module.exports = BottomCenter;
+
+
+/***/ }),
+/* 416 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var ALIGN_CONST = __webpack_require__(193);
+
+var AlignInMap = [];
+
+AlignInMap[ALIGN_CONST.BOTTOM_CENTER] = __webpack_require__(415);
+AlignInMap[ALIGN_CONST.BOTTOM_LEFT] = __webpack_require__(414);
+AlignInMap[ALIGN_CONST.BOTTOM_RIGHT] = __webpack_require__(413);
+AlignInMap[ALIGN_CONST.CENTER] = __webpack_require__(412);
+AlignInMap[ALIGN_CONST.LEFT_CENTER] = __webpack_require__(410);
+AlignInMap[ALIGN_CONST.RIGHT_CENTER] = __webpack_require__(409);
+AlignInMap[ALIGN_CONST.TOP_CENTER] = __webpack_require__(408);
+AlignInMap[ALIGN_CONST.TOP_LEFT] = __webpack_require__(407);
+AlignInMap[ALIGN_CONST.TOP_RIGHT] = __webpack_require__(406);
+
+/**
+ * Takes given Game Object and aligns it so that it is positioned relative to the other.
+ * The alignment used is based on the `position` argument, which is an `ALIGN_CONST` value, such as `LEFT_CENTER` or `TOP_RIGHT`.
+ *
+ * @function Phaser.Display.Align.In.QuickSet
+ * @since 3.0.0
+ *
+ * @generic {Phaser.GameObjects.GameObject} G - [child,$return]
+ *
+ * @param {Phaser.GameObjects.GameObject} child - The Game Object that will be positioned.
+ * @param {Phaser.GameObjects.GameObject} alignIn - The Game Object to base the alignment position on.
+ * @param {integer} position - The position to align the Game Object with. This is an align constant, such as `ALIGN_CONST.LEFT_CENTER`.
+ * @param {number} [offsetX=0] - Optional horizontal offset from the position.
+ * @param {number} [offsetY=0] - Optional vertical offset from the position.
+ *
+ * @return {Phaser.GameObjects.GameObject} The Game Object that was aligned.
+ */
+var QuickSet = function (child, alignIn, position, offsetX, offsetY)
+{
+    return AlignInMap[position](child, alignIn, offsetX, offsetY);
+};
+
+module.exports = QuickSet;
+
+
+/***/ }),
+/* 417 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Actions
+ */
+
+module.exports = {
+
+    Angle: __webpack_require__(1050),
+    Call: __webpack_require__(1049),
+    GetFirst: __webpack_require__(1048),
+    GetLast: __webpack_require__(1047),
+    GridAlign: __webpack_require__(1046),
+    IncAlpha: __webpack_require__(1035),
+    IncX: __webpack_require__(1034),
+    IncXY: __webpack_require__(1033),
+    IncY: __webpack_require__(1032),
+    PlaceOnCircle: __webpack_require__(1031),
+    PlaceOnEllipse: __webpack_require__(1030),
+    PlaceOnLine: __webpack_require__(1029),
+    PlaceOnRectangle: __webpack_require__(1028),
+    PlaceOnTriangle: __webpack_require__(1027),
+    PlayAnimation: __webpack_require__(1026),
+    PropertyValueInc: __webpack_require__(32),
+    PropertyValueSet: __webpack_require__(25),
+    RandomCircle: __webpack_require__(1025),
+    RandomEllipse: __webpack_require__(1024),
+    RandomLine: __webpack_require__(1023),
+    RandomRectangle: __webpack_require__(1022),
+    RandomTriangle: __webpack_require__(1021),
+    Rotate: __webpack_require__(1020),
+    RotateAround: __webpack_require__(1019),
+    RotateAroundDistance: __webpack_require__(1018),
+    ScaleX: __webpack_require__(1017),
+    ScaleXY: __webpack_require__(1016),
+    ScaleY: __webpack_require__(1015),
+    SetAlpha: __webpack_require__(1014),
+    SetBlendMode: __webpack_require__(1013),
+    SetDepth: __webpack_require__(1012),
+    SetHitArea: __webpack_require__(1011),
+    SetOrigin: __webpack_require__(1010),
+    SetRotation: __webpack_require__(1009),
+    SetScale: __webpack_require__(1008),
+    SetScaleX: __webpack_require__(1007),
+    SetScaleY: __webpack_require__(1006),
+    SetTint: __webpack_require__(1005),
+    SetVisible: __webpack_require__(1004),
+    SetX: __webpack_require__(1003),
+    SetXY: __webpack_require__(1002),
+    SetY: __webpack_require__(1001),
+    ShiftPosition: __webpack_require__(1000),
+    Shuffle: __webpack_require__(999),
+    SmootherStep: __webpack_require__(998),
+    SmoothStep: __webpack_require__(997),
+    Spread: __webpack_require__(996),
+    ToggleVisible: __webpack_require__(995),
+    WrapInRectangle: __webpack_require__(994)
+
+};
+
+
+/***/ }),
+/* 418 */
+/***/ (function(module, exports) {
+
+/**
+* The `Matter.Pair` module contains methods for creating and manipulating collision pairs.
+*
+* @class Pair
+*/
+
+var Pair = {};
+
+module.exports = Pair;
+
+(function() {
+    
+    /**
+     * Creates a pair.
+     * @method create
+     * @param {collision} collision
+     * @param {number} timestamp
+     * @return {pair} A new pair
+     */
+    Pair.create = function(collision, timestamp) {
+        var bodyA = collision.bodyA,
+            bodyB = collision.bodyB;
+
+        var pair = {
+            id: Pair.id(bodyA, bodyB),
+            bodyA: bodyA,
+            bodyB: bodyB,
+            activeContacts: [],
+            separation: 0,
+            isActive: true,
+            confirmedActive: true,
+            isSensor: bodyA.isSensor || bodyB.isSensor,
+            timeCreated: timestamp,
+            timeUpdated: timestamp,
+            collision: null,
+            inverseMass: 0,
+            friction: 0,
+            frictionStatic: 0,
+            restitution: 0,
+            slop: 0
+        };
+
+        Pair.update(pair, collision, timestamp);
+
+        return pair;
+    };
+
+    /**
+     * Updates a pair given a collision.
+     * @method update
+     * @param {pair} pair
+     * @param {collision} collision
+     * @param {number} timestamp
+     */
+    Pair.update = function(pair, collision, timestamp) {
+        pair.collision = collision;
+
+        if (collision.collided) {
+            var supports = collision.supports,
+                activeContacts = pair.activeContacts,
+                parentA = collision.parentA,
+                parentB = collision.parentB;
+
+            pair.inverseMass = parentA.inverseMass + parentB.inverseMass;
+            pair.friction = Math.min(parentA.friction, parentB.friction);
+            pair.frictionStatic = Math.max(parentA.frictionStatic, parentB.frictionStatic);
+            pair.restitution = Math.max(parentA.restitution, parentB.restitution);
+            pair.slop = Math.max(parentA.slop, parentB.slop);
+
+            for (var i = 0; i < supports.length; i++) {
+                activeContacts[i] = supports[i].contact;
+            }
+
+            // optimise array size
+            var supportCount = supports.length;
+            if (supportCount < activeContacts.length) {
+                activeContacts.length = supportCount;
+            }
+
+            pair.separation = collision.depth;
+            Pair.setActive(pair, true, timestamp);
+        } else {
+            if (pair.isActive === true)
+                Pair.setActive(pair, false, timestamp);
+        }
+    };
+    
+    /**
+     * Set a pair as active or inactive.
+     * @method setActive
+     * @param {pair} pair
+     * @param {bool} isActive
+     * @param {number} timestamp
+     */
+    Pair.setActive = function(pair, isActive, timestamp) {
+        if (isActive) {
+            pair.isActive = true;
+            pair.timeUpdated = timestamp;
