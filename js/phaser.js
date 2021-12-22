@@ -96726,3 +96726,240 @@ module.exports = Pair;
         if (isActive) {
             pair.isActive = true;
             pair.timeUpdated = timestamp;
+        } else {
+            pair.isActive = false;
+            pair.activeContacts.length = 0;
+        }
+    };
+
+    /**
+     * Get the id for the given pair.
+     * @method id
+     * @param {body} bodyA
+     * @param {body} bodyB
+     * @return {string} Unique pairId
+     */
+    Pair.id = function(bodyA, bodyB) {
+        if (bodyA.id < bodyB.id) {
+            return 'A' + bodyA.id + 'B' + bodyB.id;
+        } else {
+            return 'A' + bodyB.id + 'B' + bodyA.id;
+        }
+    };
+
+})();
+
+
+/***/ }),
+/* 419 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Physics.Matter.Components
+ */
+
+module.exports = {
+
+    Bounce: __webpack_require__(1103),
+    Collision: __webpack_require__(1102),
+    Force: __webpack_require__(1101),
+    Friction: __webpack_require__(1100),
+    Gravity: __webpack_require__(1099),
+    Mass: __webpack_require__(1098),
+    Static: __webpack_require__(1097),
+    Sensor: __webpack_require__(1096),
+    SetBody: __webpack_require__(1095),
+    Sleep: __webpack_require__(1093),
+    Transform: __webpack_require__(1092),
+    Velocity: __webpack_require__(1091)
+
+};
+
+
+/***/ }),
+/* 420 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Felipe Alfonso <@bitnenfer>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var ShaderSourceFS = __webpack_require__(895);
+var TextureTintPipeline = __webpack_require__(196);
+
+var LIGHT_COUNT = 10;
+
+/**
+ * @classdesc
+ * ForwardDiffuseLightPipeline implements a forward rendering approach for 2D lights.
+ * This pipeline extends TextureTintPipeline so it implements all it's rendering functions
+ * and batching system.
+ *
+ * @class ForwardDiffuseLightPipeline
+ * @extends Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline
+ * @memberof Phaser.Renderer.WebGL.Pipelines
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {object} config - [description]
+ */
+var ForwardDiffuseLightPipeline = new Class({
+
+    Extends: TextureTintPipeline,
+
+    initialize:
+
+    function ForwardDiffuseLightPipeline (config)
+    {
+        LIGHT_COUNT = config.maxLights;
+
+        config.fragShader = ShaderSourceFS.replace('%LIGHT_COUNT%', LIGHT_COUNT.toString());
+
+        TextureTintPipeline.call(this, config);
+
+        /**
+         * Default normal map texture to use.
+         *
+         * @name Phaser.Renderer.WebGL.Pipelines.ForwardDiffuseLightPipeline#defaultNormalMap
+         * @type {Phaser.Texture.Frame}
+         * @private
+         * @since 3.11.0
+         */
+        this.defaultNormalMap;
+    },
+
+    /**
+     * Called when the Game has fully booted and the Renderer has finished setting up.
+     * 
+     * By this stage all Game level systems are now in place and you can perform any final
+     * tasks that the pipeline may need that relied on game systems such as the Texture Manager.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.ForwardDiffuseLightPipeline#boot
+     * @override
+     * @since 3.11.0
+     */
+    boot: function ()
+    {
+        this.defaultNormalMap = this.game.textures.getFrame('__DEFAULT');
+    },
+
+    /**
+     * This function binds its base class resources and this lights 2D resources.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.ForwardDiffuseLightPipeline#onBind
+     * @override
+     * @since 3.0.0
+     * 
+     * @param {Phaser.GameObjects.GameObject} [gameObject] - The Game Object that invoked this pipeline, if any.
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    onBind: function (gameObject)
+    {
+        TextureTintPipeline.prototype.onBind.call(this);
+
+        var renderer = this.renderer;
+        var program = this.program;
+
+        this.mvpUpdate();
+
+        renderer.setInt1(program, 'uNormSampler', 1);
+        renderer.setFloat2(program, 'uResolution', this.width, this.height);
+
+        if (gameObject)
+        {
+            this.setNormalMap(gameObject);
+        }
+
+        return this;
+    },
+
+    /**
+     * This function sets all the needed resources for each camera pass.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.ForwardDiffuseLightPipeline#onRender
+     * @since 3.0.0
+     *
+     * @param {Phaser.Scene} scene - [description]
+     * @param {Phaser.Cameras.Scene2D.Camera} camera - [description]
+     *
+     * @return {this} This WebGLPipeline instance.
+     */
+    onRender: function (scene, camera)
+    {
+        this.active = false;
+
+        var lightManager = scene.sys.lights;
+
+        if (!lightManager || lightManager.lights.length <= 0 || !lightManager.active)
+        {
+            //  Passthru
+            return this;
+        }
+
+        var lights = lightManager.cull(camera);
+        var lightCount = Math.min(lights.length, LIGHT_COUNT);
+
+        if (lightCount === 0)
+        {
+            return this;
+        }
+
+        this.active = true;
+
+        var renderer = this.renderer;
+        var program = this.program;
+        var cameraMatrix = camera.matrix;
+        var point = {x: 0, y: 0};
+        var height = renderer.height;
+        var index;
+
+        for (index = 0; index < LIGHT_COUNT; ++index)
+        {
+            //  Reset lights
+            renderer.setFloat1(program, 'uLights[' + index + '].radius', 0);
+        }
+
+        renderer.setFloat4(program, 'uCamera', camera.x, camera.y, camera.rotation, camera.zoom);
+        renderer.setFloat3(program, 'uAmbientLightColor', lightManager.ambientColor.r, lightManager.ambientColor.g, lightManager.ambientColor.b);
+
+        for (index = 0; index < lightCount; ++index)
+        {
+            var light = lights[index];
+            var lightName = 'uLights[' + index + '].';
+
+            cameraMatrix.transformPoint(light.x, light.y, point);
+
+            renderer.setFloat2(program, lightName + 'position', point.x - (camera.scrollX * light.scrollFactorX * camera.zoom), height - (point.y - (camera.scrollY * light.scrollFactorY) * camera.zoom));
+            renderer.setFloat3(program, lightName + 'color', light.r, light.g, light.b);
+            renderer.setFloat1(program, lightName + 'intensity', light.intensity);
+            renderer.setFloat1(program, lightName + 'radius', light.radius);
+        }
+        
+        return this;
+    },
+
+    /**
+     * Generic function for batching a textured quad
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.TextureTintPipeline#batchTexture
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} gameObject - Source GameObject
+     * @param {WebGLTexture} texture - Raw WebGLTexture associated with the quad
+     * @param {integer} textureWidth - Real texture width
+     * @param {integer} textureHeight - Real texture height
+     * @param {number} srcX - X coordinate of the quad
+     * @param {number} srcY - Y coordinate of the quad
+     * @param {number} srcWidth - Width of the quad
+     * @param {number} srcHeight - Height of the quad
