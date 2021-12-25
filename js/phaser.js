@@ -96963,3 +96963,241 @@ var ForwardDiffuseLightPipeline = new Class({
      * @param {number} srcY - Y coordinate of the quad
      * @param {number} srcWidth - Width of the quad
      * @param {number} srcHeight - Height of the quad
+     * @param {number} scaleX - X component of scale
+     * @param {number} scaleY - Y component of scale
+     * @param {number} rotation - Rotation of the quad
+     * @param {boolean} flipX - Indicates if the quad is horizontally flipped
+     * @param {boolean} flipY - Indicates if the quad is vertically flipped
+     * @param {number} scrollFactorX - By which factor is the quad affected by the camera horizontal scroll
+     * @param {number} scrollFactorY - By which factor is the quad effected by the camera vertical scroll
+     * @param {number} displayOriginX - Horizontal origin in pixels
+     * @param {number} displayOriginY - Vertical origin in pixels
+     * @param {number} frameX - X coordinate of the texture frame
+     * @param {number} frameY - Y coordinate of the texture frame
+     * @param {number} frameWidth - Width of the texture frame
+     * @param {number} frameHeight - Height of the texture frame
+     * @param {integer} tintTL - Tint for top left
+     * @param {integer} tintTR - Tint for top right
+     * @param {integer} tintBL - Tint for bottom left
+     * @param {integer} tintBR - Tint for bottom right
+     * @param {number} tintEffect - The tint effect (0 for additive, 1 for replacement)
+     * @param {number} uOffset - Horizontal offset on texture coordinate
+     * @param {number} vOffset - Vertical offset on texture coordinate
+     * @param {Phaser.Cameras.Scene2D.Camera} camera - Current used camera
+     * @param {Phaser.GameObjects.Components.TransformMatrix} parentTransformMatrix - Parent container
+     */
+    batchTexture: function (
+        gameObject,
+        texture,
+        textureWidth, textureHeight,
+        srcX, srcY,
+        srcWidth, srcHeight,
+        scaleX, scaleY,
+        rotation,
+        flipX, flipY,
+        scrollFactorX, scrollFactorY,
+        displayOriginX, displayOriginY,
+        frameX, frameY, frameWidth, frameHeight,
+        tintTL, tintTR, tintBL, tintBR, tintEffect,
+        uOffset, vOffset,
+        camera,
+        parentTransformMatrix)
+    {
+        if (!this.active)
+        {
+            return;
+        }
+
+        this.renderer.setPipeline(this);
+
+        var normalTexture;
+
+        if (gameObject.displayTexture)
+        {
+            normalTexture = gameObject.displayTexture.dataSource[gameObject.displayFrame.sourceIndex];
+        }
+        else if (gameObject.texture)
+        {
+            normalTexture = gameObject.texture.dataSource[gameObject.frame.sourceIndex];
+        }
+        else if (gameObject.tileset)
+        {
+            normalTexture = gameObject.tileset.image.dataSource[0];
+        }
+
+        if (!normalTexture)
+        {
+            console.warn('Normal map missing or invalid');
+            return;
+        }
+
+        this.setTexture2D(normalTexture.glTexture, 1);
+
+        var camMatrix = this._tempMatrix1;
+        var spriteMatrix = this._tempMatrix2;
+        var calcMatrix = this._tempMatrix3;
+
+        var u0 = (frameX / textureWidth) + uOffset;
+        var v0 = (frameY / textureHeight) + vOffset;
+        var u1 = (frameX + frameWidth) / textureWidth + uOffset;
+        var v1 = (frameY + frameHeight) / textureHeight + vOffset;
+
+        var width = srcWidth;
+        var height = srcHeight;
+
+        // var x = -displayOriginX + frameX;
+        // var y = -displayOriginY + frameY;
+
+        var x = -displayOriginX;
+        var y = -displayOriginY;
+
+        if (gameObject.isCropped)
+        {
+            var crop = gameObject._crop;
+
+            width = crop.width;
+            height = crop.height;
+
+            srcWidth = crop.width;
+            srcHeight = crop.height;
+
+            frameX = crop.x;
+            frameY = crop.y;
+
+            var ox = frameX;
+            var oy = frameY;
+
+            if (flipX)
+            {
+                ox = (frameWidth - crop.x - crop.width);
+            }
+    
+            if (flipY && !texture.isRenderTexture)
+            {
+                oy = (frameHeight - crop.y - crop.height);
+            }
+
+            u0 = (ox / textureWidth) + uOffset;
+            v0 = (oy / textureHeight) + vOffset;
+            u1 = (ox + crop.width) / textureWidth + uOffset;
+            v1 = (oy + crop.height) / textureHeight + vOffset;
+
+            x = -displayOriginX + frameX;
+            y = -displayOriginY + frameY;
+        }
+
+        //  Invert the flipY if this is a RenderTexture
+        flipY = flipY ^ (texture.isRenderTexture ? 1 : 0);
+
+        if (flipX)
+        {
+            width *= -1;
+            x += srcWidth;
+        }
+
+        if (flipY)
+        {
+            height *= -1;
+            y += srcHeight;
+        }
+
+        //  Do we need this? (doubt it)
+        // if (camera.roundPixels)
+        // {
+        //     x |= 0;
+        //     y |= 0;
+        // }
+
+        var xw = x + width;
+        var yh = y + height;
+
+        spriteMatrix.applyITRS(srcX, srcY, rotation, scaleX, scaleY);
+
+        camMatrix.copyFrom(camera.matrix);
+
+        if (parentTransformMatrix)
+        {
+            //  Multiply the camera by the parent matrix
+            camMatrix.multiplyWithOffset(parentTransformMatrix, -camera.scrollX * scrollFactorX, -camera.scrollY * scrollFactorY);
+
+            //  Undo the camera scroll
+            spriteMatrix.e = srcX;
+            spriteMatrix.f = srcY;
+
+            //  Multiply by the Sprite matrix, store result in calcMatrix
+            camMatrix.multiply(spriteMatrix, calcMatrix);
+        }
+        else
+        {
+            spriteMatrix.e -= camera.scrollX * scrollFactorX;
+            spriteMatrix.f -= camera.scrollY * scrollFactorY;
+    
+            //  Multiply by the Sprite matrix, store result in calcMatrix
+            camMatrix.multiply(spriteMatrix, calcMatrix);
+        }
+
+        var tx0 = calcMatrix.getX(x, y);
+        var ty0 = calcMatrix.getY(x, y);
+
+        var tx1 = calcMatrix.getX(x, yh);
+        var ty1 = calcMatrix.getY(x, yh);
+
+        var tx2 = calcMatrix.getX(xw, yh);
+        var ty2 = calcMatrix.getY(xw, yh);
+
+        var tx3 = calcMatrix.getX(xw, y);
+        var ty3 = calcMatrix.getY(xw, y);
+
+        if (camera.roundPixels)
+        {
+            tx0 |= 0;
+            ty0 |= 0;
+
+            tx1 |= 0;
+            ty1 |= 0;
+
+            tx2 |= 0;
+            ty2 |= 0;
+
+            tx3 |= 0;
+            ty3 |= 0;
+        }
+
+        this.setTexture2D(texture, 0);
+
+        this.batchQuad(tx0, ty0, tx1, ty1, tx2, ty2, tx3, ty3, u0, v0, u1, v1, tintTL, tintTR, tintBL, tintBR, tintEffect);
+    },
+
+    /**
+     * Sets the Game Objects normal map as the active texture.
+     *
+     * @method Phaser.Renderer.WebGL.Pipelines.ForwardDiffuseLightPipeline#setNormalMap
+     * @since 3.11.0
+     *
+     * @param {Phaser.GameObjects.GameObject} gameObject - [description]
+     */
+    setNormalMap: function (gameObject)
+    {
+        if (!this.active || !gameObject)
+        {
+            return;
+        }
+
+        var normalTexture;
+
+        if (gameObject.texture)
+        {
+            normalTexture = gameObject.texture.dataSource[gameObject.frame.sourceIndex];
+        }
+
+        if (!normalTexture)
+        {
+            normalTexture = this.defaultNormalMap;
+        }
+
+        this.setTexture2D(normalTexture.glTexture, 1);
+
+        this.renderer.setPipeline(gameObject.defaultPipeline);
+    },
+
+    /**
