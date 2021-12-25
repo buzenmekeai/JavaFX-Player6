@@ -97447,3 +97447,212 @@ var BitmapMaskPipeline = new Class({
         var bitmapMask = mask.bitmapMask;
 
         if (bitmapMask && gl)
+        {
+            // Return to default framebuffer
+            renderer.setFramebuffer(null);
+            
+            // Bind bitmap mask pipeline and draw
+            renderer.setPipeline(this);
+            
+            renderer.setTexture2D(mask.maskTexture, 1);
+            renderer.setTexture2D(mask.mainTexture, 0);
+            renderer.setInt1(this.program, 'uInvertMaskAlpha', mask.invertAlpha);
+
+            // Finally draw a triangle filling the whole screen
+            gl.drawArrays(this.topology, 0, 3);
+        }
+    }
+
+});
+
+module.exports = BitmapMaskPipeline;
+
+
+/***/ }),
+/* 422 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Takes a snapshot of the current frame displayed by a WebGL canvas.
+ *
+ * @function Phaser.Renderer.Snapshot.WebGL
+ * @since 3.0.0
+ *
+ * @param {HTMLCanvasElement} sourceCanvas - The canvas to take a snapshot of.
+ * @param {string} [type='image/png'] - The format of the returned image.
+ * @param {number} [encoderOptions=0.92] - The image quality, between 0 and 1, for image formats which use lossy compression (such as `image/jpeg`).
+ *
+ * @return {HTMLImageElement} A new image which contains a snapshot of the canvas's contents.
+ */
+var WebGLSnapshot = function (sourceCanvas, type, encoderOptions)
+{
+    if (!type) { type = 'image/png'; }
+    if (!encoderOptions) { encoderOptions = 0.92; }
+
+    var gl = sourceCanvas.getContext('experimental-webgl');
+    var pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
+    gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+    //  CanvasPool?
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext('2d');
+    var imageData;
+
+    canvas.width = gl.drawingBufferWidth;
+    canvas.height = gl.drawingBufferHeight;
+
+    imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    var data = imageData.data;
+
+    for (var y = 0; y < canvas.height; y += 1)
+    {
+        for (var x = 0; x < canvas.width; x += 1)
+        {
+            var si = ((canvas.height - y) * canvas.width + x) * 4;
+            var di = (y * canvas.width + x) * 4;
+            data[di + 0] = pixels[si + 0];
+            data[di + 1] = pixels[si + 1];
+            data[di + 2] = pixels[si + 2];
+            data[di + 3] = pixels[si + 3];
+        }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+
+    var src = canvas.toDataURL(type, encoderOptions);
+    var image = new Image();
+
+    image.src = src;
+
+    return image;
+};
+
+module.exports = WebGLSnapshot;
+
+
+/***/ }),
+/* 423 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Felipe Alfonso <@bitnenfer>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var BaseCamera = __webpack_require__(121);
+var Class = __webpack_require__(0);
+var CONST = __webpack_require__(26);
+var IsSizePowerOfTwo = __webpack_require__(117);
+var SpliceOne = __webpack_require__(91);
+var TransformMatrix = __webpack_require__(38);
+var Utils = __webpack_require__(10);
+var WebGLSnapshot = __webpack_require__(422);
+
+// Default Pipelines
+var BitmapMaskPipeline = __webpack_require__(421);
+var ForwardDiffuseLightPipeline = __webpack_require__(420);
+var TextureTintPipeline = __webpack_require__(196);
+
+/**
+ * @callback WebGLContextCallback
+ *
+ * @param {Phaser.Renderer.WebGL.WebGLRenderer} renderer - The WebGL Renderer which owns the context.
+ */
+
+/**
+ * @typedef {object} SnapshotState
+ *
+ * @property {SnapshotCallback} callback - The function to call after the snapshot is taken.
+ * @property {string} type - The type of the image to create.
+ * @property {number} encoder - The image quality, between 0 and 1, for image formats which use lossy compression (such as `image/jpeg`).
+ */
+
+/**
+ * @classdesc
+ * WebGLRenderer is a class that contains the needed functionality to keep the
+ * WebGLRenderingContext state clean. The main idea of the WebGLRenderer is to keep track of
+ * any context change that happens for WebGL rendering inside of Phaser. This means
+ * if raw webgl functions are called outside the WebGLRenderer of the Phaser WebGL
+ * rendering ecosystem they might pollute the current WebGLRenderingContext state producing
+ * unexpected behavior. It's recommended that WebGL interaction is done through
+ * WebGLRenderer and/or WebGLPipeline.
+ *
+ * @class WebGLRenderer
+ * @memberof Phaser.Renderer.WebGL
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Game} game - The Game instance which owns this WebGL Renderer.
+ */
+var WebGLRenderer = new Class({
+
+    initialize:
+
+    function WebGLRenderer (game)
+    {
+        // eslint-disable-next-line consistent-this
+        var renderer = this;
+
+        var gameConfig = game.config;
+
+        var contextCreationConfig = {
+            alpha: gameConfig.transparent,
+            depth: false, // enable when 3D is added in the future
+            antialias: gameConfig.antialias,
+            premultipliedAlpha: gameConfig.premultipliedAlpha,
+            stencil: true,
+            preserveDrawingBuffer: gameConfig.preserveDrawingBuffer,
+            failIfMajorPerformanceCaveat: gameConfig.failIfMajorPerformanceCaveat,
+            powerPreference: gameConfig.powerPreference
+        };
+
+        /**
+         * The local configuration settings of this WebGL Renderer.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#config
+         * @type {RendererConfig}
+         * @since 3.0.0
+         */
+        this.config = {
+            clearBeforeRender: gameConfig.clearBeforeRender,
+            antialias: gameConfig.antialias,
+            backgroundColor: gameConfig.backgroundColor,
+            contextCreation: contextCreationConfig,
+            resolution: gameConfig.resolution,
+            autoResize: gameConfig.autoResize,
+            roundPixels: gameConfig.roundPixels,
+            maxTextures: gameConfig.maxTextures,
+            maxTextureSize: gameConfig.maxTextureSize,
+            batchSize: gameConfig.batchSize,
+            maxLights: gameConfig.maxLights
+        };
+
+        /**
+         * The Game instance which owns this WebGL Renderer.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#game
+         * @type {Phaser.Game}
+         * @since 3.0.0
+         */
+        this.game = game;
+
+        /**
+         * A constant which allows the renderer to be easily identified as a WebGL Renderer.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#type
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.type = CONST.WEBGL;
+
+        /**
+         * The width of the canvas being rendered to.
