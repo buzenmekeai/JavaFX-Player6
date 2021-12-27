@@ -97656,3 +97656,210 @@ var WebGLRenderer = new Class({
 
         /**
          * The width of the canvas being rendered to.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#width
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.width = game.config.width;
+
+        /**
+         * The height of the canvas being rendered to.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#height
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.height = game.config.height;
+
+        /**
+         * The canvas which this WebGL Renderer draws to.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#canvas
+         * @type {HTMLCanvasElement}
+         * @since 3.0.0
+         */
+        this.canvas = game.canvas;
+
+        /**
+         * An array of functions to invoke if the WebGL context is lost.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#lostContextCallbacks
+         * @type {WebGLContextCallback[]}
+         * @since 3.0.0
+         */
+        this.lostContextCallbacks = [];
+
+        /**
+         * An array of functions to invoke if the WebGL context is restored.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#restoredContextCallbacks
+         * @type {WebGLContextCallback[]}
+         * @since 3.0.0
+         */
+        this.restoredContextCallbacks = [];
+
+        /**
+         * An array of blend modes supported by the WebGL Renderer.
+         * 
+         * This array includes the default blend modes as well as any custom blend modes added through {@link #addBlendMode}.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#blendModes
+         * @type {array}
+         * @default []
+         * @since 3.0.0
+         */
+        this.blendModes = [];
+
+        /**
+         * Keeps track of any WebGLTexture created with the current WebGLRenderingContext
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#nativeTextures
+         * @type {array}
+         * @default []
+         * @since 3.0.0
+         */
+        this.nativeTextures = [];
+
+        /**
+         * Set to `true` if the WebGL context of the renderer is lost.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#contextLost
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.contextLost = false;
+
+        /**
+         * This object will store all pipelines created through addPipeline
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#pipelines
+         * @type {object}
+         * @default null
+         * @since 3.0.0
+         */
+        this.pipelines = null;
+
+        /**
+         * Details about the currently scheduled snapshot.
+         * 
+         * If a non-null `callback` is set in this object, a snapshot of the canvas will be taken after the current frame is fully rendered.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#snapshotState
+         * @type {SnapshotState}
+         * @since 3.0.0
+         */
+        this.snapshotState = {
+            callback: null,
+            type: null,
+            encoder: null
+        };
+
+        // Internal Renderer State (Textures, Framebuffers, Pipelines, Buffers, etc)
+
+        /**
+         * Cached value for the last texture unit that was used
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#currentActiveTextureUnit
+         * @type {integer}
+         * @since 3.1.0
+         */
+        this.currentActiveTextureUnit = 0;
+
+        /**
+         * An array of the last texture handles that were bound to the WebGLRenderingContext
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#currentTextures
+         * @type {array}
+         * @since 3.0.0
+         */
+        this.currentTextures = new Array(16);
+
+        /**
+         * Current framebuffer in use
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#currentFramebuffer
+         * @type {WebGLFramebuffer}
+         * @default null
+         * @since 3.0.0
+         */
+        this.currentFramebuffer = null;
+
+        /**
+         * Current WebGLPipeline in use
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#currentPipeline
+         * @type {Phaser.Renderer.WebGL.WebGLPipeline}
+         * @default null
+         * @since 3.0.0
+         */
+        this.currentPipeline = null;
+
+        /**
+         * Current WebGLProgram in use
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#currentProgram
+         * @type {WebGLProgram}
+         * @default null
+         * @since 3.0.0
+         */
+        this.currentProgram = null;
+
+        /**
+         * Current WebGLBuffer (Vertex buffer) in use
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#currentVertexBuffer
+         * @type {WebGLBuffer}
+         * @default null
+         * @since 3.0.0
+         */
+        this.currentVertexBuffer = null;
+
+        /**
+         * Current WebGLBuffer (Index buffer) in use
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#currentIndexBuffer
+         * @type {WebGLBuffer}
+         * @default null
+         * @since 3.0.0
+         */
+        this.currentIndexBuffer = null;
+
+        /**
+         * Current blend mode in use
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#currentBlendMode
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.currentBlendMode = Infinity;
+
+        /**
+         * Indicates if the the scissor state is enabled in WebGLRenderingContext
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#currentScissorEnabled
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.currentScissorEnabled = false;
+
+        /**
+         * Stores the current scissor data
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#currentScissor
+         * @type {Uint32Array}
+         * @since 3.0.0
+         */
+        // this.currentScissor = new Uint32Array([ 0, 0, this.width, this.height ]);
+        this.currentScissor = null;
+
+        /**
+         * Stack of scissor data
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#scissorStack
+         * @type {Uint32Array}
+         * @since 3.0.0
+         */
+        this.scissorStack = [];
