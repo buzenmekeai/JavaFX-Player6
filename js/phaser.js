@@ -97863,3 +97863,223 @@ var WebGLRenderer = new Class({
          * @since 3.0.0
          */
         this.scissorStack = [];
+
+        // Setup context lost and restore event listeners
+
+        this.canvas.addEventListener('webglcontextlost', function (event)
+        {
+            renderer.contextLost = true;
+            event.preventDefault();
+
+            for (var index = 0; index < renderer.lostContextCallbacks.length; ++index)
+            {
+                var callback = renderer.lostContextCallbacks[index];
+                callback[0].call(callback[1], renderer);
+            }
+        }, false);
+
+        this.canvas.addEventListener('webglcontextrestored', function ()
+        {
+            renderer.contextLost = false;
+            renderer.init(renderer.config);
+            for (var index = 0; index < renderer.restoredContextCallbacks.length; ++index)
+            {
+                var callback = renderer.restoredContextCallbacks[index];
+                callback[0].call(callback[1], renderer);
+            }
+        }, false);
+
+        // These are initialized post context creation
+
+        /**
+         * The underlying WebGL context of the renderer.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#gl
+         * @type {WebGLRenderingContext}
+         * @default null
+         * @since 3.0.0
+         */
+        this.gl = null;
+
+        /**
+         * Array of strings that indicate which WebGL extensions are supported by the browser
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#supportedExtensions
+         * @type {object}
+         * @default null
+         * @since 3.0.0
+         */
+        this.supportedExtensions = null;
+
+        /**
+         * Extensions loaded into the current context
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#extensions
+         * @type {object}
+         * @default {}
+         * @since 3.0.0
+         */
+        this.extensions = {};
+
+        /**
+         * Stores the current WebGL component formats for further use
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#glFormats
+         * @type {array}
+         * @default []
+         * @since 3.2.0
+         */
+        this.glFormats = [];
+
+        /**
+         * Stores the supported WebGL texture compression formats.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#compression
+         * @type {array}
+         * @since 3.8.0
+         */
+        this.compression = {
+            ETC1: false,
+            PVRTC: false,
+            S3TC: false
+        };
+
+        /**
+         * Cached drawing buffer height to reduce gl calls.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#drawingBufferHeight
+         * @type {number}
+         * @readonly
+         * @since 3.11.0
+         */
+        this.drawingBufferHeight = 0;
+
+        /**
+         * A blank 32x32 transparent texture, as used by the Graphics system where needed.
+         * This is set in the `boot` method.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#blankTexture
+         * @type {WebGLTexture}
+         * @readonly
+         * @since 3.12.0
+         */
+        this.blankTexture = null;
+
+        this.defaultCamera = new BaseCamera(0, 0, 0, 0);
+
+        /**
+         * A temporary Transform Matrix, re-used internally during batching.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#_tempMatrix1
+         * @private
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @since 3.12.0
+         */
+        this._tempMatrix1 = new TransformMatrix();
+
+        /**
+         * A temporary Transform Matrix, re-used internally during batching.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#_tempMatrix2
+         * @private
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @since 3.12.0
+         */
+        this._tempMatrix2 = new TransformMatrix();
+
+        /**
+         * A temporary Transform Matrix, re-used internally during batching.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#_tempMatrix3
+         * @private
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @since 3.12.0
+         */
+        this._tempMatrix3 = new TransformMatrix();
+
+        /**
+         * A temporary Transform Matrix, re-used internally during batching.
+         *
+         * @name Phaser.Renderer.WebGL.WebGLRenderer#_tempMatrix4
+         * @private
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @since 3.12.0
+         */
+        this._tempMatrix4 = new TransformMatrix();
+
+        this.init(this.config);
+    },
+
+    /**
+     * Creates a new WebGLRenderingContext and initializes all internal
+     * state.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#init
+     * @since 3.0.0
+     *
+     * @param {object} config - The configuration object for the renderer.
+     *
+     * @return {this} This WebGLRenderer instance.
+     */
+    init: function (config)
+    {
+        var gl;
+        var canvas = this.canvas;
+        var clearColor = config.backgroundColor;
+
+        //  Did they provide their own context?
+        if (this.game.config.context)
+        {
+            gl = this.game.config.context;
+        }
+        else
+        {
+            gl = canvas.getContext('webgl', config.contextCreation) || canvas.getContext('experimental-webgl', config.contextCreation);
+        }
+
+        if (!gl || gl.isContextLost())
+        {
+            this.contextLost = true;
+
+            throw new Error('WebGL unsupported');
+        }
+
+        this.gl = gl;
+
+        //  Set it back into the Game, so developers can access it from there too
+        this.game.context = gl;
+
+        for (var i = 0; i <= 16; i++)
+        {
+            this.blendModes.push({ func: [ gl.ONE, gl.ONE_MINUS_SRC_ALPHA ], equation: gl.FUNC_ADD });
+        }
+
+        this.blendModes[1].func = [ gl.ONE, gl.DST_ALPHA ];
+        this.blendModes[2].func = [ gl.DST_COLOR, gl.ONE_MINUS_SRC_ALPHA ];
+        this.blendModes[3].func = [ gl.ONE, gl.ONE_MINUS_SRC_COLOR ];
+
+        this.glFormats[0] = gl.BYTE;
+        this.glFormats[1] = gl.SHORT;
+        this.glFormats[2] = gl.UNSIGNED_BYTE;
+        this.glFormats[3] = gl.UNSIGNED_SHORT;
+        this.glFormats[4] = gl.FLOAT;
+
+        // Load supported extensions
+        var exts = gl.getSupportedExtensions();
+
+        if (!config.maxTextures)
+        {
+            config.maxTextures = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+        }
+
+        if (!config.maxTextureSize)
+        {
+            config.maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+        }
+
+        var extString = 'WEBGL_compressed_texture_';
+        var wkExtString = 'WEBKIT_' + extString;
+
+        this.compression.ETC1 = gl.getExtension(extString + 'etc1') || gl.getExtension(wkExtString + 'etc1');
+        this.compression.PVRTC = gl.getExtension(extString + 'pvrtc') || gl.getExtension(wkExtString + 'pvrtc');
+        this.compression.S3TC = gl.getExtension(extString + 's3tc') || gl.getExtension(wkExtString + 's3tc');
