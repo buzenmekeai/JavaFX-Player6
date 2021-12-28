@@ -98511,3 +98511,188 @@ var WebGLRenderer = new Class({
      * @since 3.0.0
      *
      * @param {function} func - An array containing the WebGL functions to use for the source and the destination blending factors, respectively. See the possible constants for {@link WebGLRenderingContext#blendFunc()}.
+     * @param {function} equation - The equation to use for combining the RGB and alpha components of a new pixel with a rendered one. See the possible constants for {@link WebGLRenderingContext#blendEquation()}.
+     *
+     * @return {integer} The index of the new blend mode, used for referencing it in the future.
+     */
+    addBlendMode: function (func, equation)
+    {
+        var index = this.blendModes.push({ func: func, equation: equation });
+
+        return index - 1;
+    },
+
+    /**
+     * Updates the function bound to a given custom blend mode.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#updateBlendMode
+     * @since 3.0.0
+     *
+     * @param {integer} index - The index of the custom blend mode.
+     * @param {function} func - The function to use for the blend mode.
+     * @param {function} equation - The equation to use for the blend mode.
+     *
+     * @return {this} This WebGLRenderer instance.
+     */
+    updateBlendMode: function (index, func, equation)
+    {
+        if (this.blendModes[index])
+        {
+            this.blendModes[index].func = func;
+
+            if (equation)
+            {
+                this.blendModes[index].equation = equation;
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Removes a custom blend mode from the renderer.
+     * Any Game Objects still using this blend mode will error, so be sure to clear them first.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#removeBlendMode
+     * @since 3.0.0
+     *
+     * @param {integer} index - The index of the custom blend mode to be removed.
+     *
+     * @return {this} This WebGLRenderer instance.
+     */
+    removeBlendMode: function (index)
+    {
+        if (index > 16 && this.blendModes[index])
+        {
+            this.blendModes.splice(index, 1);
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets the current active texture for texture unit zero to be a blank texture.
+     * This only happens if there isn't a texture already in use by texture unit zero.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#setBlankTexture
+     * @private
+     * @since 3.12.0
+     *
+     * @param {boolean} [force=false] - Force a blank texture set, regardless of what's already bound?
+     */
+    setBlankTexture: function (force)
+    {
+        if (force === undefined) { force = false; }
+
+        if (force || this.currentActiveTextureUnit !== 0 || !this.currentTextures[0])
+        {
+            this.setTexture2D(this.blankTexture.glTexture, 0);
+        }
+    },
+
+    /**
+     * Binds a texture at a texture unit. If a texture is already
+     * bound to that unit it will force a flush on the current pipeline.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#setTexture2D
+     * @since 3.0.0
+     *
+     * @param {WebGLTexture} texture - The WebGL texture that needs to be bound.
+     * @param {integer} textureUnit - The texture unit to which the texture will be bound.
+     *
+     * @return {this} This WebGLRenderer instance.
+     */
+    setTexture2D: function (texture, textureUnit)
+    {
+        var gl = this.gl;
+
+        if (texture !== this.currentTextures[textureUnit])
+        {
+            this.flush();
+
+            if (this.currentActiveTextureUnit !== textureUnit)
+            {
+                gl.activeTexture(gl.TEXTURE0 + textureUnit);
+
+                this.currentActiveTextureUnit = textureUnit;
+            }
+
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+
+            this.currentTextures[textureUnit] = texture;
+        }
+
+        return this;
+    },
+
+    /**
+     * Binds a framebuffer. If there was another framebuffer already bound it will force a pipeline flush.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#setFramebuffer
+     * @since 3.0.0
+     *
+     * @param {WebGLFramebuffer} framebuffer - The framebuffer that needs to be bound.
+     *
+     * @return {this} This WebGLRenderer instance.
+     */
+    setFramebuffer: function (framebuffer)
+    {
+        var gl = this.gl;
+
+        var width = this.width;
+        var height = this.height;
+
+        if (framebuffer !== this.currentFramebuffer)
+        {
+            if (framebuffer && framebuffer.renderTexture)
+            {
+                width = framebuffer.renderTexture.width;
+                height = framebuffer.renderTexture.height;
+            }
+            else
+            {
+                this.flush();
+            }
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+
+            gl.viewport(0, 0, width, height);
+
+            this.currentFramebuffer = framebuffer;
+        }
+
+        return this;
+    },
+
+    /**
+     * Binds a program. If there was another program already bound it will force a pipeline flush.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#setProgram
+     * @since 3.0.0
+     *
+     * @param {WebGLProgram} program - The program that needs to be bound.
+     *
+     * @return {this} This WebGLRenderer instance.
+     */
+    setProgram: function (program)
+    {
+        var gl = this.gl;
+
+        if (program !== this.currentProgram)
+        {
+            this.flush();
+
+            gl.useProgram(program);
+
+            this.currentProgram = program;
+        }
+
+        return this;
+    },
+
+    /**
+     * Bounds a vertex buffer. If there is a vertex buffer already bound it'll force a pipeline flush.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#setVertexBuffer
+     * @since 3.0.0
+     *
