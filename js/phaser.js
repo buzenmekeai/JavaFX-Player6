@@ -98083,3 +98083,195 @@ var WebGLRenderer = new Class({
         this.compression.ETC1 = gl.getExtension(extString + 'etc1') || gl.getExtension(wkExtString + 'etc1');
         this.compression.PVRTC = gl.getExtension(extString + 'pvrtc') || gl.getExtension(wkExtString + 'pvrtc');
         this.compression.S3TC = gl.getExtension(extString + 's3tc') || gl.getExtension(wkExtString + 's3tc');
+
+        this.supportedExtensions = exts;
+
+        // Setup initial WebGL state
+        gl.disable(gl.DEPTH_TEST);
+        gl.disable(gl.CULL_FACE);
+
+        // gl.disable(gl.SCISSOR_TEST);
+
+        gl.enable(gl.BLEND);
+        gl.clearColor(clearColor.redGL, clearColor.greenGL, clearColor.blueGL, 1.0);
+
+        // Initialize all textures to null
+        for (var index = 0; index < this.currentTextures.length; ++index)
+        {
+            this.currentTextures[index] = null;
+        }
+
+        // Clear previous pipelines and reload default ones
+        this.pipelines = {};
+
+        this.addPipeline('TextureTintPipeline', new TextureTintPipeline({ game: this.game, renderer: this }));
+        this.addPipeline('BitmapMaskPipeline', new BitmapMaskPipeline({ game: this.game, renderer: this }));
+        this.addPipeline('Light2D', new ForwardDiffuseLightPipeline({ game: this.game, renderer: this, maxLights: config.maxLights }));
+
+        this.setBlendMode(CONST.BlendModes.NORMAL);
+
+        this.resize(this.width, this.height);
+
+        this.game.events.once('texturesready', this.boot, this);
+
+        return this;
+    },
+
+    /**
+     * Internal boot handler. Calls 'boot' on each pipeline.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#boot
+     * @private
+     * @since 3.11.0
+     */
+    boot: function ()
+    {
+        for (var pipelineName in this.pipelines)
+        {
+            this.pipelines[pipelineName].boot();
+        }
+
+        var blank = this.game.textures.getFrame('__DEFAULT');
+
+        this.pipelines.TextureTintPipeline.currentFrame = blank;
+
+        this.blankTexture = blank;
+    },
+
+    /**
+     * Resizes the drawing buffer.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#resize
+     * @since 3.0.0
+     *
+     * @param {number} width - The width of the renderer.
+     * @param {number} height - The height of the renderer.
+     *
+     * @return {this} This WebGLRenderer instance.
+     */
+    resize: function (width, height)
+    {
+        var gl = this.gl;
+        var pipelines = this.pipelines;
+        var resolution = this.config.resolution;
+
+        this.width = Math.floor(width * resolution);
+        this.height = Math.floor(height * resolution);
+
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+
+        if (this.config.autoResize)
+        {
+            this.canvas.style.width = (this.width / resolution) + 'px';
+            this.canvas.style.height = (this.height / resolution) + 'px';
+        }
+
+        gl.viewport(0, 0, this.width, this.height);
+
+        //  Update all registered pipelines
+        for (var pipelineName in pipelines)
+        {
+            pipelines[pipelineName].resize(width, height, resolution);
+        }
+
+        this.drawingBufferHeight = gl.drawingBufferHeight;
+
+        this.defaultCamera.setSize(width, height);
+
+        gl.scissor(0, (this.drawingBufferHeight - this.height), this.width, this.height);
+
+        return this;
+    },
+
+    /**
+     * Adds a callback to be invoked when the WebGL context has been restored by the browser.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#onContextRestored
+     * @since 3.0.0
+     *
+     * @param {WebGLContextCallback} callback - The callback to be invoked on context restoration.
+     * @param {object} target - The context of the callback.
+     *
+     * @return {this} This WebGLRenderer instance.
+     */
+    onContextRestored: function (callback, target)
+    {
+        this.restoredContextCallbacks.push([ callback, target ]);
+
+        return this;
+    },
+
+    /**
+     * Adds a callback to be invoked when the WebGL context has been lost by the browser.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#onContextLost
+     * @since 3.0.0
+     *
+     * @param {WebGLContextCallback} callback - The callback to be invoked on context loss.
+     * @param {object} target - The context of the callback.
+     *
+     * @return {this} This WebGLRenderer instance.
+     */
+    onContextLost: function (callback, target)
+    {
+        this.lostContextCallbacks.push([ callback, target ]);
+
+        return this;
+    },
+
+    /**
+     * Checks if a WebGL extension is supported
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#hasExtension
+     * @since 3.0.0
+     *
+     * @param {string} extensionName - Name of the WebGL extension
+     *
+     * @return {boolean} `true` if the extension is supported, otherwise `false`.
+     */
+    hasExtension: function (extensionName)
+    {
+        return this.supportedExtensions ? this.supportedExtensions.indexOf(extensionName) : false;
+    },
+
+    /**
+     * Loads a WebGL extension
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#getExtension
+     * @since 3.0.0
+     *
+     * @param {string} extensionName - The name of the extension to load.
+     *
+     * @return {object} WebGL extension if the extension is supported
+     */
+    getExtension: function (extensionName)
+    {
+        if (!this.hasExtension(extensionName)) { return null; }
+
+        if (!(extensionName in this.extensions))
+        {
+            this.extensions[extensionName] = this.gl.getExtension(extensionName);
+        }
+
+        return this.extensions[extensionName];
+    },
+
+    /**
+     * Flushes the current pipeline if the pipeline is bound
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#flush
+     * @since 3.0.0
+     */
+    flush: function ()
+    {
+        if (this.currentPipeline)
+        {
+            this.currentPipeline.flush();
+        }
+    },
+
+    /**
+     * Checks if a pipeline is present in the current WebGLRenderer
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#hasPipeline
