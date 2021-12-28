@@ -98275,3 +98275,239 @@ var WebGLRenderer = new Class({
      * Checks if a pipeline is present in the current WebGLRenderer
      *
      * @method Phaser.Renderer.WebGL.WebGLRenderer#hasPipeline
+     * @since 3.0.0
+     *
+     * @param {string} pipelineName - The name of the pipeline.
+     *
+     * @return {boolean} `true` if the given pipeline is loaded, otherwise `false`.
+     */
+    hasPipeline: function (pipelineName)
+    {
+        return (pipelineName in this.pipelines);
+    },
+
+    /**
+     * Returns the pipeline by name if the pipeline exists
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#getPipeline
+     * @since 3.0.0
+     *
+     * @param {string} pipelineName - The name of the pipeline.
+     *
+     * @return {Phaser.Renderer.WebGL.WebGLPipeline} The pipeline instance, or `null` if not found.
+     */
+    getPipeline: function (pipelineName)
+    {
+        return (this.hasPipeline(pipelineName)) ? this.pipelines[pipelineName] : null;
+    },
+
+    /**
+     * Removes a pipeline by name.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#removePipeline
+     * @since 3.0.0
+     *
+     * @param {string} pipelineName - The name of the pipeline to be removed.
+     *
+     * @return {this} This WebGLRenderer instance.
+     */
+    removePipeline: function (pipelineName)
+    {
+        delete this.pipelines[pipelineName];
+
+        return this;
+    },
+
+    /**
+     * Adds a pipeline instance into the collection of pipelines
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#addPipeline
+     * @since 3.0.0
+     *
+     * @param {string} pipelineName - A unique string-based key for the pipeline.
+     * @param {Phaser.Renderer.WebGL.WebGLPipeline} pipelineInstance - A pipeline instance which must extend WebGLPipeline.
+     *
+     * @return {Phaser.Renderer.WebGL.WebGLPipeline} The pipline instance that was passed.
+     */
+    addPipeline: function (pipelineName, pipelineInstance)
+    {
+        if (!this.hasPipeline(pipelineName))
+        {
+            this.pipelines[pipelineName] = pipelineInstance;
+        }
+        else
+        {
+            console.warn('Pipeline exists: ' + pipelineName);
+        }
+
+        pipelineInstance.name = pipelineName;
+
+        this.pipelines[pipelineName].resize(this.width, this.height, this.config.resolution);
+
+        return pipelineInstance;
+    },
+
+    /**
+     * Pushes a new scissor state. This is used to set nested scissor states.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#pushScissor
+     * @since 3.0.0
+     *
+     * @param {integer} x - The x position of the scissor.
+     * @param {integer} y - The y position of the scissor.
+     * @param {integer} width - The width of the scissor.
+     * @param {integer} height - The height of the scissor.
+     *
+     * @return {integer[]} An array containing the scissor values.
+     */
+    pushScissor: function (x, y, width, height)
+    {
+        var scissorStack = this.scissorStack;
+
+        var scissor = [ x, y, width, height ];
+
+        scissorStack.push(scissor);
+
+        this.setScissor(x, y, width, height);
+
+        this.currentScissor = scissor;
+
+        return scissor;
+    },
+
+    /**
+     * Sets the current scissor state.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#setScissor
+     * @since 3.0.0
+     * 
+     * @param {integer} x - The x position of the scissor.
+     * @param {integer} y - The y position of the scissor.
+     * @param {integer} width - The width of the scissor.
+     * @param {integer} height - The height of the scissor.
+     */
+    setScissor: function (x, y, width, height)
+    {
+        var gl = this.gl;
+
+        var current = this.currentScissor;
+
+        var cx = current[0];
+        var cy = current[1];
+        var cw = current[2];
+        var ch = current[3];
+
+        if (cx !== x || cy !== y || cw !== width || ch !== height)
+        {
+            this.flush();
+
+            // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/scissor
+
+            if (width > 0 && height > 0)
+            {
+                gl.scissor(x, (this.drawingBufferHeight - y - height), width, height);
+
+            }
+        }
+    },
+
+    /**
+     * Pops the last scissor state and sets it.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#popScissor
+     * @since 3.0.0
+     */
+    popScissor: function ()
+    {
+        var scissorStack = this.scissorStack;
+
+        //  Remove the current scissor
+        scissorStack.pop();
+
+        //  Reset the previous scissor
+        var scissor = scissorStack[scissorStack.length - 1];
+
+        if (scissor)
+        {
+            this.setScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
+        }
+
+        this.currentScissor = scissor;
+    },
+
+    /**
+     * Binds a WebGLPipeline and sets it as the current pipeline to be used.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#setPipeline
+     * @since 3.0.0
+     *
+     * @param {Phaser.Renderer.WebGL.WebGLPipeline} pipelineInstance - The pipeline instance to be activated.
+     * @param {Phaser.GameObjects.GameObject} [gameObject] - The Game Object that invoked this pipeline, if any.
+     *
+     * @return {Phaser.Renderer.WebGL.WebGLPipeline} The pipeline that was activated.
+     */
+    setPipeline: function (pipelineInstance, gameObject)
+    {
+        if (this.currentPipeline !== pipelineInstance ||
+            this.currentPipeline.vertexBuffer !== this.currentVertexBuffer ||
+            this.currentPipeline.program !== this.currentProgram)
+        {
+            this.flush();
+            this.currentPipeline = pipelineInstance;
+            this.currentPipeline.bind();
+        }
+
+        this.currentPipeline.onBind(gameObject);
+
+        return this.currentPipeline;
+    },
+
+    /**
+     * Sets the blend mode to the value given.
+     *
+     * If the current blend mode is different from the one given, the pipeline is flushed and the new
+     * blend mode is enabled.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#setBlendMode
+     * @since 3.0.0
+     *
+     * @param {integer} blendModeId - The blend mode to be set. Can be a `BlendModes` const or an integer value.
+     *
+     * @return {boolean} `true` if the blend mode was changed as a result of this call, forcing a flush, otherwise `false`.
+     */
+    setBlendMode: function (blendModeId)
+    {
+        var gl = this.gl;
+        var blendMode = this.blendModes[blendModeId];
+
+        if (blendModeId !== CONST.BlendModes.SKIP_CHECK && this.currentBlendMode !== blendModeId)
+        {
+            this.flush();
+
+            gl.enable(gl.BLEND);
+            gl.blendEquation(blendMode.equation);
+
+            if (blendMode.func.length > 2)
+            {
+                gl.blendFuncSeparate(blendMode.func[0], blendMode.func[1], blendMode.func[2], blendMode.func[3]);
+            }
+            else
+            {
+                gl.blendFunc(blendMode.func[0], blendMode.func[1]);
+            }
+
+            this.currentBlendMode = blendModeId;
+
+            return true;
+        }
+
+        return false;
+    },
+
+    /**
+     * Creates a new custom blend mode for the renderer.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#addBlendMode
+     * @since 3.0.0
+     *
+     * @param {function} func - An array containing the WebGL functions to use for the source and the destination blending factors, respectively. See the possible constants for {@link WebGLRenderingContext#blendFunc()}.
