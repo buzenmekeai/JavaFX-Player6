@@ -98696,3 +98696,221 @@ var WebGLRenderer = new Class({
      * @method Phaser.Renderer.WebGL.WebGLRenderer#setVertexBuffer
      * @since 3.0.0
      *
+     * @param {WebGLBuffer} vertexBuffer - The buffer that needs to be bound.
+     *
+     * @return {this} This WebGLRenderer instance.
+     */
+    setVertexBuffer: function (vertexBuffer)
+    {
+        var gl = this.gl;
+
+        if (vertexBuffer !== this.currentVertexBuffer)
+        {
+            this.flush();
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+
+            this.currentVertexBuffer = vertexBuffer;
+        }
+
+        return this;
+    },
+
+    /**
+     * Bounds a index buffer. If there is a index buffer already bound it'll force a pipeline flush.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#setIndexBuffer
+     * @since 3.0.0
+     *
+     * @param {WebGLBuffer} indexBuffer - The buffer the needs to be bound.
+     *
+     * @return {this} This WebGLRenderer instance.
+     */
+    setIndexBuffer: function (indexBuffer)
+    {
+        var gl = this.gl;
+
+        if (indexBuffer !== this.currentIndexBuffer)
+        {
+            this.flush();
+
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+
+            this.currentIndexBuffer = indexBuffer;
+        }
+
+        return this;
+    },
+
+    /**
+     * Creates a texture from an image source. If the source is not valid it creates an empty texture.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#createTextureFromSource
+     * @since 3.0.0
+     *
+     * @param {object} source - The source of the texture.
+     * @param {integer} width - The width of the texture.
+     * @param {integer} height - The height of the texture.
+     * @param {integer} scaleMode - The scale mode to be used by the texture.
+     *
+     * @return {?WebGLTexture} The WebGL Texture that was created, or `null` if it couldn't be created.
+     */
+    createTextureFromSource: function (source, width, height, scaleMode)
+    {
+        var gl = this.gl;
+        var filter = gl.NEAREST;
+        var wrap = gl.CLAMP_TO_EDGE;
+        var texture = null;
+
+        width = source ? source.width : width;
+        height = source ? source.height : height;
+
+        if (IsSizePowerOfTwo(width, height))
+        {
+            wrap = gl.REPEAT;
+        }
+
+        if (scaleMode === CONST.ScaleModes.LINEAR && this.config.antialias)
+        {
+            filter = gl.LINEAR;
+        }
+
+        if (!source && typeof width === 'number' && typeof height === 'number')
+        {
+            texture = this.createTexture2D(0, filter, filter, wrap, wrap, gl.RGBA, null, width, height);
+        }
+        else
+        {
+            texture = this.createTexture2D(0, filter, filter, wrap, wrap, gl.RGBA, source);
+        }
+
+        return texture;
+    },
+
+    /**
+     * A wrapper for creating a WebGLTexture. If no pixel data is passed it will create an empty texture.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#createTexture2D
+     * @since 3.0.0
+     *
+     * @param {integer} mipLevel - Mip level of the texture.
+     * @param {integer} minFilter - Filtering of the texture.
+     * @param {integer} magFilter - Filtering of the texture.
+     * @param {integer} wrapT - Wrapping mode of the texture.
+     * @param {integer} wrapS - Wrapping mode of the texture.
+     * @param {integer} format - Which format does the texture use.
+     * @param {object} pixels - pixel data.
+     * @param {integer} width - Width of the texture in pixels.
+     * @param {integer} height - Height of the texture in pixels.
+     * @param {boolean} pma - Does the texture have premultiplied alpha?
+     *
+     * @return {WebGLTexture} The WebGLTexture that was created.
+     */
+    createTexture2D: function (mipLevel, minFilter, magFilter, wrapT, wrapS, format, pixels, width, height, pma)
+    {
+        pma = (pma === undefined || pma === null) ? true : pma;
+
+        var gl = this.gl;
+        var texture = gl.createTexture();
+
+        this.setTexture2D(texture, 0);
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapS);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapT);
+        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, pma);
+
+        if (pixels === null || pixels === undefined)
+        {
+            gl.texImage2D(gl.TEXTURE_2D, mipLevel, format, width, height, 0, format, gl.UNSIGNED_BYTE, null);
+        }
+        else
+        {
+            gl.texImage2D(gl.TEXTURE_2D, mipLevel, format, format, gl.UNSIGNED_BYTE, pixels);
+            width = pixels.width;
+            height = pixels.height;
+        }
+
+        this.setTexture2D(null, 0);
+
+        texture.isAlphaPremultiplied = pma;
+        texture.isRenderTexture = false;
+        texture.width = width;
+        texture.height = height;
+
+        this.nativeTextures.push(texture);
+
+        return texture;
+    },
+
+    /**
+     * Wrapper for creating WebGLFramebuffer.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#createFramebuffer
+     * @since 3.0.0
+     *
+     * @param {integer} width - Width in pixels of the framebuffer
+     * @param {integer} height - Height in pixels of the framebuffer
+     * @param {WebGLTexture} renderTexture - The color texture to where the color pixels are written
+     * @param {boolean} addDepthStencilBuffer - Indicates if the current framebuffer support depth and stencil buffers
+     *
+     * @return {WebGLFramebuffer} Raw WebGLFramebuffer
+     */
+    createFramebuffer: function (width, height, renderTexture, addDepthStencilBuffer)
+    {
+        var gl = this.gl;
+        var framebuffer = gl.createFramebuffer();
+        var complete = 0;
+
+        this.setFramebuffer(framebuffer);
+
+        if (addDepthStencilBuffer)
+        {
+            var depthStencilBuffer = gl.createRenderbuffer();
+            gl.bindRenderbuffer(gl.RENDERBUFFER, depthStencilBuffer);
+            gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_STENCIL, width, height);
+            gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, depthStencilBuffer);
+        }
+
+        renderTexture.isRenderTexture = true;
+        renderTexture.isAlphaPremultiplied = false;
+
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture, 0);
+
+        complete = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+
+        if (complete !== gl.FRAMEBUFFER_COMPLETE)
+        {
+            var errors = {
+                36054: 'Incomplete Attachment',
+                36055: 'Missing Attachment',
+                36057: 'Incomplete Dimensions',
+                36061: 'Framebuffer Unsupported'
+            };
+
+            throw new Error('Framebuffer incomplete. Framebuffer status: ' + errors[complete]);
+        }
+
+        framebuffer.renderTexture = renderTexture;
+
+        this.setFramebuffer(null);
+
+        return framebuffer;
+    },
+
+    /**
+     * Wrapper for creating a WebGLProgram
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#createProgram
+     * @since 3.0.0
+     *
+     * @param {string} vertexShader - Source to the vertex shader
+     * @param {string} fragmentShader - Source to the fragment shader
+     *
+     * @return {WebGLProgram} Raw WebGLProgram
+     */
+    createProgram: function (vertexShader, fragmentShader)
+    {
+        var gl = this.gl;
+        var program = gl.createProgram();
