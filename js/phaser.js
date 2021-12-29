@@ -98914,3 +98914,213 @@ var WebGLRenderer = new Class({
     {
         var gl = this.gl;
         var program = gl.createProgram();
+        var vs = gl.createShader(gl.VERTEX_SHADER);
+        var fs = gl.createShader(gl.FRAGMENT_SHADER);
+
+        gl.shaderSource(vs, vertexShader);
+        gl.shaderSource(fs, fragmentShader);
+        gl.compileShader(vs);
+        gl.compileShader(fs);
+
+        if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS))
+        {
+            throw new Error('Failed to compile Vertex Shader:\n' + gl.getShaderInfoLog(vs));
+        }
+        if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS))
+        {
+            throw new Error('Failed to compile Fragment Shader:\n' + gl.getShaderInfoLog(fs));
+        }
+
+        gl.attachShader(program, vs);
+        gl.attachShader(program, fs);
+        gl.linkProgram(program);
+
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS))
+        {
+            throw new Error('Failed to link program:\n' + gl.getProgramInfoLog(program));
+        }
+
+        return program;
+    },
+
+    /**
+     * Wrapper for creating a vertex buffer.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#createVertexBuffer
+     * @since 3.0.0
+     *
+     * @param {ArrayBuffer} initialDataOrSize - It's either ArrayBuffer or an integer indicating the size of the vbo
+     * @param {integer} bufferUsage - How the buffer is used. gl.DYNAMIC_DRAW, gl.STATIC_DRAW or gl.STREAM_DRAW
+     *
+     * @return {WebGLBuffer} Raw vertex buffer
+     */
+    createVertexBuffer: function (initialDataOrSize, bufferUsage)
+    {
+        var gl = this.gl;
+        var vertexBuffer = gl.createBuffer();
+
+        this.setVertexBuffer(vertexBuffer);
+
+        gl.bufferData(gl.ARRAY_BUFFER, initialDataOrSize, bufferUsage);
+
+        this.setVertexBuffer(null);
+
+        return vertexBuffer;
+    },
+
+    /**
+     * Wrapper for creating a vertex buffer.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#createIndexBuffer
+     * @since 3.0.0
+     *
+     * @param {ArrayBuffer} initialDataOrSize - Either ArrayBuffer or an integer indicating the size of the vbo.
+     * @param {integer} bufferUsage - How the buffer is used. gl.DYNAMIC_DRAW, gl.STATIC_DRAW or gl.STREAM_DRAW.
+     *
+     * @return {WebGLBuffer} Raw index buffer
+     */
+    createIndexBuffer: function (initialDataOrSize, bufferUsage)
+    {
+        var gl = this.gl;
+        var indexBuffer = gl.createBuffer();
+
+        this.setIndexBuffer(indexBuffer);
+
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, initialDataOrSize, bufferUsage);
+
+        this.setIndexBuffer(null);
+
+        return indexBuffer;
+    },
+
+    /**
+     * Removes the given texture from the nativeTextures array and then deletes it from the GPU.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#deleteTexture
+     * @since 3.0.0
+     *
+     * @param {WebGLTexture} texture - The WebGL Texture to be deleted.
+     *
+     * @return {this} This WebGLRenderer instance.
+     */
+    deleteTexture: function (texture)
+    {
+        var index = this.nativeTextures.indexOf(texture);
+
+        if (index !== -1)
+        {
+            SpliceOne(this.nativeTextures, index);
+        }
+
+        this.gl.deleteTexture(texture);
+
+        if (this.currentTextures[0] === texture)
+        {
+            //  texture we just deleted is in use, so bind a blank texture
+            this.setBlankTexture(true);
+        }
+
+        return this;
+    },
+
+    /**
+     * Deletes a WebGLFramebuffer from the GL instance.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#deleteFramebuffer
+     * @since 3.0.0
+     *
+     * @param {WebGLFramebuffer} framebuffer - The Framebuffer to be deleted.
+     *
+     * @return {this} This WebGLRenderer instance.
+     */
+    deleteFramebuffer: function (framebuffer)
+    {
+        this.gl.deleteFramebuffer(framebuffer);
+
+        return this;
+    },
+
+    /**
+     * Deletes a WebGLProgram from the GL instance.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#deleteProgram
+     * @since 3.0.0
+     *
+     * @param {WebGLProgram} program - The shader program to be deleted.
+     *
+     * @return {this} This WebGLRenderer instance.
+     */
+    deleteProgram: function (program)
+    {
+        this.gl.deleteProgram(program);
+
+        return this;
+    },
+
+    /**
+     * Deletes a WebGLBuffer from the GL instance.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#deleteBuffer
+     * @since 3.0.0
+     *
+     * @param {WebGLBuffer} vertexBuffer - The WebGLBuffer to be deleted.
+     *
+     * @return {this} This WebGLRenderer instance.
+     */
+    deleteBuffer: function (buffer)
+    {
+        this.gl.deleteBuffer(buffer);
+
+        return this;
+    },
+
+    /**
+     * Controls the pre-render operations for the given camera.
+     * Handles any clipping needed by the camera and renders the background color if a color is visible.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#preRenderCamera
+     * @since 3.0.0
+     *
+     * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera to pre-render.
+     */
+    preRenderCamera: function (camera)
+    {
+        var cx = camera._cx;
+        var cy = camera._cy;
+        var cw = camera._cw;
+        var ch = camera._ch;
+
+        var TextureTintPipeline = this.pipelines.TextureTintPipeline;
+
+        var color = camera.backgroundColor;
+
+        if (camera.renderToTexture)
+        {
+            this.flush();
+
+            this.pushScissor(cx, cy, cw, -ch);
+
+            this.setFramebuffer(camera.framebuffer);
+
+            var gl = this.gl;
+
+            gl.clearColor(0, 0, 0, 0);
+
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            TextureTintPipeline.projOrtho(cx, cw + cx, cy, ch + cy, -1000, 1000);
+
+            if (color.alphaGL > 0)
+            {
+                TextureTintPipeline.drawFillRect(
+                    cx, cy, cw + cx, ch + cy,
+                    Utils.getTintFromFloats(color.redGL, color.greenGL, color.blueGL, 1),
+                    color.alphaGL
+                );
+            }
+            
+            camera.emit('prerender', camera);
+        }
+        else
+        {
+            this.pushScissor(cx, cy, cw, ch);
