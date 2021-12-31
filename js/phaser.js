@@ -99124,3 +99124,219 @@ var WebGLRenderer = new Class({
         else
         {
             this.pushScissor(cx, cy, cw, ch);
+
+            if (color.alphaGL > 0)
+            {
+                TextureTintPipeline.drawFillRect(
+                    cx, cy, cw , ch,
+                    Utils.getTintFromFloats(color.redGL, color.greenGL, color.blueGL, 1),
+                    color.alphaGL
+                );
+            }
+        }
+    },
+
+    /**
+     * Controls the post-render operations for the given camera.
+     * Renders the foreground camera effects like flash and fading. It resets the current scissor state.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#postRenderCamera
+     * @since 3.0.0
+     *
+     * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera to post-render.
+     */
+    postRenderCamera: function (camera)
+    {
+        var TextureTintPipeline = this.pipelines.TextureTintPipeline;
+
+        camera.flashEffect.postRenderWebGL(TextureTintPipeline, Utils.getTintFromFloats);
+        camera.fadeEffect.postRenderWebGL(TextureTintPipeline, Utils.getTintFromFloats);
+
+        camera.dirty = false;
+
+        this.popScissor();
+
+        if (camera.renderToTexture)
+        {
+            TextureTintPipeline.flush();
+
+            this.setFramebuffer(null);
+
+            camera.emit('postrender', camera);
+
+            TextureTintPipeline.projOrtho(0, TextureTintPipeline.width, TextureTintPipeline.height, 0, -1000.0, 1000.0);
+
+            var getTint = Utils.getTintAppendFloatAlpha;
+
+            var pipeline = (camera.pipeline) ? camera.pipeline : TextureTintPipeline;
+
+            pipeline.batchTexture(
+                camera,
+                camera.glTexture,
+                camera.width, camera.height,
+                camera.x, camera.y,
+                camera.width, camera.height,
+                camera.zoom, camera.zoom,
+                camera.rotation,
+                camera.flipX, !camera.flipY,
+                1, 1,
+                0, 0,
+                0, 0, camera.width, camera.height,
+                getTint(camera._tintTL, camera._alphaTL),
+                getTint(camera._tintTR, camera._alphaTR),
+                getTint(camera._tintBL, camera._alphaBL),
+                getTint(camera._tintBR, camera._alphaBR),
+                (camera._isTinted && camera.tintFill),
+                0, 0,
+                this.defaultCamera,
+                null
+            );
+
+            //  Force clear the current texture so that items next in the batch (like Graphics) don't try and use it
+            this.setBlankTexture(true);
+        }
+    },
+
+    /**
+     * Clears the current vertex buffer and updates pipelines.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#preRender
+     * @since 3.0.0
+     */
+    preRender: function ()
+    {
+        if (this.contextLost) { return; }
+
+        var gl = this.gl;
+        var color = this.config.backgroundColor;
+        var pipelines = this.pipelines;
+
+        if (this.config.clearBeforeRender)
+        {
+            gl.clearColor(color.redGL, color.greenGL, color.blueGL, color.alphaGL);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+        }
+
+        gl.enable(gl.SCISSOR_TEST);
+
+        for (var key in pipelines)
+        {
+            pipelines[key].onPreRender();
+        }
+
+        //  TODO - Find a way to stop needing to create these arrays every frame
+        //  and equally not need a huge array buffer created to hold them
+
+        this.currentScissor = [ 0, 0, this.width, this.height ];
+        this.scissorStack = [ this.currentScissor ];
+
+        if (this.game.scene.customViewports)
+        {
+            gl.scissor(0, (this.drawingBufferHeight - this.height), this.width, this.height);
+        }
+
+        this.setPipeline(this.pipelines.TextureTintPipeline);
+    },
+
+    /**
+     * The core render step for a Scene.
+     * Iterates through the given Game Object's array and renders them with the given Camera.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#render
+     * @since 3.0.0
+     *
+     * @param {Phaser.Scene} scene - The Scene to render.
+     * @param {Phaser.GameObjects.GameObject} children - The Game Object's within the Scene to be rendered.
+     * @param {number} interpolationPercentage - The interpolation percentage to apply. Currently un-used.
+     * @param {Phaser.Cameras.Scene2D.Camera} camera - The Scene Camera to render with.
+     */
+    render: function (scene, children, interpolationPercentage, camera)
+    {
+        if (this.contextLost) { return; }
+
+        var list = children.list;
+        var childCount = list.length;
+        var pipelines = this.pipelines;
+
+        for (var key in pipelines)
+        {
+            pipelines[key].onRender(scene, camera);
+        }
+
+        //   Apply scissor for cam region + render background color, if not transparent
+        this.preRenderCamera(camera);
+
+        for (var i = 0; i < childCount; i++)
+        {
+            var child = list[i];
+
+            if (!child.willRender(camera))
+            {
+                continue;
+            }
+
+            if (child.blendMode !== this.currentBlendMode)
+            {
+                this.setBlendMode(child.blendMode);
+            }
+
+            var mask = child.mask;
+
+            if (mask)
+            {
+                mask.preRenderWebGL(this, child, camera);
+
+                child.renderWebGL(this, child, interpolationPercentage, camera);
+
+                mask.postRenderWebGL(this, child);
+            }
+            else
+            {
+                child.renderWebGL(this, child, interpolationPercentage, camera);
+            }
+        }
+
+        this.setBlendMode(CONST.BlendModes.NORMAL);
+
+        //  Applies camera effects and pops the scissor, if set
+        this.postRenderCamera(camera);
+    },
+
+    /**
+     * The post-render step happens after all Cameras in all Scenes have been rendered.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#postRender
+     * @since 3.0.0
+     */
+    postRender: function ()
+    {
+        if (this.contextLost) { return; }
+
+        this.flush();
+
+        // Unbind custom framebuffer here
+
+        if (this.snapshotState.callback)
+        {
+            this.snapshotState.callback(WebGLSnapshot(this.canvas, this.snapshotState.type, this.snapshotState.encoder));
+            this.snapshotState.callback = null;
+        }
+
+        var pipelines = this.pipelines;
+
+        for (var key in pipelines)
+        {
+            pipelines[key].onPostRender();
+        }
+    },
+
+    /**
+     * Schedules a snapshot to be taken after the current frame is rendered.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#snapshot
+     * @since 3.0.0
+     *
+     * @param {SnapshotCallback} callback - Function to invoke after the snapshot is created.
+     * @param {string} type - The format of the image to create, usually `image/png`.
+     * @param {number} encoderOptions - The image quality, between 0 and 1, to use for image formats with lossy compression (such as `image/jpeg`).
+     *
