@@ -99340,3 +99340,219 @@ var WebGLRenderer = new Class({
      * @param {string} type - The format of the image to create, usually `image/png`.
      * @param {number} encoderOptions - The image quality, between 0 and 1, to use for image formats with lossy compression (such as `image/jpeg`).
      *
+     * @return {Phaser.Renderer.WebGL.WebGLRenderer} This WebGL Renderer.
+     */
+    snapshot: function (callback, type, encoderOptions)
+    {
+        this.snapshotState.callback = callback;
+        this.snapshotState.type = type;
+        this.snapshotState.encoder = encoderOptions;
+
+        return this;
+    },
+
+    /**
+     * Creates a WebGL Texture based on the given canvas element.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#canvasToTexture
+     * @since 3.0.0
+     *
+     * @param {HTMLCanvasElement} srcCanvas - The Canvas element that will be used to populate the texture.
+     * @param {WebGLTexture} [dstTexture] - Is this going to replace an existing texture? If so, pass it here.
+     * @param {boolean} [noRepeat=false] - Should this canvas never be allowed to set REPEAT? (such as for Text objects)
+     *
+     * @return {WebGLTexture} The newly created WebGL Texture.
+     */
+    canvasToTexture: function (srcCanvas, dstTexture, noRepeat)
+    {
+        if (noRepeat === undefined) { noRepeat = false; }
+
+        var gl = this.gl;
+
+        if (!dstTexture)
+        {
+            var wrapping = gl.CLAMP_TO_EDGE;
+
+            if (!noRepeat && IsSizePowerOfTwo(srcCanvas.width, srcCanvas.height))
+            {
+                wrapping = gl.REPEAT;
+            }
+
+            dstTexture = this.createTexture2D(0, gl.NEAREST, gl.NEAREST, wrapping, wrapping, gl.RGBA, srcCanvas, srcCanvas.width, srcCanvas.height, true);
+        }
+        else
+        {
+            this.setTexture2D(dstTexture, 0);
+
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, srcCanvas);
+
+            dstTexture.width = srcCanvas.width;
+            dstTexture.height = srcCanvas.height;
+
+            this.setTexture2D(null, 0);
+        }
+
+        return dstTexture;
+    },
+
+    /**
+     * Sets the minification and magnification filter for a texture.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#setTextureFilter
+     * @since 3.0.0
+     *
+     * @param {integer} texture - The texture to set the filter for.
+     * @param {integer} filter - The filter to set. 0 for linear filtering, 1 for nearest neighbor (blocky) filtering.
+     *
+     * @return {this} This WebGL Renderer instance.
+     */
+    setTextureFilter: function (texture, filter)
+    {
+        var gl = this.gl;
+        var glFilter = [ gl.LINEAR, gl.NEAREST ][filter];
+
+        this.setTexture2D(texture, 0);
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, glFilter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, glFilter);
+
+        this.setTexture2D(null, 0);
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#setFloat1
+     * @since 3.0.0
+     *
+     * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {number} x - [description]
+     *
+     * @return {this} This WebGL Renderer instance.
+     */
+    setFloat1: function (program, name, x)
+    {
+        this.setProgram(program);
+
+        this.gl.uniform1f(this.gl.getUniformLocation(program, name), x);
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#setFloat2
+     * @since 3.0.0
+     *
+     * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {number} x - [description]
+     * @param {number} y - [description]
+     *
+     * @return {this} This WebGL Renderer instance.
+     */
+    setFloat2: function (program, name, x, y)
+    {
+        this.setProgram(program);
+
+        this.gl.uniform2f(this.gl.getUniformLocation(program, name), x, y);
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#setFloat3
+     * @since 3.0.0
+     *
+     * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {number} x - [description]
+     * @param {number} y - [description]
+     * @param {number} z - [description]
+     *
+     * @return {this} This WebGL Renderer instance.
+     */
+    setFloat3: function (program, name, x, y, z)
+    {
+        this.setProgram(program);
+
+        this.gl.uniform3f(this.gl.getUniformLocation(program, name), x, y, z);
+
+        return this;
+    },
+
+    /**
+     * Sets uniform of a WebGLProgram
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#setFloat4
+     * @since 3.0.0
+     *
+     * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {number} x - X component
+     * @param {number} y - Y component
+     * @param {number} z - Z component
+     * @param {number} w - W component
+     *
+     * @return {this} This WebGL Renderer instance.
+     */
+    setFloat4: function (program, name, x, y, z, w)
+    {
+        this.setProgram(program);
+
+        this.gl.uniform4f(this.gl.getUniformLocation(program, name), x, y, z, w);
+
+        return this;
+    },
+
+    /**
+     * Sets the value of a uniform variable in the given WebGLProgram.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#setFloat1v
+     * @since 3.13.0
+     *
+     * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {Float32Array} arr - The new value to be used for the uniform variable.
+     *
+     * @return {this} This WebGL Renderer instance.
+     */
+    setFloat1v: function (program, name, arr)
+    {
+        this.setProgram(program);
+
+        this.gl.uniform1fv(this.gl.getUniformLocation(program, name), arr);
+
+        return this;
+    },
+
+    /**
+     * Sets the value of a uniform variable in the given WebGLProgram.
+     *
+     * @method Phaser.Renderer.WebGL.WebGLRenderer#setFloat2v
+     * @since 3.13.0
+     *
+     * @param {WebGLProgram} program - The target WebGLProgram from which the uniform location will be looked-up.
+     * @param {string} name - The name of the uniform to look-up and modify.
+     * @param {Float32Array} arr - The new value to be used for the uniform variable.
+     *
+     * @return {this} This WebGL Renderer instance.
+     */
+    setFloat2v: function (program, name, arr)
+    {
+        this.setProgram(program);
+
+        this.gl.uniform2fv(this.gl.getUniformLocation(program, name), arr);
+
+        return this;
+    },
+
+    /**
+     * Sets the value of a uniform variable in the given WebGLProgram.
+     *
