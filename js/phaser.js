@@ -99788,3 +99788,249 @@ var WebGLRenderer = new Class({
      */
     destroy: function ()
     {
+        //  Clear-up anything that should be cleared :)
+        for (var key in this.pipelines)
+        {
+            this.pipelines[key].destroy();
+
+            delete this.pipelines[key];
+        }
+
+        for (var index = 0; index < this.nativeTextures.length; ++index)
+        {
+            this.deleteTexture(this.nativeTextures[index]);
+
+            delete this.nativeTextures[index];
+        }
+
+        delete this.gl;
+        delete this.game;
+
+        this.contextLost = true;
+        this.extensions = {};
+        this.nativeTextures.length = 0;
+    }
+
+});
+
+module.exports = WebGLRenderer;
+
+
+/***/ }),
+/* 424 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var modes = __webpack_require__(66);
+var CanvasFeatures = __webpack_require__(339);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Renderer.Canvas.GetBlendModes
+ * @since 3.0.0
+ *
+ * @return {array} [description]
+ */
+var GetBlendModes = function ()
+{
+    var output = [];
+    var useNew = CanvasFeatures.supportNewBlendModes;
+    var so = 'source-over';
+
+    output[modes.NORMAL] = so;
+    output[modes.ADD] = 'lighter';
+    output[modes.MULTIPLY] = (useNew) ? 'multiply' : so;
+    output[modes.SCREEN] = (useNew) ? 'screen' : so;
+    output[modes.OVERLAY] = (useNew) ? 'overlay' : so;
+    output[modes.DARKEN] = (useNew) ? 'darken' : so;
+    output[modes.LIGHTEN] = (useNew) ? 'lighten' : so;
+    output[modes.COLOR_DODGE] = (useNew) ? 'color-dodge' : so;
+    output[modes.COLOR_BURN] = (useNew) ? 'color-burn' : so;
+    output[modes.HARD_LIGHT] = (useNew) ? 'hard-light' : so;
+    output[modes.SOFT_LIGHT] = (useNew) ? 'soft-light' : so;
+    output[modes.DIFFERENCE] = (useNew) ? 'difference' : so;
+    output[modes.EXCLUSION] = (useNew) ? 'exclusion' : so;
+    output[modes.HUE] = (useNew) ? 'hue' : so;
+    output[modes.SATURATION] = (useNew) ? 'saturation' : so;
+    output[modes.COLOR] = (useNew) ? 'color' : so;
+    output[modes.LUMINOSITY] = (useNew) ? 'luminosity' : so;
+
+    return output;
+};
+
+module.exports = GetBlendModes;
+
+
+/***/ }),
+/* 425 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Renderer.Snapshot.Canvas
+ * @since 3.0.0
+ *
+ * @param {HTMLCanvasElement} canvas - [description]
+ * @param {string} [type='image/png'] - [description]
+ * @param {number} [encoderOptions=0.92] - [description]
+ *
+ * @return {HTMLImageElement} [description]
+ */
+var CanvasSnapshot = function (canvas, type, encoderOptions)
+{
+    if (type === undefined) { type = 'image/png'; }
+    if (encoderOptions === undefined) { encoderOptions = 0.92; }
+
+    var src = canvas.toDataURL(type, encoderOptions);
+
+    var image = new Image();
+
+    image.src = src;
+
+    return image;
+};
+
+module.exports = CanvasSnapshot;
+
+
+/***/ }),
+/* 426 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Felipe Alfonso <@bitnenfer>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CanvasSnapshot = __webpack_require__(425);
+var Class = __webpack_require__(0);
+var CONST = __webpack_require__(26);
+var GetBlendModes = __webpack_require__(424);
+var ScaleModes = __webpack_require__(94);
+var Smoothing = __webpack_require__(120);
+var TransformMatrix = __webpack_require__(38);
+
+/**
+ * @classdesc
+ * [description]
+ *
+ * @class CanvasRenderer
+ * @memberof Phaser.Renderer.Canvas
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Game} game - The Phaser Game instance that owns this renderer.
+ */
+var CanvasRenderer = new Class({
+
+    initialize:
+
+    function CanvasRenderer (game)
+    {
+        /**
+         * The Phaser Game instance that owns this renderer.
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#game
+         * @type {Phaser.Game}
+         * @since 3.0.0
+         */
+        this.game = game;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#type
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.type = CONST.CANVAS;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#drawCount
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.drawCount = 0;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#width
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.width = game.config.width;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#height
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.height = game.config.height;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#config
+         * @type {RendererConfig}
+         * @since 3.0.0
+         */
+        this.config = {
+            clearBeforeRender: game.config.clearBeforeRender,
+            backgroundColor: game.config.backgroundColor,
+            resolution: game.config.resolution,
+            autoResize: game.config.autoResize,
+            antialias: game.config.antialias,
+            roundPixels: game.config.roundPixels
+        };
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#scaleMode
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.scaleMode = (game.config.antialias) ? ScaleModes.LINEAR : ScaleModes.NEAREST;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#gameCanvas
+         * @type {HTMLCanvasElement}
+         * @since 3.0.0
+         */
+        this.gameCanvas = game.canvas;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#gameContext
+         * @type {CanvasRenderingContext2D}
+         * @since 3.0.0
+         */
+        this.gameContext = (this.game.config.context) ? this.game.config.context : this.gameCanvas.getContext('2d');
+
+        /**
+         * [description]
+         *
