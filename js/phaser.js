@@ -100034,3 +100034,243 @@ var CanvasRenderer = new Class({
         /**
          * [description]
          *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#currentContext
+         * @type {CanvasRenderingContext2D}
+         * @since 3.0.0
+         */
+        this.currentContext = this.gameContext;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#blendModes
+         * @type {array}
+         * @since 3.0.0
+         */
+        this.blendModes = GetBlendModes();
+
+        // image-rendering: optimizeSpeed;
+        // image-rendering: pixelated;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#currentScaleMode
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.currentScaleMode = 0;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#snapshotCallback
+         * @type {?SnapshotCallback}
+         * @default null
+         * @since 3.0.0
+         */
+        this.snapshotCallback = null;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#snapshotType
+         * @type {?string}
+         * @default null
+         * @since 3.0.0
+         */
+        this.snapshotType = null;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#snapshotEncoder
+         * @type {?number}
+         * @default null
+         * @since 3.0.0
+         */
+        this.snapshotEncoder = null;
+
+        /**
+         * A temporary Transform Matrix, re-used internally during batching.
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#_tempMatrix1
+         * @private
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @since 3.12.0
+         */
+        this._tempMatrix1 = new TransformMatrix();
+
+        /**
+         * A temporary Transform Matrix, re-used internally during batching.
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#_tempMatrix2
+         * @private
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @since 3.12.0
+         */
+        this._tempMatrix2 = new TransformMatrix();
+
+        /**
+         * A temporary Transform Matrix, re-used internally during batching.
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#_tempMatrix3
+         * @private
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @since 3.12.0
+         */
+        this._tempMatrix3 = new TransformMatrix();
+
+        /**
+         * A temporary Transform Matrix, re-used internally during batching.
+         *
+         * @name Phaser.Renderer.Canvas.CanvasRenderer#_tempMatrix4
+         * @private
+         * @type {Phaser.GameObjects.Components.TransformMatrix}
+         * @since 3.12.0
+         */
+        this._tempMatrix4 = new TransformMatrix();
+
+        this.init();
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.Canvas.CanvasRenderer#init
+     * @since 3.0.0
+     */
+    init: function ()
+    {
+        this.resize(this.width, this.height);
+    },
+
+    /**
+     * Resize the main game canvas.
+     *
+     * @method Phaser.Renderer.Canvas.CanvasRenderer#resize
+     * @since 3.0.0
+     *
+     * @param {integer} width - [description]
+     * @param {integer} height - [description]
+     */
+    resize: function (width, height)
+    {
+        var resolution = this.config.resolution;
+
+        this.width = width * resolution;
+        this.height = height * resolution;
+
+        this.gameCanvas.width = this.width;
+        this.gameCanvas.height = this.height;
+
+        if (this.config.autoResize)
+        {
+            this.gameCanvas.style.width = (this.width / resolution) + 'px';
+            this.gameCanvas.style.height = (this.height / resolution) + 'px';
+        }
+
+        //  Resizing a canvas will reset imageSmoothingEnabled (and probably other properties)
+        if (this.scaleMode === ScaleModes.NEAREST)
+        {
+            Smoothing.disable(this.gameContext);
+        }
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.Canvas.CanvasRenderer#onContextLost
+     * @since 3.0.0
+     *
+     * @param {function} callback - [description]
+     */
+    onContextLost: function ()
+    {
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.Canvas.CanvasRenderer#onContextRestored
+     * @since 3.0.0
+     *
+     * @param {function} callback - [description]
+     */
+    onContextRestored: function ()
+    {
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.Canvas.CanvasRenderer#resetTransform
+     * @since 3.0.0
+     */
+    resetTransform: function ()
+    {
+        this.currentContext.setTransform(1, 0, 0, 1, 0, 0);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.Canvas.CanvasRenderer#setBlendMode
+     * @since 3.0.0
+     *
+     * @param {number} blendMode - [description]
+     *
+     * @return {this} [description]
+     */
+    setBlendMode: function (blendMode)
+    {
+        this.currentContext.globalCompositeOperation = blendMode;
+
+        return this;
+    },
+
+    /**
+     * Changes the Canvas Rendering Context that all draw operations are performed against.
+     *
+     * @method Phaser.Renderer.Canvas.CanvasRenderer#setContext
+     * @since 3.12.0
+     *
+     * @param {?CanvasRenderingContext2D} [ctx] - The new Canvas Rendering Context to draw everything to. Leave empty to reset to the Game Canvas.
+     *
+     * @return {this} The Canvas Renderer instance.
+     */
+    setContext: function (ctx)
+    {
+        this.currentContext = (ctx) ? ctx : this.gameContext;
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.Canvas.CanvasRenderer#setAlpha
+     * @since 3.0.0
+     *
+     * @param {number} alpha - [description]
+     *
+     * @return {this} [description]
+     */
+    setAlpha: function (alpha)
+    {
+        this.currentContext.globalAlpha = alpha;
+
+        return this;
+    },
+
+    /**
+     * Called at the start of the render loop.
+     *
+     * @method Phaser.Renderer.Canvas.CanvasRenderer#preRender
+     * @since 3.0.0
+     */
+    preRender: function ()
+    {
+        var ctx = this.gameContext;
+        var config = this.config;
