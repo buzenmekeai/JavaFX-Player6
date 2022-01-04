@@ -100466,3 +100466,215 @@ var CanvasRenderer = new Class({
         var res = frame.source.resolution;
 
         var x = -sprite.displayOriginX + frame.x;
+        var y = -sprite.displayOriginY + frame.y;
+
+        var fx = (sprite.flipX) ? -1 : 1;
+        var fy = (sprite.flipY) ? -1 : 1;
+    
+        if (sprite.isCropped)
+        {
+            var crop = sprite._crop;
+
+            if (crop.flipX !== sprite.flipX || crop.flipY !== sprite.flipY)
+            {
+                frame.updateCropUVs(crop, sprite.flipX, sprite.flipY);
+            }
+
+            frameWidth = crop.cw;
+            frameHeight = crop.ch;
+    
+            frameX = crop.cx;
+            frameY = crop.cy;
+
+            x = -sprite.displayOriginX + crop.x;
+            y = -sprite.displayOriginY + crop.y;
+
+            if (fx === -1)
+            {
+                if (x >= 0)
+                {
+                    x = -(x + frameWidth);
+                }
+                else if (x < 0)
+                {
+                    x = (Math.abs(x) - frameWidth);
+                }
+            }
+        
+            if (fy === -1)
+            {
+                if (y >= 0)
+                {
+                    y = -(y + frameHeight);
+                }
+                else if (y < 0)
+                {
+                    y = (Math.abs(y) - frameHeight);
+                }
+            }
+        }
+
+        spriteMatrix.applyITRS(sprite.x, sprite.y, sprite.rotation, sprite.scaleX, sprite.scaleY);
+
+        camMatrix.copyFrom(camera.matrix);
+
+        if (parentTransformMatrix)
+        {
+            //  Multiply the camera by the parent matrix
+            camMatrix.multiplyWithOffset(parentTransformMatrix, -camera.scrollX * sprite.scrollFactorX, -camera.scrollY * sprite.scrollFactorY);
+
+            //  Undo the camera scroll
+            spriteMatrix.e = sprite.x;
+            spriteMatrix.f = sprite.y;
+
+            //  Multiply by the Sprite matrix, store result in calcMatrix
+            camMatrix.multiply(spriteMatrix, calcMatrix);
+        }
+        else
+        {
+            spriteMatrix.e -= camera.scrollX * sprite.scrollFactorX;
+            spriteMatrix.f -= camera.scrollY * sprite.scrollFactorY;
+    
+            //  Multiply by the Sprite matrix, store result in calcMatrix
+            camMatrix.multiply(spriteMatrix, calcMatrix);
+        }
+
+        ctx.save();
+       
+        calcMatrix.setToContext(ctx);
+
+        ctx.scale(fx, fy);
+
+        ctx.globalCompositeOperation = this.blendModes[sprite.blendMode];
+
+        ctx.globalAlpha = alpha;
+
+        ctx.drawImage(frame.source.image, frameX, frameY, frameWidth, frameHeight, x, y, frameWidth / res, frameHeight / res);
+
+        ctx.restore();
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.Canvas.CanvasRenderer#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.gameCanvas = null;
+        this.gameContext = null;
+
+        this.game = null;
+    }
+
+});
+
+module.exports = CanvasRenderer;
+
+
+/***/ }),
+/* 427 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+
+/**
+ * This event is dispatched when an animation starts playing.
+ * 
+ * Listen for it on the Game Object: `sprite.on('animationstart', listener)`
+ *
+ * @event Phaser.GameObjects.Components.Animation#onStartEvent
+ * @param {Phaser.Animations.Animation} animation - Reference to the currently playing animation.
+ * @param {Phaser.Animations.AnimationFrame} frame - Reference to the current Animation Frame.
+ * @param {Phaser.GameObjects.Sprite} gameObject - Reference to the Game Object on which the event occurred.
+ */
+
+/**
+ * This event is dispatched when an animation restarts.
+ * 
+ * Listen for it on the Game Object: `sprite.on('animationrestart', listener)`
+ *
+ * @event Phaser.GameObjects.Components.Animation#onRestartEvent
+ * @param {Phaser.Animations.Animation} animation - Reference to the currently playing animation.
+ * @param {Phaser.Animations.AnimationFrame} frame - Reference to the current Animation Frame.
+ * @param {Phaser.GameObjects.Sprite} gameObject - Reference to the Game Object on which the event occurred.
+ */
+
+/**
+ * This event is dispatched when an animation repeats.
+ * 
+ * Listen for it on the Game Object: `sprite.on('animationrepeat', listener)`
+ *
+ * @event Phaser.GameObjects.Components.Animation#onRepeatEvent
+ * @param {Phaser.Animations.Animation} animation - Reference to the currently playing animation.
+ * @param {Phaser.Animations.AnimationFrame} frame - Reference to the current Animation Frame.
+ * @param {integer} repeatCount - The number of times this animation has repeated.
+ * @param {Phaser.GameObjects.Sprite} gameObject - Reference to the Game Object on which the event occurred.
+ */
+
+/**
+ * This event is dispatched when an animation updates. This happens when the animation frame changes,
+ * based on the animation frame rate and other factors like timeScale and delay.
+ * 
+ * Listen for it on the Game Object: `sprite.on('animationupdate', listener)`
+ *
+ * @event Phaser.GameObjects.Components.Animation#onUpdateEvent
+ * @param {Phaser.Animations.Animation} animation - Reference to the currently playing animation.
+ * @param {Phaser.Animations.AnimationFrame} frame - Reference to the current Animation Frame.
+ * @param {Phaser.GameObjects.Sprite} gameObject - Reference to the Game Object on which the event occurred.
+ */
+
+/**
+ * This event is dispatched when an animation completes playing, either naturally or via Animation.stop.
+ * 
+ * Listen for it on the Game Object: `sprite.on('animationcomplete', listener)`
+ *
+ * @event Phaser.GameObjects.Components.Animation#onCompleteEvent
+ * @param {Phaser.Animations.Animation} animation - Reference to the currently playing animation.
+ * @param {Phaser.Animations.AnimationFrame} frame - Reference to the current Animation Frame.
+ * @param {Phaser.GameObjects.Sprite} gameObject - Reference to the Game Object on which the event occurred.
+ */
+
+/**
+ * @classdesc
+ * A Game Object Animation Controller.
+ *
+ * This controller lives as an instance within a Game Object, accessible as `sprite.anims`.
+ *
+ * @class Animation
+ * @memberof Phaser.GameObjects.Components
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.GameObjects.GameObject} parent - The Game Object to which this animation controller belongs.
+ */
+var Animation = new Class({
+
+    initialize:
+
+    function Animation (parent)
+    {
+        /**
+         * The Game Object to which this animation controller belongs.
+         *
+         * @name Phaser.GameObjects.Components.Animation#parent
+         * @type {Phaser.GameObjects.GameObject}
+         * @since 3.0.0
+         */
+        this.parent = parent;
+
+        /**
+         * A reference to the global Animation Manager.
+         *
+         * @name Phaser.GameObjects.Components.Animation#animationManager
+         * @type {Phaser.Animations.AnimationManager}
+         * @since 3.0.0
+         */
+        this.animationManager = parent.scene.sys.anims;
