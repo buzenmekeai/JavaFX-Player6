@@ -100274,3 +100274,195 @@ var CanvasRenderer = new Class({
     {
         var ctx = this.gameContext;
         var config = this.config;
+
+        var width = this.width;
+        var height = this.height;
+
+        if (config.clearBeforeRender)
+        {
+            ctx.clearRect(0, 0, width, height);
+        }
+
+        if (!config.transparent)
+        {
+            ctx.fillStyle = config.backgroundColor.rgba;
+            ctx.fillRect(0, 0, width, height);
+        }
+
+        this.drawCount = 0;
+    },
+
+    /**
+     * Renders the Scene to the given Camera.
+     *
+     * @method Phaser.Renderer.Canvas.CanvasRenderer#render
+     * @since 3.0.0
+     *
+     * @param {Phaser.Scene} scene - [description]
+     * @param {Phaser.GameObjects.DisplayList} children - [description]
+     * @param {number} interpolationPercentage - [description]
+     * @param {Phaser.Cameras.Scene2D.Camera} camera - [description]
+     */
+    render: function (scene, children, interpolationPercentage, camera)
+    {
+        var list = children.list;
+        var childCount = list.length;
+
+        var cx = camera._cx;
+        var cy = camera._cy;
+        var cw = camera._cw;
+        var ch = camera._ch;
+
+        var ctx = (camera.renderToTexture) ? camera.context : scene.sys.context;
+
+        var scissor = (cx !== 0 || cy !== 0 || cw !== ctx.canvas.width || ch !== ctx.canvas.height);
+
+        this.currentContext = ctx;
+
+        //  If the alpha or blend mode didn't change since the last render, then don't set them again (saves 2 ops)
+
+        if (!camera.transparent)
+        {
+            ctx.fillStyle = camera.backgroundColor.rgba;
+            ctx.fillRect(cx, cy, cw, ch);
+        }
+
+        ctx.globalAlpha = camera.alpha;
+
+        ctx.globalCompositeOperation = 'source-over';
+
+        this.drawCount += list.length;
+
+        if (scissor)
+        {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(cx, cy, cw, ch);
+            ctx.clip();
+        }
+
+        if (camera.renderToTexture)
+        {
+            camera.emit('prerender', camera);
+        }
+
+        camera.matrix.copyToContext(ctx);
+
+        for (var i = 0; i < childCount; i++)
+        {
+            var child = list[i];
+
+            if (!child.willRender(camera))
+            {
+                continue;
+            }
+
+            if (child.mask)
+            {
+                child.mask.preRenderCanvas(this, child, camera);
+            }
+
+            child.renderCanvas(this, child, interpolationPercentage, camera);
+
+            if (child.mask)
+            {
+                child.mask.postRenderCanvas(this, child, camera);
+            }
+        }
+
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+
+        camera.flashEffect.postRenderCanvas(ctx);
+        camera.fadeEffect.postRenderCanvas(ctx);
+
+        camera.dirty = false;
+
+        //  Reset the camera scissor
+        if (scissor)
+        {
+            ctx.restore();
+        }
+
+        if (camera.renderToTexture)
+        {
+            camera.emit('postrender', camera);
+
+            scene.sys.context.drawImage(camera.canvas, cx, cy);
+        }
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.Canvas.CanvasRenderer#postRender
+     * @since 3.0.0
+     */
+    postRender: function ()
+    {
+        var ctx = this.gameContext;
+
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+
+        if (this.snapshotCallback)
+        {
+            this.snapshotCallback(CanvasSnapshot(this.gameCanvas, this.snapshotType, this.snapshotEncoder));
+            this.snapshotCallback = null;
+        }
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Renderer.Canvas.CanvasRenderer#snapshot
+     * @since 3.0.0
+     *
+     * @param {SnapshotCallback} callback - [description]
+     * @param {string} type - [description]
+     * @param {number} encoderOptions - [description]
+     */
+    snapshot: function (callback, type, encoderOptions)
+    {
+        this.snapshotCallback = callback;
+        this.snapshotType = type;
+        this.snapshotEncoder = encoderOptions;
+    },
+
+    /**
+     * Takes a Sprite Game Object, or any object that extends it, and draws it to the current context.
+     *
+     * @method Phaser.Renderer.Canvas.CanvasRenderer#batchSprite
+     * @since 3.12.0
+     *
+     * @param {Phaser.GameObjects.GameObject} sprite - The texture based Game Object to draw.
+     * @param {Phaser.Textures.Frame} frame - The frame to draw, doesn't have to be that owned by the Game Object.
+     * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera to use for the rendering transform.
+     * @param {Phaser.GameObjects.Components.TransformMatrix} [parentTransformMatrix] - The transform matrix of the parent container, if set.
+     */
+    batchSprite: function (sprite, frame, camera, parentTransformMatrix)
+    {
+        var alpha = camera.alpha * sprite.alpha;
+
+        if (alpha === 0)
+        {
+            //  Nothing to see, so abort early
+            return;
+        }
+    
+        var ctx = this.currentContext;
+
+        var camMatrix = this._tempMatrix1;
+        var spriteMatrix = this._tempMatrix2;
+        var calcMatrix = this._tempMatrix3;
+
+        var cd = frame.canvasData;
+
+        var frameX = cd.x;
+        var frameY = cd.y;
+        var frameWidth = frame.cutWidth;
+        var frameHeight = frame.cutHeight;
+        var res = frame.source.resolution;
+
+        var x = -sprite.displayOriginX + frame.x;
