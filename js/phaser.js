@@ -100902,3 +100902,223 @@ var Animation = new Class({
          *
          * @name Phaser.GameObjects.Components.Animation#_pendingStop
          * @type {integer}
+         * @private
+         * @since 3.4.0
+         */
+        this._pendingStop = 0;
+
+        /**
+         * Internal property used by _pendingStop.
+         *
+         * @name Phaser.GameObjects.Components.Animation#_pendingStopValue
+         * @type {any}
+         * @private
+         * @since 3.4.0
+         */
+        this._pendingStopValue;
+    },
+
+    /**
+     * Sets the amount of time, in milliseconds, that the animation will be delayed before starting playback.
+     *
+     * @method Phaser.GameObjects.Components.Animation#setDelay
+     * @since 3.4.0
+     *
+     * @param {integer} [value=0] - The amount of time, in milliseconds, to wait before starting playback.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    setDelay: function (value)
+    {
+        if (value === undefined) { value = 0; }
+
+        this._delay = value;
+
+        return this.parent;
+    },
+
+    /**
+     * Gets the amount of time, in milliseconds that the animation will be delayed before starting playback.
+     *
+     * @method Phaser.GameObjects.Components.Animation#getDelay
+     * @since 3.4.0
+     *
+     * @return {integer} The amount of time, in milliseconds, the Animation will wait before starting playback.
+     */
+    getDelay: function ()
+    {
+        return this._delay;
+    },
+
+    /**
+     * Waits for the specified delay, in milliseconds, then starts playback of the requested animation.
+     *
+     * @method Phaser.GameObjects.Components.Animation#delayedPlay
+     * @since 3.0.0
+     *
+     * @param {integer} delay - The delay, in milliseconds, to wait before starting the animation playing.
+     * @param {string} key - The key of the animation to play.
+     * @param {integer} [startFrame=0] - The frame of the animation to start from.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    delayedPlay: function (delay, key, startFrame)
+    {
+        this.play(key, true, startFrame);
+
+        this.nextTick += delay;
+
+        return this.parent;
+    },
+
+    /**
+     * Returns the key of the animation currently loaded into this component.
+     *
+     * @method Phaser.GameObjects.Components.Animation#getCurrentKey
+     * @since 3.0.0
+     *
+     * @return {string} The key of the Animation loaded into this component.
+     */
+    getCurrentKey: function ()
+    {
+        if (this.currentAnim)
+        {
+            return this.currentAnim.key;
+        }
+    },
+
+    /**
+     * Internal method used to load an animation into this component.
+     *
+     * @method Phaser.GameObjects.Components.Animation#load
+     * @protected
+     * @since 3.0.0
+     *
+     * @param {string} key - The key of the animation to load.
+     * @param {integer} [startFrame=0] - The start frame of the animation to load.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    load: function (key, startFrame)
+    {
+        if (startFrame === undefined) { startFrame = 0; }
+
+        if (this.isPlaying)
+        {
+            this.stop();
+        }
+
+        //  Load the new animation in
+        this.animationManager.load(this, key, startFrame);
+
+        return this.parent;
+    },
+
+    /**
+     * Pause the current animation and set the `isPlaying` property to `false`.
+     * You can optionally pause it at a specific frame.
+     *
+     * @method Phaser.GameObjects.Components.Animation#pause
+     * @since 3.0.0
+     *
+     * @param {Phaser.Animations.AnimationFrame} [atFrame] - An optional frame to set after pausing the animation.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    pause: function (atFrame)
+    {
+        if (!this._paused)
+        {
+            this._paused = true;
+            this._wasPlaying = this.isPlaying;
+            this.isPlaying = false;
+        }
+
+        if (atFrame !== undefined)
+        {
+            this.updateFrame(atFrame);
+        }
+
+        return this.parent;
+    },
+
+    /**
+     * Resumes playback of a paused animation and sets the `isPlaying` property to `true`.
+     * You can optionally tell it to start playback from a specific frame.
+     *
+     * @method Phaser.GameObjects.Components.Animation#resume
+     * @since 3.0.0
+     *
+     * @param {Phaser.Animations.AnimationFrame} [fromFrame] - An optional frame to set before restarting playback.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    resume: function (fromFrame)
+    {
+        if (this._paused)
+        {
+            this._paused = false;
+            this.isPlaying = this._wasPlaying;
+        }
+
+        if (fromFrame !== undefined)
+        {
+            this.updateFrame(fromFrame);
+        }
+
+        return this.parent;
+    },
+
+    /**
+     * `true` if the current animation is paused, otherwise `false`.
+     *
+     * @name Phaser.GameObjects.Components.Animation#isPaused
+     * @readonly
+     * @type {boolean}
+     * @since 3.4.0
+     */
+    isPaused: {
+
+        get: function ()
+        {
+            return this._paused;
+        }
+
+    },
+
+    /**
+     * Plays an Animation on the Game Object that owns this Animation Component.
+     *
+     * @method Phaser.GameObjects.Components.Animation#play
+     * @fires Phaser.GameObjects.Components.Animation#onStartEvent
+     * @since 3.0.0
+     *
+     * @param {string} key - The string-based key of the animation to play, as defined previously in the Animation Manager.
+     * @param {boolean} [ignoreIfPlaying=false] - If an animation is already playing then ignore this call.
+     * @param {integer} [startFrame=0] - Optionally start the animation playing from this frame index.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    play: function (key, ignoreIfPlaying, startFrame)
+    {
+        if (ignoreIfPlaying === undefined) { ignoreIfPlaying = false; }
+        if (startFrame === undefined) { startFrame = 0; }
+
+        if (ignoreIfPlaying && this.isPlaying && this.currentAnim.key === key)
+        {
+            return this.parent;
+        }
+
+        this.forward = true;
+        this._reverse = false;
+
+        return this._startAnimation(key, startFrame);
+    },
+
+    /**
+     * Plays an Animation (in reverse mode) on the Game Object that owns this Animation Component.
+     *
+     * @method Phaser.GameObjects.Components.Animation#playReverse
+     * @fires Phaser.GameObjects.Components.Animation#onStartEvent
+     * @since 3.12.0
+     *
