@@ -101122,3 +101122,231 @@ var Animation = new Class({
      * @fires Phaser.GameObjects.Components.Animation#onStartEvent
      * @since 3.12.0
      *
+     * @param {string} key - The string-based key of the animation to play, as defined previously in the Animation Manager.
+     * @param {boolean} [ignoreIfPlaying=false] - If an animation is already playing then ignore this call.
+     * @param {integer} [startFrame=0] - Optionally start the animation playing from this frame index.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    playReverse: function (key, ignoreIfPlaying, startFrame)
+    {
+        if (ignoreIfPlaying === undefined) { ignoreIfPlaying = false; }
+        if (startFrame === undefined) { startFrame = 0; }
+
+        if (ignoreIfPlaying && this.isPlaying && this.currentAnim.key === key)
+        {
+            return this.parent;
+        }
+
+        this.forward = false;
+        this._reverse = true;
+
+        return this._startAnimation(key, startFrame);
+    },
+
+    /**
+     * Load an Animation and fires 'onStartEvent' event,
+     * extracted from 'play' method
+     *
+     * @method Phaser.GameObjects.Components.Animation#_startAnimation
+     * @fires Phaser.GameObjects.Components.Animation#onStartEvent
+     * @since 3.12.0
+     *
+     * @param {string} key - The string-based key of the animation to play, as defined previously in the Animation Manager.
+     * @param {integer} [startFrame=0] - Optionally start the animation playing from this frame index.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    _startAnimation: function (key, startFrame)
+    {
+        this.load(key, startFrame);
+
+        var anim = this.currentAnim;
+        var gameObject = this.parent;
+
+        //  Should give us 9,007,199,254,740,991 safe repeats
+        this.repeatCounter = (this._repeat === -1) ? Number.MAX_VALUE : this._repeat;
+
+        anim.getFirstTick(this);
+
+        this.isPlaying = true;
+        this.pendingRepeat = false;
+
+        if (anim.showOnStart)
+        {
+            gameObject.visible = true;
+        }
+
+        gameObject.emit('animationstart', this.currentAnim, this.currentFrame, gameObject);
+
+        return gameObject;
+    },
+
+    /**
+     * Reverse an Animation that is already playing on the Game Object.
+     *
+     * @method Phaser.GameObjects.Components.Animation#reverse
+     * @since 3.12.0
+     *
+     * @param {string} key - The string-based key of the animation to play, as defined previously in the Animation Manager.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    reverse: function (key)
+    {
+        if (!this.isPlaying || this.currentAnim.key !== key) { return this.parent; }
+        this._reverse = !this._reverse;
+        this.forward = !this.forward;
+
+        return this.parent;
+    },
+
+    /**
+     * Returns a value between 0 and 1 indicating how far this animation is through, ignoring repeats and yoyos.
+     * If the animation has a non-zero repeat defined, `getProgress` and `getTotalProgress` will be different
+     * because `getProgress` doesn't include any repeats or repeat delays, whereas `getTotalProgress` does.
+     *
+     * @method Phaser.GameObjects.Components.Animation#getProgress
+     * @since 3.4.0
+     *
+     * @return {number} The progress of the current animation, between 0 and 1.
+     */
+    getProgress: function ()
+    {
+        var p = this.currentFrame.progress;
+
+        if (!this.forward)
+        {
+            p = 1 - p;
+        }
+
+        return p;
+    },
+
+    /**
+     * Takes a value between 0 and 1 and uses it to set how far this animation is through playback.
+     * Does not factor in repeats or yoyos, but does handle playing forwards or backwards.
+     *
+     * @method Phaser.GameObjects.Components.Animation#setProgress
+     * @since 3.4.0
+     *
+     * @param {number} [value=0] - The progress value, between 0 and 1.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    setProgress: function (value)
+    {
+        if (!this.forward)
+        {
+            value = 1 - value;
+        }
+
+        this.setCurrentFrame(this.currentAnim.getFrameByProgress(value));
+
+        return this.parent;
+    },
+
+    /**
+     * Handle the removal of an animation from the Animation Manager.
+     *
+     * @method Phaser.GameObjects.Components.Animation#remove
+     * @since 3.0.0
+     *
+     * @param {string} [key] - The key of the removed Animation.
+     * @param {Phaser.Animations.Animation} [animation] - The removed Animation.
+     */
+    remove: function (key, animation)
+    {
+        if (animation === undefined) { animation = this.currentAnim; }
+
+        if (this.isPlaying && animation.key === this.currentAnim.key)
+        {
+            this.stop();
+
+            this.setCurrentFrame(this.currentAnim.frames[0]);
+        }
+    },
+
+    /**
+     * Gets the number of times that the animation will repeat
+     * after its first iteration. For example, if returns 1, the animation will
+     * play a total of twice (the initial play plus 1 repeat).
+     * A value of -1 means the animation will repeat indefinitely.
+     *
+     * @method Phaser.GameObjects.Components.Animation#getRepeat
+     * @since 3.4.0
+     *
+     * @return {integer} The number of times that the animation will repeat.
+     */
+    getRepeat: function ()
+    {
+        return this._repeat;
+    },
+
+    /**
+     * Sets the number of times that the animation should repeat
+     * after its first iteration. For example, if repeat is 1, the animation will
+     * play a total of twice (the initial play plus 1 repeat).
+     * To repeat indefinitely, use -1. repeat should always be an integer.
+     *
+     * @method Phaser.GameObjects.Components.Animation#setRepeat
+     * @since 3.4.0
+     *
+     * @param {integer} value - The number of times that the animation should repeat.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    setRepeat: function (value)
+    {
+        this._repeat = value;
+
+        this.repeatCounter = 0;
+
+        return this.parent;
+    },
+
+    /**
+     * Gets the amount of delay between repeats, if any.
+     *
+     * @method Phaser.GameObjects.Components.Animation#getRepeatDelay
+     * @since 3.4.0
+     *
+     * @return {number} The delay between repeats.
+     */
+    getRepeatDelay: function ()
+    {
+        return this._repeatDelay;
+    },
+
+    /**
+     * Sets the amount of time in seconds between repeats.
+     * For example, if `repeat` is 2 and `repeatDelay` is 10, the animation will play initially,
+     * then wait for 10 seconds before repeating, then play again, then wait another 10 seconds
+     * before doing its final repeat.
+     *
+     * @method Phaser.GameObjects.Components.Animation#setRepeatDelay
+     * @since 3.4.0
+     *
+     * @param {number} value - The delay to wait between repeats, in seconds.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    setRepeatDelay: function (value)
+    {
+        this._repeatDelay = value;
+
+        return this.parent;
+    },
+
+    /**
+     * Restarts the current animation from its beginning, optionally including its delay value.
+     *
+     * @method Phaser.GameObjects.Components.Animation#restart
+     * @fires Phaser.GameObjects.Components.Animation#onRestartEvent
+     * @since 3.0.0
+     *
+     * @param {boolean} [includeDelay=false] - Whether to include the delay value of the animation when restarting.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    restart: function (includeDelay)
