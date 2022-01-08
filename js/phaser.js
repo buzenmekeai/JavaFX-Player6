@@ -101562,3 +101562,227 @@ var Animation = new Class({
         {
             gameObject.updateDisplayOrigin();
         }
+
+        return gameObject;
+    },
+
+    /**
+     * Internal frame change handler.
+     *
+     * @method Phaser.GameObjects.Components.Animation#updateFrame
+     * @fires Phaser.GameObjects.Components.Animation#onUpdateEvent
+     * @private
+     * @since 3.0.0
+     *
+     * @param {Phaser.Animations.AnimationFrame} animationFrame - The animation frame to change to.
+     */
+    updateFrame: function (animationFrame)
+    {
+        var gameObject = this.setCurrentFrame(animationFrame);
+
+        if (this.isPlaying)
+        {
+            if (animationFrame.setAlpha)
+            {
+                gameObject.alpha = animationFrame.alpha;
+            }
+
+            var anim = this.currentAnim;
+
+            gameObject.emit('animationupdate', anim, animationFrame, gameObject);
+
+            if (this._pendingStop === 3 && this._pendingStopValue === animationFrame)
+            {
+                this.currentAnim.completeAnimation(this);
+            }
+        }
+    },
+
+    /**
+     * Sets if the current Animation will yoyo when it reaches the end.
+     * A yoyo'ing animation will play through consecutively, and then reverse-play back to the start again.
+     *
+     * @method Phaser.GameObjects.Components.Animation#setYoyo
+     * @since 3.4.0
+     *
+     * @param {boolean} [value=false] - `true` if the animation should yoyo, `false` to not.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object this Animation Component belongs to.
+     */
+    setYoyo: function (value)
+    {
+        if (value === undefined) { value = false; }
+
+        this._yoyo = value;
+
+        return this.parent;
+    },
+
+    /**
+     * Gets if the current Animation will yoyo when it reaches the end.
+     * A yoyo'ing animation will play through consecutively, and then reverse-play back to the start again.
+     *
+     * @method Phaser.GameObjects.Components.Animation#getYoyo
+     * @since 3.4.0
+     *
+     * @return {boolean} `true` if the animation is set to yoyo, `false` if not.
+     */
+    getYoyo: function ()
+    {
+        return this._yoyo;
+    },
+
+    /**
+     * Destroy this Animation component.
+     *
+     * Unregisters event listeners and cleans up its references.
+     *
+     * @method Phaser.GameObjects.Components.Animation#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.animationManager.off('remove', this.remove, this);
+
+        this.animationManager = null;
+        this.parent = null;
+
+        this.currentAnim = null;
+        this.currentFrame = null;
+    }
+
+});
+
+module.exports = Animation;
+
+
+/***/ }),
+/* 428 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Takes the given string and reverses it, returning the reversed string.
+ * For example if given the string `Atari 520ST` it would return `TS025 iratA`.
+ *
+ * @function Phaser.Utils.String.ReverseString
+ * @since 3.0.0
+ *
+ * @param {string} string - The string to be reversed.
+ *
+ * @return {string} The reversed string.
+ */
+var ReverseString = function (string)
+{
+    return string.split('').reverse().join('');
+};
+
+module.exports = ReverseString;
+
+
+/***/ }),
+/* 429 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Takes a string and replaces instances of markers with values in the given array.
+ * The markers take the form of `%1`, `%2`, etc. I.e.:
+ *
+ * `Format("The %1 is worth %2 gold", [ 'Sword', 500 ])`
+ *
+ * @function Phaser.Utils.String.Format
+ * @since 3.0.0
+ *
+ * @param {string} string - The string containing the replacement markers.
+ * @param {array} values - An array containing values that will replace the markers. If no value exists an empty string is inserted instead.
+ *
+ * @return {string} The string containing replaced values.
+ */
+var Format = function (string, values)
+{
+    return string.replace(/%([0-9]+)/g, function (s, n)
+    {
+        return values[Number(n) - 1];
+    });
+};
+
+module.exports = Format;
+
+
+/***/ }),
+/* 430 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Utils.String
+ */
+
+module.exports = {
+
+    Format: __webpack_require__(429),
+    Pad: __webpack_require__(179),
+    Reverse: __webpack_require__(428),
+    UppercaseFirst: __webpack_require__(327),
+    UUID: __webpack_require__(295)
+
+};
+
+
+/***/ }),
+/* 431 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Clone = __webpack_require__(63);
+
+/**
+ * Creates a new Object using all values from obj1.
+ * 
+ * Then scans obj2. If a property is found in obj2 that *also* exists in obj1, the value from obj2 is used, otherwise the property is skipped.
+ *
+ * @function Phaser.Utils.Objects.MergeRight
+ * @since 3.0.0
+ *
+ * @param {object} obj1 - [description]
+ * @param {object} obj2 - [description]
+ *
+ * @return {object} [description]
+ */
+var MergeRight = function (obj1, obj2)
+{
+    var clone = Clone(obj1);
+
+    for (var key in obj2)
+    {
+        if (clone.hasOwnProperty(key))
+        {
+            clone[key] = obj2[key];
+        }
+    }
+
+    return clone;
+};
+
+module.exports = MergeRight;
