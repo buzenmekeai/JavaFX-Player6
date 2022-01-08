@@ -101350,3 +101350,215 @@ var Animation = new Class({
      * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
      */
     restart: function (includeDelay)
+    {
+        if (includeDelay === undefined) { includeDelay = false; }
+
+        this.currentAnim.getFirstTick(this, includeDelay);
+
+        this.forward = true;
+        this.isPlaying = true;
+        this.pendingRepeat = false;
+        this._paused = false;
+
+        //  Set frame
+        this.updateFrame(this.currentAnim.frames[0]);
+
+        var gameObject = this.parent;
+
+        gameObject.emit('animationrestart', this.currentAnim, this.currentFrame, gameObject);
+
+        return this.parent;
+    },
+
+    /**
+     * Immediately stops the current animation from playing and dispatches the `animationcomplete` event.
+     *
+     * @method Phaser.GameObjects.Components.Animation#stop
+     * @fires Phaser.GameObjects.Components.Animation#onCompleteEvent
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    stop: function ()
+    {
+        this._pendingStop = 0;
+
+        this.isPlaying = false;
+
+        var gameObject = this.parent;
+
+        gameObject.emit('animationcomplete', this.currentAnim, this.currentFrame, gameObject);
+
+        return gameObject;
+    },
+
+    /**
+     * Stops the current animation from playing after the specified time delay, given in milliseconds.
+     *
+     * @method Phaser.GameObjects.Components.Animation#stopAfterDelay
+     * @fires Phaser.GameObjects.Components.Animation#onCompleteEvent
+     * @since 3.4.0
+     *
+     * @param {integer} delay - The number of milliseconds to wait before stopping this animation.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    stopAfterDelay: function (delay)
+    {
+        this._pendingStop = 1;
+        this._pendingStopValue = delay;
+
+        return this.parent;
+    },
+
+    /**
+     * Stops the current animation from playing when it next repeats.
+     *
+     * @method Phaser.GameObjects.Components.Animation#stopOnRepeat
+     * @fires Phaser.GameObjects.Components.Animation#onCompleteEvent
+     * @since 3.4.0
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    stopOnRepeat: function ()
+    {
+        this._pendingStop = 2;
+
+        return this.parent;
+    },
+
+    /**
+     * Stops the current animation from playing when it next sets the given frame.
+     * If this frame doesn't exist within the animation it will not stop it from playing.
+     *
+     * @method Phaser.GameObjects.Components.Animation#stopOnFrame
+     * @fires Phaser.GameObjects.Components.Animation#onCompleteEvent
+     * @since 3.4.0
+     *
+     * @param {Phaser.Animations.AnimationFrame} delay - The frame to check before stopping this animation.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    stopOnFrame: function (frame)
+    {
+        this._pendingStop = 3;
+        this._pendingStopValue = frame;
+
+        return this.parent;
+    },
+
+    /**
+     * Sets the Time Scale factor, allowing you to make the animation go go faster or slower than default.
+     * Where 1 = normal speed (the default), 0.5 = half speed, 2 = double speed, etc.
+     *
+     * @method Phaser.GameObjects.Components.Animation#setTimeScale
+     * @since 3.4.0
+     *
+     * @param {number} [value=1] - The time scale factor, where 1 is no change, 0.5 is half speed, etc.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that owns this Animation Component.
+     */
+    setTimeScale: function (value)
+    {
+        if (value === undefined) { value = 1; }
+
+        this._timeScale = value;
+
+        return this.parent;
+    },
+
+    /**
+     * Gets the Time Scale factor.
+     *
+     * @method Phaser.GameObjects.Components.Animation#getTimeScale
+     * @since 3.4.0
+     *
+     * @return {number} The Time Scale value.
+     */
+    getTimeScale: function ()
+    {
+        return this._timeScale;
+    },
+
+    /**
+     * Returns the total number of frames in this animation.
+     *
+     * @method Phaser.GameObjects.Components.Animation#getTotalFrames
+     * @since 3.4.0
+     *
+     * @return {integer} The total number of frames in this animation.
+     */
+    getTotalFrames: function ()
+    {
+        return this.currentAnim.frames.length;
+    },
+
+    /**
+     * The internal update loop for the Animation Component.
+     *
+     * @method Phaser.GameObjects.Components.Animation#update
+     * @since 3.0.0
+     *
+     * @param {number} time - The current timestamp.
+     * @param {number} delta - The delta time, in ms, elapsed since the last frame.
+     */
+    update: function (time, delta)
+    {
+        if (!this.currentAnim || !this.isPlaying || this.currentAnim.paused)
+        {
+            return;
+        }
+
+        this.accumulator += delta * this._timeScale;
+
+        if (this._pendingStop === 1)
+        {
+            this._pendingStopValue -= delta;
+
+            if (this._pendingStopValue <= 0)
+            {
+                return this.currentAnim.completeAnimation(this);
+            }
+        }
+
+        if (this.accumulator >= this.nextTick)
+        {
+            this.currentAnim.setFrame(this);
+        }
+    },
+
+    /**
+     * Sets the given Animation Frame as being the current frame
+     * and applies it to the parent Game Object, adjusting its size and origin as needed.
+     *
+     * @method Phaser.GameObjects.Components.Animation#setCurrentFrame
+     * @since 3.4.0
+     *
+     * @param {Phaser.Animations.AnimationFrame} animationFrame - The Animation Frame to set as being current.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object this Animation Component belongs to.
+     */
+    setCurrentFrame: function (animationFrame)
+    {
+        var gameObject = this.parent;
+
+        this.currentFrame = animationFrame;
+
+        gameObject.texture = animationFrame.frame.texture;
+        gameObject.frame = animationFrame.frame;
+
+        if (gameObject.isCropped)
+        {
+            gameObject.frame.updateCropUVs(gameObject._crop, gameObject.flipX, gameObject.flipY);
+        }
+
+        gameObject.setSizeToFrame();
+
+        if (animationFrame.frame.customPivot)
+        {
+            gameObject.setOrigin(animationFrame.frame.pivotX, animationFrame.frame.pivotY);
+        }
+        else
+        {
+            gameObject.updateDisplayOrigin();
+        }
