@@ -102009,3 +102009,199 @@ var TweenManager = new Class({
          * @private
          * @since 3.0.0
          */
+        this._active = [];
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tweens.TweenManager#_destroy
+         * @type {array}
+         * @private
+         * @since 3.0.0
+         */
+        this._destroy = [];
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tweens.TweenManager#_toProcess
+         * @type {integer}
+         * @private
+         * @default 0
+         * @since 3.0.0
+         */
+        this._toProcess = 0;
+
+        scene.sys.events.once('boot', this.boot, this);
+        scene.sys.events.on('start', this.start, this);
+    },
+
+    /**
+     * This method is called automatically, only once, when the Scene is first created.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.Tweens.TweenManager#boot
+     * @private
+     * @since 3.5.1
+     */
+    boot: function ()
+    {
+        this.systems.events.once('destroy', this.destroy, this);
+    },
+
+    /**
+     * This method is called automatically by the Scene when it is starting up.
+     * It is responsible for creating local systems, properties and listening for Scene events.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.Tweens.TweenManager#start
+     * @private
+     * @since 3.5.0
+     */
+    start: function ()
+    {
+        var eventEmitter = this.systems.events;
+
+        eventEmitter.on('preupdate', this.preUpdate, this);
+        eventEmitter.on('update', this.update, this);
+        eventEmitter.once('shutdown', this.shutdown, this);
+
+        this.timeScale = 1;
+    },
+
+    /**
+     * Create a Tween Timeline and return it, but do NOT add it to the active or pending Tween lists.
+     *
+     * @method Phaser.Tweens.TweenManager#createTimeline
+     * @since 3.0.0
+     *
+     * @param {object} config - [description]
+     *
+     * @return {Phaser.Tweens.Timeline} [description]
+     */
+    createTimeline: function (config)
+    {
+        return TimelineBuilder(this, config);
+    },
+
+    /**
+     * Create a Tween Timeline and add it to the active Tween list/
+     *
+     * @method Phaser.Tweens.TweenManager#timeline
+     * @since 3.0.0
+     *
+     * @param {object} config - [description]
+     *
+     * @return {Phaser.Tweens.Timeline} [description]
+     */
+    timeline: function (config)
+    {
+        var timeline = TimelineBuilder(this, config);
+
+        if (!timeline.paused)
+        {
+            this._add.push(timeline);
+
+            this._toProcess++;
+        }
+
+        return timeline;
+    },
+
+    /**
+     * Create a Tween and return it, but do NOT add it to the active or pending Tween lists.
+     *
+     * @method Phaser.Tweens.TweenManager#create
+     * @since 3.0.0
+     *
+     * @param {object} config - [description]
+     *
+     * @return {Phaser.Tweens.Tween} [description]
+     */
+    create: function (config)
+    {
+        return TweenBuilder(this, config);
+    },
+
+    /**
+     * Create a Tween and add it to the active Tween list.
+     *
+     * @method Phaser.Tweens.TweenManager#add
+     * @since 3.0.0
+     *
+     * @param {object} config - [description]
+     *
+     * @return {Phaser.Tweens.Tween} [description]
+     */
+    add: function (config)
+    {
+        var tween = TweenBuilder(this, config);
+
+        this._add.push(tween);
+
+        this._toProcess++;
+
+        return tween;
+    },
+
+    /**
+     * Add an existing tween into the active Tween list.
+     *
+     * @method Phaser.Tweens.TweenManager#existing
+     * @since 3.0.0
+     *
+     * @param {Phaser.Tweens.Tween} tween - [description]
+     *
+     * @return {Phaser.Tweens.TweenManager} This Tween Manager object.
+     */
+    existing: function (tween)
+    {
+        this._add.push(tween);
+
+        this._toProcess++;
+
+        return this;
+    },
+
+    /**
+     * Create a Tween and add it to the active Tween list.
+     *
+     * @method Phaser.Tweens.TweenManager#addCounter
+     * @since 3.0.0
+     *
+     * @param {object} config - [description]
+     *
+     * @return {Phaser.Tweens.Tween} [description]
+     */
+    addCounter: function (config)
+    {
+        var tween = NumberTweenBuilder(this, config);
+
+        this._add.push(tween);
+
+        this._toProcess++;
+
+        return tween;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.TweenManager#preUpdate
+     * @since 3.0.0
+     */
+    preUpdate: function ()
+    {
+        if (this._toProcess === 0)
+        {
+            //  Quick bail
+            return;
+        }
+
+        var list = this._destroy;
+        var active = this._active;
+        var pending = this._pending;
+        var i;
+        var tween;
+
+        //  Clear the 'destroy' list
