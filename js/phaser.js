@@ -101786,3 +101786,226 @@ var MergeRight = function (obj1, obj2)
 };
 
 module.exports = MergeRight;
+
+
+/***/ }),
+/* 432 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Verifies that an object contains all requested keys
+ *
+ * @function Phaser.Utils.Objects.HasAll
+ * @since 3.0.0
+ *
+ * @param {object} source - an object on which to check for key existence
+ * @param {string[]} keys - an array of keys to ensure the source object contains
+ *
+ * @return {boolean} true if the source object contains all keys, false otherwise.
+ */
+var HasAll = function (source, keys)
+{
+    for (var i = 0; i < keys.length; i++)
+    {
+        if (!source.hasOwnProperty(keys[i]))
+        {
+            return false;
+        }
+    }
+
+    return true;
+};
+
+module.exports = HasAll;
+
+
+/***/ }),
+/* 433 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetValue = __webpack_require__(4);
+var Clamp = __webpack_require__(23);
+
+/**
+ * Retrieves and clamps a numerical value from an object.
+ *
+ * @function Phaser.Utils.Objects.GetMinMaxValue
+ * @since 3.0.0
+ *
+ * @param {object} source - The object to retrieve the value from.
+ * @param {string} key - The name of the property to retrieve from the object. If a property is nested, the names of its preceding properties should be separated by a dot (`.`).
+ * @param {number} min - The minimum value which can be returned.
+ * @param {number} max - The maximum value which can be returned.
+ * @param {number} defaultValue - The value to return if the property doesn't exist. It's also constrained to the given bounds.
+ *
+ * @return {number} The clamped value from the `source` object.
+ */
+var GetMinMaxValue = function (source, key, min, max, defaultValue)
+{
+    if (defaultValue === undefined) { defaultValue = min; }
+
+    var value = GetValue(source, key, defaultValue);
+
+    return Clamp(value, min, max);
+};
+
+module.exports = GetMinMaxValue;
+
+
+/***/ }),
+/* 434 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Utils.Object
+ */
+
+module.exports = {
+
+    Clone: __webpack_require__(63),
+    Extend: __webpack_require__(20),
+    GetAdvancedValue: __webpack_require__(12),
+    GetFastValue: __webpack_require__(2),
+    GetMinMaxValue: __webpack_require__(433),
+    GetValue: __webpack_require__(4),
+    HasAll: __webpack_require__(432),
+    HasAny: __webpack_require__(298),
+    HasValue: __webpack_require__(85),
+    IsPlainObject: __webpack_require__(8),
+    Merge: __webpack_require__(96),
+    MergeRight: __webpack_require__(431)
+
+};
+
+
+/***/ }),
+/* 435 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Utils
+ */
+
+module.exports = {
+
+    Array: __webpack_require__(164),
+    Objects: __webpack_require__(434),
+    String: __webpack_require__(430)
+
+};
+
+
+/***/ }),
+/* 436 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var NumberTweenBuilder = __webpack_require__(203);
+var PluginCache = __webpack_require__(15);
+var TimelineBuilder = __webpack_require__(202);
+var TWEEN_CONST = __webpack_require__(83);
+var TweenBuilder = __webpack_require__(97);
+
+/**
+ * @classdesc
+ * [description]
+ *
+ * @class TweenManager
+ * @memberof Phaser.Tweens
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - [description]
+ */
+var TweenManager = new Class({
+
+    initialize:
+
+    function TweenManager (scene)
+    {
+        /**
+         * [description]
+         *
+         * @name Phaser.Tweens.TweenManager#scene
+         * @type {Phaser.Scene}
+         * @since 3.0.0
+         */
+        this.scene = scene;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tweens.TweenManager#systems
+         * @type {Phaser.Scenes.Systems}
+         * @since 3.0.0
+         */
+        this.systems = scene.sys;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tweens.TweenManager#timeScale
+         * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.timeScale = 1;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tweens.TweenManager#_add
+         * @type {array}
+         * @private
+         * @since 3.0.0
+         */
+        this._add = [];
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tweens.TweenManager#_pending
+         * @type {array}
+         * @private
+         * @since 3.0.0
+         */
+        this._pending = [];
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Tweens.TweenManager#_active
+         * @type {array}
+         * @private
+         * @since 3.0.0
+         */
