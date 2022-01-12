@@ -102205,3 +102205,230 @@ var TweenManager = new Class({
         var tween;
 
         //  Clear the 'destroy' list
+        for (i = 0; i < list.length; i++)
+        {
+            tween = list[i];
+
+            //  Remove from the 'active' array
+            var idx = active.indexOf(tween);
+
+            if (idx === -1)
+            {
+                //  Not in the active array, is it in pending instead?
+                idx = pending.indexOf(tween);
+
+                if (idx > -1)
+                {
+                    tween.state = TWEEN_CONST.REMOVED;
+                    pending.splice(idx, 1);
+                }
+            }
+            else
+            {
+                tween.state = TWEEN_CONST.REMOVED;
+                active.splice(idx, 1);
+            }
+        }
+
+        list.length = 0;
+
+        //  Process the addition list
+        //  This stops callbacks and out of sync events from populating the active array mid-way during the update
+
+        list = this._add;
+
+        for (i = 0; i < list.length; i++)
+        {
+            tween = list[i];
+
+            if (tween.state === TWEEN_CONST.PENDING_ADD)
+            {
+                //  Return true if the Tween should be started right away, otherwise false
+                if (tween.init())
+                {
+                    tween.play();
+
+                    this._active.push(tween);
+                }
+                else
+                {
+                    this._pending.push(tween);
+                }
+            }
+        }
+
+        list.length = 0;
+
+        this._toProcess = 0;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.TweenManager#update
+     * @since 3.0.0
+     *
+     * @param {number} timestamp - [description]
+     * @param {number} delta - The delta time in ms since the last frame. This is a smoothed and capped value based on the FPS rate.
+     */
+    update: function (timestamp, delta)
+    {
+        //  Process active tweens
+        var list = this._active;
+        var tween;
+
+        //  Scale the delta
+        delta *= this.timeScale;
+
+        for (var i = 0; i < list.length; i++)
+        {
+            tween = list[i];
+
+            //  If Tween.update returns 'true' then it means it has completed,
+            //  so move it to the destroy list
+            if (tween.update(timestamp, delta))
+            {
+                this._destroy.push(tween);
+                this._toProcess++;
+            }
+        }
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.TweenManager#makeActive
+     * @since 3.0.0
+     *
+     * @param {Phaser.Tweens.Tween} tween - [description]
+     *
+     * @return {Phaser.Tweens.TweenManager} This Tween Manager object.
+     */
+    makeActive: function (tween)
+    {
+        if (this._add.indexOf(tween) !== -1 || this._active.indexOf(tween) !== -1)
+        {
+            return;
+        }
+
+        var idx = this._pending.indexOf(tween);
+
+        if (idx !== -1)
+        {
+            this._pending.splice(idx, 1);
+        }
+
+        this._add.push(tween);
+
+        tween.state = TWEEN_CONST.PENDING_ADD;
+
+        this._toProcess++;
+
+        return this;
+    },
+
+    /**
+     * Passes all Tweens to the given callback.
+     *
+     * @method Phaser.Tweens.TweenManager#each
+     * @since 3.0.0
+     *
+     * @param {function} callback - [description]
+     * @param {object} [scope] - [description]
+     * @param {...*} [args] - [description]
+     */
+    each: function (callback, scope)
+    {
+        var args = [ null ];
+
+        for (var i = 1; i < arguments.length; i++)
+        {
+            args.push(arguments[i]);
+        }
+
+        for (var texture in this.list)
+        {
+            args[0] = this.list[texture];
+
+            callback.apply(scope, args);
+        }
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.TweenManager#getAllTweens
+     * @since 3.0.0
+     *
+     * @return {Phaser.Tweens.Tween[]} [description]
+     */
+    getAllTweens: function ()
+    {
+        var list = this._active;
+        var output = [];
+
+        for (var i = 0; i < list.length; i++)
+        {
+            output.push(list[i]);
+        }
+
+        return output;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.TweenManager#getGlobalTimeScale
+     * @since 3.0.0
+     *
+     * @return {number} [description]
+     */
+    getGlobalTimeScale: function ()
+    {
+        return this.timeScale;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.TweenManager#getTweensOf
+     * @since 3.0.0
+     *
+     * @param {(object|array)} target - [description]
+     *
+     * @return {Phaser.Tweens.Tween[]} [description]
+     */
+    getTweensOf: function (target)
+    {
+        var list = this._active;
+        var tween;
+        var output = [];
+        var i;
+
+        if (Array.isArray(target))
+        {
+            for (i = 0; i < list.length; i++)
+            {
+                tween = list[i];
+
+                for (var t = 0; t < target.length; t++)
+                {
+                    if (tween.hasTarget(target[t]))
+                    {
+                        output.push(tween);
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (i = 0; i < list.length; i++)
+            {
+                tween = list[i];
+
+                if (tween.hasTarget(target))
+                {
+                    output.push(tween);
+                }
+            }
+        }
