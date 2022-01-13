@@ -102432,3 +102432,233 @@ var TweenManager = new Class({
                 }
             }
         }
+
+        return output;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.TweenManager#isTweening
+     * @since 3.0.0
+     *
+     * @param {object} target - [description]
+     *
+     * @return {boolean} [description]
+     */
+    isTweening: function (target)
+    {
+        var list = this._active;
+        var tween;
+
+        for (var i = 0; i < list.length; i++)
+        {
+            tween = list[i];
+
+            if (tween.hasTarget(target) && tween.isPlaying())
+            {
+                return true;
+            }
+        }
+
+        return false;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.TweenManager#killAll
+     * @since 3.0.0
+     *
+     * @return {Phaser.Tweens.TweenManager} [description]
+     */
+    killAll: function ()
+    {
+        var tweens = this.getAllTweens();
+
+        for (var i = 0; i < tweens.length; i++)
+        {
+            tweens[i].stop();
+        }
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.TweenManager#killTweensOf
+     * @since 3.0.0
+     *
+     * @param {(object|array)} target - [description]
+     *
+     * @return {Phaser.Tweens.TweenManager} [description]
+     */
+    killTweensOf: function (target)
+    {
+        var tweens = this.getTweensOf(target);
+
+        for (var i = 0; i < tweens.length; i++)
+        {
+            tweens[i].stop();
+        }
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.TweenManager#pauseAll
+     * @since 3.0.0
+     *
+     * @return {Phaser.Tweens.TweenManager} [description]
+     */
+    pauseAll: function ()
+    {
+        var list = this._active;
+
+        for (var i = 0; i < list.length; i++)
+        {
+            list[i].pause();
+        }
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.TweenManager#resumeAll
+     * @since 3.0.0
+     *
+     * @return {Phaser.Tweens.TweenManager} [description]
+     */
+    resumeAll: function ()
+    {
+        var list = this._active;
+
+        for (var i = 0; i < list.length; i++)
+        {
+            list[i].resume();
+        }
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Tweens.TweenManager#setGlobalTimeScale
+     * @since 3.0.0
+     *
+     * @param {number} value - [description]
+     *
+     * @return {Phaser.Tweens.TweenManager} [description]
+     */
+    setGlobalTimeScale: function (value)
+    {
+        this.timeScale = value;
+
+        return this;
+    },
+
+    /**
+     * The Scene that owns this plugin is shutting down.
+     * We need to kill and reset all internal properties as well as stop listening to Scene events.
+     *
+     * @method Phaser.Tweens.TweenManager#shutdown
+     * @since 3.0.0
+     */
+    shutdown: function ()
+    {
+        this.killAll();
+
+        this._add = [];
+        this._pending = [];
+        this._active = [];
+        this._destroy = [];
+
+        this._toProcess = 0;
+
+        var eventEmitter = this.systems.events;
+
+        eventEmitter.off('preupdate', this.preUpdate, this);
+        eventEmitter.off('update', this.update, this);
+        eventEmitter.off('shutdown', this.shutdown, this);
+    },
+
+    /**
+     * The Scene that owns this plugin is being destroyed.
+     * We need to shutdown and then kill off all external references.
+     *
+     * @method Phaser.Tweens.TweenManager#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.shutdown();
+
+        this.scene.sys.events.off('start', this.start, this);
+
+        this.scene = null;
+        this.systems = null;
+    }
+
+});
+
+PluginCache.register('TweenManager', TweenManager, 'tweens');
+
+module.exports = TweenManager;
+
+
+/***/ }),
+/* 437 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  RESERVED properties that a Tween config object uses
+
+//  completeDelay: The time the tween will wait before the onComplete event is dispatched once it has completed
+//  delay: The time the tween will wait before it first starts
+//  duration: The duration of the tween
+//  ease: The ease function used by the tween
+//  easeParams: The parameters to go with the ease function (if any)
+//  flipX: flip X the GameObject on tween end
+//  flipY: flip Y the GameObject on tween end//  hold: The time the tween will pause before running a yoyo
+//  hold: The time the tween will pause before running a yoyo
+//  loop: The time the tween will pause before starting either a yoyo or returning to the start for a repeat
+//  loopDelay: 
+//  offset: Used when the Tween is part of a Timeline
+//  paused: Does the tween start in a paused state, or playing?
+//  props: The properties being tweened by the tween
+//  repeat: The number of times the tween will repeat itself (a value of 1 means the tween will play twice, as it repeated once)
+//  repeatDelay: The time the tween will pause for before starting a repeat. The tween holds in the start state.
+//  targets: The targets the tween is updating.
+//  useFrames: Use frames or milliseconds?
+//  yoyo: boolean - Does the tween reverse itself (yoyo) when it reaches the end?
+
+module.exports = [
+    'callbackScope',
+    'completeDelay',
+    'delay',
+    'duration',
+    'ease',
+    'easeParams',
+    'flipX',
+    'flipY',
+    'hold',
+    'loop',
+    'loopDelay',
+    'offset',
+    'onComplete',
+    'onCompleteParams',
+    'onCompleteScope',
+    'onLoop',
+    'onLoopParams',
+    'onLoopScope',
