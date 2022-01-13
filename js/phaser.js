@@ -102662,3 +102662,231 @@ module.exports = [
     'onLoop',
     'onLoopParams',
     'onLoopScope',
+    'onRepeat',
+    'onRepeatParams',
+    'onRepeatScope',
+    'onStart',
+    'onStartParams',
+    'onStartScope',
+    'onUpdate',
+    'onUpdateParams',
+    'onUpdateScope',
+    'onYoyo',
+    'onYoyoParams',
+    'onYoyoScope',
+    'paused',
+    'props',
+    'repeat',
+    'repeatDelay',
+    'targets',
+    'useFrames',
+    'yoyo'
+];
+
+
+/***/ }),
+/* 438 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Tweens.Builders
+ */
+
+module.exports = {
+
+    GetBoolean: __webpack_require__(84),
+    GetEaseFunction: __webpack_require__(86),
+    GetNewValue: __webpack_require__(98),
+    GetProps: __webpack_require__(205),
+    GetTargets: __webpack_require__(131),
+    GetTweens: __webpack_require__(204),
+    GetValueOp: __webpack_require__(130),
+    NumberTweenBuilder: __webpack_require__(203),
+    TimelineBuilder: __webpack_require__(202),
+    TweenBuilder: __webpack_require__(97)
+
+};
+
+
+/***/ }),
+/* 439 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CONST = __webpack_require__(83);
+var Extend = __webpack_require__(20);
+
+/**
+ * @namespace Phaser.Tweens
+ */
+
+var Tweens = {
+
+    Builders: __webpack_require__(438),
+
+    TweenManager: __webpack_require__(436),
+    Tween: __webpack_require__(128),
+    TweenData: __webpack_require__(127),
+    Timeline: __webpack_require__(201)
+
+};
+
+//   Merge in the consts
+Tweens = Extend(false, Tweens, CONST);
+
+module.exports = Tweens;
+
+
+/***/ }),
+/* 440 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var PluginCache = __webpack_require__(15);
+var TimerEvent = __webpack_require__(206);
+
+/**
+ * @classdesc
+ * [description]
+ *
+ * @class Clock
+ * @memberof Phaser.Time
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - [description]
+ */
+var Clock = new Class({
+
+    initialize:
+
+    function Clock (scene)
+    {
+        /**
+         * [description]
+         *
+         * @name Phaser.Time.Clock#scene
+         * @type {Phaser.Scene}
+         * @since 3.0.0
+         */
+        this.scene = scene;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Time.Clock#systems
+         * @type {Phaser.Scenes.Systems}
+         * @since 3.0.0
+         */
+        this.systems = scene.sys;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Time.Clock#now
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.now = Date.now();
+
+        //  Scale the delta time coming into the Clock by this factor
+        //  which then influences anything using this Clock for calculations, like TimerEvents
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Time.Clock#timeScale
+         * @type {number}
+         * @default 1
+         * @since 3.0.0
+         */
+        this.timeScale = 1;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Time.Clock#paused
+         * @type {boolean}
+         * @default false
+         * @since 3.0.0
+         */
+        this.paused = false;
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Time.Clock#_active
+         * @type {Phaser.Time.TimerEvent[]}
+         * @private
+         * @default []
+         * @since 3.0.0
+         */
+        this._active = [];
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Time.Clock#_pendingInsertion
+         * @type {Phaser.Time.TimerEvent[]}
+         * @private
+         * @default []
+         * @since 3.0.0
+         */
+        this._pendingInsertion = [];
+
+        /**
+         * [description]
+         *
+         * @name Phaser.Time.Clock#_pendingRemoval
+         * @type {Phaser.Time.TimerEvent[]}
+         * @private
+         * @default []
+         * @since 3.0.0
+         */
+        this._pendingRemoval = [];
+
+        scene.sys.events.once('boot', this.boot, this);
+        scene.sys.events.on('start', this.start, this);
+    },
+
+    /**
+     * This method is called automatically, only once, when the Scene is first created.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.Time.Clock#boot
+     * @private
+     * @since 3.5.1
+     */
+    boot: function ()
+    {
+        this.systems.events.once('destroy', this.destroy, this);
+    },
+
+    /**
+     * This method is called automatically by the Scene when it is starting up.
+     * It is responsible for creating local systems, properties and listening for Scene events.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.Time.Clock#start
+     * @private
+     * @since 3.5.0
+     */
+    start: function ()
+    {
