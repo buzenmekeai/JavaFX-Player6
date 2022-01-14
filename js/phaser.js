@@ -102890,3 +102890,221 @@ var Clock = new Class({
      */
     start: function ()
     {
+        var eventEmitter = this.systems.events;
+
+        eventEmitter.on('preupdate', this.preUpdate, this);
+        eventEmitter.on('update', this.update, this);
+        eventEmitter.once('shutdown', this.shutdown, this);
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Time.Clock#addEvent
+     * @since 3.0.0
+     *
+     * @param {TimerEventConfig} config - [description]
+     *
+     * @return {Phaser.Time.TimerEvent} [description]
+     */
+    addEvent: function (config)
+    {
+        var event = new TimerEvent(config);
+
+        this._pendingInsertion.push(event);
+
+        return event;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Time.Clock#delayedCall
+     * @since 3.0.0
+     *
+     * @param {number} delay - [description]
+     * @param {function} callback - [description]
+     * @param {Array.<*>} args - [description]
+     * @param {*} callbackScope - [description]
+     *
+     * @return {Phaser.Time.TimerEvent} [description]
+     */
+    delayedCall: function (delay, callback, args, callbackScope)
+    {
+        return this.addEvent({ delay: delay, callback: callback, args: args, callbackScope: callbackScope });
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Time.Clock#clearPendingEvents
+     * @since 3.0.0
+     *
+     * @return {Phaser.Time.Clock} [description]
+     */
+    clearPendingEvents: function ()
+    {
+        this._pendingInsertion = [];
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Time.Clock#removeAllEvents
+     * @since 3.0.0
+     *
+     * @return {Phaser.Time.Clock} [description]
+     */
+    removeAllEvents: function ()
+    {
+        this._pendingRemoval = this._pendingRemoval.concat(this._active);
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Time.Clock#preUpdate
+     * @since 3.0.0
+     *
+     * @param {number} time - The current time. Either a High Resolution Timer value if it comes from Request Animation Frame, or Date.now if using SetTimeout.
+     * @param {number} delta - The delta time in ms since the last frame. This is a smoothed and capped value based on the FPS rate.
+     */
+    preUpdate: function ()
+    {
+        var toRemove = this._pendingRemoval.length;
+        var toInsert = this._pendingInsertion.length;
+
+        if (toRemove === 0 && toInsert === 0)
+        {
+            //  Quick bail
+            return;
+        }
+
+        var i;
+        var event;
+
+        //  Delete old events
+        for (i = 0; i < toRemove; i++)
+        {
+            event = this._pendingRemoval[i];
+
+            var index = this._active.indexOf(event);
+
+            if (index > -1)
+            {
+                this._active.splice(index, 1);
+            }
+
+            //  Pool them?
+            event.destroy();
+        }
+
+        for (i = 0; i < toInsert; i++)
+        {
+            event = this._pendingInsertion[i];
+
+            this._active.push(event);
+        }
+
+        //  Clear the lists
+        this._pendingRemoval.length = 0;
+        this._pendingInsertion.length = 0;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Time.Clock#update
+     * @since 3.0.0
+     *
+     * @param {number} time - The current time. Either a High Resolution Timer value if it comes from Request Animation Frame, or Date.now if using SetTimeout.
+     * @param {number} delta - The delta time in ms since the last frame. This is a smoothed and capped value based on the FPS rate.
+     */
+    update: function (time, delta)
+    {
+        this.now = time;
+
+        if (this.paused)
+        {
+            return;
+        }
+
+        delta *= this.timeScale;
+
+        for (var i = 0; i < this._active.length; i++)
+        {
+            var event = this._active[i];
+
+            if (event.paused)
+            {
+                continue;
+            }
+
+            //  Use delta time to increase elapsed.
+            //  Avoids needing to adjust for pause / resume.
+            //  Automatically smoothed by TimeStep class.
+            //  In testing accurate to +- 1ms!
+            event.elapsed += delta * event.timeScale;
+
+            if (event.elapsed >= event.delay)
+            {
+                var remainder = event.elapsed - event.delay;
+
+                //  Limit it, in case it's checked in the callback
+                event.elapsed = event.delay;
+
+                //  Process the event
+                if (!event.hasDispatched && event.callback)
+                {
+                    event.hasDispatched = true;
+                    event.callback.apply(event.callbackScope, event.args);
+                }
+
+                if (event.repeatCount > 0)
+                {
+                    event.repeatCount--;
+
+                    event.elapsed = remainder;
+                    event.hasDispatched = false;
+                }
+                else
+                {
+                    this._pendingRemoval.push(event);
+                }
+            }
+        }
+    },
+
+    /**
+     * The Scene that owns this plugin is shutting down.
+     * We need to kill and reset all internal properties as well as stop listening to Scene events.
+     *
+     * @method Phaser.Time.Clock#shutdown
+     * @private
+     * @since 3.0.0
+     */
+    shutdown: function ()
+    {
+        var i;
+
+        for (i = 0; i < this._pendingInsertion.length; i++)
+        {
+            this._pendingInsertion[i].destroy();
+        }
+
+        for (i = 0; i < this._active.length; i++)
+        {
+            this._active[i].destroy();
+        }
+
+        for (i = 0; i < this._pendingRemoval.length; i++)
+        {
+            this._pendingRemoval[i].destroy();
+        }
+
+        this._active.length = 0;
+        this._pendingRemoval.length = 0;
