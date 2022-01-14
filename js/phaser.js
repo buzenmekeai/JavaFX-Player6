@@ -103108,3 +103108,240 @@ var Clock = new Class({
 
         this._active.length = 0;
         this._pendingRemoval.length = 0;
+        this._pendingInsertion.length = 0;
+
+        var eventEmitter = this.systems.events;
+
+        eventEmitter.off('preupdate', this.preUpdate, this);
+        eventEmitter.off('update', this.update, this);
+        eventEmitter.off('shutdown', this.shutdown, this);
+    },
+
+    /**
+     * The Scene that owns this plugin is being destroyed.
+     * We need to shutdown and then kill off all external references.
+     *
+     * @method Phaser.Time.Clock#destroy
+     * @private
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.shutdown();
+
+        this.scene.sys.events.off('start', this.start, this);
+
+        this.scene = null;
+        this.systems = null;
+    }
+
+});
+
+PluginCache.register('Clock', Clock, 'time');
+
+module.exports = Clock;
+
+
+/***/ }),
+/* 441 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Time
+ */
+
+module.exports = {
+
+    Clock: __webpack_require__(440),
+    TimerEvent: __webpack_require__(206)
+
+};
+
+
+/***/ }),
+/* 442 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectFactory = __webpack_require__(5);
+var ParseToTilemap = __webpack_require__(132);
+
+/**
+ * Creates a Tilemap from the given key or data, or creates a blank Tilemap if no key/data provided.
+ * When loading from CSV or a 2D array, you should specify the tileWidth & tileHeight. When parsing
+ * from a map from Tiled, the tileWidth, tileHeight, width & height will be pulled from the map
+ * data. For an empty map, you should specify tileWidth, tileHeight, width & height.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#tilemap
+ * @since 3.0.0
+ *
+ * @param {string} [key] - The key in the Phaser cache that corresponds to the loaded tilemap data.
+ * @param {integer} [tileWidth=32] - The width of a tile in pixels. Pass in `null` to leave as the
+ * default.
+ * @param {integer} [tileHeight=32] - The height of a tile in pixels. Pass in `null` to leave as the
+ * default.
+ * @param {integer} [width=10] - The width of the map in tiles. Pass in `null` to leave as the
+ * default.
+ * @param {integer} [height=10] - The height of the map in tiles. Pass in `null` to leave as the
+ * default.
+ * @param {integer[][]} [data] - Instead of loading from the cache, you can also load directly from
+ * a 2D array of tile indexes. Pass in `null` for no data.
+ * @param {boolean} [insertNull=false] - Controls how empty tiles, tiles with an index of -1, in the
+ * map data are handled. If `true`, empty locations will get a value of `null`. If `false`, empty
+ * location will get a Tile object with an index of -1. If you've a large sparsely populated map and
+ * the tile data doesn't need to change then setting this value to `true` will help with memory
+ * consumption. However if your map is small or you need to update the tiles dynamically, then leave
+ * the default value set.
+ * 
+ * @return {Phaser.Tilemaps.Tilemap}
+ */
+GameObjectFactory.register('tilemap', function (key, tileWidth, tileHeight, width, height, data, insertNull)
+{
+    // Allow users to specify null to indicate that they want the default value, since null is
+    // shorter & more legible than undefined. Convert null to undefined to allow ParseToTilemap
+    // defaults to take effect.
+
+    if (key === null) { key = undefined; }
+    if (tileWidth === null) { tileWidth = undefined; }
+    if (tileHeight === null) { tileHeight = undefined; }
+    if (width === null) { width = undefined; }
+    if (height === null) { height = undefined; }
+
+    return ParseToTilemap(this.scene, key, tileWidth, tileHeight, width, height, data, insertNull);
+});
+
+//  When registering a factory function 'this' refers to the GameObjectFactory context.
+//
+//  There are several properties available to use:
+//
+//  this.scene - a reference to the Scene that owns the GameObjectFactory
+//  this.displayList - a reference to the Display List the Scene owns
+//  this.updateList - a reference to the Update List the Scene owns
+
+
+/***/ }),
+/* 443 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectCreator = __webpack_require__(13);
+var ParseToTilemap = __webpack_require__(132);
+
+/**
+ * @typedef {object} TilemapConfig
+ * 
+ * @property {string} [key] - The key in the Phaser cache that corresponds to the loaded tilemap data.
+ * @property {integer[][]} [data] - Instead of loading from the cache, you can also load directly from a 2D array of tile indexes.
+ * @property {integer} [tileWidth=32] - The width of a tile in pixels.
+ * @property {integer} [tileHeight=32] - The height of a tile in pixels.
+ * @property {integer} [width=10] - The width of the map in tiles.
+ * @property {integer} [height=10] - The height of the map in tiles.
+ * @property {boolean} [insertNull=false] - Controls how empty tiles, tiles with an index of -1,
+ * in the map data are handled. If `true`, empty locations will get a value of `null`. If `false`,
+ * empty location will get a Tile object with an index of -1. If you've a large sparsely populated
+ * map and the tile data doesn't need to change then setting this value to `true` will help with
+ * memory consumption. However if your map is small or you need to update the tiles dynamically,
+ * then leave the default value set.
+ */
+
+/**
+ * Creates a Tilemap from the given key or data, or creates a blank Tilemap if no key/data provided.
+ * When loading from CSV or a 2D array, you should specify the tileWidth & tileHeight. When parsing
+ * from a map from Tiled, the tileWidth, tileHeight, width & height will be pulled from the map
+ * data. For an empty map, you should specify tileWidth, tileHeight, width & height.
+ *
+ * @method Phaser.GameObjects.GameObjectCreator#tilemap
+ * @since 3.0.0
+ * 
+ * @param {TilemapConfig} [config] - The config options for the Tilemap.
+ * 
+ * @return {Phaser.Tilemaps.Tilemap}
+ */
+GameObjectCreator.register('tilemap', function (config)
+{
+    // Defaults are applied in ParseToTilemap
+    var c = (config !== undefined) ? config : {};
+
+    return ParseToTilemap(
+        this.scene,
+        c.key,
+        c.tileWidth,
+        c.tileHeight,
+        c.width,
+        c.height,
+        c.data,
+        c.insertNull
+    );
+});
+
+
+/***/ }),
+/* 444 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Renders this Game Object with the Canvas Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.Tilemaps.StaticTilemapLayer#renderCanvas
+ * @since 3.0.0
+ * @private
+ *
+ * @param {Phaser.Renderer.Canvas.CanvasRenderer} renderer - A reference to the current active Canvas renderer.
+ * @param {Phaser.Tilemaps.StaticTilemapLayer} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var StaticTilemapLayerCanvasRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    src.cull(camera);
+
+    var renderTiles = src.culledTiles;
+    var tileCount = renderTiles.length;
+
+    if (tileCount === 0)
+    {
+        return;
+    }
+
+    var camMatrix = renderer._tempMatrix1;
+    var layerMatrix = renderer._tempMatrix2;
+    var calcMatrix = renderer._tempMatrix3;
+
+    layerMatrix.applyITRS(src.x, src.y, src.rotation, src.scaleX, src.scaleY);
+
+    camMatrix.copyFrom(camera.matrix);
+
+    var ctx = renderer.currentContext;
+    var gidMap = src.gidMap;
+
+    ctx.save();
+
+    if (parentMatrix)
+    {
+        //  Multiply the camera by the parent matrix
+        camMatrix.multiplyWithOffset(parentMatrix, -camera.scrollX * src.scrollFactorX, -camera.scrollY * src.scrollFactorY);
