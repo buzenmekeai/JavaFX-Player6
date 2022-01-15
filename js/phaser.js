@@ -103345,3 +103345,230 @@ var StaticTilemapLayerCanvasRenderer = function (renderer, src, interpolationPer
     {
         //  Multiply the camera by the parent matrix
         camMatrix.multiplyWithOffset(parentMatrix, -camera.scrollX * src.scrollFactorX, -camera.scrollY * src.scrollFactorY);
+
+        //  Undo the camera scroll
+        layerMatrix.e = src.x;
+        layerMatrix.f = src.y;
+
+        camMatrix.multiply(layerMatrix, calcMatrix);
+
+        calcMatrix.copyToContext(ctx);
+    }
+    else
+    {
+        //  Undo the camera scroll
+        layerMatrix.e -= camera.scrollX * src.scrollFactorX;
+        layerMatrix.f -= camera.scrollY * src.scrollFactorY;
+
+        layerMatrix.copyToContext(ctx);
+    }
+
+    var alpha = camera.alpha * src.alpha;
+
+    ctx.globalAlpha = camera.alpha * src.alpha;
+
+    for (var i = 0; i < tileCount; i++)
+    {
+        var tile = renderTiles[i];
+
+        var tileset = gidMap[tile.index];
+
+        if (!tileset)
+        {
+            continue;
+        }
+
+        var image = tileset.image.getSourceImage();
+        var tileTexCoords = tileset.getTileTextureCoordinates(tile.index);
+
+        if (tileTexCoords)
+        {
+            var halfWidth = tile.width / 2;
+            var halfHeight = tile.height / 2;
+    
+            ctx.save();
+
+            ctx.translate(tile.pixelX + halfWidth, tile.pixelY + halfHeight);
+
+            if (tile.rotation !== 0)
+            {
+                ctx.rotate(tile.rotation);
+            }
+    
+            if (tile.flipX || tile.flipY)
+            {
+                ctx.scale((tile.flipX) ? -1 : 1, (tile.flipY) ? -1 : 1);
+            }
+
+            ctx.globalAlpha = alpha * tile.alpha;
+    
+            ctx.drawImage(
+                image,
+                tileTexCoords.x, tileTexCoords.y,
+                tile.width, tile.height,
+                -halfWidth, -halfHeight,
+                tile.width, tile.height
+            );
+    
+            ctx.restore();
+        }
+    }
+
+    ctx.restore();
+};
+
+module.exports = StaticTilemapLayerCanvasRenderer;
+
+
+/***/ }),
+/* 445 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Renders this Game Object with the WebGL Renderer to the given Camera.
+ * 
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ * 
+ * A Static Tilemap Layer renders immediately and does not use any batching.
+ *
+ * @method Phaser.Tilemaps.StaticTilemapLayer#renderWebGL
+ * @since 3.0.0
+ * @private
+ *
+ * @param {Phaser.Renderer.WebGL.WebGLRenderer} renderer - A reference to the current active WebGL renderer.
+ * @param {Phaser.Tilemaps.StaticTilemapLayer} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ */
+var StaticTilemapLayerWebGLRenderer = function (renderer, src, interpolationPercentage, camera)
+{
+    var tilesets = src.tileset;
+
+    var pipeline = src.pipeline;
+    var pipelineVertexBuffer = pipeline.vertexBuffer;
+
+    renderer.setPipeline(pipeline);
+
+    pipeline.modelIdentity();
+    pipeline.modelTranslate(src.x - (camera.scrollX * src.scrollFactorX), src.y - (camera.scrollY * src.scrollFactorY), 0);
+    pipeline.modelScale(src.scaleX, src.scaleY, 1);
+    pipeline.viewLoad2D(camera.matrix.matrix);
+
+    for (var i = 0; i < tilesets.length; i++)
+    {
+        src.upload(camera, i);
+
+        if (src.vertexCount[i] > 0)
+        {
+            if (renderer.currentPipeline && renderer.currentPipeline.vertexCount > 0)
+            {
+                renderer.flush();
+            }
+        
+            pipeline.vertexBuffer = src.vertexBuffer[i];
+        
+            renderer.setPipeline(pipeline);
+        
+            renderer.setTexture2D(tilesets[i].glTexture, 0);
+        
+            renderer.gl.drawArrays(pipeline.topology, 0, src.vertexCount[i]);
+        }
+    }
+
+    //  Restore the pipeline
+    pipeline.vertexBuffer = pipelineVertexBuffer;
+
+    pipeline.viewIdentity();
+    pipeline.modelIdentity();
+};
+
+module.exports = StaticTilemapLayerWebGLRenderer;
+
+
+/***/ }),
+/* 446 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var renderWebGL = __webpack_require__(1);
+var renderCanvas = __webpack_require__(1);
+
+if (true)
+{
+    renderWebGL = __webpack_require__(445);
+}
+
+if (true)
+{
+    renderCanvas = __webpack_require__(444);
+}
+
+module.exports = {
+
+    renderWebGL: renderWebGL,
+    renderCanvas: renderCanvas
+
+};
+
+
+/***/ }),
+/* 447 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Renders this Game Object with the Canvas Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.Tilemaps.DynamicTilemapLayer#renderCanvas
+ * @since 3.0.0
+ * @private
+ *
+ * @param {Phaser.Renderer.Canvas.CanvasRenderer} renderer - A reference to the current active Canvas renderer.
+ * @param {Phaser.Tilemaps.DynamicTilemapLayer} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var DynamicTilemapLayerCanvasRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    src.cull(camera);
+
+    var renderTiles = src.culledTiles;
+    var tileCount = renderTiles.length;
+
+    if (tileCount === 0)
+    {
+        return;
+    }
+
+    var camMatrix = renderer._tempMatrix1;
+    var layerMatrix = renderer._tempMatrix2;
+    var calcMatrix = renderer._tempMatrix3;
+
+    layerMatrix.applyITRS(src.x, src.y, src.rotation, src.scaleX, src.scaleY);
+
+    camMatrix.copyFrom(camera.matrix);
+
+    var ctx = renderer.currentContext;
+    var gidMap = src.gidMap;
+
+    ctx.save();
