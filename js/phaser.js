@@ -103572,3 +103572,227 @@ var DynamicTilemapLayerCanvasRenderer = function (renderer, src, interpolationPe
     var gidMap = src.gidMap;
 
     ctx.save();
+
+    if (parentMatrix)
+    {
+        //  Multiply the camera by the parent matrix
+        camMatrix.multiplyWithOffset(parentMatrix, -camera.scrollX * src.scrollFactorX, -camera.scrollY * src.scrollFactorY);
+
+        //  Undo the camera scroll
+        layerMatrix.e = src.x;
+        layerMatrix.f = src.y;
+
+        //  Multiply by the Sprite matrix, store result in calcMatrix
+        camMatrix.multiply(layerMatrix, calcMatrix);
+
+        calcMatrix.copyToContext(ctx);
+    }
+    else
+    {
+        layerMatrix.e -= camera.scrollX * src.scrollFactorX;
+        layerMatrix.f -= camera.scrollY * src.scrollFactorY;
+
+        layerMatrix.copyToContext(ctx);
+    }
+
+    var alpha = camera.alpha * src.alpha;
+
+    for (var i = 0; i < tileCount; i++)
+    {
+        var tile = renderTiles[i];
+
+        var tileset = gidMap[tile.index];
+
+        if (!tileset)
+        {
+            continue;
+        }
+
+        var image = tileset.image.getSourceImage();
+        var tileTexCoords = tileset.getTileTextureCoordinates(tile.index);
+
+        if (tileTexCoords)
+        {
+            var halfWidth = tile.width / 2;
+            var halfHeight = tile.height / 2;
+    
+            ctx.save();
+
+            ctx.translate(tile.pixelX + halfWidth, tile.pixelY + halfHeight);
+    
+            if (tile.rotation !== 0)
+            {
+                ctx.rotate(tile.rotation);
+            }
+    
+            if (tile.flipX || tile.flipY)
+            {
+                ctx.scale((tile.flipX) ? -1 : 1, (tile.flipY) ? -1 : 1);
+            }
+    
+            ctx.globalAlpha = alpha * tile.alpha;
+    
+            ctx.drawImage(
+                image,
+                tileTexCoords.x, tileTexCoords.y,
+                tile.width, tile.height,
+                -halfWidth, -halfHeight,
+                tile.width, tile.height
+            );
+    
+            ctx.restore();
+        }
+    }
+
+    ctx.restore();
+};
+
+module.exports = DynamicTilemapLayerCanvasRenderer;
+
+
+/***/ }),
+/* 448 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Utils = __webpack_require__(10);
+
+/**
+ * Renders this Game Object with the WebGL Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.Tilemaps.DynamicTilemapLayer#renderWebGL
+ * @since 3.0.0
+ * @private
+ *
+ * @param {Phaser.Renderer.WebGL.WebGLRenderer} renderer - A reference to the current active WebGL renderer.
+ * @param {Phaser.Tilemaps.DynamicTilemapLayer} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ */
+var DynamicTilemapLayerWebGLRenderer = function (renderer, src, interpolationPercentage, camera)
+{
+    src.cull(camera);
+
+    var renderTiles = src.culledTiles;
+    var tileCount = renderTiles.length;
+    var alpha = camera.alpha * src.alpha;
+
+    if (tileCount === 0 || alpha <= 0)
+    {
+        return;
+    }
+
+    var gidMap = src.gidMap;
+    var pipeline = src.pipeline;
+
+    var getTint = Utils.getTintAppendFloatAlpha;
+
+    var scrollFactorX = src.scrollFactorX;
+    var scrollFactorY = src.scrollFactorY;
+
+    var x = src.x;
+    var y = src.y;
+
+    var sx = src.scaleX;
+    var sy = src.scaleY;
+
+    var tilesets = src.tileset;
+
+    //  Loop through each tileset in this layer, drawing just the tiles that are in that set each time
+    //  Doing it this way around allows us to batch tiles using the same tileset
+    for (var c = 0; c < tilesets.length; c++)
+    {
+        var currentSet = tilesets[c];
+        var texture = currentSet.glTexture;
+
+        for (var i = 0; i < tileCount; i++)
+        {
+            var tile = renderTiles[i];
+
+            var tileset = gidMap[tile.index];
+
+            if (tileset !== currentSet)
+            {
+                //  Skip tiles that aren't in this set
+                continue;
+            }
+       
+            var tileTexCoords = tileset.getTileTextureCoordinates(tile.index);
+
+            if (tileTexCoords === null)
+            {
+                continue;
+            }
+
+            var frameWidth = tile.width;
+            var frameHeight = tile.height;
+
+            var frameX = tileTexCoords.x;
+            var frameY = tileTexCoords.y;
+
+            var tw = tile.width * 0.5;
+            var th = tile.height * 0.5;
+
+            var tint = getTint(tile.tint, alpha * tile.alpha);
+
+            pipeline.batchTexture(
+                src,
+                texture,
+                texture.width, texture.height,
+                (tw + x + tile.pixelX) * sx, (th + y + tile.pixelY) * sy,
+                tile.width, tile.height,
+                sx, sy,
+                tile.rotation,
+                tile.flipX, tile.flipY,
+                scrollFactorX, scrollFactorY,
+                tw, th,
+                frameX, frameY, frameWidth, frameHeight,
+                tint, tint, tint, tint, false,
+                0, 0,
+                camera,
+                null,
+                true
+            );
+        }
+    }
+};
+
+module.exports = DynamicTilemapLayerWebGLRenderer;
+
+
+/***/ }),
+/* 449 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var renderWebGL = __webpack_require__(1);
+var renderCanvas = __webpack_require__(1);
+
+if (true)
+{
+    renderWebGL = __webpack_require__(448);
+}
+
+if (true)
+{
+    renderCanvas = __webpack_require__(447);
+}
+
+module.exports = {
+
+    renderWebGL: renderWebGL,
+    renderCanvas: renderCanvas
+
+};
