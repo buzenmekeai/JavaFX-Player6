@@ -103796,3 +103796,220 @@ module.exports = {
     renderCanvas: renderCanvas
 
 };
+
+
+/***/ }),
+/* 450 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Tileset = __webpack_require__(99);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Tilemaps.Parsers.Impact.ParseTilesets
+ * @since 3.0.0
+ *
+ * @param {object} json - [description]
+ *
+ * @return {array} [description]
+ */
+var ParseTilesets = function (json)
+{
+    var tilesets = [];
+    var tilesetsNames = [];
+
+    for (var i = 0; i < json.layer.length; i++)
+    {
+        var layer = json.layer[i];
+
+        // A relative filepath to the source image (within Weltmeister) is used for the name
+        var tilesetName = layer.tilesetName;
+
+        // Only add unique tilesets that have a valid name. Collision layers will have a blank name.
+        if (tilesetName !== '' && tilesetsNames.indexOf(tilesetName) === -1)
+        {
+            tilesetsNames.push(tilesetName);
+
+            // Tiles are stored with an ID relative to the tileset, rather than a globally unique ID
+            // across all tilesets. Also, tilesets in Weltmeister have no margin or padding.
+            tilesets.push(new Tileset(tilesetName, 0, layer.tilesize, layer.tilesize, 0, 0));
+        }
+    }
+
+    return tilesets;
+};
+
+module.exports = ParseTilesets;
+
+
+/***/ }),
+/* 451 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var LayerData = __webpack_require__(78);
+var Tile = __webpack_require__(55);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Tilemaps.Parsers.Impact.ParseTileLayers
+ * @since 3.0.0
+ *
+ * @param {object} json - [description]
+ * @param {boolean} insertNull - [description]
+ *
+ * @return {array} [description]
+ */
+var ParseTileLayers = function (json, insertNull)
+{
+    var tileLayers = [];
+
+    for (var i = 0; i < json.layer.length; i++)
+    {
+        var layer = json.layer[i];
+
+        var layerData = new LayerData({
+            name: layer.name,
+            width: layer.width,
+            height: layer.height,
+            tileWidth: layer.tilesize,
+            tileHeight: layer.tilesize,
+            visible: layer.visible === 1
+        });
+
+        var row = [];
+        var tileGrid = [];
+
+        //  Loop through the data field in the JSON. This is a 2D array containing the tile indexes,
+        //  one after the other. The indexes are relative to the tileset that contains the tile.
+        for (var y = 0; y < layer.data.length; y++)
+        {
+            for (var x = 0; x < layer.data[y].length; x++)
+            {
+                // In Weltmeister, 0 = no tile, but the Tilemap API expects -1 = no tile.
+                var index = layer.data[y][x] - 1;
+
+                var tile;
+
+                if (index > -1)
+                {
+                    tile = new Tile(layerData, index, x, y, layer.tilesize, layer.tilesize);
+                }
+                else
+                {
+                    tile = insertNull
+                        ? null
+                        : new Tile(layerData, -1, x, y, layer.tilesize, layer.tilesize);
+                }
+
+                row.push(tile);
+            }
+
+            tileGrid.push(row);
+            row = [];
+        }
+
+        layerData.data = tileGrid;
+
+        tileLayers.push(layerData);
+    }
+
+    return tileLayers;
+};
+
+module.exports = ParseTileLayers;
+
+
+/***/ }),
+/* 452 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Extend = __webpack_require__(20);
+
+/**
+ * Copy properties from tileset to tiles.
+ *
+ * @function Phaser.Tilemaps.Parsers.Tiled.AssignTileProperties
+ * @since 3.0.0
+ *
+ * @param {Phaser.Tilemaps.MapData} mapData - [description]
+ */
+var AssignTileProperties = function (mapData)
+{
+    var layerData;
+    var tile;
+    var sid;
+    var set;
+    var row;
+
+    // go through each of the map data layers
+    for (var i = 0; i < mapData.layers.length; i++)
+    {
+        layerData = mapData.layers[i];
+
+        set = null;
+
+        // rows of tiles
+        for (var j = 0; j < layerData.data.length; j++)
+        {
+            row = layerData.data[j];
+
+            // individual tiles
+            for (var k = 0; k < row.length; k++)
+            {
+                tile = row[k];
+
+                if (tile === null || tile.index < 0)
+                {
+                    continue;
+                }
+
+                // find the relevant tileset
+                sid = mapData.tiles[tile.index][2];
+                set = mapData.tilesets[sid];
+
+                // Ensure that a tile's size matches its tileset
+                tile.width = set.tileWidth;
+                tile.height = set.tileHeight;
+
+                // if that tile type has any properties, add them to the tile object
+                if (set.tileProperties && set.tileProperties[tile.index - set.firstgid])
+                {
+                    tile.properties = Extend(
+                        tile.properties, set.tileProperties[tile.index - set.firstgid]
+                    );
+                }
+            }
+        }
+    }
+};
+
+module.exports = AssignTileProperties;
+
+
+/***/ }),
+/* 453 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
