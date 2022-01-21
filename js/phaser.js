@@ -104013,3 +104013,211 @@ module.exports = AssignTileProperties;
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Master list of tiles -> x, y, index in tileset.
+ *
+ * @function Phaser.Tilemaps.Parsers.Tiled.BuildTilesetIndex
+ * @since 3.0.0
+ *
+ * @param {Phaser.Tilemaps.MapData} mapData - [description]
+ *
+ * @return {array} [description]
+ */
+var BuildTilesetIndex = function (mapData)
+{
+    var tiles = [];
+
+    for (var i = 0; i < mapData.tilesets.length; i++)
+    {
+        var set = mapData.tilesets[i];
+
+        var x = set.tileMargin;
+        var y = set.tileMargin;
+
+        var count = 0;
+        var countX = 0;
+        var countY = 0;
+
+        for (var t = set.firstgid; t < set.firstgid + set.total; t++)
+        {
+            //  Can add extra properties here as needed
+            tiles[t] = [ x, y, i ];
+
+            x += set.tileWidth + set.tileSpacing;
+
+            count++;
+
+            if (count === set.total)
+            {
+                break;
+            }
+
+            countX++;
+
+            if (countX === set.columns)
+            {
+                x = set.tileMargin;
+                y += set.tileHeight + set.tileSpacing;
+
+                countX = 0;
+                countY++;
+
+                if (countY === set.rows)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    return tiles;
+};
+
+module.exports = BuildTilesetIndex;
+
+
+/***/ }),
+/* 454 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetFastValue = __webpack_require__(2);
+var ParseObject = __webpack_require__(212);
+var ObjectLayer = __webpack_require__(211);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Tilemaps.Parsers.Tiled.ParseObjectLayers
+ * @since 3.0.0
+ *
+ * @param {object} json - [description]
+ *
+ * @return {array} [description]
+ */
+var ParseObjectLayers = function (json)
+{
+    var objectLayers = [];
+
+    for (var i = 0; i < json.layers.length; i++)
+    {
+        if (json.layers[i].type !== 'objectgroup')
+        {
+            continue;
+        }
+
+        var curo = json.layers[i];
+        var offsetX = GetFastValue(curo, 'offsetx', 0);
+        var offsetY = GetFastValue(curo, 'offsety', 0);
+        var objects = [];
+
+        for (var j = 0; j < curo.objects.length; j++)
+        {
+            var parsedObject = ParseObject(curo.objects[j], offsetX, offsetY);
+
+            objects.push(parsedObject);
+        }
+
+        var objectLayer = new ObjectLayer(curo);
+        objectLayer.objects = objects;
+
+        objectLayers.push(objectLayer);
+    }
+
+    return objectLayers;
+};
+
+module.exports = ParseObjectLayers;
+
+
+/***/ }),
+/* 455 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var HasValue = __webpack_require__(85);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Tilemaps.Parsers.Tiled.Pick
+ * @since 3.0.0
+ *
+ * @param {object} object - [description]
+ * @param {array} keys - [description]
+ *
+ * @return {object} [description]
+ */
+var Pick = function (object, keys)
+{
+    var obj = {};
+
+    for (var i = 0; i < keys.length; i++)
+    {
+        var key = keys[i];
+
+        if (HasValue(object, key))
+        {
+            obj[key] = object[key];
+        }
+    }
+
+    return obj;
+};
+
+module.exports = Pick;
+
+
+/***/ }),
+/* 456 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Tileset = __webpack_require__(99);
+var ImageCollection = __webpack_require__(213);
+var ParseObject = __webpack_require__(212);
+
+/**
+ * Tilesets & Image Collections
+ *
+ * @function Phaser.Tilemaps.Parsers.Tiled.ParseTilesets
+ * @since 3.0.0
+ *
+ * @param {object} json - [description]
+ *
+ * @return {object} [description]
+ */
+var ParseTilesets = function (json)
+{
+    var tilesets = [];
+    var imageCollections = [];
+    var lastSet = null;
+    var stringID;
+
+    for (var i = 0; i < json.tilesets.length; i++)
+    {
+        //  name, firstgid, width, height, margin, spacing, properties
+        var set = json.tilesets[i];
+
+        if (set.source)
+        {
+            console.warn('Phaser can\'t load external tilesets. Use the Embed Tileset button and then export the map again.');
+        }
