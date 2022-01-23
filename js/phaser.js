@@ -104221,3 +104221,222 @@ var ParseTilesets = function (json)
         {
             console.warn('Phaser can\'t load external tilesets. Use the Embed Tileset button and then export the map again.');
         }
+        else if (set.image)
+        {
+            var newSet = new Tileset(set.name, set.firstgid, set.tilewidth, set.tileheight, set.margin, set.spacing);
+
+            if (json.version > 1)
+            {
+                // Tiled 1.2+
+
+                if (Array.isArray(set.tiles))
+                {
+                    var tiles = {};
+                    var props = {};
+
+                    for (var t = 0; t < set.tiles.length; t++)
+                    {
+                        var tile = set.tiles[t];
+
+                        //  Convert tileproperties
+                        if (tile.properties)
+                        {
+                            var newPropData = {};
+
+                            tile.properties.forEach(function (propData)
+                            {
+                                newPropData[propData['name']] = propData['value'];
+                            });
+
+                            props[tile.id] = newPropData;
+                        }
+
+                        //  Convert objectgroup
+                        if (tile.objectgroup)
+                        {
+                            tiles[tile.id] = { objectgroup: tile.objectgroup };
+
+                            if (tile.objectgroup.objects)
+                            {
+                                var parsedObjects2 = tile.objectgroup.objects.map(
+                                    function (obj) { return ParseObject(obj); }
+                                );
+
+                                tiles[tile.id].objectgroup.objects = parsedObjects2;
+                            }
+                        }
+                    }
+
+                    newSet.tileData = tiles;
+                    newSet.tileProperties = props;
+                }
+            }
+            else
+            {
+                // Tiled 1
+
+                // Properties stored per-tile in object with string indexes starting at "0"
+                if (set.tileproperties)
+                {
+                    newSet.tileProperties = set.tileproperties;
+                }
+
+                // Object & terrain shapes stored per-tile in object with string indexes starting at "0"
+                if (set.tiles)
+                {
+                    newSet.tileData = set.tiles;
+
+                    // Parse the objects into Phaser format to match handling of other Tiled objects
+                    for (stringID in newSet.tileData)
+                    {
+                        var objectGroup = newSet.tileData[stringID].objectgroup;
+                        if (objectGroup && objectGroup.objects)
+                        {
+                            var parsedObjects1 = objectGroup.objects.map(
+                                function (obj) { return ParseObject(obj); }
+                            );
+                            newSet.tileData[stringID].objectgroup.objects = parsedObjects1;
+                        }
+                    }
+                }
+            }
+
+            // For a normal sliced tileset the row/count/size information is computed when updated.
+            // This is done (again) after the image is set.
+            newSet.updateTileData(set.imagewidth, set.imageheight);
+
+            tilesets.push(newSet);
+        }
+        else
+        {
+            var newCollection = new ImageCollection(set.name, set.firstgid, set.tilewidth,
+                set.tileheight, set.margin, set.spacing, set.properties);
+
+            for (stringID in set.tiles)
+            {
+                var image = set.tiles[stringID].image;
+                var gid = set.firstgid + parseInt(stringID, 10);
+                newCollection.addImage(gid, image);
+            }
+
+            imageCollections.push(newCollection);
+        }
+
+        //  We've got a new Tileset, so set the lastgid into the previous one
+        if (lastSet)
+        {
+            lastSet.lastgid = set.firstgid - 1;
+        }
+
+        lastSet = set;
+    }
+
+    return { tilesets: tilesets, imageCollections: imageCollections };
+};
+
+module.exports = ParseTilesets;
+
+
+/***/ }),
+/* 457 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetFastValue = __webpack_require__(2);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Tilemaps.Parsers.Tiled.ParseImageLayers
+ * @since 3.0.0
+ *
+ * @param {object} json - [description]
+ *
+ * @return {array} [description]
+ */
+var ParseImageLayers = function (json)
+{
+    var images = [];
+
+    for (var i = 0; i < json.layers.length; i++)
+    {
+        if (json.layers[i].type !== 'imagelayer')
+        {
+            continue;
+        }
+
+        var curi = json.layers[i];
+
+        images.push({
+            name: curi.name,
+            image: curi.image,
+            x: GetFastValue(curi, 'offsetx', 0) + curi.x,
+            y: GetFastValue(curi, 'offsety', 0) + curi.y,
+            alpha: curi.opacity,
+            visible: curi.visible,
+            properties: GetFastValue(curi, 'properties', {})
+        });
+    }
+
+    return images;
+};
+
+module.exports = ParseImageLayers;
+
+
+/***/ }),
+/* 458 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Decode base-64 encoded data, for example as exported by Tiled.
+ *
+ * @function Phaser.Tilemaps.Parsers.Tiled.Base64Decode
+ * @since 3.0.0
+ *
+ * @param {object} data - Base-64 encoded data to decode.
+ *
+ * @return {array} Array containing the decoded bytes.
+ */
+var Base64Decode = function (data)
+{
+    var binaryString = window.atob(data);
+    var len = binaryString.length;
+    var bytes = new Array(len / 4);
+
+    // Interpret binaryString as an array of bytes representing little-endian encoded uint32 values.
+    for (var i = 0; i < len; i += 4)
+    {
+        bytes[i / 4] = (
+            binaryString.charCodeAt(i) |
+            binaryString.charCodeAt(i + 1) << 8 |
+            binaryString.charCodeAt(i + 2) << 16 |
+            binaryString.charCodeAt(i + 3) << 24
+        ) >>> 0;
+    }
+
+    return bytes;
+};
+
+module.exports = Base64Decode;
+
+
+/***/ }),
+/* 459 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
