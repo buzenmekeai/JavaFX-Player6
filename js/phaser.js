@@ -104440,3 +104440,231 @@ module.exports = Base64Decode;
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2018 Photon Storm Ltd.
  * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Base64Decode = __webpack_require__(458);
+var GetFastValue = __webpack_require__(2);
+var LayerData = __webpack_require__(78);
+var ParseGID = __webpack_require__(214);
+var Tile = __webpack_require__(55);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Tilemaps.Parsers.Tiled.ParseTileLayers
+ * @since 3.0.0
+ *
+ * @param {object} json - [description]
+ * @param {boolean} insertNull - [description]
+ *
+ * @return {array} [description]
+ */
+var ParseTileLayers = function (json, insertNull)
+{
+    var tileLayers = [];
+
+    for (var i = 0; i < json.layers.length; i++)
+    {
+        if (json.layers[i].type !== 'tilelayer')
+        {
+            continue;
+        }
+
+        var curl = json.layers[i];
+
+        // Base64 decode data if necessary. NOTE: uncompressed base64 only.
+        if (curl.compression)
+        {
+            console.warn(
+                'TilemapParser.parseTiledJSON - Layer compression is unsupported, skipping layer \''
+                + curl.name + '\''
+            );
+            continue;
+        }
+        else if (curl.encoding && curl.encoding === 'base64')
+        {
+            curl.data = Base64Decode(curl.data);
+            delete curl.encoding; // Allow the same map to be parsed multiple times
+        }
+
+        var layerData = new LayerData({
+            name: curl.name,
+            x: GetFastValue(curl, 'offsetx', 0) + curl.x,
+            y: GetFastValue(curl, 'offsety', 0) + curl.y,
+            width: curl.width,
+            height: curl.height,
+            tileWidth: json.tilewidth,
+            tileHeight: json.tileheight,
+            alpha: curl.opacity,
+            visible: curl.visible,
+            properties: GetFastValue(curl, 'properties', {})
+        });
+
+        var x = 0;
+        var row = [];
+        var output = [];
+
+        //  Loop through the data field in the JSON.
+
+        //  This is an array containing the tile indexes, one after the other. -1 = no tile,
+        //  everything else = the tile index (starting at 1 for Tiled, 0 for CSV) If the map
+        //  contains multiple tilesets then the indexes are relative to that which the set starts
+        //  from. Need to set which tileset in the cache = which tileset in the JSON, if you do this
+        //  manually it means you can use the same map data but a new tileset.
+
+        for (var t = 0, len = curl.data.length; t < len; t++)
+        {
+            var gidInfo = ParseGID(curl.data[t]);
+
+            //  index, x, y, width, height
+            if (gidInfo.gid > 0)
+            {
+                var tile = new Tile(layerData, gidInfo.gid, x, output.length, json.tilewidth,
+                    json.tileheight);
+
+                // Turning Tiled's FlippedHorizontal, FlippedVertical and FlippedAntiDiagonal
+                // propeties into flipX, flipY and rotation
+                tile.rotation = gidInfo.rotation;
+                tile.flipX = gidInfo.flipped;
+
+                row.push(tile);
+            }
+            else
+            {
+                var blankTile = insertNull
+                    ? null
+                    : new Tile(layerData, -1, x, output.length, json.tilewidth, json.tileheight);
+                row.push(blankTile);
+            }
+
+            x++;
+
+            if (x === curl.width)
+            {
+                output.push(row);
+                x = 0;
+                row = [];
+            }
+        }
+
+        layerData.data = output;
+
+        tileLayers.push(layerData);
+    }
+
+    return tileLayers;
+};
+
+module.exports = ParseTileLayers;
+
+
+/***/ }),
+/* 460 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Tilemaps.Parsers
+ */
+
+module.exports = {
+
+    Parse: __webpack_require__(217),
+    Parse2DArray: __webpack_require__(133),
+    ParseCSV: __webpack_require__(216),
+
+    Impact: __webpack_require__(210),
+    Tiled: __webpack_require__(215)
+
+};
+
+
+/***/ }),
+/* 461 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var WorldToTileX = __webpack_require__(50);
+var WorldToTileY = __webpack_require__(49);
+var Vector2 = __webpack_require__(3);
+
+/**
+ * Converts from world XY coordinates (pixels) to tile XY coordinates (tile units), factoring in the
+ * layer's position, scale and scroll. This will return a new Vector2 object or update the given
+ * `point` object.
+ *
+ * @function Phaser.Tilemaps.Components.WorldToTileXY
+ * @private
+ * @since 3.0.0
+ *
+ * @param {number} worldX - The x coordinate to be converted, in pixels, not tiles.
+ * @param {number} worldY - The y coordinate to be converted, in pixels, not tiles.
+ * @param {boolean} [snapToFloor=true] - Whether or not to round the tile coordinate down to the nearest integer.
+ * @param {Phaser.Math.Vector2} [point] - A Vector2 to store the coordinates in. If not given a new Vector2 is created.
+ * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ * 
+ * @return {Phaser.Math.Vector2} The XY location in tile units.
+ */
+var WorldToTileXY = function (worldX, worldY, snapToFloor, point, camera, layer)
+{
+    if (point === undefined) { point = new Vector2(0, 0); }
+
+    point.x = WorldToTileX(worldX, snapToFloor, camera, layer);
+    point.y = WorldToTileY(worldY, snapToFloor, camera, layer);
+
+    return point;
+};
+
+module.exports = WorldToTileXY;
+
+
+/***/ }),
+/* 462 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetTilesWithin = __webpack_require__(17);
+
+/**
+ * Randomizes the indexes of a rectangular region of tiles (in tile coordinates) within the
+ * specified layer. Each tile will receive a new index. New indexes are drawn from the given
+ * weightedIndexes array. An example weighted array:
+ *
+ * [
+ *  { index: 6, weight: 4 },    // Probability of index 6 is 4 / 8
+ *  { index: 7, weight: 2 },    // Probability of index 7 would be 2 / 8
+ *  { index: 8, weight: 1.5 },  // Probability of index 8 would be 1.5 / 8
+ *  { index: 26, weight: 0.5 }  // Probability of index 27 would be 0.5 / 8
+ * ]
+ *
+ * The probability of any index being choose is (the index's weight) / (sum of all weights). This
+ * method only modifies tile indexes and does not change collision information.
+ *
+ * @function Phaser.Tilemaps.Components.WeightedRandomize
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+ * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+ * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+ * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+ * @param {object[]} [weightedIndexes] - An array of objects to randomly draw from during
+ * randomization. They should be in the form: { index: 0, weight: 4 } or
+ * { index: [0, 1], weight: 4 } if you wish to draw from multiple tile indexes.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
