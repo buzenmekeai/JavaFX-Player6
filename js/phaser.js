@@ -104668,3 +104668,202 @@ var GetTilesWithin = __webpack_require__(17);
  * randomization. They should be in the form: { index: 0, weight: 4 } or
  * { index: [0, 1], weight: 4 } if you wish to draw from multiple tile indexes.
  * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var WeightedRandomize = function (tileX, tileY, width, height, weightedIndexes, layer)
+{
+    if (weightedIndexes === undefined) { return; }
+
+    var i;
+    var tiles = GetTilesWithin(tileX, tileY, width, height, null, layer);
+
+    var weightTotal = 0;
+    for (i = 0; i < weightedIndexes.length; i++)
+    {
+        weightTotal += weightedIndexes[i].weight;
+    }
+
+    if (weightTotal <= 0) { return; }
+
+    for (i = 0; i < tiles.length; i++)
+    {
+        var rand = Math.random() * weightTotal;
+        var sum = 0;
+        var randomIndex = -1;
+        for (var j = 0; j < weightedIndexes.length; j++)
+        {
+            sum += weightedIndexes[j].weight;
+            if (rand <= sum)
+            {
+                var chosen = weightedIndexes[j].index;
+                randomIndex = Array.isArray(chosen)
+                    ? chosen[Math.floor(Math.random() * chosen.length)]
+                    : chosen;
+                break;
+            }
+        }
+
+        tiles[i].index = randomIndex;
+    }
+};
+
+module.exports = WeightedRandomize;
+
+
+/***/ }),
+/* 463 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var TileToWorldX = __webpack_require__(101);
+var TileToWorldY = __webpack_require__(100);
+var Vector2 = __webpack_require__(3);
+
+/**
+ * Converts from tile XY coordinates (tile units) to world XY coordinates (pixels), factoring in the
+ * layer's position, scale and scroll. This will return a new Vector2 object or update the given
+ * `point` object.
+ *
+ * @function Phaser.Tilemaps.Components.TileToWorldXY
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} tileX - The x coordinate, in tiles, not pixels.
+ * @param {integer} tileY - The y coordinate, in tiles, not pixels.
+ * @param {Phaser.Math.Vector2} [point] - A Vector2 to store the coordinates in. If not given a new Vector2 is created.
+ * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ * 
+ * @return {Phaser.Math.Vector2} The XY location in world coordinates.
+ */
+var TileToWorldXY = function (tileX, tileY, point, camera, layer)
+{
+    if (point === undefined) { point = new Vector2(0, 0); }
+
+    point.x = TileToWorldX(tileX, camera, layer);
+    point.y = TileToWorldY(tileY, camera, layer);
+
+    return point;
+};
+
+module.exports = TileToWorldXY;
+
+
+/***/ }),
+/* 464 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetTilesWithin = __webpack_require__(17);
+
+/**
+ * Scans the given rectangular area (given in tile coordinates) for tiles with an index matching
+ * `indexA` and swaps then with `indexB`. This only modifies the index and does not change collision
+ * information.
+ *
+ * @function Phaser.Tilemaps.Components.SwapByIndex
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} tileA - First tile index.
+ * @param {integer} tileB - Second tile index.
+ * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+ * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+ * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+ * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var SwapByIndex = function (indexA, indexB, tileX, tileY, width, height, layer)
+{
+    var tiles = GetTilesWithin(tileX, tileY, width, height, null, layer);
+    for (var i = 0; i < tiles.length; i++)
+    {
+        if (tiles[i])
+        {
+            if (tiles[i].index === indexA)
+            {
+                tiles[i].index = indexB;
+            }
+            else if (tiles[i].index === indexB)
+            {
+                tiles[i].index = indexA;
+            }
+        }
+    }
+};
+
+module.exports = SwapByIndex;
+
+
+/***/ }),
+/* 465 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetTilesWithin = __webpack_require__(17);
+var ShuffleArray = __webpack_require__(122);
+
+/**
+ * Shuffles the tiles in a rectangular region (specified in tile coordinates) within the given
+ * layer. It will only randomize the tiles in that area, so if they're all the same nothing will
+ * appear to have changed! This method only modifies tile indexes and does not change collision
+ * information.
+ *
+ * @function Phaser.Tilemaps.Components.Shuffle
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+ * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+ * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+ * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var Shuffle = function (tileX, tileY, width, height, layer)
+{
+    var tiles = GetTilesWithin(tileX, tileY, width, height, null, layer);
+
+    var indexes = tiles.map(function (tile) { return tile.index; });
+    ShuffleArray(indexes);
+
+    for (var i = 0; i < tiles.length; i++)
+    {
+        tiles[i].index = indexes[i];
+    }
+};
+
+module.exports = Shuffle;
+
+
+/***/ }),
+/* 466 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetTilesWithin = __webpack_require__(17);
+
+/**
+ * Sets a collision callback for the given rectangular area (in tile coordinates) within the layer.
+ * If a callback is already set for the tile index it will be replaced. Set the callback to null to
+ * remove it.
+ *
+ * @function Phaser.Tilemaps.Components.SetTileLocationCallback
