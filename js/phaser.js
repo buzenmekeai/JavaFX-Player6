@@ -105111,3 +105111,229 @@ var SetCollisionByExclusion = function (indexes, collides, recalculateFaces, lay
     // Note: this only updates layer.collideIndexes for tile indexes found currently in the layer
     for (var ty = 0; ty < layer.height; ty++)
     {
+        for (var tx = 0; tx < layer.width; tx++)
+        {
+            var tile = layer.data[ty][tx];
+            if (tile && indexes.indexOf(tile.index) === -1)
+            {
+                SetTileCollision(tile, collides);
+                SetLayerCollisionIndex(tile.index, collides, layer);
+            }
+        }
+    }
+
+    if (recalculateFaces)
+    {
+        CalculateFacesWithin(0, 0, layer.width, layer.height, layer);
+    }
+};
+
+module.exports = SetCollisionByExclusion;
+
+
+/***/ }),
+/* 471 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var SetTileCollision = __webpack_require__(56);
+var CalculateFacesWithin = __webpack_require__(34);
+var SetLayerCollisionIndex = __webpack_require__(134);
+
+/**
+ * Sets collision on a range of tiles in a layer whose index is between the specified `start` and
+ * `stop` (inclusive). Calling this with a start value of 10 and a stop value of 14 would set
+ * collision for tiles 10, 11, 12, 13 and 14. The `collides` parameter controls if collision will be
+ * enabled (true) or disabled (false).
+ *
+ * @function Phaser.Tilemaps.Components.SetCollisionBetween
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} start - The first index of the tile to be set for collision.
+ * @param {integer} stop - The last index of the tile to be set for collision.
+ * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear collision.
+ * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the update.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var SetCollisionBetween = function (start, stop, collides, recalculateFaces, layer)
+{
+    if (collides === undefined) { collides = true; }
+    if (recalculateFaces === undefined) { recalculateFaces = true; }
+
+    if (start > stop) { return; }
+
+    // Update the array of colliding indexes
+    for (var index = start; index <= stop; index++)
+    {
+        SetLayerCollisionIndex(index, collides, layer);
+    }
+
+    // Update the tiles
+    for (var ty = 0; ty < layer.height; ty++)
+    {
+        for (var tx = 0; tx < layer.width; tx++)
+        {
+            var tile = layer.data[ty][tx];
+            if (tile)
+            {
+                if (tile.index >= start && tile.index <= stop)
+                {
+                    SetTileCollision(tile, collides);
+                }
+            }
+        }
+    }
+
+    if (recalculateFaces)
+    {
+        CalculateFacesWithin(0, 0, layer.width, layer.height, layer);
+    }
+};
+
+module.exports = SetCollisionBetween;
+
+
+/***/ }),
+/* 472 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var SetTileCollision = __webpack_require__(56);
+var CalculateFacesWithin = __webpack_require__(34);
+var SetLayerCollisionIndex = __webpack_require__(134);
+
+/**
+ * Sets collision on the given tile or tiles within a layer by index. You can pass in either a
+ * single numeric index or an array of indexes: [2, 3, 15, 20]. The `collides` parameter controls if
+ * collision will be enabled (true) or disabled (false).
+ *
+ * @function Phaser.Tilemaps.Components.SetCollision
+ * @private
+ * @since 3.0.0
+ *
+ * @param {(integer|array)} indexes - Either a single tile index, or an array of tile indexes.
+ * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear collision.
+ * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the update.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var SetCollision = function (indexes, collides, recalculateFaces, layer)
+{
+    if (collides === undefined) { collides = true; }
+    if (recalculateFaces === undefined) { recalculateFaces = true; }
+    if (!Array.isArray(indexes)) { indexes = [ indexes ]; }
+
+    // Update the array of colliding indexes
+    for (var i = 0; i < indexes.length; i++)
+    {
+        SetLayerCollisionIndex(indexes[i], collides, layer);
+    }
+
+    // Update the tiles
+    for (var ty = 0; ty < layer.height; ty++)
+    {
+        for (var tx = 0; tx < layer.width; tx++)
+        {
+            var tile = layer.data[ty][tx];
+
+            if (tile && indexes.indexOf(tile.index) !== -1)
+            {
+                SetTileCollision(tile, collides);
+            }
+        }
+    }
+
+    if (recalculateFaces)
+    {
+        CalculateFacesWithin(0, 0, layer.width, layer.height, layer);
+    }
+};
+
+module.exports = SetCollision;
+
+
+/***/ }),
+/* 473 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetTilesWithin = __webpack_require__(17);
+var Color = __webpack_require__(347);
+
+var defaultTileColor = new Color(105, 210, 231, 150);
+var defaultCollidingTileColor = new Color(243, 134, 48, 200);
+var defaultFaceColor = new Color(40, 39, 37, 150);
+
+/**
+ * Draws a debug representation of the layer to the given Graphics. This is helpful when you want to
+ * get a quick idea of which of your tiles are colliding and which have interesting faces. The tiles
+ * are drawn starting at (0, 0) in the Graphics, allowing you to place the debug representation
+ * wherever you want on the screen.
+ *
+ * @function Phaser.Tilemaps.Components.RenderDebug
+ * @private
+ * @since 3.0.0
+ *
+ * @param {Phaser.GameObjects.Graphics} graphics - The target Graphics object to draw upon.
+ * @param {object} styleConfig - An object specifying the colors to use for the debug drawing.
+ * @param {?Phaser.Display.Color} [styleConfig.tileColor=blue] - Color to use for drawing a filled rectangle at
+ * non-colliding tile locations. If set to null, non-colliding tiles will not be drawn.
+ * @param {?Phaser.Display.Color} [styleConfig.collidingTileColor=orange] - Color to use for drawing a filled
+ * rectangle at colliding tile locations. If set to null, colliding tiles will not be drawn.
+ * @param {?Phaser.Display.Color} [styleConfig.faceColor=grey] - Color to use for drawing a line at interesting
+ * tile faces. If set to null, interesting tile faces will not be drawn.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var RenderDebug = function (graphics, styleConfig, layer)
+{
+    if (styleConfig === undefined) { styleConfig = {}; }
+
+    // Default colors without needlessly creating Color objects
+    var tileColor = (styleConfig.tileColor !== undefined) ? styleConfig.tileColor : defaultTileColor;
+    var collidingTileColor = (styleConfig.collidingTileColor !== undefined) ? styleConfig.collidingTileColor : defaultCollidingTileColor;
+    var faceColor = (styleConfig.faceColor !== undefined) ? styleConfig.faceColor : defaultFaceColor;
+
+    var tiles = GetTilesWithin(0, 0, layer.width, layer.height, null, layer);
+
+    graphics.translate(layer.tilemapLayer.x, layer.tilemapLayer.y);
+    graphics.scale(layer.tilemapLayer.scaleX, layer.tilemapLayer.scaleY);
+
+    for (var i = 0; i < tiles.length; i++)
+    {
+        var tile = tiles[i];
+
+        var tw = tile.width;
+        var th = tile.height;
+        var x = tile.pixelX;
+        var y = tile.pixelY;
+
+        var color = tile.collides ? collidingTileColor : tileColor;
+
+        if (color !== null)
+        {
+            graphics.fillStyle(color.color, color.alpha / 255);
+            graphics.fillRect(x, y, tw, th);
+        }
+
+        // Inset the face line to prevent neighboring tile's lines from overlapping
+        x += 1;
+        y += 1;
+        tw -= 2;
+        th -= 2;
+
+        if (faceColor !== null)
