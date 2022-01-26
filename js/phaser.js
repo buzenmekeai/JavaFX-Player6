@@ -104867,3 +104867,247 @@ var GetTilesWithin = __webpack_require__(17);
  * remove it.
  *
  * @function Phaser.Tilemaps.Components.SetTileLocationCallback
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+ * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+ * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+ * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+ * @param {function} callback - The callback that will be invoked when the tile is collided with.
+ * @param {object} callbackContext - The context under which the callback is called.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var SetTileLocationCallback = function (tileX, tileY, width, height, callback, callbackContext, layer)
+{
+    var tiles = GetTilesWithin(tileX, tileY, width, height, null, layer);
+
+    for (var i = 0; i < tiles.length; i++)
+    {
+        tiles[i].setCollisionCallback(callback, callbackContext);
+    }
+
+};
+
+module.exports = SetTileLocationCallback;
+
+
+/***/ }),
+/* 467 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Sets a global collision callback for the given tile index within the layer. This will affect all
+ * tiles on this layer that have the same index. If a callback is already set for the tile index it
+ * will be replaced. Set the callback to null to remove it. If you want to set a callback for a tile
+ * at a specific location on the map then see setTileLocationCallback.
+ *
+ * @function Phaser.Tilemaps.Components.SetTileIndexCallback
+ * @private
+ * @since 3.0.0
+ *
+ * @param {(integer|array)} indexes - Either a single tile index, or an array of tile indexes to have a collision callback set for.
+ * @param {function} callback - The callback that will be invoked when the tile is collided with.
+ * @param {object} callbackContext - The context under which the callback is called.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var SetTileIndexCallback = function (indexes, callback, callbackContext, layer)
+{
+    if (typeof indexes === 'number')
+    {
+        layer.callbacks[indexes] = (callback !== null)
+            ? { callback: callback, callbackContext: callbackContext }
+            : undefined;
+    }
+    else
+    {
+        for (var i = 0, len = indexes.length; i < len; i++)
+        {
+            layer.callbacks[indexes[i]] = (callback !== null)
+                ? { callback: callback, callbackContext: callbackContext }
+                : undefined;
+        }
+    }
+};
+
+module.exports = SetTileIndexCallback;
+
+
+/***/ }),
+/* 468 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var SetTileCollision = __webpack_require__(56);
+var CalculateFacesWithin = __webpack_require__(34);
+
+/**
+ * Sets collision on the tiles within a layer by checking each tile's collision group data
+ * (typically defined in Tiled within the tileset collision editor). If any objects are found within
+ * a tile's collision group, the tile's colliding information will be set. The `collides` parameter
+ * controls if collision will be enabled (true) or disabled (false).
+ *
+ * @function Phaser.Tilemaps.Components.SetCollisionFromCollisionGroup
+ * @private
+ * @since 3.0.0
+ *
+ * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear collision.
+ * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the update.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var SetCollisionFromCollisionGroup = function (collides, recalculateFaces, layer)
+{
+    if (collides === undefined) { collides = true; }
+    if (recalculateFaces === undefined) { recalculateFaces = true; }
+
+    for (var ty = 0; ty < layer.height; ty++)
+    {
+        for (var tx = 0; tx < layer.width; tx++)
+        {
+            var tile = layer.data[ty][tx];
+
+            if (!tile) { continue; }
+
+            var collisionGroup = tile.getCollisionGroup();
+
+            // It's possible in Tiled to have a collision group without any shapes, e.g. create a
+            // shape and then delete the shape.
+            if (collisionGroup && collisionGroup.objects && collisionGroup.objects.length > 0)
+            {
+                SetTileCollision(tile, collides);
+            }
+        }
+    }
+
+    if (recalculateFaces)
+    {
+        CalculateFacesWithin(0, 0, layer.width, layer.height, layer);
+    }
+};
+
+module.exports = SetCollisionFromCollisionGroup;
+
+
+/***/ }),
+/* 469 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var SetTileCollision = __webpack_require__(56);
+var CalculateFacesWithin = __webpack_require__(34);
+var HasValue = __webpack_require__(85);
+
+/**
+ * Sets collision on the tiles within a layer by checking tile properties. If a tile has a property
+ * that matches the given properties object, its collision flag will be set. The `collides`
+ * parameter controls if collision will be enabled (true) or disabled (false). Passing in
+ * `{ collides: true }` would update the collision flag on any tiles with a "collides" property that
+ * has a value of true. Any tile that doesn't have "collides" set to true will be ignored. You can
+ * also use an array of values, e.g. `{ types: ["stone", "lava", "sand" ] }`. If a tile has a
+ * "types" property that matches any of those values, its collision flag will be updated.
+ *
+ * @function Phaser.Tilemaps.Components.SetCollisionByProperty
+ * @private
+ * @since 3.0.0
+ *
+ * @param {object} properties - An object with tile properties and corresponding values that should be checked.
+ * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear collision.
+ * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the update.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var SetCollisionByProperty = function (properties, collides, recalculateFaces, layer)
+{
+    if (collides === undefined) { collides = true; }
+    if (recalculateFaces === undefined) { recalculateFaces = true; }
+
+    for (var ty = 0; ty < layer.height; ty++)
+    {
+        for (var tx = 0; tx < layer.width; tx++)
+        {
+            var tile = layer.data[ty][tx];
+
+            if (!tile) { continue; }
+
+            for (var property in properties)
+            {
+                if (!HasValue(tile.properties, property)) { continue; }
+
+                var values = properties[property];
+                if (!Array.isArray(values))
+                {
+                    values = [ values ];
+                }
+
+                for (var i = 0; i < values.length; i++)
+                {
+                    if (tile.properties[property] === values[i])
+                    {
+                        SetTileCollision(tile, collides);
+                    }
+                }
+            }
+        }
+    }
+
+    if (recalculateFaces)
+    {
+        CalculateFacesWithin(0, 0, layer.width, layer.height, layer);
+    }
+};
+
+module.exports = SetCollisionByProperty;
+
+
+/***/ }),
+/* 470 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var SetTileCollision = __webpack_require__(56);
+var CalculateFacesWithin = __webpack_require__(34);
+var SetLayerCollisionIndex = __webpack_require__(134);
+
+/**
+ * Sets collision on all tiles in the given layer, except for tiles that have an index specified in
+ * the given array. The `collides` parameter controls if collision will be enabled (true) or
+ * disabled (false).
+ *
+ * @function Phaser.Tilemaps.Components.SetCollisionByExclusion
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer[]} indexes - An array of the tile indexes to not be counted for collision.
+ * @param {boolean} [collides=true] - If true it will enable collision. If false it will clear collision.
+ * @param {boolean} [recalculateFaces=true] - Whether or not to recalculate the tile faces after the update.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var SetCollisionByExclusion = function (indexes, collides, recalculateFaces, layer)
+{
+    if (collides === undefined) { collides = true; }
+    if (recalculateFaces === undefined) { recalculateFaces = true; }
+    if (!Array.isArray(indexes)) { indexes = [ indexes ]; }
+
+    // Note: this only updates layer.collideIndexes for tile indexes found currently in the layer
+    for (var ty = 0; ty < layer.height; ty++)
+    {
