@@ -105337,3 +105337,209 @@ var RenderDebug = function (graphics, styleConfig, layer)
         th -= 2;
 
         if (faceColor !== null)
+        {
+            graphics.lineStyle(1, faceColor.color, faceColor.alpha / 255);
+
+            if (tile.faceTop) { graphics.lineBetween(x, y, x + tw, y); }
+            if (tile.faceRight) { graphics.lineBetween(x + tw, y, x + tw, y + th); }
+            if (tile.faceBottom) { graphics.lineBetween(x, y + th, x + tw, y + th); }
+            if (tile.faceLeft) { graphics.lineBetween(x, y, x, y + th); }
+        }
+    }
+};
+
+module.exports = RenderDebug;
+
+
+/***/ }),
+/* 474 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var RemoveTileAt = __webpack_require__(218);
+var WorldToTileX = __webpack_require__(50);
+var WorldToTileY = __webpack_require__(49);
+
+/**
+ * Removes the tile at the given world coordinates in the specified layer and updates the layer's
+ * collision information.
+ *
+ * @function Phaser.Tilemaps.Components.RemoveTileAtWorldXY
+ * @private
+ * @since 3.0.0
+ *
+ * @param {number} worldX - The x coordinate, in pixels.
+ * @param {number} worldY - The y coordinate, in pixels.
+ * @param {boolean} [replaceWithNull=true] - If true, this will replace the tile at the specified location with null instead of a Tile with an index of -1.
+ * @param {boolean} [recalculateFaces=true] - `true` if the faces data should be recalculated.
+ * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ *
+ * @return {Phaser.Tilemaps.Tile} The Tile object that was removed.
+ */
+var RemoveTileAtWorldXY = function (worldX, worldY, replaceWithNull, recalculateFaces, camera, layer)
+{
+    var tileX = WorldToTileX(worldX, true, camera, layer);
+    var tileY = WorldToTileY(worldY, true, camera, layer);
+    return RemoveTileAt(tileX, tileY, replaceWithNull, recalculateFaces, layer);
+};
+
+module.exports = RemoveTileAtWorldXY;
+
+
+/***/ }),
+/* 475 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetTilesWithin = __webpack_require__(17);
+var GetRandom = __webpack_require__(162);
+
+/**
+ * Randomizes the indexes of a rectangular region of tiles (in tile coordinates) within the
+ * specified layer. Each tile will receive a new index. If an array of indexes is passed in, then
+ * those will be used for randomly assigning new tile indexes. If an array is not provided, the
+ * indexes found within the region (excluding -1) will be used for randomly assigning new tile
+ * indexes. This method only modifies tile indexes and does not change collision information.
+ *
+ * @function Phaser.Tilemaps.Components.Randomize
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area.
+ * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area.
+ * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+ * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+ * @param {integer[]} [indexes] - An array of indexes to randomly draw from during randomization.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var Randomize = function (tileX, tileY, width, height, indexes, layer)
+{
+    var i;
+    var tiles = GetTilesWithin(tileX, tileY, width, height, null, layer);
+
+    // If no indicies are given, then find all the unique indexes within the specified region
+    if (indexes === undefined)
+    {
+        indexes = [];
+        for (i = 0; i < tiles.length; i++)
+        {
+            if (indexes.indexOf(tiles[i].index) === -1)
+            {
+                indexes.push(tiles[i].index);
+            }
+        }
+    }
+
+    for (i = 0; i < tiles.length; i++)
+    {
+        tiles[i].index = GetRandom(indexes);
+    }
+};
+
+module.exports = Randomize;
+
+
+/***/ }),
+/* 476 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CalculateFacesWithin = __webpack_require__(34);
+var PutTileAt = __webpack_require__(135);
+
+/**
+ * Puts an array of tiles or a 2D array of tiles at the given tile coordinates in the specified
+ * layer. The array can be composed of either tile indexes or Tile objects. If you pass in a Tile,
+ * all attributes will be copied over to the specified location. If you pass in an index, only the
+ * index at the specified location will be changed. Collision information will be recalculated
+ * within the region tiles were changed.
+ *
+ * @function Phaser.Tilemaps.Components.PutTilesAt
+ * @private
+ * @since 3.0.0
+ *
+ * @param {(integer[]|integer[][]|Phaser.Tilemaps.Tile[]|Phaser.Tilemaps.Tile[][])} tile - A row (array) or grid (2D array) of Tiles or tile indexes to place.
+ * @param {integer} tileX - The x coordinate, in tiles, not pixels.
+ * @param {integer} tileY - The y coordinate, in tiles, not pixels.
+ * @param {boolean} [recalculateFaces=true] - `true` if the faces data should be recalculated.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var PutTilesAt = function (tilesArray, tileX, tileY, recalculateFaces, layer)
+{
+    if (!Array.isArray(tilesArray)) { return null; }
+    if (recalculateFaces === undefined) { recalculateFaces = true; }
+
+    // Force the input array to be a 2D array
+    if (!Array.isArray(tilesArray[0]))
+    {
+        tilesArray = [ tilesArray ];
+    }
+
+    var height = tilesArray.length;
+    var width = tilesArray[0].length;
+
+    for (var ty = 0; ty < height; ty++)
+    {
+        for (var tx = 0; tx < width; tx++)
+        {
+            var tile = tilesArray[ty][tx];
+            PutTileAt(tile, tileX + tx, tileY + ty, false, layer);
+        }
+    }
+
+    if (recalculateFaces)
+    {
+        // Recalculate the faces within the destination area and neighboring tiles
+        CalculateFacesWithin(tileX - 1, tileY - 1, width + 2, height + 2, layer);
+    }
+};
+
+module.exports = PutTilesAt;
+
+
+
+/***/ }),
+/* 477 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var PutTileAt = __webpack_require__(135);
+var WorldToTileX = __webpack_require__(50);
+var WorldToTileY = __webpack_require__(49);
+
+/**
+ * Puts a tile at the given world coordinates (pixels) in the specified layer. You can pass in either
+ * an index or a Tile object. If you pass in a Tile, all attributes will be copied over to the
+ * specified location. If you pass in an index, only the index at the specified location will be
+ * changed. Collision information will be recalculated at the specified location.
+ *
+ * @function Phaser.Tilemaps.Components.PutTileAtWorldXY
+ * @private
+ * @since 3.0.0
+ *
+ * @param {(integer|Phaser.Tilemaps.Tile)} tile - The index of this tile to set or a Tile object.
+ * @param {number} worldX - The x coordinate, in pixels.
+ * @param {number} worldY - The y coordinate, in pixels.
+ * @param {boolean} [recalculateFaces=true] - `true` if the faces data should be recalculated.
+ * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
