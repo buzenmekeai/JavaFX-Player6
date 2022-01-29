@@ -105766,3 +105766,235 @@ var WorldToTileY = __webpack_require__(49);
  * @since 3.0.0
  *
  * @param {number} worldX - X position to get the tile from (given in pixels)
+ * @param {number} worldY - Y position to get the tile from (given in pixels)
+ * @param {boolean} [nonNull=false] - If true, function won't return null for empty tiles, but a Tile object with an index of -1.
+ * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ * 
+ * @return {Phaser.Tilemaps.Tile} The tile at the given coordinates or null if no tile was found or the coordinates
+ * were invalid.
+ */
+var GetTileAtWorldXY = function (worldX, worldY, nonNull, camera, layer)
+{
+    var tileX = WorldToTileX(worldX, true, camera, layer);
+    var tileY = WorldToTileY(worldY, true, camera, layer);
+
+    return GetTileAt(tileX, tileY, nonNull, layer);
+};
+
+module.exports = GetTileAtWorldXY;
+
+
+/***/ }),
+/* 482 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetTilesWithin = __webpack_require__(17);
+
+/**
+ * @callback EachTileCallback
+ *
+ * @param {Phaser.Tilemaps.Tile} value - The Tile.
+ * @param {integer} index - The index of the tile.
+ * @param {Phaser.Tilemaps.Tile[]} array - An array of Tile objects.
+ */
+
+/**
+ * For each tile in the given rectangular area (in tile coordinates) of the layer, run the given
+ * callback. Similar to Array.prototype.forEach in vanilla JS.
+ *
+ * @function Phaser.Tilemaps.Components.ForEachTile
+ * @private
+ * @since 3.0.0
+ *
+ * @param {EachTileCallback} callback - The callback. Each tile in the given area will be passed to this callback as the first and only parameter.
+ * @param {object} [context] - The context under which the callback should be run.
+ * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area to filter.
+ * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area to filter.
+ * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+ * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+ * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+ * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have -1 for an index.
+ * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide on at least one side.
+ * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that have at least one interesting face.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ */
+var ForEachTile = function (callback, context, tileX, tileY, width, height, filteringOptions, layer)
+{
+    var tiles = GetTilesWithin(tileX, tileY, width, height, filteringOptions, layer);
+
+    tiles.forEach(callback, context);
+};
+
+module.exports = ForEachTile;
+
+
+/***/ }),
+/* 483 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetTilesWithin = __webpack_require__(17);
+
+/**
+ * @callback FindTileCallback
+ *
+ * @param {Phaser.Tilemaps.Tile} value - The Tile.
+ * @param {integer} index - The index of the tile.
+ * @param {Phaser.Tilemaps.Tile[]} array - An array of Tile objects.
+ *
+ * @return {boolean} Return `true` if the callback should run, otherwise `false`.
+ */
+
+/**
+ * Find the first tile in the given rectangular area (in tile coordinates) of the layer that
+ * satisfies the provided testing function. I.e. finds the first tile for which `callback` returns
+ * true. Similar to Array.prototype.find in vanilla JS.
+ *
+ * @function Phaser.Tilemaps.Components.FindTile
+ * @private
+ * @since 3.0.0
+ *
+ * @param {FindTileCallback} callback - The callback. Each tile in the given area will be passed to this callback as the first and only parameter.
+ * @param {object} [context] - The context under which the callback should be run.
+ * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area to filter.
+ * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area to filter.
+ * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+ * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+ * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+ * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have -1 for an index.
+ * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide on at least one side.
+ * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that have at least one interesting face.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ *
+ * @return {?Phaser.Tilemaps.Tile} A Tile that matches the search, or null if no Tile found
+ */
+var FindTile = function (callback, context, tileX, tileY, width, height, filteringOptions, layer)
+{
+    var tiles = GetTilesWithin(tileX, tileY, width, height, filteringOptions, layer);
+    return tiles.find(callback, context) || null;
+};
+
+module.exports = FindTile;
+
+
+/***/ }),
+/* 484 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Searches the entire map layer for the first tile matching the given index, then returns that Tile
+ * object. If no match is found, it returns null. The search starts from the top-left tile and
+ * continues horizontally until it hits the end of the row, then it drops down to the next column.
+ * If the reverse boolean is true, it scans starting from the bottom-right corner traveling up to
+ * the top-left.
+ *
+ * @function Phaser.Tilemaps.Components.FindByIndex
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} index - The tile index value to search for.
+ * @param {integer} [skip=0] - The number of times to skip a matching tile before returning.
+ * @param {boolean} [reverse=false] - If true it will scan the layer in reverse, starting at the
+ * bottom-right. Otherwise it scans from the top-left.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ *
+ * @return {?Phaser.Tilemaps.Tile} The first (or n skipped) tile with the matching index.
+ */
+var FindByIndex = function (findIndex, skip, reverse, layer)
+{
+    if (skip === undefined) { skip = 0; }
+    if (reverse === undefined) { reverse = false; }
+
+    var count = 0;
+    var tx;
+    var ty;
+    var tile;
+
+    if (reverse)
+    {
+        for (ty = layer.height - 1; ty >= 0; ty--)
+        {
+            for (tx = layer.width - 1; tx >= 0; tx--)
+            {
+                tile = layer.data[ty][tx];
+                if (tile && tile.index === findIndex)
+                {
+                    if (count === skip)
+                    {
+                        return tile;
+                    }
+                    else
+                    {
+                        count += 1;
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        for (ty = 0; ty < layer.height; ty++)
+        {
+            for (tx = 0; tx < layer.width; tx++)
+            {
+                tile = layer.data[ty][tx];
+                if (tile && tile.index === findIndex)
+                {
+                    if (count === skip)
+                    {
+                        return tile;
+                    }
+                    else
+                    {
+                        count += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    return null;
+};
+
+module.exports = FindByIndex;
+
+
+/***/ }),
+/* 485 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetTilesWithin = __webpack_require__(17);
+
+/**
+ * For each tile in the given rectangular area (in tile coordinates) of the layer, run the given
+ * filter callback function. Any tiles that pass the filter test (i.e. where the callback returns
+ * true) will returned as a new array. Similar to Array.prototype.Filter in vanilla JS.
+ *
+ * @function Phaser.Tilemaps.Components.FilterTiles
+ * @private
+ * @since 3.0.0
+ *
