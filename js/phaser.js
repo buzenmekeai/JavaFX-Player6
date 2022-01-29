@@ -105543,3 +105543,226 @@ var WorldToTileY = __webpack_require__(49);
  * @param {number} worldY - The y coordinate, in pixels.
  * @param {boolean} [recalculateFaces=true] - `true` if the faces data should be recalculated.
  * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ *
+ * @return {Phaser.Tilemaps.Tile} The Tile object that was created or added to this map.
+ */
+var PutTileAtWorldXY = function (tile, worldX, worldY, recalculateFaces, camera, layer)
+{
+    var tileX = WorldToTileX(worldX, true, camera, layer);
+    var tileY = WorldToTileY(worldY, true, camera, layer);
+    return PutTileAt(tile, tileX, tileY, recalculateFaces, layer);
+};
+
+module.exports = PutTileAtWorldXY;
+
+
+/***/ }),
+/* 478 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var HasTileAt = __webpack_require__(219);
+var WorldToTileX = __webpack_require__(50);
+var WorldToTileY = __webpack_require__(49);
+
+/**
+ * Checks if there is a tile at the given location (in world coordinates) in the given layer. Returns
+ * false if there is no tile or if the tile at that location has an index of -1.
+ *
+ * @function Phaser.Tilemaps.Components.HasTileAtWorldXY
+ * @private
+ * @since 3.0.0
+ *
+ * @param {number} worldX - The X coordinate of the world position.
+ * @param {number} worldY - The Y coordinate of the world position.
+ * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when factoring in which tiles to return.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ * 
+ * @return {?boolean} Returns a boolean, or null if the layer given was invalid.
+ */
+var HasTileAtWorldXY = function (worldX, worldY, camera, layer)
+{
+    var tileX = WorldToTileX(worldX, true, camera, layer);
+    var tileY = WorldToTileY(worldY, true, camera, layer);
+
+    return HasTileAt(tileX, tileY, layer);
+};
+
+module.exports = HasTileAtWorldXY;
+
+
+/***/ }),
+/* 479 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetTilesWithin = __webpack_require__(17);
+var WorldToTileX = __webpack_require__(50);
+var WorldToTileY = __webpack_require__(49);
+
+/**
+ * Gets the tiles in the given rectangular area (in world coordinates) of the layer.
+ *
+ * @function Phaser.Tilemaps.Components.GetTilesWithinWorldXY
+ * @private
+ * @since 3.0.0
+ *
+ * @param {number} worldX - The world x coordinate for the top-left of the area.
+ * @param {number} worldY - The world y coordinate for the top-left of the area.
+ * @param {number} width - The width of the area.
+ * @param {number} height - The height of the area.
+ * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+ * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have -1 for an index.
+ * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide on at least one side.
+ * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that have at least one interesting face.
+ * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when factoring in which tiles to return.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ * 
+ * @return {Phaser.Tilemaps.Tile[]} Array of Tile objects.
+ */
+var GetTilesWithinWorldXY = function (worldX, worldY, width, height, filteringOptions, camera, layer)
+{
+    // Top left corner of the rect, rounded down to include partial tiles
+    var xStart = WorldToTileX(worldX, true, camera, layer);
+    var yStart = WorldToTileY(worldY, true, camera, layer);
+
+    // Bottom right corner of the rect, rounded up to include partial tiles
+    var xEnd = Math.ceil(WorldToTileX(worldX + width, false, camera, layer));
+    var yEnd = Math.ceil(WorldToTileY(worldY + height, false, camera, layer));
+
+    return GetTilesWithin(xStart, yStart, xEnd - xStart, yEnd - yStart, filteringOptions, layer);
+};
+
+module.exports = GetTilesWithinWorldXY;
+
+
+/***/ }),
+/* 480 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Geom = __webpack_require__(274);
+var GetTilesWithin = __webpack_require__(17);
+var Intersects = __webpack_require__(273);
+var NOOP = __webpack_require__(1);
+var TileToWorldX = __webpack_require__(101);
+var TileToWorldY = __webpack_require__(100);
+var WorldToTileX = __webpack_require__(50);
+var WorldToTileY = __webpack_require__(49);
+
+var TriangleToRectangle = function (triangle, rect)
+{
+    return Intersects.RectangleToTriangle(rect, triangle);
+};
+
+// Note: Could possibly be optimized by copying the shape and shifting it into tilemapLayer
+// coordinates instead of shifting the tiles.
+
+/**
+ * Gets the tiles that overlap with the given shape in the given layer. The shape must be a Circle,
+ * Line, Rectangle or Triangle. The shape should be in world coordinates.
+ *
+ * @function Phaser.Tilemaps.Components.GetTilesWithinShape
+ * @private
+ * @since 3.0.0
+ *
+ * @param {(Phaser.Geom.Circle|Phaser.Geom.Line|Phaser.Geom.Rectangle|Phaser.Geom.Triangle)} shape - A shape in world (pixel) coordinates
+ * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+ * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have -1 for an index.
+ * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide on at least one side.
+ * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that have at least one interesting face.
+ * @param {Phaser.Cameras.Scene2D.Camera} [camera=main camera] - The Camera to use when calculating the tile index from the world values.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ *
+ * @return {Phaser.Tilemaps.Tile[]} Array of Tile objects.
+ */
+var GetTilesWithinShape = function (shape, filteringOptions, camera, layer)
+{
+    if (shape === undefined) { return []; }
+
+    // intersectTest is a function with parameters: shape, rect
+    var intersectTest = NOOP;
+    if (shape instanceof Geom.Circle) { intersectTest = Intersects.CircleToRectangle; }
+    else if (shape instanceof Geom.Rectangle) { intersectTest = Intersects.RectangleToRectangle; }
+    else if (shape instanceof Geom.Triangle) { intersectTest = TriangleToRectangle; }
+    else if (shape instanceof Geom.Line) { intersectTest = Intersects.LineToRectangle; }
+
+    // Top left corner of the shapes's bounding box, rounded down to include partial tiles
+    var xStart = WorldToTileX(shape.left, true, camera, layer);
+    var yStart = WorldToTileY(shape.top, true, camera, layer);
+
+    // Bottom right corner of the shapes's bounding box, rounded up to include partial tiles
+    var xEnd = Math.ceil(WorldToTileX(shape.right, false, camera, layer));
+    var yEnd = Math.ceil(WorldToTileY(shape.bottom, false, camera, layer));
+
+    // Tiles within bounding rectangle of shape. Bounds are forced to be at least 1 x 1 tile in size
+    // to grab tiles for shapes that don't have a height or width (e.g. a horizontal line).
+    var width = Math.max(xEnd - xStart, 1);
+    var height = Math.max(yEnd - yStart, 1);
+    var tiles = GetTilesWithin(xStart, yStart, width, height, filteringOptions, layer);
+
+    var tileWidth = layer.tileWidth;
+    var tileHeight = layer.tileHeight;
+    if (layer.tilemapLayer)
+    {
+        tileWidth *= layer.tilemapLayer.scaleX;
+        tileHeight *= layer.tilemapLayer.scaleY;
+    }
+
+    var results = [];
+    var tileRect = new Geom.Rectangle(0, 0, tileWidth, tileHeight);
+    for (var i = 0; i < tiles.length; i++)
+    {
+        var tile = tiles[i];
+        tileRect.x = TileToWorldX(tile.x, camera, layer);
+        tileRect.y = TileToWorldY(tile.y, camera, layer);
+        if (intersectTest(shape, tileRect))
+        {
+            results.push(tile);
+        }
+    }
+
+    return results;
+};
+
+module.exports = GetTilesWithinShape;
+
+
+/***/ }),
+/* 481 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetTileAt = __webpack_require__(102);
+var WorldToTileX = __webpack_require__(50);
+var WorldToTileY = __webpack_require__(49);
+
+/**
+ * Gets a tile at the given world coordinates from the given layer.
+ *
+ * @function Phaser.Tilemaps.Components.GetTileAtWorldXY
+ * @private
+ * @since 3.0.0
+ *
+ * @param {number} worldX - X position to get the tile from (given in pixels)
