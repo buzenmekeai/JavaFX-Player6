@@ -105998,3 +105998,195 @@ var GetTilesWithin = __webpack_require__(17);
  * @private
  * @since 3.0.0
  *
+ * @param {function} callback - The callback. Each tile in the given area will be passed to this
+ * callback as the first and only parameter. The callback should return true for tiles that pass the
+ * filter.
+ * @param {object} [context] - The context under which the callback should be run.
+ * @param {integer} [tileX=0] - The left most tile index (in tile coordinates) to use as the origin of the area to filter.
+ * @param {integer} [tileY=0] - The top most tile index (in tile coordinates) to use as the origin of the area to filter.
+ * @param {integer} [width=max width based on tileX] - How many tiles wide from the `tileX` index the area will be.
+ * @param {integer} [height=max height based on tileY] - How many tiles tall from the `tileY` index the area will be.
+ * @param {object} [filteringOptions] - Optional filters to apply when getting the tiles.
+ * @param {boolean} [filteringOptions.isNotEmpty=false] - If true, only return tiles that don't have -1 for an index.
+ * @param {boolean} [filteringOptions.isColliding=false] - If true, only return tiles that collide on at least one side.
+ * @param {boolean} [filteringOptions.hasInterestingFace=false] - If true, only return tiles that have at least one interesting face.
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ * 
+ * @return {Phaser.Tilemaps.Tile[]} The filtered array of Tiles.
+ */
+var FilterTiles = function (callback, context, tileX, tileY, width, height, filteringOptions, layer)
+{
+    var tiles = GetTilesWithin(tileX, tileY, width, height, filteringOptions, layer);
+
+    return tiles.filter(callback, context);
+};
+
+module.exports = FilterTiles;
+
+
+
+/***/ }),
+/* 486 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetTilesWithin = __webpack_require__(17);
+var CalculateFacesWithin = __webpack_require__(34);
+var SetTileCollision = __webpack_require__(56);
+
+/**
+ * Sets the tiles in the given rectangular area (in tile coordinates) of the layer with the
+ * specified index. Tiles will be set to collide if the given index is a colliding index.
+ * Collision information in the region will be recalculated.
+ *
+ * @function Phaser.Tilemaps.Components.Fill
+ * @private
+ * @since 3.0.0
+ *
+ * @param {integer} index - The tile index to fill the area with.
+ * @param {integer} tileX - The left most tile index (in tile coordinates) to use as the origin of the area.
+ * @param {integer} tileY - The top most tile index (in tile coordinates) to use as the origin of the area.
+ * @param {integer} width - How many tiles wide from the `tileX` index the area will be.
+ * @param {integer} height - How many tiles tall from the `tileY` index the area will be.
+ * @param {boolean} recalculateFaces - `true` if the faces data should be recalculated.
+ * @param {Phaser.Tilemaps.LayerData} layer - The tile layer to use. If not given the current layer is used.
+ */
+var Fill = function (index, tileX, tileY, width, height, recalculateFaces, layer)
+{
+    var doesIndexCollide = (layer.collideIndexes.indexOf(index) !== -1);
+
+    var tiles = GetTilesWithin(tileX, tileY, width, height, null, layer);
+
+    for (var i = 0; i < tiles.length; i++)
+    {
+        tiles[i].index = index;
+
+        SetTileCollision(tiles[i], doesIndexCollide);
+    }
+
+    if (recalculateFaces)
+    {
+        // Recalculate the faces within the area and neighboring tiles
+        CalculateFacesWithin(tileX - 1, tileY - 1, width + 2, height + 2, layer);
+    }
+};
+
+module.exports = Fill;
+
+
+/***/ }),
+/* 487 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var SnapFloor = __webpack_require__(142);
+var SnapCeil = __webpack_require__(243);
+
+/**
+ * Returns the tiles in the given layer that are within the camera's viewport. This is used internally.
+ *
+ * @function Phaser.Tilemaps.Components.CullTiles
+ * @private
+ * @since 3.0.0
+ *
+ * @param {Phaser.Tilemaps.LayerData} layer - The Tilemap Layer to act upon.
+ * @param {Phaser.Cameras.Scene2D.Camera} [camera] - The Camera to run the cull check against.
+ * @param {array} [outputArray] - An optional array to store the Tile objects within.
+ *
+ * @return {Phaser.Tilemaps.Tile[]} An array of Tile objects.
+ */
+var CullTiles = function (layer, camera, outputArray, renderOrder)
+{
+    if (outputArray === undefined) { outputArray = []; }
+    if (renderOrder === undefined) { renderOrder = 0; }
+
+    outputArray.length = 0;
+
+    var tilemap = layer.tilemapLayer.tilemap;
+    var tilemapLayer = layer.tilemapLayer;
+
+    var mapData = layer.data;
+    var mapWidth = layer.width;
+    var mapHeight = layer.height;
+
+    //  We need to use the tile sizes defined for the map as a whole, not the layer,
+    //  in order to calculate the bounds correctly. As different sized tiles may be
+    //  placed on the grid and we cannot trust layer.baseTileWidth to give us the true size.
+    var tileW = Math.floor(tilemap.tileWidth * tilemapLayer.scaleX);
+    var tileH = Math.floor(tilemap.tileHeight * tilemapLayer.scaleY);
+
+    var drawLeft = 0;
+    var drawRight = mapWidth;
+    var drawTop = 0;
+    var drawBottom = mapHeight;
+
+    if (!tilemapLayer.skipCull && tilemapLayer.scrollFactorX === 1 && tilemapLayer.scrollFactorY === 1)
+    {
+        //  Camera world view bounds, snapped for scaled tile size
+        //  Cull Padding values are given in tiles, not pixels
+
+        var boundsLeft = SnapFloor(camera.worldView.x - tilemapLayer.x, tileW, 0, true) - tilemapLayer.cullPaddingX;
+        var boundsRight = SnapCeil(camera.worldView.right - tilemapLayer.x, tileW, 0, true) + tilemapLayer.cullPaddingX;
+        var boundsTop = SnapFloor(camera.worldView.y - tilemapLayer.y, tileH, 0, true) - tilemapLayer.cullPaddingY;
+        var boundsBottom = SnapCeil(camera.worldView.bottom - tilemapLayer.y, tileH, 0, true) + tilemapLayer.cullPaddingY;
+
+        drawLeft = Math.max(0, boundsLeft);
+        drawRight = Math.min(mapWidth, boundsRight);
+        drawTop = Math.max(0, boundsTop);
+        drawBottom = Math.min(mapHeight, boundsBottom);
+    }
+
+    var x;
+    var y;
+    var tile;
+
+    if (renderOrder === 0)
+    {
+        //  right-down
+
+        for (y = drawTop; y < drawBottom; y++)
+        {
+            for (x = drawLeft; x < drawRight; x++)
+            {
+                tile = mapData[y][x];
+    
+                if (!tile || tile.index === -1 || !tile.visible || tile.alpha === 0)
+                {
+                    continue;
+                }
+    
+                outputArray.push(tile);
+            }
+        }
+    }
+    else if (renderOrder === 1)
+    {
+        //  left-down
+
+        for (y = drawTop; y < drawBottom; y++)
+        {
+            for (x = drawRight; x >= drawLeft; x--)
+            {
+                tile = mapData[y][x];
+    
+                if (!tile || tile.index === -1 || !tile.visible || tile.alpha === 0)
+                {
+                    continue;
+                }
+    
+                outputArray.push(tile);
+            }
+        }
+    }
+    else if (renderOrder === 2)
+    {
