@@ -106401,3 +106401,217 @@ module.exports = Copy;
  */
 
 module.exports = {
+
+    Components: __webpack_require__(103),
+    Parsers: __webpack_require__(460),
+
+    Formats: __webpack_require__(29),
+    ImageCollection: __webpack_require__(213),
+    ParseToTilemap: __webpack_require__(132),
+    Tile: __webpack_require__(55),
+    Tilemap: __webpack_require__(209),
+    TilemapCreator: __webpack_require__(443),
+    TilemapFactory: __webpack_require__(442),
+    Tileset: __webpack_require__(99),
+
+    LayerData: __webpack_require__(78),
+    MapData: __webpack_require__(77),
+    ObjectLayer: __webpack_require__(211),
+
+    DynamicTilemapLayer: __webpack_require__(208),
+    StaticTilemapLayer: __webpack_require__(207)
+
+};
+
+
+/***/ }),
+/* 491 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Filter Types.
+ *
+ * @name Phaser.Textures.FilterMode
+ * @enum {integer}
+ * @memberof Phaser.Textures
+ * @readonly
+ * @since 3.0.0
+ */
+var CONST = {
+
+    /**
+     * Linear filter type.
+     * 
+     * @name Phaser.Textures.FilterMode.LINEAR
+     */
+    LINEAR: 0,
+
+    /**
+     * Nearest neighbor filter type.
+     * 
+     * @name Phaser.Textures.FilterMode.NEAREST
+     */
+    NEAREST: 1
+    
+};
+
+module.exports = CONST;
+
+
+/***/ }),
+/* 492 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Extend = __webpack_require__(20);
+var FilterMode = __webpack_require__(491);
+
+/**
+ * @namespace Phaser.Textures
+ */
+
+/**
+ * Linear filter type.
+ * 
+ * @name Phaser.Textures.LINEAR
+ * @constant
+ */
+
+/**
+ * Nearest Neighbor filter type.
+ * 
+ * @name Phaser.Textures.NEAREST
+ * @constant
+ */
+
+var Textures = {
+
+    FilterMode: FilterMode,
+    Frame: __webpack_require__(113),
+    Parsers: __webpack_require__(316),
+    Texture: __webpack_require__(165),
+    TextureManager: __webpack_require__(318),
+    TextureSource: __webpack_require__(317)
+
+};
+
+Textures = Extend(false, Textures, FilterMode);
+
+module.exports = Textures;
+
+
+/***/ }),
+/* 493 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Structs
+ */
+
+module.exports = {
+
+    List: __webpack_require__(112),
+    Map: __webpack_require__(180),
+    ProcessQueue: __webpack_require__(228),
+    RTree: __webpack_require__(227),
+    Set: __webpack_require__(95)
+
+};
+
+
+/***/ }),
+/* 494 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Pavle Goloskokovic <pgoloskokovic@gmail.com> (http://prunegames.com)
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Sound
+ */
+
+/**
+ * Config object containing various sound settings.
+ *
+ * @typedef {object} SoundConfig
+ *
+ * @property {boolean} [mute=false] - Boolean indicating whether the sound should be muted or not.
+ * @property {number} [volume=1] - A value between 0 (silence) and 1 (full volume).
+ * @property {number} [rate=1] - Defines the speed at which the sound should be played.
+ * @property {number} [detune=0] - Represents detuning of sound in [cents](https://en.wikipedia.org/wiki/Cent_%28music%29).
+ * @property {number} [seek=0] - Position of playback for this sound, in seconds.
+ * @property {boolean} [loop=false] - Whether or not the sound or current sound marker should loop.
+ * @property {number} [delay=0] - Time, in seconds, that should elapse before the sound actually starts its playback.
+ */
+
+/**
+ * Marked section of a sound represented by name, and optionally start time, duration, and config object.
+ *
+ * @typedef {object} SoundMarker
+ *
+ * @property {string} name - Unique identifier of a sound marker.
+ * @property {number} [start=0] - Sound position offset at witch playback should start.
+ * @property {number} [duration] - Playback duration of this marker.
+ * @property {SoundConfig} [config] - An optional config object containing default marker settings.
+ */
+
+module.exports = {
+
+    SoundManagerCreator: __webpack_require__(325),
+
+    BaseSound: __webpack_require__(114),
+    BaseSoundManager: __webpack_require__(115),
+
+    WebAudioSound: __webpack_require__(319),
+    WebAudioSoundManager: __webpack_require__(320),
+
+    HTML5AudioSound: __webpack_require__(323),
+    HTML5AudioSoundManager: __webpack_require__(324),
+
+    NoAudioSound: __webpack_require__(321),
+    NoAudioSoundManager: __webpack_require__(322)
+
+};
+
+
+/***/ }),
+/* 495 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Clamp = __webpack_require__(23);
+var Class = __webpack_require__(0);
+var GetFastValue = __webpack_require__(2);
+var PluginCache = __webpack_require__(15);
+
+/**
+ * @classdesc
+ * A proxy class to the Global Scene Manager.
+ *
+ * @class ScenePlugin
