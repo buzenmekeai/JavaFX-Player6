@@ -106615,3 +106615,229 @@ var PluginCache = __webpack_require__(15);
  * A proxy class to the Global Scene Manager.
  *
  * @class ScenePlugin
+ * @memberof Phaser.Scenes
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - The Scene that this ScenePlugin belongs to.
+ */
+var ScenePlugin = new Class({
+
+    initialize:
+
+    function ScenePlugin (scene)
+    {
+        /**
+         * The Scene that this ScenePlugin belongs to.
+         *
+         * @name Phaser.Scenes.ScenePlugin#scene
+         * @type {Phaser.Scene}
+         * @since 3.0.0
+         */
+        this.scene = scene;
+
+        /**
+         * The Scene Systems instance of the Scene that this ScenePlugin belongs to.
+         *
+         * @name Phaser.Scenes.ScenePlugin#systems
+         * @type {Phaser.Scenes.Systems}
+         * @since 3.0.0
+         */
+        this.systems = scene.sys;
+
+        /**
+         * The settings of the Scene this ScenePlugin belongs to.
+         *
+         * @name Phaser.Scenes.ScenePlugin#settings
+         * @type {Phaser.Scenes.Settings.Object}
+         * @since 3.0.0
+         */
+        this.settings = scene.sys.settings;
+
+        /**
+         * The key of the Scene this ScenePlugin belongs to.
+         *
+         * @name Phaser.Scenes.ScenePlugin#key
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.key = scene.sys.settings.key;
+
+        /**
+         * The Game's SceneManager.
+         *
+         * @name Phaser.Scenes.ScenePlugin#manager
+         * @type {Phaser.Scenes.SceneManager}
+         * @since 3.0.0
+         */
+        this.manager = scene.sys.game.scene;
+
+        /**
+         * If this Scene is currently transitioning to another, this holds
+         * the current percentage of the transition progress, between 0 and 1.
+         *
+         * @name Phaser.Scenes.ScenePlugin#transitionProgress
+         * @type {number}
+         * @since 3.5.0
+         */
+        this.transitionProgress = 0;
+
+        /**
+         * Transition elapsed timer.
+         *
+         * @name Phaser.Scenes.ScenePlugin#_elapsed
+         * @type {integer}
+         * @private
+         * @since 3.5.0
+         */
+        this._elapsed = 0;
+
+        /**
+         * Transition elapsed timer.
+         *
+         * @name Phaser.Scenes.ScenePlugin#_target
+         * @type {?Phaser.Scenes.Scene}
+         * @private
+         * @since 3.5.0
+         */
+        this._target = null;
+
+        /**
+         * Transition duration.
+         *
+         * @name Phaser.Scenes.ScenePlugin#_duration
+         * @type {integer}
+         * @private
+         * @since 3.5.0
+         */
+        this._duration = 0;
+
+        /**
+         * Transition callback.
+         *
+         * @name Phaser.Scenes.ScenePlugin#_onUpdate
+         * @type {function}
+         * @private
+         * @since 3.5.0
+         */
+        this._onUpdate;
+
+        /**
+         * Transition callback scope.
+         *
+         * @name Phaser.Scenes.ScenePlugin#_onUpdateScope
+         * @type {object}
+         * @private
+         * @since 3.5.0
+         */
+        this._onUpdateScope;
+
+        /**
+         * Will this Scene sleep (true) after the transition, or stop (false)
+         *
+         * @name Phaser.Scenes.ScenePlugin#_willSleep
+         * @type {boolean}
+         * @private
+         * @since 3.5.0
+         */
+        this._willSleep = false;
+
+        /**
+         * Will this Scene be removed from the Scene Manager after the transition completes?
+         *
+         * @name Phaser.Scenes.ScenePlugin#_willRemove
+         * @type {boolean}
+         * @private
+         * @since 3.5.0
+         */
+        this._willRemove = false;
+
+        scene.sys.events.once('boot', this.boot, this);
+        scene.sys.events.on('start', this.pluginStart, this);
+    },
+
+    /**
+     * This method is called automatically, only once, when the Scene is first created.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.Scenes.ScenePlugin#boot
+     * @private
+     * @since 3.0.0
+     */
+    boot: function ()
+    {
+        this.systems.events.once('destroy', this.destroy, this);
+    },
+
+    /**
+     * This method is called automatically by the Scene when it is starting up.
+     * It is responsible for creating local systems, properties and listening for Scene events.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.Scenes.ScenePlugin#pluginStart
+     * @private
+     * @since 3.5.0
+     */
+    pluginStart: function ()
+    {
+        this._target = null;
+
+        this.systems.events.once('shutdown', this.shutdown, this);
+    },
+
+    /**
+     * Shutdown this Scene and run the given one.
+     *
+     * @method Phaser.Scenes.ScenePlugin#start
+     * @since 3.0.0
+     *
+     * @param {string} [key] - The Scene to start.
+     * @param {object} [data] - The Scene data.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    start: function (key, data)
+    {
+        if (key === undefined) { key = this.key; }
+
+        this.manager.queueOp('stop', this.key);
+        this.manager.queueOp('start', key, data);
+
+        return this;
+    },
+
+    /**
+     * Restarts this Scene.
+     *
+     * @method Phaser.Scenes.ScenePlugin#restart
+     * @since 3.4.0
+     * 
+     * @param {object} [data] - The Scene data.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    restart: function (data)
+    {
+        var key = this.key;
+
+        this.manager.queueOp('stop', key);
+        this.manager.queueOp('start', key, data);
+
+        return this;
+    },
+
+    /**
+     * @typedef {object} Phaser.Scenes.ScenePlugin.SceneTransitionConfig
+     * 
+     * @property {string} target - The Scene key to transition to.
+     * @property {integer} [duration=1000] - The duration, in ms, for the transition to last.
+     * @property {boolean} [sleep=false] - Will the Scene responsible for the transition be sent to sleep on completion (`true`), or stopped? (`false`)
+     * @property {boolean} [allowInput=false] - Will the Scenes Input system be able to process events while it is transitioning in or out?
+     * @property {boolean} [moveAbove] - Move the target Scene to be above this one before the transition starts.
+     * @property {boolean} [moveBelow] - Move the target Scene to be below this one before the transition starts.
+     * @property {function} [onUpdate] - This callback is invoked every frame for the duration of the transition.
+     * @property {any} [onUpdateScope] - The context in which the callback is invoked.
+     * @property {any} [data] - An object containing any data you wish to be passed to the target Scenes init / create methods.
+     */
+
+    /**
