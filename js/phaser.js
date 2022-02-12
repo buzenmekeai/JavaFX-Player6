@@ -106841,3 +106841,235 @@ var ScenePlugin = new Class({
      */
 
     /**
+     * This will start a transition from the current Scene to the target Scene given.
+     * 
+     * The transition will last for the duration specified in milliseconds.
+     * 
+     * You can have the target Scene moved above or below this one in the display list.
+     * 
+     * You can specify an update callback. This callback will be invoked _every frame_ for the duration
+     * of the transition.
+     *
+     * This Scene can either be sent to sleep at the end of the transition, or stopped. The default is to stop.
+     * 
+     * There are also 5 transition related events: This scene will emit the event `transitionto` when
+     * the transition begins, which is typically the frame after calling this method.
+     * 
+     * The target Scene will emit the event `transitioninit` when that Scene's `init` method is called.
+     * It will then emit the event `transitionstart` when its `create` method is called.
+     * If the Scene was sleeping and has been woken up, it will emit the event `transitionwake` instead of these two,
+     * as the Scenes `init` and `create` methods are not invoked when a Scene wakes up.
+     * 
+     * When the duration of the transition has elapsed it will emit the event `transitioncomplete`.
+     * These events are cleared of all listeners when the Scene shuts down, but not if it is sent to sleep.
+     *
+     * It's important to understand that the duration of the transition begins the moment you call this method.
+     * If the Scene you are transitioning to includes delayed processes, such as waiting for files to load, the
+     * time still counts down even while that is happening. If the game itself pauses, or something else causes
+     * this Scenes update loop to stop, then the transition will also pause for that duration. There are
+     * checks in place to prevent you accidentally stopping a transitioning Scene but if you've got code to
+     * override this understand that until the target Scene completes it might never be unlocked for input events.
+     * 
+     * @method Phaser.Scenes.ScenePlugin#transition
+     * @since 3.5.0
+     *
+     * @param {Phaser.Scenes.ScenePlugin.SceneTransitionConfig} config - The transition configuration object.
+     *
+     * @return {boolean} `true` is the transition was started, otherwise `false`.
+     */
+    transition: function (config)
+    {
+        if (config === undefined) { config = {}; }
+
+        var key = GetFastValue(config, 'target', false);
+
+        var target = this.manager.getScene(key);
+
+        if (!key || !this.checkValidTransition(target))
+        {
+            return false;
+        }
+
+        var duration = GetFastValue(config, 'duration', 1000);
+
+        this._elapsed = 0;
+        this._target = target;
+        this._duration = duration;
+        this._willSleep = GetFastValue(config, 'sleep', false);
+        this._willRemove = GetFastValue(config, 'remove', false);
+
+        var callback = GetFastValue(config, 'onUpdate', null);
+
+        if (callback)
+        {
+            this._onUpdate = callback;
+            this._onUpdateScope = GetFastValue(config, 'onUpdateScope', this.scene);
+        }
+
+        var allowInput = GetFastValue(config, 'allowInput', false);
+
+        this.settings.transitionAllowInput = allowInput;
+
+        var targetSettings = target.sys.settings;
+
+        targetSettings.isTransition = true;
+        targetSettings.transitionFrom = this.scene;
+        targetSettings.transitionDuration = duration;
+        targetSettings.transitionAllowInput = allowInput;
+
+        if (GetFastValue(config, 'moveAbove', false))
+        {
+            this.manager.moveAbove(this.key, key);
+        }
+        else if (GetFastValue(config, 'moveBelow', false))
+        {
+            this.manager.moveBelow(this.key, key);
+        }
+
+        if (target.sys.isSleeping())
+        {
+            target.sys.wake();
+        }
+        else
+        {
+            this.manager.start(key, GetFastValue(config, 'data'));
+        }
+
+        this.systems.events.emit('transitionout', target, duration);
+
+        this.systems.events.on('update', this.step, this);
+
+        return true;
+    },
+
+    /**
+     * Checks to see if this Scene can transition to the target Scene or not.
+     *
+     * @method Phaser.Scenes.ScenePlugin#checkValidTransition
+     * @private
+     * @since 3.5.0
+     *
+     * @param {Phaser.Scene} target - The Scene to test against.
+     *
+     * @return {boolean} `true` if this Scene can transition, otherwise `false`.
+     */
+    checkValidTransition: function (target)
+    {
+        //  Not a valid target if it doesn't exist, isn't active or is already transitioning in or out
+        if (!target || target.sys.isActive() || target.sys.isTransitioning() || target === this.scene || this.systems.isTransitioning())
+        {
+            return false;
+        }
+
+        return true;
+    },
+
+    /**
+     * A single game step. This is only called if the parent Scene is transitioning
+     * out to another Scene.
+     *
+     * @method Phaser.Scenes.ScenePlugin#step
+     * @private
+     * @since 3.5.0
+     *
+     * @param {number} time - The current time. Either a High Resolution Timer value if it comes from Request Animation Frame, or Date.now if using SetTimeout.
+     * @param {number} delta - The delta time in ms since the last frame. This is a smoothed and capped value based on the FPS rate.
+     */
+    step: function (time, delta)
+    {
+        this._elapsed += delta;
+
+        this.transitionProgress = Clamp(this._elapsed / this._duration, 0, 1);
+
+        if (this._onUpdate)
+        {
+            this._onUpdate.call(this._onUpdateScope, this.transitionProgress);
+        }
+
+        if (this._elapsed >= this._duration)
+        {
+            this.transitionComplete();
+        }
+    },
+
+    /**
+     * Called by `step` when the transition out of this scene to another is over.
+     *
+     * @method Phaser.Scenes.ScenePlugin#transitionComplete
+     * @private
+     * @since 3.5.0
+     */
+    transitionComplete: function ()
+    {
+        var targetSys = this._target.sys;
+        var targetSettings = this._target.sys.settings;
+
+        //  Stop the step
+        this.systems.events.off('update', this.step, this);
+
+        //  Notify target scene
+        targetSys.events.emit('transitioncomplete', this.scene);
+
+        //  Clear target scene settings
+        targetSettings.isTransition = false;
+        targetSettings.transitionFrom = null;
+
+        //  Clear local settings
+        this._duration = 0;
+        this._target = null;
+        this._onUpdate = null;
+        this._onUpdateScope = null;
+
+        //  Now everything is clear we can handle what happens to this Scene
+        if (this._willRemove)
+        {
+            this.manager.remove(this.key);
+        }
+        else if (this._willSleep)
+        {
+            this.systems.sleep();
+        }
+        else
+        {
+            this.manager.stop(this.key);
+        }
+    },
+
+    /**
+     * Add the Scene into the Scene Manager and start it if 'autoStart' is true or the Scene config 'active' property is set.
+     *
+     * @method Phaser.Scenes.ScenePlugin#add
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene key.
+     * @param {(Phaser.Scene|Phaser.Scenes.Settings.Config|function)} sceneConfig - The config for the Scene.
+     * @param {boolean} autoStart - Whether to start the Scene after it's added.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    add: function (key, sceneConfig, autoStart)
+    {
+        this.manager.add(key, sceneConfig, autoStart);
+
+        return this;
+    },
+
+    /**
+     * Launch the given Scene and run it in parallel with this one.
+     *
+     * @method Phaser.Scenes.ScenePlugin#launch
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to launch.
+     * @param {object} [data] - The Scene data.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    launch: function (key, data)
+    {
+        if (key && key !== this.key)
+        {
+            this.manager.queueOp('start', key, data);
+        }
+
+        return this;
