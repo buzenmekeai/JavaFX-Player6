@@ -107073,3 +107073,229 @@ var ScenePlugin = new Class({
         }
 
         return this;
+    },
+
+    /**
+     * Runs the given Scene, but does not change the state of this Scene.
+     * 
+     * If the given Scene is paused, it will resume it. If sleeping, it will wake it.
+     * If not running at all, it will be started.
+     *
+     * Use this if you wish to open a modal Scene by calling `pause` on the current
+     * Scene, then `run` on the modal Scene.
+     *
+     * @method Phaser.Scenes.ScenePlugin#run
+     * @since 3.10.0
+     *
+     * @param {string} key - The Scene to run.
+     * @param {object} [data] - A data object that will be passed to the Scene and emitted in its ready, wake, or resume events.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    run: function (key, data)
+    {
+        if (key && key !== this.key)
+        {
+            this.manager.queueOp('run', key, data);
+        }
+
+        return this;
+    },
+
+    /**
+     * Pause the Scene - this stops the update step from happening but it still renders.
+     *
+     * @method Phaser.Scenes.ScenePlugin#pause
+     * @since 3.0.0
+     *
+     * @param {string} [key] - The Scene to pause.
+     * @param {object} [data] - An optional data object that will be passed to the Scene and emitted in its pause event.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    pause: function (key, data)
+    {
+        if (key === undefined) { key = this.key; }
+
+        this.manager.queueOp('pause', key, data);
+
+        return this;
+    },
+
+    /**
+     * Resume the Scene - starts the update loop again.
+     *
+     * @method Phaser.Scenes.ScenePlugin#resume
+     * @since 3.0.0
+     *
+     * @param {string} [key] - The Scene to resume.
+     * @param {object} [data] - An optional data object that will be passed to the Scene and emitted in its resume event.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    resume: function (key, data)
+    {
+        if (key === undefined) { key = this.key; }
+
+        this.manager.queueOp('resume', key, data);
+
+        return this;
+    },
+
+    /**
+     * Makes the Scene sleep (no update, no render) but doesn't shutdown.
+     *
+     * @method Phaser.Scenes.ScenePlugin#sleep
+     * @since 3.0.0
+     *
+     * @param {string} [key] - The Scene to put to sleep.
+     * @param {object} [data] - An optional data object that will be passed to the Scene and emitted in its sleep event.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    sleep: function (key, data)
+    {
+        if (key === undefined) { key = this.key; }
+
+        this.manager.queueOp('sleep', key, data);
+
+        return this;
+    },
+
+    /**
+     * Makes the Scene wake-up (starts update and render)
+     *
+     * @method Phaser.Scenes.ScenePlugin#wake
+     * @since 3.0.0
+     *
+     * @param {string} [key] - The Scene to wake up.
+     * @param {object} [data] - An optional data object that will be passed to the Scene and emitted in its wake event.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    wake: function (key, data)
+    {
+        if (key === undefined) { key = this.key; }
+
+        this.manager.queueOp('wake', key, data);
+
+        return this;
+    },
+
+    /**
+     * Makes this Scene sleep then starts the Scene given.
+     *
+     * @method Phaser.Scenes.ScenePlugin#switch
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to start.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    switch: function (key)
+    {
+        if (key !== this.key)
+        {
+            this.manager.queueOp('switch', this.key, key);
+        }
+
+        return this;
+    },
+
+    /**
+     * Shutdown the Scene, clearing display list, timers, etc.
+     *
+     * @method Phaser.Scenes.ScenePlugin#stop
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to stop.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    stop: function (key)
+    {
+        if (key === undefined) { key = this.key; }
+
+        this.manager.queueOp('stop', key);
+
+        return this;
+    },
+
+    /**
+     * Sets the active state of the given Scene.
+     *
+     * @method Phaser.Scenes.ScenePlugin#setActive
+     * @since 3.0.0
+     *
+     * @param {boolean} value - If `true` the Scene will be resumed. If `false` it will be paused.
+     * @param {string} [key] - The Scene to set the active state of.
+     * @param {object} [data] - An optional data object that will be passed to the Scene and emitted with its events.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    setActive: function (value, key, data)
+    {
+        if (key === undefined) { key = this.key; }
+
+        var scene = this.manager.getScene(key);
+
+        if (scene)
+        {
+            scene.sys.setActive(value, data);
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets the visible state of the given Scene.
+     *
+     * @method Phaser.Scenes.ScenePlugin#setVisible
+     * @since 3.0.0
+     *
+     * @param {boolean} value - The visible value.
+     * @param {string} [key] - The Scene to set the visible state for.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    setVisible: function (value, key)
+    {
+        if (key === undefined) { key = this.key; }
+
+        var scene = this.manager.getScene(key);
+
+        if (scene)
+        {
+            scene.sys.setVisible(value);
+        }
+
+        return this;
+    },
+
+    /**
+     * Checks if the given Scene is sleeping or not?
+     *
+     * @method Phaser.Scenes.ScenePlugin#isSleeping
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to check.
+     *
+     * @return {boolean} Whether the Scene is sleeping.
+     */
+    isSleeping: function (key)
+    {
+        if (key === undefined) { key = this.key; }
+
+        return this.manager.isSleeping(key);
+    },
+
+    /**
+     * Checks if the given Scene is active or not?
+     *
+     * @method Phaser.Scenes.ScenePlugin#isActive
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to check.
+     *
+     * @return {boolean} Whether the Scene is active.
+     */
