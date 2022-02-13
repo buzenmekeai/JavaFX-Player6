@@ -107299,3 +107299,209 @@ var ScenePlugin = new Class({
      *
      * @return {boolean} Whether the Scene is active.
      */
+    isActive: function (key)
+    {
+        if (key === undefined) { key = this.key; }
+
+        return this.manager.isActive(key);
+    },
+
+    /**
+     * Checks if the given Scene is visible or not?
+     *
+     * @method Phaser.Scenes.ScenePlugin#isVisible
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to check.
+     *
+     * @return {boolean} Whether the Scene is visible.
+     */
+    isVisible: function (key)
+    {
+        if (key === undefined) { key = this.key; }
+
+        return this.manager.isVisible(key);
+    },
+
+    /**
+     * Swaps the position of two scenes in the Scenes list.
+     *
+     * This controls the order in which they are rendered and updated.
+     *
+     * @method Phaser.Scenes.ScenePlugin#swapPosition
+     * @since 3.2.0
+     *
+     * @param {string} keyA - The first Scene to swap.
+     * @param {string} [keyB] - The second Scene to swap. If none is given it defaults to this Scene.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    swapPosition: function (keyA, keyB)
+    {
+        if (keyB === undefined) { keyB = this.key; }
+
+        if (keyA !== keyB)
+        {
+            this.manager.swapPosition(keyA, keyB);
+        }
+
+        return this;
+    },
+
+    /**
+     * Swaps the position of two scenes in the Scenes list, so that Scene B is directly above Scene A.
+     *
+     * This controls the order in which they are rendered and updated.
+     *
+     * @method Phaser.Scenes.ScenePlugin#moveAbove
+     * @since 3.2.0
+     *
+     * @param {string} keyA - The Scene that Scene B will be moved to be above.
+     * @param {string} [keyB] - The Scene to be moved. If none is given it defaults to this Scene.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    moveAbove: function (keyA, keyB)
+    {
+        if (keyB === undefined) { keyB = this.key; }
+
+        if (keyA !== keyB)
+        {
+            this.manager.moveAbove(keyA, keyB);
+        }
+
+        return this;
+    },
+
+    /**
+     * Swaps the position of two scenes in the Scenes list, so that Scene B is directly below Scene A.
+     *
+     * This controls the order in which they are rendered and updated.
+     *
+     * @method Phaser.Scenes.ScenePlugin#moveBelow
+     * @since 3.2.0
+     *
+     * @param {string} keyA - The Scene that Scene B will be moved to be below.
+     * @param {string} [keyB] - The Scene to be moved. If none is given it defaults to this Scene.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    moveBelow: function (keyA, keyB)
+    {
+        if (keyB === undefined) { keyB = this.key; }
+
+        if (keyA !== keyB)
+        {
+            this.manager.moveBelow(keyA, keyB);
+        }
+
+        return this;
+    },
+
+    /**
+     * Removes a Scene from the SceneManager.
+     *
+     * The Scene is removed from the local scenes array, it's key is cleared from the keys
+     * cache and Scene.Systems.destroy is then called on it.
+     *
+     * If the SceneManager is processing the Scenes when this method is called it wil
+     * queue the operation for the next update sequence.
+     *
+     * @method Phaser.Scenes.ScenePlugin#remove
+     * @since 3.2.0
+     *
+     * @param {(string|Phaser.Scene)} key - The Scene to be removed.
+     *
+     * @return {Phaser.Scenes.SceneManager} This SceneManager.
+     */
+    remove: function (key)
+    {
+        if (key === undefined) { key = this.key; }
+
+        this.manager.remove(key);
+
+        return this;
+    },
+
+    /**
+     * Moves a Scene up one position in the Scenes list.
+     *
+     * @method Phaser.Scenes.ScenePlugin#moveUp
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to move.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    moveUp: function (key)
+    {
+        if (key === undefined) { key = this.key; }
+
+        this.manager.moveUp(key);
+
+        return this;
+    },
+
+    /**
+     * Moves a Scene down one position in the Scenes list.
+     *
+     * @method Phaser.Scenes.ScenePlugin#moveDown
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to move.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    moveDown: function (key)
+    {
+        if (key === undefined) { key = this.key; }
+
+        this.manager.moveDown(key);
+
+        return this;
+    },
+
+    /**
+     * Brings a Scene to the top of the Scenes list.
+     *
+     * This means it will render above all other Scenes.
+     *
+     * @method Phaser.Scenes.ScenePlugin#bringToTop
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to move.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    bringToTop: function (key)
+    {
+        if (key === undefined) { key = this.key; }
+
+        this.manager.bringToTop(key);
+
+        return this;
+    },
+
+    /**
+     * Sends a Scene to the back of the Scenes list.
+     *
+     * This means it will render below all other Scenes.
+     *
+     * @method Phaser.Scenes.ScenePlugin#sendToBack
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to move.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    sendToBack: function (key)
+    {
+        if (key === undefined) { key = this.key; }
+
+        this.manager.sendToBack(key);
+
+        return this;
+    },
+
+    /**
+     * Retrieve a Scene.
