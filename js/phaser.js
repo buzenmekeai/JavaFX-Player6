@@ -107505,3 +107505,220 @@ var ScenePlugin = new Class({
 
     /**
      * Retrieve a Scene.
+     *
+     * @method Phaser.Scenes.ScenePlugin#get
+     * @since 3.0.0
+     *
+     * @param {string} key - The Scene to retrieve.
+     *
+     * @return {Phaser.Scene} The Scene.
+     */
+    get: function (key)
+    {
+        return this.manager.getScene(key);
+    },
+
+    /**
+     * Retrieves the numeric index of a Scene in the Scenes list.
+     *
+     * @method Phaser.Scenes.ScenePlugin#getIndex
+     * @since 3.7.0
+     *
+     * @param {(string|Phaser.Scene)} [key] - The Scene to get the index of.
+     *
+     * @return {integer} The index of the Scene.
+     */
+    getIndex: function (key)
+    {
+        if (key === undefined) { key = this.key; }
+
+        return this.manager.getIndex(key);
+    },
+
+    /**
+     * The Scene that owns this plugin is shutting down.
+     * We need to kill and reset all internal properties as well as stop listening to Scene events.
+     *
+     * @method Phaser.Scenes.ScenePlugin#shutdown
+     * @private
+     * @since 3.0.0
+     */
+    shutdown: function ()
+    {
+        var eventEmitter = this.systems.events;
+
+        eventEmitter.off('shutdown', this.shutdown, this);
+        eventEmitter.off('postupdate', this.step, this);
+        eventEmitter.off('transitionout');
+    },
+
+    /**
+     * The Scene that owns this plugin is being destroyed.
+     * We need to shutdown and then kill off all external references.
+     *
+     * @method Phaser.Scenes.ScenePlugin#destroy
+     * @private
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.shutdown();
+
+        this.scene.sys.events.off('start', this.start, this);
+
+        this.scene = null;
+        this.systems = null;
+        this.settings = null;
+        this.manager = null;
+    }
+
+});
+
+PluginCache.register('ScenePlugin', ScenePlugin, 'scenePlugin');
+
+module.exports = ScenePlugin;
+
+
+/***/ }),
+/* 496 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CONST = __webpack_require__(116);
+var Extend = __webpack_require__(20);
+
+/**
+ * @namespace Phaser.Scenes
+ */
+
+var Scene = {
+
+    SceneManager: __webpack_require__(329),
+    ScenePlugin: __webpack_require__(495),
+    Settings: __webpack_require__(326),
+    Systems: __webpack_require__(166)
+
+};
+
+//   Merge in the consts
+Scene = Extend(false, Scene, CONST);
+
+module.exports = Scene;
+
+
+/***/ }),
+/* 497 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+* @author       Richard Davey <rich@photonstorm.com>
+* @copyright    2018 Photon Storm Ltd.
+* @license      {@link https://github.com/photonstorm/phaser3-plugin-template/blob/master/LICENSE|MIT License}
+*/
+
+var BasePlugin = __webpack_require__(221);
+var Class = __webpack_require__(0);
+
+/**
+ * @classdesc
+ * A Scene Level Plugin is installed into every Scene and belongs to that Scene.
+ * It can listen for Scene events and respond to them.
+ * It can map itself to a Scene property, or into the Scene Systems, or both.
+ *
+ * @class ScenePlugin
+ * @memberof Phaser.Plugins
+ * @extends Phaser.Plugins.BasePlugin
+ * @constructor
+ * @since 3.8.0
+ *
+ * @param {Phaser.Scene} scene - A reference to the Scene that has installed this plugin.
+ * @param {Phaser.Plugins.PluginManager} pluginManager - A reference to the Plugin Manager.
+ */
+var ScenePlugin = new Class({
+
+    Extends: BasePlugin,
+
+    initialize:
+
+    function ScenePlugin (scene, pluginManager)
+    {
+        BasePlugin.call(this, pluginManager);
+
+        this.scene = scene;
+        this.systems = scene.sys;
+
+        scene.sys.events.once('boot', this.boot, this);
+    },
+
+    /**
+     * This method is called when the Scene boots. It is only ever called once.
+     * 
+     * By this point the plugin properties `scene` and `systems` will have already been set.
+     * 
+     * In here you can listen for Scene events and set-up whatever you need for this plugin to run.
+     * Here are the Scene events you can listen to:
+     * 
+     * start
+     * ready
+     * preupdate
+     * update
+     * postupdate
+     * resize
+     * pause
+     * resume
+     * sleep
+     * wake
+     * transitioninit
+     * transitionstart
+     * transitioncomplete
+     * transitionout
+     * shutdown
+     * destroy
+     * 
+     * At the very least you should offer a destroy handler for when the Scene closes down, i.e:
+     *
+     * ```javascript
+     * var eventEmitter = this.systems.events;
+     * eventEmitter.once('destroy', this.sceneDestroy, this);
+     * ```
+     *
+     * @method Phaser.Plugins.ScenePlugin#boot
+     * @since 3.8.0
+     */
+    boot: function ()
+    {
+    }
+
+});
+
+module.exports = ScenePlugin;
+
+
+/***/ }),
+/* 498 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Plugins
+ */
+
+module.exports = {
+
+    BasePlugin: __webpack_require__(221),
+    DefaultPlugins: __webpack_require__(167),
+    PluginCache: __webpack_require__(15),
+    PluginManager: __webpack_require__(331),
+    ScenePlugin: __webpack_require__(497)
+
+};
