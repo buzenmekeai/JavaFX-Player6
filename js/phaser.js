@@ -108148,3 +108148,226 @@ var Common = __webpack_require__(33);
      * Ranges are a strict subset of [npm ranges](https://docs.npmjs.com/misc/semver#advanced-range-syntax).
      * Only the following range types are supported:
      * - Tilde ranges e.g. `~1.2.3`
+     * - Caret ranges e.g. `^1.2.3`
+     * - Exact version e.g. `1.2.3`
+     * - Any version `*`
+     * @method versionParse
+     * @param range {string} The version string.
+     * @return {object} The version range parsed into its components.
+     */
+    Plugin.versionParse = function(range) {
+        var pattern = /^\*|[\^~]?\d+\.\d+\.\d+(-[0-9A-Za-z-]+)?$/;
+
+        if (!pattern.test(range)) {
+            Common.warn('Plugin.versionParse:', range, 'is not a valid version or range.');
+        }
+
+        var identifiers = range.split('-');
+        range = identifiers[0];
+
+        var isRange = isNaN(Number(range[0])),
+            version = isRange ? range.substr(1) : range,
+            parts = Common.map(version.split('.'), function(part) {
+                return Number(part);
+            });
+
+        return {
+            isRange: isRange,
+            version: version,
+            range: range,
+            operator: isRange ? range[0] : '',
+            parts: parts,
+            prerelease: identifiers[1],
+            number: parts[0] * 1e8 + parts[1] * 1e4 + parts[2]
+        };
+    };
+
+    /**
+     * Returns `true` if `version` satisfies the given `range`.
+     * See documentation for `Plugin.versionParse` for a description of the format.
+     * If a version or range is not specified, then any version (`*`) is assumed to satisfy.
+     * @method versionSatisfies
+     * @param version {string} The version string.
+     * @param range {string} The range string.
+     * @return {boolean} `true` if `version` satisfies `range`, otherwise `false`.
+     */
+    Plugin.versionSatisfies = function(version, range) {
+        range = range || '*';
+
+        var rangeParsed = Plugin.versionParse(range),
+            rangeParts = rangeParsed.parts,
+            versionParsed = Plugin.versionParse(version),
+            versionParts = versionParsed.parts;
+
+        if (rangeParsed.isRange) {
+            if (rangeParsed.operator === '*' || version === '*') {
+                return true;
+            }
+
+            if (rangeParsed.operator === '~') {
+                return versionParts[0] === rangeParts[0] && versionParts[1] === rangeParts[1] && versionParts[2] >= rangeParts[2];
+            }
+
+            if (rangeParsed.operator === '^') {
+                if (rangeParts[0] > 0) {
+                    return versionParts[0] === rangeParts[0] && versionParsed.number >= rangeParsed.number;
+                }
+
+                if (rangeParts[1] > 0) {
+                    return versionParts[1] === rangeParts[1] && versionParts[2] >= rangeParts[2];
+                }
+
+                return versionParts[2] === rangeParts[2];
+            }
+        }
+
+        return version === range || version === '*';
+    };
+
+})();
+
+
+/***/ }),
+/* 501 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Matter = __webpack_require__(1065);
+
+Matter.Body = __webpack_require__(67);
+Matter.Composite = __webpack_require__(137);
+Matter.World = __webpack_require__(499);
+
+Matter.Detector = __webpack_require__(503);
+Matter.Grid = __webpack_require__(1064);
+Matter.Pairs = __webpack_require__(1063);
+Matter.Pair = __webpack_require__(418);
+Matter.Query = __webpack_require__(1089);
+Matter.Resolver = __webpack_require__(1062);
+Matter.SAT = __webpack_require__(502);
+
+Matter.Constraint = __webpack_require__(194);
+
+Matter.Common = __webpack_require__(33);
+Matter.Engine = __webpack_require__(1061);
+Matter.Events = __webpack_require__(195);
+Matter.Sleeping = __webpack_require__(222);
+Matter.Plugin = __webpack_require__(500);
+
+Matter.Bodies = __webpack_require__(126);
+Matter.Composites = __webpack_require__(1068);
+
+Matter.Axes = __webpack_require__(505);
+Matter.Bounds = __webpack_require__(80);
+Matter.Svg = __webpack_require__(1087);
+Matter.Vector = __webpack_require__(81);
+Matter.Vertices = __webpack_require__(76);
+
+// aliases
+
+Matter.World.add = Matter.Composite.add;
+Matter.World.remove = Matter.Composite.remove;
+Matter.World.addComposite = Matter.Composite.addComposite;
+Matter.World.addBody = Matter.Composite.addBody;
+Matter.World.addConstraint = Matter.Composite.addConstraint;
+Matter.World.clear = Matter.Composite.clear;
+
+module.exports = Matter;
+
+
+/***/ }),
+/* 502 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+* The `Matter.SAT` module contains methods for detecting collisions using the Separating Axis Theorem.
+*
+* @class SAT
+*/
+
+// TODO: true circles and curves
+
+var SAT = {};
+
+module.exports = SAT;
+
+var Vertices = __webpack_require__(76);
+var Vector = __webpack_require__(81);
+
+(function() {
+
+    /**
+     * Detect collision between two bodies using the Separating Axis Theorem.
+     * @method collides
+     * @param {body} bodyA
+     * @param {body} bodyB
+     * @param {collision} previousCollision
+     * @return {collision} collision
+     */
+    SAT.collides = function(bodyA, bodyB, previousCollision) {
+        var overlapAB,
+            overlapBA, 
+            minOverlap,
+            collision,
+            canReusePrevCol = false;
+
+        if (previousCollision) {
+            // estimate total motion
+            var parentA = bodyA.parent,
+                parentB = bodyB.parent,
+                motion = parentA.speed * parentA.speed + parentA.angularSpeed * parentA.angularSpeed
+                       + parentB.speed * parentB.speed + parentB.angularSpeed * parentB.angularSpeed;
+
+            // we may be able to (partially) reuse collision result 
+            // but only safe if collision was resting
+            canReusePrevCol = previousCollision && previousCollision.collided && motion < 0.2;
+
+            // reuse collision object
+            collision = previousCollision;
+        } else {
+            collision = { collided: false, bodyA: bodyA, bodyB: bodyB };
+        }
+
+        if (previousCollision && canReusePrevCol) {
+            // if we can reuse the collision result
+            // we only need to test the previously found axis
+            var axisBodyA = collision.axisBody,
+                axisBodyB = axisBodyA === bodyA ? bodyB : bodyA,
+                axes = [axisBodyA.axes[previousCollision.axisNumber]];
+
+            minOverlap = SAT._overlapAxes(axisBodyA.vertices, axisBodyB.vertices, axes);
+            collision.reused = true;
+
+            if (minOverlap.overlap <= 0) {
+                collision.collided = false;
+                return collision;
+            }
+        } else {
+            // if we can't reuse a result, perform a full SAT test
+
+            overlapAB = SAT._overlapAxes(bodyA.vertices, bodyB.vertices, bodyA.axes);
+
+            if (overlapAB.overlap <= 0) {
+                collision.collided = false;
+                return collision;
+            }
+
+            overlapBA = SAT._overlapAxes(bodyB.vertices, bodyA.vertices, bodyB.axes);
+
+            if (overlapBA.overlap <= 0) {
+                collision.collided = false;
+                return collision;
+            }
+
+            if (overlapAB.overlap < overlapBA.overlap) {
+                minOverlap = overlapAB;
+                collision.axisBody = bodyA;
+            } else {
+                minOverlap = overlapBA;
+                collision.axisBody = bodyB;
+            }
