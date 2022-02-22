@@ -108592,3 +108592,245 @@ var Bounds = __webpack_require__(80);
         // @if DEBUG
         var metrics = engine.metrics;
         // @endif
+        
+        for (var i = 0; i < broadphasePairs.length; i++) {
+            var bodyA = broadphasePairs[i][0], 
+                bodyB = broadphasePairs[i][1];
+
+            if ((bodyA.isStatic || bodyA.isSleeping) && (bodyB.isStatic || bodyB.isSleeping))
+                continue;
+            
+            if (!Detector.canCollide(bodyA.collisionFilter, bodyB.collisionFilter))
+                continue;
+
+            // @if DEBUG
+            metrics.midphaseTests += 1;
+            // @endif
+
+            // mid phase
+            if (Bounds.overlaps(bodyA.bounds, bodyB.bounds)) {
+                for (var j = bodyA.parts.length > 1 ? 1 : 0; j < bodyA.parts.length; j++) {
+                    var partA = bodyA.parts[j];
+
+                    for (var k = bodyB.parts.length > 1 ? 1 : 0; k < bodyB.parts.length; k++) {
+                        var partB = bodyB.parts[k];
+
+                        if ((partA === bodyA && partB === bodyB) || Bounds.overlaps(partA.bounds, partB.bounds)) {
+                            // find a previous collision we could reuse
+                            var pairId = Pair.id(partA, partB),
+                                pair = pairsTable[pairId],
+                                previousCollision;
+
+                            if (pair && pair.isActive) {
+                                previousCollision = pair.collision;
+                            } else {
+                                previousCollision = null;
+                            }
+
+                            // narrow phase
+                            var collision = SAT.collides(partA, partB, previousCollision);
+
+                            // @if DEBUG
+                            metrics.narrowphaseTests += 1;
+                            if (collision.reused)
+                                metrics.narrowReuseCount += 1;
+                            // @endif
+
+                            if (collision.collided) {
+                                collisions.push(collision);
+                                // @if DEBUG
+                                metrics.narrowDetections += 1;
+                                // @endif
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return collisions;
+    };
+
+    /**
+     * Returns `true` if both supplied collision filters will allow a collision to occur.
+     * See `body.collisionFilter` for more information.
+     * @method canCollide
+     * @param {} filterA
+     * @param {} filterB
+     * @return {bool} `true` if collision can occur
+     */
+    Detector.canCollide = function(filterA, filterB) {
+        if (filterA.group === filterB.group && filterA.group !== 0)
+            return filterA.group > 0;
+
+        return (filterA.mask & filterB.category) !== 0 && (filterB.mask & filterA.category) !== 0;
+    };
+
+})();
+
+
+/***/ }),
+/* 504 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Bodies = __webpack_require__(126);
+var Body = __webpack_require__(67);
+var Class = __webpack_require__(0);
+var Components = __webpack_require__(419);
+var GetFastValue = __webpack_require__(2);
+var HasValue = __webpack_require__(85);
+var Vertices = __webpack_require__(76);
+
+/**
+ * @classdesc
+ * A wrapper around a Tile that provides access to a corresponding Matter body. A tile can only
+ * have one Matter body associated with it. You can either pass in an existing Matter body for
+ * the tile or allow the constructor to create the corresponding body for you. If the Tile has a
+ * collision group (defined in Tiled), those shapes will be used to create the body. If not, the
+ * tile's rectangle bounding box will be used.
+ *
+ * The corresponding body will be accessible on the Tile itself via Tile.physics.matterBody.
+ *
+ * Note: not all Tiled collision shapes are supported. See
+ * Phaser.Physics.Matter.TileBody#setFromTileCollision for more information.
+ *
+ * @class TileBody
+ * @memberof Phaser.Physics.Matter
+ * @constructor
+ * @since 3.0.0
+ *
+ * @extends Phaser.Physics.Matter.Components.Bounce
+ * @extends Phaser.Physics.Matter.Components.Collision
+ * @extends Phaser.Physics.Matter.Components.Friction
+ * @extends Phaser.Physics.Matter.Components.Gravity
+ * @extends Phaser.Physics.Matter.Components.Mass
+ * @extends Phaser.Physics.Matter.Components.Sensor
+ * @extends Phaser.Physics.Matter.Components.Sleep
+ * @extends Phaser.Physics.Matter.Components.Static
+ *
+ * @param {Phaser.Physics.Matter.World} world - [description]
+ * @param {Phaser.Tilemaps.Tile} tile - The target tile that should have a Matter body.
+ * @param {object} [options] - Options to be used when creating the Matter body. See
+ * Phaser.Physics.Matter.Matter.Body for a list of what Matter accepts.
+ * @param {Phaser.Physics.Matter.Matter.Body} [options.body=null] - An existing Matter body to
+ * be used instead of creating a new one.
+ * @param {boolean} [options.isStatic=true] - Whether or not the newly created body should be
+ * made static. This defaults to true since typically tiles should not be moved.
+ * @param {boolean} [options.addToWorld=true] - Whether or not to add the newly created body (or
+ * existing body if options.body is used) to the Matter world.
+ */
+var MatterTileBody = new Class({
+
+    Mixins: [
+        Components.Bounce,
+        Components.Collision,
+        Components.Friction,
+        Components.Gravity,
+        Components.Mass,
+        Components.Sensor,
+        Components.Sleep,
+        Components.Static
+    ],
+
+    initialize:
+
+    function MatterTileBody (world, tile, options)
+    {
+        /**
+         * The tile object the body is associated with.
+         *
+         * @name Phaser.Physics.Matter.TileBody#tile
+         * @type {Phaser.Tilemaps.Tile}
+         * @since 3.0.0
+         */
+        this.tile = tile;
+
+        /**
+         * The Matter world the body exists within.
+         *
+         * @name Phaser.Physics.Matter.TileBody#world
+         * @type {Phaser.Physics.Matter.World}
+         * @since 3.0.0
+         */
+        this.world = world;
+
+        // Install a reference to 'this' on the tile and ensure there can only be one matter body
+        // associated with the tile
+        if (tile.physics.matterBody)
+        {
+            tile.physics.matterBody.destroy();
+        }
+
+        tile.physics.matterBody = this;
+
+        // Set the body either from an existing body (if provided), the shapes in the tileset
+        // collision layer (if it exists) or a rectangle matching the tile.
+        var body = GetFastValue(options, 'body', null);
+
+        var addToWorld = GetFastValue(options, 'addToWorld', true);
+
+        if (!body)
+        {
+            var collisionGroup = tile.getCollisionGroup();
+            var collisionObjects = GetFastValue(collisionGroup, 'objects', []);
+
+            if (collisionObjects.length > 0)
+            {
+                this.setFromTileCollision(options);
+            }
+            else
+            {
+                this.setFromTileRectangle(options);
+            }
+        }
+        else
+        {
+            this.setBody(body, addToWorld);
+        }
+    },
+
+    /**
+     * Sets the current body to a rectangle that matches the bounds of the tile.
+     *
+     * @method Phaser.Physics.Matter.TileBody#setFromTileRectangle
+     * @since 3.0.0
+     *
+     * @param {object} [options] - Options to be used when creating the Matter body. See MatterJS.Body for a list of what Matter accepts.
+     * @param {boolean} [options.isStatic=true] - Whether or not the newly created body should be
+     * made static. This defaults to true since typically tiles should not be moved.
+     * @param {boolean} [options.addToWorld=true] - Whether or not to add the newly created body (or
+     * existing body if options.body is used) to the Matter world.
+     * 
+     * @return {Phaser.Physics.Matter.TileBody} This TileBody object.
+     */
+    setFromTileRectangle: function (options)
+    {
+        if (options === undefined) { options = {}; }
+        if (!HasValue(options, 'isStatic')) { options.isStatic = true; }
+        if (!HasValue(options, 'addToWorld')) { options.addToWorld = true; }
+
+        var bounds = this.tile.getBounds();
+        var cx = bounds.x + (bounds.width / 2);
+        var cy = bounds.y + (bounds.height / 2);
+        var body = Bodies.rectangle(cx, cy, bounds.width, bounds.height, options);
+
+        this.setBody(body, options.addToWorld);
+
+        return this;
+    },
+
+    /**
+     * Sets the current body from the collision group associated with the Tile. This is typically
+     * set up in Tiled's collision editor.
+     *
+     * Note: Matter doesn't support all shapes from Tiled. Rectangles and polygons are directly
+     * supported. Ellipses are converted into circle bodies. Polylines are treated as if they are
+     * closed polygons. If a tile has multiple shapes, a multi-part body will be created. Concave
+     * shapes are supported if poly-decomp library is included. Decomposition is not guaranteed to
+     * work for complex shapes (e.g. holes), so it's often best to manually decompose a concave
