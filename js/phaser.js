@@ -108834,3 +108834,230 @@ var MatterTileBody = new Class({
      * closed polygons. If a tile has multiple shapes, a multi-part body will be created. Concave
      * shapes are supported if poly-decomp library is included. Decomposition is not guaranteed to
      * work for complex shapes (e.g. holes), so it's often best to manually decompose a concave
+     * polygon into multiple convex polygons yourself.
+     *
+     * @method Phaser.Physics.Matter.TileBody#setFromTileCollision
+     * @since 3.0.0
+     *
+     * @param {object} [options] - Options to be used when creating the Matter body. See MatterJS.Body for a list of what Matter accepts.
+     * @param {boolean} [options.isStatic=true] - Whether or not the newly created body should be
+     * made static. This defaults to true since typically tiles should not be moved.
+     * @param {boolean} [options.addToWorld=true] - Whether or not to add the newly created body (or
+     * existing body if options.body is used) to the Matter world.
+     * 
+     * @return {Phaser.Physics.Matter.TileBody} This TileBody object.
+     */
+    setFromTileCollision: function (options)
+    {
+        if (options === undefined) { options = {}; }
+        if (!HasValue(options, 'isStatic')) { options.isStatic = true; }
+        if (!HasValue(options, 'addToWorld')) { options.addToWorld = true; }
+
+        var sx = this.tile.tilemapLayer.scaleX;
+        var sy = this.tile.tilemapLayer.scaleY;
+        var tileX = this.tile.getLeft();
+        var tileY = this.tile.getTop();
+        var collisionGroup = this.tile.getCollisionGroup();
+        var collisionObjects = GetFastValue(collisionGroup, 'objects', []);
+
+        var parts = [];
+
+        for (var i = 0; i < collisionObjects.length; i++)
+        {
+            var object = collisionObjects[i];
+            var ox = tileX + (object.x * sx);
+            var oy = tileY + (object.y * sy);
+            var ow = object.width * sx;
+            var oh = object.height * sy;
+            var body = null;
+
+            if (object.rectangle)
+            {
+                body = Bodies.rectangle(ox + ow / 2, oy + oh / 2, ow, oh, options);
+            }
+            else if (object.ellipse)
+            {
+                body = Bodies.circle(ox + ow / 2, oy + oh / 2, ow / 2, options);
+            }
+            else if (object.polygon || object.polyline)
+            {
+                // Polygons and polylines are both treated as closed polygons
+                var originalPoints = object.polygon ? object.polygon : object.polyline;
+
+                var points = originalPoints.map(function (p)
+                {
+                    return { x: p.x * sx, y: p.y * sy };
+                });
+
+                var vertices = Vertices.create(points);
+
+                // Points are relative to the object's origin (first point placed in Tiled), but
+                // matter expects points to be relative to the center of mass. This only applies to
+                // convex shapes. When a concave shape is decomposed, multiple parts are created and
+                // the individual parts are positioned relative to (ox, oy).
+                if (Vertices.isConvex(points))
+                {
+                    var center = Vertices.centre(vertices);
+                    ox += center.x;
+                    oy += center.y;
+                }
+
+                body = Bodies.fromVertices(ox, oy, vertices, options);
+            }
+
+            if (body)
+            {
+                parts.push(body);
+            }
+        }
+
+        if (parts.length === 1)
+        {
+            this.setBody(parts[0], options.addToWorld);
+        }
+        else if (parts.length > 1)
+        {
+            options.parts = parts;
+            this.setBody(Body.create(options), options.addToWorld);
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets the current body to the given body. This will remove the previous body, if one already
+     * exists.
+     *
+     * @method Phaser.Physics.Matter.TileBody#setBody
+     * @since 3.0.0
+     *
+     * @param {MatterJS.Body} body - The new Matter body to use.
+     * @param {boolean} [addToWorld=true] - Whether or not to add the body to the Matter world.
+     * 
+     * @return {Phaser.Physics.Matter.TileBody} This TileBody object.
+     */
+    setBody: function (body, addToWorld)
+    {
+        if (addToWorld === undefined) { addToWorld = true; }
+
+        if (this.body)
+        {
+            this.removeBody();
+        }
+
+        this.body = body;
+        this.body.gameObject = this;
+
+        if (addToWorld)
+        {
+            this.world.add(this.body);
+        }
+
+        return this;
+    },
+
+    /**
+     * Removes the current body from the TileBody and from the Matter world
+     *
+     * @method Phaser.Physics.Matter.TileBody#removeBody
+     * @since 3.0.0
+     *
+     * @return {Phaser.Physics.Matter.TileBody} This TileBody object.
+     */
+    removeBody: function ()
+    {
+        if (this.body)
+        {
+            this.world.remove(this.body);
+            this.body.gameObject = undefined;
+            this.body = undefined;
+        }
+
+        return this;
+    },
+
+    /**
+     * Removes the current body from the tile and the world.
+     *
+     * @method Phaser.Physics.Matter.TileBody#destroy
+     * @since 3.0.0
+     *
+     * @return {Phaser.Physics.Matter.TileBody} This TileBody object.
+     */
+    destroy: function ()
+    {
+        this.removeBody();
+        this.tile.physics.matterBody = undefined;
+    }
+
+});
+
+module.exports = MatterTileBody;
+
+
+/***/ }),
+/* 505 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+* The `Matter.Axes` module contains methods for creating and manipulating sets of axes.
+*
+* @class Axes
+*/
+
+var Axes = {};
+
+module.exports = Axes;
+
+var Vector = __webpack_require__(81);
+var Common = __webpack_require__(33);
+
+(function() {
+
+    /**
+     * Creates a new set of axes from the given vertices.
+     * @method fromVertices
+     * @param {vertices} vertices
+     * @return {axes} A new axes from the given vertices
+     */
+    Axes.fromVertices = function(vertices) {
+        var axes = {};
+
+        // find the unique axes, using edge normal gradients
+        for (var i = 0; i < vertices.length; i++) {
+            var j = (i + 1) % vertices.length, 
+                normal = Vector.normalise({ 
+                    x: vertices[j].y - vertices[i].y, 
+                    y: vertices[i].x - vertices[j].x
+                }),
+                gradient = (normal.y === 0) ? Infinity : (normal.x / normal.y);
+            
+            // limit precision
+            gradient = gradient.toFixed(3).toString();
+            axes[gradient] = normal;
+        }
+
+        return Common.values(axes);
+    };
+
+    /**
+     * Rotates a set of axes by the given angle.
+     * @method rotate
+     * @param {axes} axes
+     * @param {number} angle
+     */
+    Axes.rotate = function(axes, angle) {
+        if (angle === 0)
+            return;
+        
+        var cos = Math.cos(angle),
+            sin = Math.sin(angle);
+
+        for (var i = 0; i < axes.length; i++) {
+            var axis = axes[i],
+                xx;
+            xx = axis.x * cos - axis.y * sin;
+            axis.y = axis.x * sin + axis.y * cos;
+            axis.x = xx;
+        }
+    };
