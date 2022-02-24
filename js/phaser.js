@@ -109267,3 +109267,217 @@ var SeparateX = function (body1, body2, overlapOnly, bias)
     //  If we got this far then there WAS overlap, and separation is complete, so return true
     return true;
 };
+
+module.exports = SeparateX;
+
+
+/***/ }),
+/* 509 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Internal function to process the separation of a physics body from a tile.
+ *
+ * @function Phaser.Physics.Arcade.Tilemap.ProcessTileSeparationY
+ * @since 3.0.0
+ *
+ * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
+ * @param {number} y - The y separation amount.
+ */
+var ProcessTileSeparationY = function (body, y)
+{
+    if (y < 0)
+    {
+        body.blocked.none = false;
+        body.blocked.up = true;
+    }
+    else if (y > 0)
+    {
+        body.blocked.none = false;
+        body.blocked.down = true;
+    }
+
+    body.position.y -= y;
+
+    if (body.bounce.y === 0)
+    {
+        body.velocity.y = 0;
+    }
+    else
+    {
+        body.velocity.y = -body.velocity.y * body.bounce.y;
+    }
+};
+
+module.exports = ProcessTileSeparationY;
+
+
+/***/ }),
+/* 510 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var ProcessTileSeparationY = __webpack_require__(509);
+
+/**
+ * Check the body against the given tile on the Y axis.
+ *
+ * @function Phaser.Physics.Arcade.Tilemap.TileCheckY
+ * @since 3.0.0
+ *
+ * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
+ * @param {Phaser.Tilemaps.Tile} tile - The tile to check.
+ * @param {number} tileTop - [description]
+ * @param {number} tileBottom - [description]
+ * @param {number} tileBias - [description]
+ *
+ * @return {number} The amount of separation that occurred.
+ */
+var TileCheckY = function (body, tile, tileTop, tileBottom, tileBias)
+{
+    var oy = 0;
+
+    if (body.deltaY() < 0 && !body.blocked.up && tile.collideDown && body.checkCollision.up)
+    {
+        //  Body is moving UP
+        if (tile.faceBottom && body.y < tileBottom)
+        {
+            oy = body.y - tileBottom;
+
+            if (oy < -tileBias)
+            {
+                oy = 0;
+            }
+        }
+    }
+    else if (body.deltaY() > 0 && !body.blocked.down && tile.collideUp && body.checkCollision.down)
+    {
+        //  Body is moving DOWN
+        if (tile.faceTop && body.bottom > tileTop)
+        {
+            oy = body.bottom - tileTop;
+
+            if (oy > tileBias)
+            {
+                oy = 0;
+            }
+        }
+    }
+
+    if (oy !== 0)
+    {
+        if (body.customSeparateY)
+        {
+            body.overlapY = oy;
+        }
+        else
+        {
+            ProcessTileSeparationY(body, oy);
+        }
+    }
+
+    return oy;
+};
+
+module.exports = TileCheckY;
+
+
+/***/ }),
+/* 511 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Internal function to process the separation of a physics body from a tile.
+ *
+ * @function Phaser.Physics.Arcade.Tilemap.ProcessTileSeparationX
+ * @since 3.0.0
+ *
+ * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
+ * @param {number} x - The x separation amount.
+ */
+var ProcessTileSeparationX = function (body, x)
+{
+    if (x < 0)
+    {
+        body.blocked.none = false;
+        body.blocked.left = true;
+    }
+    else if (x > 0)
+    {
+        body.blocked.none = false;
+        body.blocked.right = true;
+    }
+
+    body.position.x -= x;
+
+    if (body.bounce.x === 0)
+    {
+        body.velocity.x = 0;
+    }
+    else
+    {
+        body.velocity.x = -body.velocity.x * body.bounce.x;
+    }
+};
+
+module.exports = ProcessTileSeparationX;
+
+
+/***/ }),
+/* 512 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var ProcessTileSeparationX = __webpack_require__(511);
+
+/**
+ * Check the body against the given tile on the X axis.
+ *
+ * @function Phaser.Physics.Arcade.Tilemap.TileCheckX
+ * @since 3.0.0
+ *
+ * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
+ * @param {Phaser.Tilemaps.Tile} tile - The tile to check.
+ * @param {number} tileLeft - [description]
+ * @param {number} tileRight - [description]
+ * @param {number} tileBias - [description]
+ *
+ * @return {number} The amount of separation that occurred.
+ */
+var TileCheckX = function (body, tile, tileLeft, tileRight, tileBias)
+{
+    var ox = 0;
+
+    if (body.deltaX() < 0 && !body.blocked.left && tile.collideRight && body.checkCollision.left)
+    {
+        //  Body is moving LEFT
+        if (tile.faceRight && body.x < tileRight)
+        {
+            ox = body.x - tileRight;
+
+            if (ox < -tileBias)
+            {
+                ox = 0;
+            }
