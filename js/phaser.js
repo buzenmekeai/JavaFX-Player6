@@ -109481,3 +109481,228 @@ var TileCheckX = function (body, tile, tileLeft, tileRight, tileBias)
             {
                 ox = 0;
             }
+        }
+    }
+    else if (body.deltaX() > 0 && !body.blocked.right && tile.collideLeft && body.checkCollision.right)
+    {
+        //  Body is moving RIGHT
+        if (tile.faceLeft && body.right > tileLeft)
+        {
+            ox = body.right - tileLeft;
+
+            if (ox > tileBias)
+            {
+                ox = 0;
+            }
+        }
+    }
+
+    if (ox !== 0)
+    {
+        if (body.customSeparateX)
+        {
+            body.overlapX = ox;
+        }
+        else
+        {
+            ProcessTileSeparationX(body, ox);
+        }
+    }
+
+    return ox;
+};
+
+module.exports = TileCheckX;
+
+
+/***/ }),
+/* 513 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var TileCheckX = __webpack_require__(512);
+var TileCheckY = __webpack_require__(510);
+var TileIntersectsBody = __webpack_require__(226);
+
+/**
+ * The core separation function to separate a physics body and a tile.
+ *
+ * @function Phaser.Physics.Arcade.Tilemap.SeparateTile
+ * @since 3.0.0
+ *
+ * @param {number} i - [description]
+ * @param {Phaser.Physics.Arcade.Body} body - The Body object to separate.
+ * @param {Phaser.Tilemaps.Tile} tile - The tile to collide against.
+ * @param {Phaser.Geom.Rectangle} tileWorldRect - [description]
+ * @param {(Phaser.Tilemaps.DynamicTilemapLayer|Phaser.Tilemaps.StaticTilemapLayer)} tilemapLayer - The tilemapLayer to collide against.
+ * @param {number} tileBias - [description]
+ *
+ * @return {boolean} Returns true if the body was separated, otherwise false.
+ */
+var SeparateTile = function (i, body, tile, tileWorldRect, tilemapLayer, tileBias)
+{
+    var tileLeft = tileWorldRect.left;
+    var tileTop = tileWorldRect.top;
+    var tileRight = tileWorldRect.right;
+    var tileBottom = tileWorldRect.bottom;
+    var faceHorizontal = tile.faceLeft || tile.faceRight;
+    var faceVertical = tile.faceTop || tile.faceBottom;
+
+    //  We don't need to go any further if this tile doesn't actually have any colliding faces. This
+    //  could happen if the tile was meant to be collided with re: a callback, but otherwise isn't
+    //  needed for separation.
+    if (!faceHorizontal && !faceVertical)
+    {
+        return false;
+    }
+
+    var ox = 0;
+    var oy = 0;
+    var minX = 0;
+    var minY = 1;
+
+    if (body.deltaAbsX() > body.deltaAbsY())
+    {
+        //  Moving faster horizontally, check X axis first
+        minX = -1;
+    }
+    else if (body.deltaAbsX() < body.deltaAbsY())
+    {
+        //  Moving faster vertically, check Y axis first
+        minY = -1;
+    }
+
+    if (body.deltaX() !== 0 && body.deltaY() !== 0 && faceHorizontal && faceVertical)
+    {
+        //  We only need do this if both axes have colliding faces AND we're moving in both
+        //  directions
+        minX = Math.min(Math.abs(body.position.x - tileRight), Math.abs(body.right - tileLeft));
+        minY = Math.min(Math.abs(body.position.y - tileBottom), Math.abs(body.bottom - tileTop));
+    }
+
+    if (minX < minY)
+    {
+        if (faceHorizontal)
+        {
+            ox = TileCheckX(body, tile, tileLeft, tileRight, tileBias);
+
+            //  That's horizontal done, check if we still intersects? If not then we can return now
+            if (ox !== 0 && !TileIntersectsBody(tileWorldRect, body))
+            {
+                return true;
+            }
+        }
+
+        if (faceVertical)
+        {
+            oy = TileCheckY(body, tile, tileTop, tileBottom, tileBias);
+        }
+    }
+    else
+    {
+        if (faceVertical)
+        {
+            oy = TileCheckY(body, tile, tileTop, tileBottom, tileBias);
+
+            //  That's vertical done, check if we still intersects? If not then we can return now
+            if (oy !== 0 && !TileIntersectsBody(tileWorldRect, body))
+            {
+                return true;
+            }
+        }
+
+        if (faceHorizontal)
+        {
+            ox = TileCheckX(body, tile, tileLeft, tileRight, tileBias);
+        }
+    }
+
+    return (ox !== 0 || oy !== 0);
+};
+
+module.exports = SeparateTile;
+
+
+/***/ }),
+/* 514 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Physics.Arcade.Tilemap.ProcessTileCallbacks
+ * @since 3.0.0
+ *
+ * @param {Phaser.Tilemaps.Tilemap} tile - [description]
+ * @param {Phaser.GameObjects.Sprite} sprite - [description]
+ *
+ * @return {boolean} [description]
+ */
+var ProcessTileCallbacks = function (tile, sprite)
+{
+    // Tile callbacks take priority over layer level callbacks
+    if (tile.collisionCallback)
+    {
+        return !tile.collisionCallback.call(tile.collisionCallbackContext, sprite, tile);
+    }
+    else if (tile.layer.callbacks[tile.index])
+    {
+        return !tile.layer.callbacks[tile.index].callback.call(
+            tile.layer.callbacks[tile.index].callbackContext, sprite, tile
+        );
+    }
+
+    return true;
+};
+
+module.exports = ProcessTileCallbacks;
+
+
+/***/ }),
+/* 515 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @name Phaser.Physics.Arcade.Components.Velocity
+ * @since 3.0.0
+ */
+var Velocity = {
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Components.Velocity#setVelocity
+     * @since 3.0.0
+     *
+     * @param {number} x - [description]
+     * @param {number} [y=x] - [description]
+     *
+     * @return {this} This Game Object.
+     */
+    setVelocity: function (x, y)
+    {
+        this.body.setVelocity(x, y);
+
+        return this;
+    },
+
+    /**
