@@ -109911,3 +109911,242 @@ var Immovable = {
      * @param {boolean} [value=true] - [description]
      *
      * @return {this} This Game Object.
+     */
+    setImmovable: function (value)
+    {
+        if (value === undefined) { value = true; }
+
+        this.body.immovable = value;
+
+        return this;
+    }
+
+};
+
+module.exports = Immovable;
+
+
+/***/ }),
+/* 519 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Provides methods for setting the gravity properties of an Arcade Physics Game Object.
+ * Should be applied as a mixin and not used directly.
+ *
+ * @name Phaser.Physics.Arcade.Components.Gravity
+ * @since 3.0.0
+ */
+var Gravity = {
+
+    /**
+     * Set the X and Y values of the gravitational pull to act upon this Arcade Physics Game Object. Values can be positive or negative. Larger values result in a stronger effect.
+     * 
+     * If only one value is provided, this value will be used for both the X and Y axis.
+     *
+     * @method Phaser.Physics.Arcade.Components.Gravity#setGravity
+     * @since 3.0.0
+     *
+     * @param {number} x - The gravitational force to be applied to the X-axis.
+     * @param {number} [y=x] - The gravitational force to be applied to the Y-axis. If this is not specified, the X value will be used.
+     *
+     * @return {this} This Game Object.
+     */
+    setGravity: function (x, y)
+    {
+        this.body.gravity.set(x, y);
+
+        return this;
+    },
+
+    /**
+     * Set the gravitational force to be applied to the X axis. Value can be positive or negative. Larger values result in a stronger effect.
+     *
+     * @method Phaser.Physics.Arcade.Components.Gravity#setGravityX
+     * @since 3.0.0
+     *
+     * @param {number} x - The gravitational force to be applied to the X-axis.
+     *
+     * @return {this} This Game Object.
+     */
+    setGravityX: function (x)
+    {
+        this.body.gravity.x = x;
+
+        return this;
+    },
+
+    /**
+     * Set the gravitational force to be applied to the Y axis. Value can be positive or negative. Larger values result in a stronger effect.
+     *
+     * @method Phaser.Physics.Arcade.Components.Gravity#setGravityY
+     * @since 3.0.0
+     *
+     * @param {number} y - The gravitational force to be applied to the Y-axis.
+     *
+     * @return {this} This Game Object.
+     */
+    setGravityY: function (y)
+    {
+        this.body.gravity.y = y;
+
+        return this;
+    }
+
+};
+
+module.exports = Gravity;
+
+
+/***/ }),
+/* 520 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Sets the friction (e.g. the amount of velocity reduced over time) of the physics body when moving horizontally in the X axis. The higher than friction, the faster the body will slow down once force stops being applied to it.
+ *
+ * @name Phaser.Physics.Arcade.Components.Friction
+ * @since 3.0.0
+ */
+var Friction = {
+
+    /**
+     * Sets the friction (e.g. the amount of velocity reduced over time) of the physics body when moving.
+     * The higher than friction, the faster the body will slow down once force stops being applied to it.
+     *
+     * @method Phaser.Physics.Arcade.Components.Friction#setFriction
+     * @since 3.0.0
+     *
+     * @param {number} x - The amount of horizontal friction to apply.
+     * @param {number} [y=x] - The amount of vertical friction to apply.
+     *
+     * @return {this} This Game Object.
+     */
+    setFriction: function (x, y)
+    {
+        this.body.friction.set(x, y);
+
+        return this;
+    },
+
+    /**
+     * Sets the friction (e.g. the amount of velocity reduced over time) of the physics body when moving horizontally in the X axis.
+     * The higher than friction, the faster the body will slow down once force stops being applied to it.
+     *
+     * @method Phaser.Physics.Arcade.Components.Friction#setFrictionX
+     * @since 3.0.0
+     *
+     * @param {number} x - The amount of friction to apply.
+     *
+     * @return {this} This Game Object.
+     */
+    setFrictionX: function (x)
+    {
+        this.body.friction.x = x;
+
+        return this;
+    },
+
+    /**
+     * Sets the friction (e.g. the amount of velocity reduced over time) of the physics body when moving vertically in the Y axis.
+     * The higher than friction, the faster the body will slow down once force stops being applied to it.
+     *
+     * @method Phaser.Physics.Arcade.Components.Friction#setFrictionY
+     * @since 3.0.0
+     *
+     * @param {number} x - The amount of friction to apply.
+     *
+     * @return {this} This Game Object.
+     */
+    setFrictionY: function (y)
+    {
+        this.body.friction.y = y;
+
+        return this;
+    }
+
+};
+
+module.exports = Friction;
+
+
+/***/ }),
+/* 521 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @name Phaser.Physics.Arcade.Components.Enable
+ * @since 3.0.0
+ */
+var Enable = {
+
+    /**
+     * Enables this Game Object's Body.
+     *
+     * @method Phaser.Physics.Arcade.Components.Enable#enableBody
+     * @since 3.0.0
+     *
+     * @param {boolean} reset - Also reset the Body and place it at (x, y).
+     * @param {number} x - The horizontal position to place the Game Object and Body.
+     * @param {number} y - The horizontal position to place the Game Object and Body.
+     * @param {boolean} enableGameObject - Also activate this Game Object.
+     * @param {boolean} showGameObject - Also show this Game Object.
+     *
+     * @return {this} This Game Object.
+     *
+     * @see Phaser.Physics.Arcade.Body#enable
+     * @see Phaser.Physics.Arcade.StaticBody#enable
+     * @see Phaser.Physics.Arcade.Body#reset
+     * @see Phaser.Physics.Arcade.StaticBody#reset
+     * @see Phaser.GameObjects.GameObject#active
+     * @see Phaser.GameObjects.GameObject#visible
+     */
+    enableBody: function (reset, x, y, enableGameObject, showGameObject)
+    {
+        if (reset)
+        {
+            this.body.reset(x, y);
+        }
+
+        if (enableGameObject)
+        {
+            this.body.gameObject.active = true;
+        }
+
+        if (showGameObject)
+        {
+            this.body.gameObject.visible = true;
+        }
+
+        this.body.enable = true;
+
+        return this;
+    },
+
+    /**
+     * Stops and disables this Game Object's Body.
+     *
+     * @method Phaser.Physics.Arcade.Components.Enable#disableBody
+     * @since 3.0.0
+     *
+     * @param {boolean} [disableGameObject=false] - Also deactivate this Game Object.
