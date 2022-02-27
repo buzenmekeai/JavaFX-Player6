@@ -110150,3 +110150,206 @@ var Enable = {
      * @since 3.0.0
      *
      * @param {boolean} [disableGameObject=false] - Also deactivate this Game Object.
+     * @param {boolean} [hideGameObject=false] - Also hide this Game Object.
+     *
+     * @return {this} This Game Object.
+     *
+     * @see Phaser.Physics.Arcade.Body#enable
+     * @see Phaser.Physics.Arcade.StaticBody#enable
+     * @see Phaser.GameObjects.GameObject#active
+     * @see Phaser.GameObjects.GameObject#visible
+     */
+    disableBody: function (disableGameObject, hideGameObject)
+    {
+        if (disableGameObject === undefined) { disableGameObject = false; }
+        if (hideGameObject === undefined) { hideGameObject = false; }
+
+        this.body.stop();
+
+        this.body.enable = false;
+
+        if (disableGameObject)
+        {
+            this.body.gameObject.active = false;
+        }
+
+        if (hideGameObject)
+        {
+            this.body.gameObject.visible = false;
+        }
+
+        return this;
+    },
+
+    /**
+     * Syncs the Body's position and size with its parent Game Object.
+     * You don't need to call this for Dynamic Bodies, as it happens automatically.
+     * But for Static bodies it's a useful way of modifying the position of a Static Body
+     * in the Physics World, based on its Game Object.
+     *
+     * @method Phaser.Physics.Arcade.Components.Enable#refreshBody
+     * @since 3.1.0
+     *
+     * @return {this} This Game Object.
+     *
+     * @see Phaser.Physics.Arcade.StaticBody#updateFromGameObject
+     */
+    refreshBody: function ()
+    {
+        this.body.updateFromGameObject();
+
+        return this;
+    }
+
+};
+
+module.exports = Enable;
+
+
+/***/ }),
+/* 522 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @name Phaser.Physics.Arcade.Components.Drag
+ * @since 3.0.0
+ */
+var Drag = {
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Components.Drag#setDrag
+     * @since 3.0.0
+     *
+     * @param {number} x - [description]
+     * @param {number} [y=x] - [description]
+     *
+     * @return {this} This Game Object.
+     */
+    setDrag: function (x, y)
+    {
+        this.body.drag.set(x, y);
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Components.Drag#setDragX
+     * @since 3.0.0
+     *
+     * @param {number} value - [description]
+     *
+     * @return {this} This Game Object.
+     */
+    setDragX: function (value)
+    {
+        this.body.drag.x = value;
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Components.Drag#setDragY
+     * @since 3.0.0
+     *
+     * @param {number} value - [description]
+     *
+     * @return {this} This Game Object.
+     */
+    setDragY: function (value)
+    {
+        this.body.drag.y = value;
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Components.Drag#setDamping
+     * @since 3.10.0
+     *
+     * @param {boolean} value - `true` to use damping for deceleration, or `false` to use linear deceleration.
+     *
+     * @return {this} This Game Object.
+     */
+    setDamping: function (value)
+    {
+        this.body.useDamping = value;
+
+        return this;
+    }
+
+};
+
+module.exports = Drag;
+
+
+/***/ }),
+/* 523 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @name Phaser.Physics.Arcade.Components.Debug
+ * @since 3.0.0
+ */
+var Debug = {
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Components.Debug#setDebug
+     * @since 3.0.0
+     *
+     * @param {boolean} showBody - [description]
+     * @param {boolean} showVelocity - [description]
+     * @param {number} bodyColor - [description]
+     *
+     * @return {this} This Game Object.
+     */
+    setDebug: function (showBody, showVelocity, bodyColor)
+    {
+        this.debugShowBody = showBody;
+        this.debugShowVelocity = showVelocity;
+        this.debugBodyColor = bodyColor;
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Components.Debug#setDebugBodyColor
+     * @since 3.0.0
+     *
+     * @param {number} value - [description]
+     *
+     * @return {this} This Game Object.
+     */
+    setDebugBodyColor: function (value)
+    {
+        this.body.debugBodyColor = value;
+
+        return this;
+    },
