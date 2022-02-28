@@ -110353,3 +110353,203 @@ var Debug = {
 
         return this;
     },
+
+    /**
+     * [description]
+     *
+     * @name Phaser.Physics.Arcade.Components.Debug#debugShowBody
+     * @type {boolean}
+     * @since 3.0.0
+     */
+    debugShowBody: {
+
+        get: function ()
+        {
+            return this.body.debugShowBody;
+        },
+
+        set: function (value)
+        {
+            this.body.debugShowBody = value;
+        }
+
+    },
+
+    /**
+     * [description]
+     *
+     * @name Phaser.Physics.Arcade.Components.Debug#debugShowVelocity
+     * @type {boolean}
+     * @since 3.0.0
+     */
+    debugShowVelocity: {
+
+        get: function ()
+        {
+            return this.body.debugShowVelocity;
+        },
+
+        set: function (value)
+        {
+            this.body.debugShowVelocity = value;
+        }
+
+    },
+
+    /**
+     * [description]
+     *
+     * @name Phaser.Physics.Arcade.Components.Debug#debugBodyColor
+     * @type {number}
+     * @since 3.0.0
+     */
+    debugBodyColor: {
+
+        get: function ()
+        {
+            return this.body.debugBodyColor;
+        },
+
+        set: function (value)
+        {
+            this.body.debugBodyColor = value;
+        }
+
+    }
+
+};
+
+module.exports = Debug;
+
+
+/***/ }),
+/* 524 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @name Phaser.Physics.Arcade.Components.Bounce
+ * @since 3.0.0
+ */
+var Bounce = {
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Components.Bounce#setBounce
+     * @since 3.0.0
+     *
+     * @param {number} x - [description]
+     * @param {number} [y=x] - [description]
+     *
+     * @return {this} This Game Object.
+     */
+    setBounce: function (x, y)
+    {
+        this.body.bounce.set(x, y);
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Components.Bounce#setBounceX
+     * @since 3.0.0
+     *
+     * @param {number} value - [description]
+     *
+     * @return {this} This Game Object.
+     */
+    setBounceX: function (value)
+    {
+        this.body.bounce.x = value;
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Components.Bounce#setBounceY
+     * @since 3.0.0
+     *
+     * @param {number} value - [description]
+     *
+     * @return {this} This Game Object.
+     */
+    setBounceY: function (value)
+    {
+        this.body.bounce.y = value;
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Components.Bounce#setCollideWorldBounds
+     * @since 3.0.0
+     *
+     * @param {boolean} value - [description]
+     *
+     * @return {this} This Game Object.
+     */
+    setCollideWorldBounds: function (value)
+    {
+        this.body.collideWorldBounds = value;
+
+        return this;
+    }
+
+};
+
+module.exports = Bounce;
+
+
+/***/ }),
+/* 525 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @name Phaser.Physics.Arcade.Components.Angular
+ * @since 3.0.0
+ */
+var Angular = {
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Components.Angular#setAngularVelocity
+     * @since 3.0.0
+     *
+     * @param {number} value - [description]
+     *
+     * @return {this} This Game Object.
+     */
+    setAngularVelocity: function (value)
+    {
+        this.body.angularVelocity = value;
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Components.Angular#setAngularAcceleration
