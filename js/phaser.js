@@ -110553,3 +110553,225 @@ var Angular = {
      * [description]
      *
      * @method Phaser.Physics.Arcade.Components.Angular#setAngularAcceleration
+     * @since 3.0.0
+     *
+     * @param {number} value - [description]
+     *
+     * @return {this} This Game Object.
+     */
+    setAngularAcceleration: function (value)
+    {
+        this.body.angularAcceleration = value;
+
+        return this;
+    },
+
+    /**
+     * [description]
+     *
+     * @method Phaser.Physics.Arcade.Components.Angular#setAngularDrag
+     * @since 3.0.0
+     *
+     * @param {number} value - [description]
+     *
+     * @return {this} This Game Object.
+     */
+    setAngularDrag: function (value)
+    {
+        this.body.angularDrag = value;
+
+        return this;
+    }
+
+};
+
+module.exports = Angular;
+
+
+/***/ }),
+/* 526 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Provides methods used for setting the acceleration properties of an Arcade Body.
+ *
+ * @name Phaser.Physics.Arcade.Components.Acceleration
+ * @since 3.0.0
+ */
+var Acceleration = {
+
+    /**
+     * Sets the body's horizontal and vertical acceleration. If the vertical acceleration value is not provided, the vertical acceleration is set to the same value as the horizontal acceleration.
+     *
+     * @method Phaser.Physics.Arcade.Components.Acceleration#setAcceleration
+     * @since 3.0.0
+     *
+     * @param {number} x - The horizontal acceleration
+     * @param {number} [y=x] - The vertical acceleration
+     *
+     * @return {this} This Game Object.
+     */
+    setAcceleration: function (x, y)
+    {
+        this.body.acceleration.set(x, y);
+
+        return this;
+    },
+
+    /**
+     * Sets the body's horizontal acceleration.
+     *
+     * @method Phaser.Physics.Arcade.Components.Acceleration#setAccelerationX
+     * @since 3.0.0
+     *
+     * @param {number} value - The horizontal acceleration
+     *
+     * @return {this} This Game Object.
+     */
+    setAccelerationX: function (value)
+    {
+        this.body.acceleration.x = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the body's vertical acceleration.
+     *
+     * @method Phaser.Physics.Arcade.Components.Acceleration#setAccelerationY
+     * @since 3.0.0
+     *
+     * @param {number} value - The vertical acceleration
+     *
+     * @return {this} This Game Object.
+     */
+    setAccelerationY: function (value)
+    {
+        this.body.acceleration.y = value;
+
+        return this;
+    }
+
+};
+
+module.exports = Acceleration;
+
+
+/***/ }),
+/* 527 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var DegToRad = __webpack_require__(31);
+var DistanceBetween = __webpack_require__(52);
+var DistanceSquared = __webpack_require__(249);
+var Factory = __webpack_require__(238);
+var GetFastValue = __webpack_require__(2);
+var Merge = __webpack_require__(96);
+var PluginCache = __webpack_require__(15);
+var Vector2 = __webpack_require__(3);
+var World = __webpack_require__(233);
+
+/**
+ * @classdesc
+ * The Arcade Physics Plugin belongs to a Scene and sets up and manages the Scene's physics simulation.
+ * It also holds some useful methods for moving and rotating Arcade Physics Bodies.
+ *
+ * You can access it from within a Scene using `this.physics`.
+ *
+ * @class ArcadePhysics
+ * @memberof Phaser.Physics.Arcade
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - The Scene that this Plugin belongs to.
+ */
+var ArcadePhysics = new Class({
+
+    initialize:
+
+    function ArcadePhysics (scene)
+    {
+        /**
+         * The Scene that this Plugin belongs to.
+         *
+         * @name Phaser.Physics.Arcade.ArcadePhysics#scene
+         * @type {Phaser.Scene}
+         * @since 3.0.0
+         */
+        this.scene = scene;
+
+        /**
+         * The Scene's Systems.
+         *
+         * @name Phaser.Physics.Arcade.ArcadePhysics#systems
+         * @type {Phaser.Scenes.Systems}
+         * @since 3.0.0
+         */
+        this.systems = scene.sys;
+
+        /**
+         * A configuration object. Union of the `physics.arcade.*` properties of the GameConfig and SceneConfig objects.
+         *
+         * @name Phaser.Physics.Arcade.ArcadePhysics#config
+         * @type {object}
+         * @since 3.0.0
+         */
+        this.config = this.getConfig();
+
+        /**
+         * The physics simulation.
+         *
+         * @name Phaser.Physics.Arcade.ArcadePhysics#world
+         * @type {Phaser.Physics.Arcade.World}
+         * @since 3.0.0
+         */
+        this.world;
+
+        /**
+         * An object holding the Arcade Physics factory methods.
+         *
+         * @name Phaser.Physics.Arcade.ArcadePhysics#add
+         * @type {Phaser.Physics.Arcade.Factory}
+         * @since 3.0.0
+         */
+        this.add;
+
+        scene.sys.events.once('boot', this.boot, this);
+        scene.sys.events.on('start', this.start, this);
+    },
+
+    /**
+     * This method is called automatically, only once, when the Scene is first created.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.Physics.Arcade.ArcadePhysics#boot
+     * @private
+     * @since 3.5.1
+     */
+    boot: function ()
+    {
+        this.world = new World(this.scene, this.config);
+        this.add = new Factory(this.world);
+
+        this.systems.events.once('destroy', this.destroy, this);
+    },
+
+    /**
+     * This method is called automatically by the Scene when it is starting up.
+     * It is responsible for creating local systems, properties and listening for Scene events.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.Physics.Arcade.ArcadePhysics#start
