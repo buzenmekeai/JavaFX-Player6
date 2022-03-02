@@ -110775,3 +110775,207 @@ var ArcadePhysics = new Class({
      * Do not invoke it directly.
      *
      * @method Phaser.Physics.Arcade.ArcadePhysics#start
+     * @private
+     * @since 3.5.0
+     */
+    start: function ()
+    {
+        if (!this.world)
+        {
+            this.world = new World(this.scene, this.config);
+            this.add = new Factory(this.world);
+        }
+
+        var eventEmitter = this.systems.events;
+
+        eventEmitter.on('update', this.world.update, this.world);
+        eventEmitter.on('postupdate', this.world.postUpdate, this.world);
+        eventEmitter.once('shutdown', this.shutdown, this);
+    },
+
+    /**
+     * Creates the physics configuration for the current Scene.
+     *
+     * @method Phaser.Physics.Arcade.ArcadePhysics#getConfig
+     * @since 3.0.0
+     *
+     * @return {object} The physics configuration.
+     */
+    getConfig: function ()
+    {
+        var gameConfig = this.systems.game.config.physics;
+        var sceneConfig = this.systems.settings.physics;
+
+        var config = Merge(
+            GetFastValue(sceneConfig, 'arcade', {}),
+            GetFastValue(gameConfig, 'arcade', {})
+        );
+
+        return config;
+    },
+
+    /**
+     * Tests if Game Objects overlap. See {@link Phaser.Physics.Arcade.World#overlap}
+     *
+     * @method Phaser.Physics.Arcade.ArcadePhysics#overlap
+     * @since 3.0.0
+     *
+     * @param {ArcadeColliderType} object1 - The first object or array of objects to check.
+     * @param {ArcadeColliderType} [object2] - The second object or array of objects to check, or `undefined`.
+     * @param {ArcadePhysicsCallback} [collideCallback] - An optional callback function that is called if the objects collide.
+     * @param {ArcadePhysicsCallback} [processCallback] - An optional callback function that lets you perform additional checks against the two objects if they overlap. If this is set then `collideCallback` will only be called if this callback returns `true`.
+     * @param {*} [callbackContext] - The context in which to run the callbacks.
+     *
+     * @return {boolean} True if at least one Game Object overlaps another.
+     *
+     * @see Phaser.Physics.Arcade.World#overlap
+     */
+    overlap: function (object1, object2, overlapCallback, processCallback, callbackContext)
+    {
+        if (overlapCallback === undefined) { overlapCallback = null; }
+        if (processCallback === undefined) { processCallback = null; }
+        if (callbackContext === undefined) { callbackContext = overlapCallback; }
+
+        return this.world.collideObjects(object1, object2, overlapCallback, processCallback, callbackContext, true);
+    },
+
+    /**
+     * Tests if Game Objects overlap and separates them (if possible). See {@link Phaser.Physics.Arcade.World#collide}.
+     *
+     * @method Phaser.Physics.Arcade.ArcadePhysics#collide
+     * @since 3.0.0
+     *
+     * @param {ArcadeColliderType} object1 - The first object or array of objects to check.
+     * @param {ArcadeColliderType} [object2] - The second object or array of objects to check, or `undefined`.
+     * @param {ArcadePhysicsCallback} [collideCallback] - An optional callback function that is called if the objects collide.
+     * @param {ArcadePhysicsCallback} [processCallback] - An optional callback function that lets you perform additional checks against the two objects if they collide. If this is set then `collideCallback` will only be called if this callback returns `true`.
+     * @param {*} [callbackContext] - The context in which to run the callbacks.
+     *
+     * @return {boolean} True if any overlapping Game Objects were separated, otherwise false.
+     *
+     * @see Phaser.Physics.Arcade.World#collide
+     */
+    collide: function (object1, object2, collideCallback, processCallback, callbackContext)
+    {
+        if (collideCallback === undefined) { collideCallback = null; }
+        if (processCallback === undefined) { processCallback = null; }
+        if (callbackContext === undefined) { callbackContext = collideCallback; }
+
+        return this.world.collideObjects(object1, object2, collideCallback, processCallback, callbackContext, false);
+    },
+
+    /**
+     * Pauses the simulation.
+     *
+     * @method Phaser.Physics.Arcade.ArcadePhysics#pause
+     * @since 3.0.0
+     *
+     * @return {Phaser.Physics.Arcade.World} The simulation.
+     */
+    pause: function ()
+    {
+        return this.world.pause();
+    },
+
+    /**
+     * Resumes the simulation (if paused).
+     *
+     * @method Phaser.Physics.Arcade.ArcadePhysics#resume
+     * @since 3.0.0
+     *
+     * @return {Phaser.Physics.Arcade.World} The simulation.
+     */
+    resume: function ()
+    {
+        return this.world.resume();
+    },
+
+    /**
+     * Sets the acceleration.x/y property on the game object so it will move towards the x/y coordinates at the given rate (in pixels per second squared)
+     *
+     * You must give a maximum speed value, beyond which the game object won't go any faster.
+     *
+     * Note: The game object does not continuously track the target. If the target changes location during transit the game object will not modify its course.
+     * Note: The game object doesn't stop moving once it reaches the destination coordinates.
+     *
+     * @method Phaser.Physics.Arcade.ArcadePhysics#accelerateTo
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} gameObject - Any Game Object with an Arcade Physics body.
+     * @param {number} x - The x coordinate to accelerate towards.
+     * @param {number} y - The y coordinate to accelerate towards.
+     * @param {number} [speed=60] - The acceleration (change in speed) in pixels per second squared.
+     * @param {number} [xSpeedMax=500] - The maximum x velocity the game object can reach.
+     * @param {number} [ySpeedMax=500] - The maximum y velocity the game object can reach.
+     *
+     * @return {number} The angle (in radians) that the object should be visually set to in order to match its new velocity.
+     */
+    accelerateTo: function (gameObject, x, y, speed, xSpeedMax, ySpeedMax)
+    {
+        if (speed === undefined) { speed = 60; }
+
+        var angle = Math.atan2(y - gameObject.y, x - gameObject.x);
+
+        gameObject.body.acceleration.setToPolar(angle, speed);
+
+        if (xSpeedMax !== undefined && ySpeedMax !== undefined)
+        {
+            gameObject.body.maxVelocity.set(xSpeedMax, ySpeedMax);
+        }
+
+        return angle;
+    },
+
+    /**
+     * Sets the acceleration.x/y property on the game object so it will move towards the x/y coordinates at the given rate (in pixels per second squared)
+     *
+     * You must give a maximum speed value, beyond which the game object won't go any faster.
+     *
+     * Note: The game object does not continuously track the target. If the target changes location during transit the game object will not modify its course.
+     * Note: The game object doesn't stop moving once it reaches the destination coordinates.
+     *
+     * @method Phaser.Physics.Arcade.ArcadePhysics#accelerateToObject
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} gameObject - Any Game Object with an Arcade Physics body.
+     * @param {Phaser.GameObjects.GameObject} destination - The Game Object to move towards. Can be any object but must have visible x/y properties.
+     * @param {number} [speed=60] - The acceleration (change in speed) in pixels per second squared.
+     * @param {number} [xSpeedMax=500] - The maximum x velocity the game object can reach.
+     * @param {number} [ySpeedMax=500] - The maximum y velocity the game object can reach.
+     *
+     * @return {number} The angle (in radians) that the object should be visually set to in order to match its new velocity.
+     */
+    accelerateToObject: function (gameObject, destination, speed, xSpeedMax, ySpeedMax)
+    {
+        return this.accelerateTo(gameObject, destination.x, destination.y, speed, xSpeedMax, ySpeedMax);
+    },
+
+    /**
+     * Finds the Body closest to a source point or object.
+     *
+     * @method Phaser.Physics.Arcade.ArcadePhysics#closest
+     * @since 3.0.0
+     *
+     * @param {object} source - Any object with public `x` and `y` properties, such as a Game Object or Geometry object.
+     *
+     * @return {Phaser.Physics.Arcade.Body} The closest Body to the given source point.
+     */
+    closest: function (source)
+    {
+        var bodies = this.world.tree.all();
+
+        var min = Number.MAX_VALUE;
+        var closest = null;
+        var x = source.x;
+        var y = source.y;
+
+        for (var i = bodies.length - 1; i >= 0; i--)
+        {
+            var target = bodies[i];
+            var distance = DistanceSquared(x, y, target.x, target.y);
+
+            if (distance < min)
+            {
+                closest = target;
+                min = distance;
+            }
