@@ -111193,3 +111193,236 @@ var Extend = __webpack_require__(20);
  */
 
 /**
+ * @namespace Phaser.Physics.Arcade
+ */
+
+var Arcade = {
+
+    ArcadePhysics: __webpack_require__(527),
+    Body: __webpack_require__(232),
+    Collider: __webpack_require__(231),
+    Factory: __webpack_require__(238),
+    Group: __webpack_require__(235),
+    Image: __webpack_require__(237),
+    Sprite: __webpack_require__(104),
+    StaticBody: __webpack_require__(225),
+    StaticGroup: __webpack_require__(234),
+    World: __webpack_require__(233)
+
+};
+
+//   Merge in the consts
+Arcade = Extend(false, Arcade, CONST);
+
+module.exports = Arcade;
+
+
+/***/ }),
+/* 529 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Vector3 = __webpack_require__(138);
+var Matrix4 = __webpack_require__(240);
+var Quaternion = __webpack_require__(239);
+
+var tmpMat4 = new Matrix4();
+var tmpQuat = new Quaternion();
+var tmpVec3 = new Vector3();
+
+/**
+ * Rotates a vector in place by axis angle.
+ *
+ * This is the same as transforming a point by an
+ * axis-angle quaternion, but it has higher precision.
+ *
+ * @function Phaser.Math.RotateVec3
+ * @since 3.0.0
+ *
+ * @param {Phaser.Math.Vector3} vec - The vector to be rotated.
+ * @param {Phaser.Math.Vector3} axis - The axis to rotate around.
+ * @param {number} radians - The angle of rotation in radians.
+ *
+ * @return {Phaser.Math.Vector3} The given vector.
+ */
+var RotateVec3 = function (vec, axis, radians)
+{
+    //  Set the quaternion to our axis angle
+    tmpQuat.setAxisAngle(axis, radians);
+
+    //  Create a rotation matrix from the axis angle
+    tmpMat4.fromRotationTranslation(tmpQuat, tmpVec3.set(0, 0, 0));
+
+    //  Multiply our vector by the rotation matrix
+    return vec.transformMat4(tmpMat4);
+};
+
+module.exports = RotateVec3;
+
+
+/***/ }),
+/* 530 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  Adapted from [gl-matrix](https://github.com/toji/gl-matrix) by toji
+//  and [vecmath](https://github.com/mattdesl/vecmath) by mattdesl
+
+var Class = __webpack_require__(0);
+
+/**
+ * @classdesc
+ * A representation of a vector in 4D space.
+ *
+ * A four-component vector.
+ *
+ * @class Vector4
+ * @memberof Phaser.Math
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {number} [x] - The x component.
+ * @param {number} [y] - The y component.
+ * @param {number} [z] - The z component.
+ * @param {number} [w] - The w component.
+ */
+var Vector4 = new Class({
+
+    initialize:
+
+    function Vector4 (x, y, z, w)
+    {
+        /**
+         * The x component of this Vector.
+         *
+         * @name Phaser.Math.Vector4#x
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.x = 0;
+
+        /**
+         * The y component of this Vector.
+         *
+         * @name Phaser.Math.Vector4#y
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.y = 0;
+
+        /**
+         * The z component of this Vector.
+         *
+         * @name Phaser.Math.Vector4#z
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.z = 0;
+
+        /**
+         * The w component of this Vector.
+         *
+         * @name Phaser.Math.Vector4#w
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.w = 0;
+
+        if (typeof x === 'object')
+        {
+            this.x = x.x || 0;
+            this.y = x.y || 0;
+            this.z = x.z || 0;
+            this.w = x.w || 0;
+        }
+        else
+        {
+            this.x = x || 0;
+            this.y = y || 0;
+            this.z = z || 0;
+            this.w = w || 0;
+        }
+    },
+
+    /**
+     * Make a clone of this Vector4.
+     *
+     * @method Phaser.Math.Vector4#clone
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Vector4} A clone of this Vector4.
+     */
+    clone: function ()
+    {
+        return new Vector4(this.x, this.y, this.z, this.w);
+    },
+
+    /**
+     * Copy the components of a given Vector into this Vector.
+     *
+     * @method Phaser.Math.Vector4#copy
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector4} src - The Vector to copy the components from.
+     *
+     * @return {Phaser.Math.Vector4} This Vector4.
+     */
+    copy: function (src)
+    {
+        this.x = src.x;
+        this.y = src.y;
+        this.z = src.z || 0;
+        this.w = src.w || 0;
+
+        return this;
+    },
+
+    /**
+     * Check whether this Vector is equal to a given Vector.
+     *
+     * Performs a strict quality check against each Vector's components.
+     *
+     * @method Phaser.Math.Vector4#equals
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector4} v - The vector to check equality with.
+     *
+     * @return {boolean} A boolean indicating whether the two Vectors are equal or not.
+     */
+    equals: function (v)
+    {
+        return ((this.x === v.x) && (this.y === v.y) && (this.z === v.z) && (this.w === v.w));
+    },
+
+    /**
+     * Set the `x`, `y`, `z` and `w` components of the this Vector to the given `x`, `y`, `z` and `w` values.
+     *
+     * @method Phaser.Math.Vector4#set
+     * @since 3.0.0
+     *
+     * @param {(number|object)} x - The x value to set for this Vector, or an object containing x, y, z and w components.
+     * @param {number} y - The y value to set for this Vector.
+     * @param {number} z - The z value to set for this Vector.
+     * @param {number} w - The z value to set for this Vector.
+     *
+     * @return {Phaser.Math.Vector4} This Vector4.
+     */
+    set: function (x, y, z, w)
+    {
+        if (typeof x === 'object')
+        {
+            this.x = x.x || 0;
