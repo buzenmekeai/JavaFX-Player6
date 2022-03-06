@@ -111426,3 +111426,247 @@ var Vector4 = new Class({
         if (typeof x === 'object')
         {
             this.x = x.x || 0;
+            this.y = x.y || 0;
+            this.z = x.z || 0;
+            this.w = x.w || 0;
+        }
+        else
+        {
+            this.x = x || 0;
+            this.y = y || 0;
+            this.z = z || 0;
+            this.w = w || 0;
+        }
+
+        return this;
+    },
+
+    /**
+     * Add a given Vector to this Vector. Addition is component-wise.
+     *
+     * @method Phaser.Math.Vector4#add
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Vector2|Phaser.Math.Vector3|Phaser.Math.Vector4)} v - The Vector to add to this Vector.
+     *
+     * @return {Phaser.Math.Vector4} This Vector4.
+     */
+    add: function (v)
+    {
+        this.x += v.x;
+        this.y += v.y;
+        this.z += v.z || 0;
+        this.w += v.w || 0;
+
+        return this;
+    },
+
+    /**
+     * Subtract the given Vector from this Vector. Subtraction is component-wise.
+     *
+     * @method Phaser.Math.Vector4#subtract
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Vector2|Phaser.Math.Vector3|Phaser.Math.Vector4)} v - The Vector to subtract from this Vector.
+     *
+     * @return {Phaser.Math.Vector4} This Vector4.
+     */
+    subtract: function (v)
+    {
+        this.x -= v.x;
+        this.y -= v.y;
+        this.z -= v.z || 0;
+        this.w -= v.w || 0;
+
+        return this;
+    },
+
+    /**
+     * Scale this Vector by the given value.
+     *
+     * @method Phaser.Math.Vector4#scale
+     * @since 3.0.0
+     *
+     * @param {number} scale - The value to scale this Vector by.
+     *
+     * @return {Phaser.Math.Vector4} This Vector4.
+     */
+    scale: function (scale)
+    {
+        this.x *= scale;
+        this.y *= scale;
+        this.z *= scale;
+        this.w *= scale;
+
+        return this;
+    },
+
+    /**
+     * Calculate the length (or magnitude) of this Vector.
+     *
+     * @method Phaser.Math.Vector4#length
+     * @since 3.0.0
+     *
+     * @return {number} The length of this Vector.
+     */
+    length: function ()
+    {
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+        var w = this.w;
+
+        return Math.sqrt(x * x + y * y + z * z + w * w);
+    },
+
+    /**
+     * Calculate the length of this Vector squared.
+     *
+     * @method Phaser.Math.Vector4#lengthSq
+     * @since 3.0.0
+     *
+     * @return {number} The length of this Vector, squared.
+     */
+    lengthSq: function ()
+    {
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+        var w = this.w;
+
+        return x * x + y * y + z * z + w * w;
+    },
+
+    /**
+     * Normalize this Vector.
+     *
+     * Makes the vector a unit length vector (magnitude of 1) in the same direction.
+     *
+     * @method Phaser.Math.Vector4#normalize
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Vector4} This Vector4.
+     */
+    normalize: function ()
+    {
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+        var w = this.w;
+        var len = x * x + y * y + z * z + w * w;
+
+        if (len > 0)
+        {
+            len = 1 / Math.sqrt(len);
+
+            this.x = x * len;
+            this.y = y * len;
+            this.z = z * len;
+            this.w = w * len;
+        }
+
+        return this;
+    },
+
+    /**
+     * Calculate the dot product of this Vector and the given Vector.
+     *
+     * @method Phaser.Math.Vector4#dot
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector4} v - The Vector4 to dot product with this Vector4.
+     *
+     * @return {number} The dot product of this Vector and the given Vector.
+     */
+    dot: function (v)
+    {
+        return this.x * v.x + this.y * v.y + this.z * v.z + this.w * v.w;
+    },
+
+    /**
+     * Linearly interpolate between this Vector and the given Vector.
+     *
+     * Interpolates this Vector towards the given Vector.
+     *
+     * @method Phaser.Math.Vector4#lerp
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Vector4} v - The Vector4 to interpolate towards.
+     * @param {number} [t=0] - The interpolation percentage, between 0 and 1.
+     *
+     * @return {Phaser.Math.Vector4} This Vector4.
+     */
+    lerp: function (v, t)
+    {
+        if (t === undefined) { t = 0; }
+
+        var ax = this.x;
+        var ay = this.y;
+        var az = this.z;
+        var aw = this.w;
+
+        this.x = ax + t * (v.x - ax);
+        this.y = ay + t * (v.y - ay);
+        this.z = az + t * (v.z - az);
+        this.w = aw + t * (v.w - aw);
+
+        return this;
+    },
+
+    /**
+     * Perform a component-wise multiplication between this Vector and the given Vector.
+     *
+     * Multiplies this Vector by the given Vector.
+     *
+     * @method Phaser.Math.Vector4#multiply
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Vector2|Phaser.Math.Vector3|Phaser.Math.Vector4)} v - The Vector to multiply this Vector by.
+     *
+     * @return {Phaser.Math.Vector4} This Vector4.
+     */
+    multiply: function (v)
+    {
+        this.x *= v.x;
+        this.y *= v.y;
+        this.z *= v.z || 1;
+        this.w *= v.w || 1;
+
+        return this;
+    },
+
+    /**
+     * Perform a component-wise division between this Vector and the given Vector.
+     *
+     * Divides this Vector by the given Vector.
+     *
+     * @method Phaser.Math.Vector4#divide
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Vector2|Phaser.Math.Vector3|Phaser.Math.Vector4)} v - The Vector to divide this Vector by.
+     *
+     * @return {Phaser.Math.Vector4} This Vector4.
+     */
+    divide: function (v)
+    {
+        this.x /= v.x;
+        this.y /= v.y;
+        this.z /= v.z || 1;
+        this.w /= v.w || 1;
+
+        return this;
+    },
+
+    /**
+     * Calculate the distance between this Vector and the given Vector.
+     *
+     * @method Phaser.Math.Vector4#distance
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Vector2|Phaser.Math.Vector3|Phaser.Math.Vector4)} v - The Vector to calculate the distance to.
+     *
+     * @return {number} The distance from this Vector to the given Vector.
+     */
+    distance: function (v)
+    {
+        var dx = v.x - this.x;
