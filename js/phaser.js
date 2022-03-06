@@ -111670,3 +111670,233 @@ var Vector4 = new Class({
     distance: function (v)
     {
         var dx = v.x - this.x;
+        var dy = v.y - this.y;
+        var dz = v.z - this.z || 0;
+        var dw = v.w - this.w || 0;
+
+        return Math.sqrt(dx * dx + dy * dy + dz * dz + dw * dw);
+    },
+
+    /**
+     * Calculate the distance between this Vector and the given Vector, squared.
+     *
+     * @method Phaser.Math.Vector4#distanceSq
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Math.Vector2|Phaser.Math.Vector3|Phaser.Math.Vector4)} v - The Vector to calculate the distance to.
+     *
+     * @return {number} The distance from this Vector to the given Vector, squared.
+     */
+    distanceSq: function (v)
+    {
+        var dx = v.x - this.x;
+        var dy = v.y - this.y;
+        var dz = v.z - this.z || 0;
+        var dw = v.w - this.w || 0;
+
+        return dx * dx + dy * dy + dz * dz + dw * dw;
+    },
+
+    /**
+     * Negate the `x`, `y`, `z` and `w` components of this Vector.
+     *
+     * @method Phaser.Math.Vector4#negate
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Vector4} This Vector4.
+     */
+    negate: function ()
+    {
+        this.x = -this.x;
+        this.y = -this.y;
+        this.z = -this.z;
+        this.w = -this.w;
+
+        return this;
+    },
+
+    /**
+     * Transform this Vector with the given Matrix.
+     *
+     * @method Phaser.Math.Vector4#transformMat4
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Matrix4} mat - The Matrix4 to transform this Vector4 with.
+     *
+     * @return {Phaser.Math.Vector4} This Vector4.
+     */
+    transformMat4: function (mat)
+    {
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+        var w = this.w;
+        var m = mat.val;
+
+        this.x = m[0] * x + m[4] * y + m[8] * z + m[12] * w;
+        this.y = m[1] * x + m[5] * y + m[9] * z + m[13] * w;
+        this.z = m[2] * x + m[6] * y + m[10] * z + m[14] * w;
+        this.w = m[3] * x + m[7] * y + m[11] * z + m[15] * w;
+
+        return this;
+    },
+
+    /**
+     * Transform this Vector with the given Quaternion.
+     *
+     * @method Phaser.Math.Vector4#transformQuat
+     * @since 3.0.0
+     *
+     * @param {Phaser.Math.Quaternion} q - The Quaternion to transform this Vector with.
+     *
+     * @return {Phaser.Math.Vector4} This Vector4.
+     */
+    transformQuat: function (q)
+    {
+        // TODO: is this really the same as Vector3?
+        // Also, what about this: http://molecularmusings.wordpress.com/2013/05/24/a-faster-quaternion-vector-multiplication/
+        // benchmarks: http://jsperf.com/quaternion-transform-vec3-implementations
+        var x = this.x;
+        var y = this.y;
+        var z = this.z;
+        var qx = q.x;
+        var qy = q.y;
+        var qz = q.z;
+        var qw = q.w;
+
+        // calculate quat * vec
+        var ix = qw * x + qy * z - qz * y;
+        var iy = qw * y + qz * x - qx * z;
+        var iz = qw * z + qx * y - qy * x;
+        var iw = -qx * x - qy * y - qz * z;
+
+        // calculate result * inverse quat
+        this.x = ix * qw + iw * -qx + iy * -qz - iz * -qy;
+        this.y = iy * qw + iw * -qy + iz * -qx - ix * -qz;
+        this.z = iz * qw + iw * -qz + ix * -qy - iy * -qx;
+
+        return this;
+    },
+
+    /**
+     * Make this Vector the zero vector (0, 0, 0, 0).
+     *
+     * @method Phaser.Math.Vector4#reset
+     * @since 3.0.0
+     *
+     * @return {Phaser.Math.Vector4} This Vector4.
+     */
+    reset: function ()
+    {
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+        this.w = 0;
+
+        return this;
+    }
+
+});
+
+//  TODO: Check if these are required internally, if not, remove.
+Vector4.prototype.sub = Vector4.prototype.subtract;
+Vector4.prototype.mul = Vector4.prototype.multiply;
+Vector4.prototype.div = Vector4.prototype.divide;
+Vector4.prototype.dist = Vector4.prototype.distance;
+Vector4.prototype.distSq = Vector4.prototype.distanceSq;
+Vector4.prototype.len = Vector4.prototype.length;
+Vector4.prototype.lenSq = Vector4.prototype.lengthSq;
+
+module.exports = Vector4;
+
+
+/***/ }),
+/* 531 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Checks if the two values are within the given `tolerance` of each other.
+ *
+ * @function Phaser.Math.Within
+ * @since 3.0.0
+ *
+ * @param {number} a - The first value to use in the calculation.
+ * @param {number} b - The second value to use in the calculation.
+ * @param {number} tolerance - The tolerance. Anything equal to or less than this value is considered as being within range.
+ *
+ * @return {boolean} Returns `true` if `a` is less than or equal to the tolerance of `b`.
+ */
+var Within = function (a, b, tolerance)
+{
+    return (Math.abs(a - b) <= tolerance);
+};
+
+module.exports = Within;
+
+
+/***/ }),
+/* 532 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @typedef {object} SinCosTable
+ *
+ * @property {number} sin - The sine value.
+ * @property {number} cos - The cosine value.
+ * @property {number} length - The length.
+ */
+
+/**
+ * Generate a series of sine and cosine values.
+ *
+ * @function Phaser.Math.SinCosTableGenerator
+ * @since 3.0.0
+ *
+ * @param {number} length - The number of values to generate.
+ * @param {number} [sinAmp=1] - The sine value amplitude.
+ * @param {number} [cosAmp=1] - The cosine value amplitude.
+ * @param {number} [frequency=1] - The frequency of the values.
+ *
+ * @return {SinCosTable} The generated values.
+ */
+var SinCosTableGenerator = function (length, sinAmp, cosAmp, frequency)
+{
+    if (sinAmp === undefined) { sinAmp = 1; }
+    if (cosAmp === undefined) { cosAmp = 1; }
+    if (frequency === undefined) { frequency = 1; }
+
+    frequency *= Math.PI / length;
+
+    var cos = [];
+    var sin = [];
+
+    for (var c = 0; c < length; c++)
+    {
+        cosAmp -= sinAmp * frequency;
+        sinAmp += cosAmp * frequency;
+
+        cos[c] = cosAmp;
+        sin[c] = sinAmp;
+    }
+
+    return {
+        sin: sin,
+        cos: cos,
+        length: length
+    };
+};
+
+module.exports = SinCosTableGenerator;
+
