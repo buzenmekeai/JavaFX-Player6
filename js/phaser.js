@@ -112119,3 +112119,235 @@ module.exports = Percent;
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2018 Photon Storm Ltd.
  * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Subtract an `amount` from `value`, limiting the minimum result to `min`.
+ *
+ * @function Phaser.Math.MinSub
+ * @since 3.0.0
+ *
+ * @param {number} value - The value to subtract from.
+ * @param {number} amount - The amount to subtract.
+ * @param {number} min - The minimum value to return.
+ *
+ * @return {number} The resulting value.
+ */
+var MinSub = function (value, amount, min)
+{
+    return Math.max(value - amount, min);
+};
+
+module.exports = MinSub;
+
+
+/***/ }),
+/* 539 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Add an `amount` to a `value`, limiting the maximum result to `max`.
+ *
+ * @function Phaser.Math.MaxAdd
+ * @since 3.0.0
+ *
+ * @param {number} value - The value to add to.
+ * @param {number} amount - The amount to add.
+ * @param {number} max - The maximum value to return.
+ *
+ * @return {number} The resulting value.
+ */
+var MaxAdd = function (value, amount, max)
+{
+    return Math.min(value + amount, max);
+};
+
+module.exports = MaxAdd;
+
+
+/***/ }),
+/* 540 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Check if a given value is an even number using a strict type check.
+ *
+ * @function Phaser.Math.IsEvenStrict
+ * @since 3.0.0
+ *
+ * @param {number} value - The number to perform the check with.
+ *
+ * @return {boolean} Whether the number is even or not.
+ */
+var IsEvenStrict = function (value)
+{
+    // Use strict equality === for "is number" test
+    return (value === parseFloat(value)) ? !(value % 2) : void 0;
+};
+
+module.exports = IsEvenStrict;
+
+
+/***/ }),
+/* 541 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Check if a given value is an even number.
+ *
+ * @function Phaser.Math.IsEven
+ * @since 3.0.0
+ *
+ * @param {number} value - The number to perform the check with.
+ *
+ * @return {boolean} Whether the number is even or not.
+ */
+var IsEven = function (value)
+{
+    // Use abstract equality == for "is number" test
+
+    // eslint-disable-next-line eqeqeq
+    return (value == parseFloat(value)) ? !(value % 2) : void 0;
+};
+
+module.exports = IsEven;
+
+
+/***/ }),
+/* 542 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculate the speed required to cover a distance in the time given.
+ *
+ * @function Phaser.Math.GetSpeed
+ * @since 3.0.0
+ *
+ * @param {number} distance - The distance to travel in pixels.
+ * @param {integer} time - The time, in ms, to cover the distance in.
+ *
+ * @return {number} The amount you will need to increment the position by each step in order to cover the distance in the time given.
+ */
+var GetSpeed = function (distance, time)
+{
+    return (distance / time) / 1000;
+};
+
+module.exports = GetSpeed;
+
+
+/***/ }),
+/* 543 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Floors to some place comparative to a `base`, default is 10 for decimal place.
+ *
+ * The `place` is represented by the power applied to `base` to get that place.
+ *
+ * @function Phaser.Math.FloorTo
+ * @since 3.0.0
+ *
+ * @param {number} value - The value to round.
+ * @param {integer} [place=0] - The place to round to.
+ * @param {integer} [base=10] - The base to round in. Default is 10 for decimal.
+ *
+ * @return {number} The rounded value.
+ */
+var FloorTo = function (value, place, base)
+{
+    if (place === undefined) { place = 0; }
+    if (base === undefined) { base = 10; }
+
+    var p = Math.pow(base, -place);
+
+    return Math.floor(value * p) / p;
+};
+
+module.exports = FloorTo;
+
+
+/***/ }),
+/* 544 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculates the positive difference of two given numbers.
+ *
+ * @function Phaser.Math.Difference
+ * @since 3.0.0
+ *
+ * @param {number} a - The first number in the calculation.
+ * @param {number} b - The second number in the calculation.
+ *
+ * @return {number} The positive difference of the two given numbers.
+ */
+var Difference = function (a, b)
+{
+    return Math.abs(a - b);
+};
+
+module.exports = Difference;
+
+
+/***/ }),
+/* 545 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Ceils to some place comparative to a `base`, default is 10 for decimal place.
+ *
+ * The `place` is represented by the power applied to `base` to get that place.
+ *
+ * @function Phaser.Math.CeilTo
+ * @since 3.0.0
+ *
+ * @param {number} value - The value to round.
+ * @param {number} [place=0] - The place to round to.
+ * @param {integer} [base=10] - The base to round in. Default is 10 for decimal.
+ *
+ * @return {number} The rounded value.
+ */
+var CeilTo = function (value, place, base)
