@@ -111900,3 +111900,222 @@ var SinCosTableGenerator = function (length, sinAmp, cosAmp, frequency)
 
 module.exports = SinCosTableGenerator;
 
+
+/***/ }),
+/* 533 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Round a value to a given decimal place.
+ *
+ * @function Phaser.Math.RoundTo
+ * @since 3.0.0
+ *
+ * @param {number} value - The value to round.
+ * @param {integer} [place=0] - The place to round to.
+ * @param {integer} [base=10] - The base to round in. Default is 10 for decimal.
+ *
+ * @return {number} The rounded value.
+ */
+var RoundTo = function (value, place, base)
+{
+    if (place === undefined) { place = 0; }
+    if (base === undefined) { base = 10; }
+
+    var p = Math.pow(base, -place);
+
+    return Math.round(value * p) / p;
+};
+
+module.exports = RoundTo;
+
+
+/***/ }),
+/* 534 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Compute a random four-dimensional vector.
+ *
+ * @function Phaser.Math.RandomXYZW
+ * @since 3.0.0
+ *
+ * @param {Phaser.Math.Vector4} vec4 - The Vector to compute random values for.
+ * @param {number} [scale=1] - The scale of the random values.
+ *
+ * @return {Phaser.Math.Vector4} The given Vector.
+ */
+var RandomXYZW = function (vec4, scale)
+{
+    if (scale === undefined) { scale = 1; }
+
+    // TODO: Not spherical; should fix this for more uniform distribution
+    vec4.x = (Math.random() * 2 - 1) * scale;
+    vec4.y = (Math.random() * 2 - 1) * scale;
+    vec4.z = (Math.random() * 2 - 1) * scale;
+    vec4.w = (Math.random() * 2 - 1) * scale;
+
+    return vec4;
+};
+
+module.exports = RandomXYZW;
+
+
+/***/ }),
+/* 535 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Compute a random position vector in a spherical area, optionally defined by the given radius.
+ *
+ * @function Phaser.Math.RandomXYZ
+ * @since 3.0.0
+ *
+ * @param {Phaser.Math.Vector3} vec3 - The Vector to compute random values for.
+ * @param {number} [radius=1] - The radius.
+ *
+ * @return {Phaser.Math.Vector3} The given Vector.
+ */
+var RandomXYZ = function (vec3, radius)
+{
+    if (radius === undefined) { radius = 1; }
+
+    var r = Math.random() * 2 * Math.PI;
+    var z = (Math.random() * 2) - 1;
+    var zScale = Math.sqrt(1 - z * z) * radius;
+
+    vec3.x = Math.cos(r) * zScale;
+    vec3.y = Math.sin(r) * zScale;
+    vec3.z = z * radius;
+
+    return vec3;
+};
+
+module.exports = RandomXYZ;
+
+
+/***/ }),
+/* 536 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Compute a random unit vector.
+ *
+ * Computes random values for the given vector between -1 and 1 that can be used to represent a direction.
+ *
+ * Optionally accepts a scale value to scale the resulting vector by.
+ *
+ * @function Phaser.Math.RandomXY
+ * @since 3.0.0
+ *
+ * @param {Phaser.Math.Vector2} vector - The Vector to compute random values for.
+ * @param {number} [scale=1] - The scale of the random values.
+ *
+ * @return {Phaser.Math.Vector2} The given Vector.
+ */
+var RandomXY = function (vector, scale)
+{
+    if (scale === undefined) { scale = 1; }
+
+    var r = Math.random() * 2 * Math.PI;
+
+    vector.x = Math.cos(r) * scale;
+    vector.y = Math.sin(r) * scale;
+
+    return vector;
+};
+
+module.exports = RandomXY;
+
+
+/***/ }),
+/* 537 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Work out what percentage `value` is of the range between `min` and `max`.
+ * If `max` isn't given then it will return the percentage of `value` to `min`.
+ *
+ * You can optionally specify an `upperMax` value, which is a mid-way point in the range that represents 100%, after which the % starts to go down to zero again.
+ *
+ * @function Phaser.Math.Percent
+ * @since 3.0.0
+ *
+ * @param {number} value - The value to determine the percentage of.
+ * @param {number} min - The minimum value.
+ * @param {number} [max] - The maximum value.
+ * @param {number} [upperMax] - The mid-way point in the range that represents 100%.
+ *
+ * @return {number} A value between 0 and 1 representing the percentage.
+ */
+var Percent = function (value, min, max, upperMax)
+{
+    if (max === undefined) { max = min + 1; }
+
+    var percentage = (value - min) / (max - min);
+
+    if (percentage > 1)
+    {
+        if (upperMax !== undefined)
+        {
+            percentage = ((upperMax - value)) / (upperMax - max);
+
+            if (percentage < 0)
+            {
+                percentage = 0;
+            }
+        }
+        else
+        {
+            percentage = 1;
+        }
+    }
+    else if (percentage < 0)
+    {
+        percentage = 0;
+    }
+
+    return percentage;
+};
+
+module.exports = Percent;
+
+
+/***/ }),
+/* 538 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
