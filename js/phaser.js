@@ -112351,3 +112351,225 @@ module.exports = Difference;
  * @return {number} The rounded value.
  */
 var CeilTo = function (value, place, base)
+{
+    if (place === undefined) { place = 0; }
+    if (base === undefined) { base = 10; }
+
+    var p = Math.pow(base, -place);
+
+    return Math.ceil(value * p) / p;
+};
+
+module.exports = CeilTo;
+
+
+/***/ }),
+/* 546 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculate the mean average of the given values.
+ *
+ * @function Phaser.Math.Average
+ * @since 3.0.0
+ *
+ * @param {number[]} values - The values to average.
+ *
+ * @return {number} The average value.
+ */
+var Average = function (values)
+{
+    var sum = 0;
+
+    for (var i = 0; i < values.length; i++)
+    {
+        sum += (+values[i]);
+    }
+
+    return sum / values.length;
+};
+
+module.exports = Average;
+
+
+/***/ }),
+/* 547 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Snap a value to nearest grid slice, using rounding.
+ *
+ * Example: if you have an interval gap of `5` and a position of `12`... you will snap to `10` whereas `14` will snap to `15`.
+ *
+ * @function Phaser.Math.Snap.To
+ * @since 3.0.0
+ *
+ * @param {number} value - The value to snap.
+ * @param {number} gap - The interval gap of the grid.
+ * @param {number} [start=0] - Optional starting offset for gap.
+ * @param {boolean} [divide=false] - If `true` it will divide the snapped value by the gap before returning.
+ *
+ * @return {number} The snapped value.
+ */
+var SnapTo = function (value, gap, start, divide)
+{
+    if (start === undefined) { start = 0; }
+
+    if (gap === 0)
+    {
+        return value;
+    }
+
+    value -= start;
+    value = gap * Math.round(value / gap);
+
+    return (divide) ? (start + value) / gap : start + value;
+};
+
+module.exports = SnapTo;
+
+
+/***/ }),
+/* 548 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Snap
+ */
+
+module.exports = {
+
+    Ceil: __webpack_require__(243),
+    Floor: __webpack_require__(142),
+    To: __webpack_require__(547)
+
+};
+
+
+/***/ }),
+/* 549 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Tests the value and returns `true` if it is a power of two.
+ *
+ * @function Phaser.Math.Pow2.IsValuePowerOfTwo
+ * @since 3.0.0
+ *
+ * @param {number} value - The value to check if it's a power of two.
+ *
+ * @return {boolean} Returns `true` if `value` is a power of two, otherwise `false`.
+ */
+var IsValuePowerOfTwo = function (value)
+{
+    return (value > 0 && (value & (value - 1)) === 0);
+};
+
+module.exports = IsValuePowerOfTwo;
+
+
+/***/ }),
+/* 550 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Pow2
+ */
+
+module.exports = {
+
+    GetNext: __webpack_require__(294),
+    IsSize: __webpack_require__(117),
+    IsValue: __webpack_require__(549)
+
+};
+
+
+/***/ }),
+/* 551 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var SmootherStep = __webpack_require__(182);
+
+/**
+ * A Smoother Step interpolation method.
+ *
+ * @function Phaser.Math.Interpolation.SmootherStep
+ * @since 3.9.0
+ * @see {@link https://en.wikipedia.org/wiki/Smoothstep#Variations}
+ *
+ * @param {number} t - The percentage of interpolation, between 0 and 1.
+ * @param {number} min - The minimum value, also known as the 'left edge', assumed smaller than the 'right edge'.
+ * @param {number} max - The maximum value, also known as the 'right edge', assumed greater than the 'left edge'.
+ *
+ * @return {number} The interpolated value.
+ */
+var SmootherStepInterpolation = function (t, min, max)
+{
+    return min + (max - min) * SmootherStep(t, 0, 1);
+};
+
+module.exports = SmootherStepInterpolation;
+
+
+/***/ }),
+/* 552 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Linear = __webpack_require__(119);
+
+/**
+ * A linear interpolation method.
+ *
+ * @function Phaser.Math.Interpolation.Linear
+ * @since 3.0.0
+ * @see {@link https://en.wikipedia.org/wiki/Linear_interpolation}
+ *
+ * @param {number[]} v - The input array of values to interpolate between.
+ * @param {!number} k - The percentage of interpolation, between 0 and 1.
+ *
+ * @return {!number} The interpolated value.
+ */
+var LinearInterpolation = function (v, k)
