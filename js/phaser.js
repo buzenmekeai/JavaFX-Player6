@@ -112796,3 +112796,233 @@ module.exports = Ceil;
 module.exports = {
 
     Ceil: __webpack_require__(557),
+    Equal: __webpack_require__(248),
+    Floor: __webpack_require__(556),
+    GreaterThan: __webpack_require__(247),
+    LessThan: __webpack_require__(246)
+
+};
+
+
+/***/ }),
+/* 559 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Easing
+ */
+
+module.exports = {
+
+    Back: __webpack_require__(369),
+    Bounce: __webpack_require__(368),
+    Circular: __webpack_require__(367),
+    Cubic: __webpack_require__(366),
+    Elastic: __webpack_require__(365),
+    Expo: __webpack_require__(364),
+    Linear: __webpack_require__(363),
+    Quadratic: __webpack_require__(362),
+    Quartic: __webpack_require__(361),
+    Quintic: __webpack_require__(360),
+    Sine: __webpack_require__(359),
+    Stepped: __webpack_require__(358)
+
+};
+
+
+/***/ }),
+/* 560 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculate the distance between two sets of coordinates (points) to the power of `pow`.
+ *
+ * @function Phaser.Math.Distance.Power
+ * @since 3.0.0
+ *
+ * @param {number} x1 - The x coordinate of the first point.
+ * @param {number} y1 - The y coordinate of the first point.
+ * @param {number} x2 - The x coordinate of the second point.
+ * @param {number} y2 - The y coordinate of the second point.
+ * @param {number} pow - The exponent.
+ *
+ * @return {number} The distance between each point.
+ */
+var DistancePower = function (x1, y1, x2, y2, pow)
+{
+    if (pow === undefined) { pow = 2; }
+
+    return Math.sqrt(Math.pow(x2 - x1, pow) + Math.pow(y2 - y1, pow));
+};
+
+module.exports = DistancePower;
+
+
+/***/ }),
+/* 561 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Distance
+ */
+
+module.exports = {
+
+    Between: __webpack_require__(52),
+    Power: __webpack_require__(560),
+    Squared: __webpack_require__(249)
+
+};
+
+
+/***/ }),
+/* 562 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Gets the shortest angle between `angle1` and `angle2`.
+ *
+ * Both angles must be in the range -180 to 180, which is the same clamped
+ * range that `sprite.angle` uses, so you can pass in two sprite angles to
+ * this method and get the shortest angle back between the two of them.
+ *
+ * The angle returned will be in the same range. If the returned angle is
+ * greater than 0 then it's a counter-clockwise rotation, if < 0 then it's
+ * a clockwise rotation.
+ *
+ * TODO: Wrap the angles in this function?
+ *
+ * @function Phaser.Math.Angle.ShortestBetween
+ * @since 3.0.0
+ *
+ * @param {number} angle1 - The first angle in the range -180 to 180.
+ * @param {number} angle2 - The second angle in the range -180 to 180.
+ *
+ * @return {number} The shortest angle, in degrees. If greater than zero it's a counter-clockwise rotation.
+ */
+var ShortestBetween = function (angle1, angle2)
+{
+    var difference = angle2 - angle1;
+
+    if (difference === 0)
+    {
+        return 0;
+    }
+
+    var times = Math.floor((difference - (-180)) / 360);
+
+    return difference - (times * 360);
+
+};
+
+module.exports = ShortestBetween;
+
+
+/***/ }),
+/* 563 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var MATH_CONST = __webpack_require__(16);
+
+/**
+ * Rotates `currentAngle` towards `targetAngle`, taking the shortest rotation distance. The `lerp` argument is the amount to rotate by in this call.
+ *
+ * @function Phaser.Math.Angle.RotateTo
+ * @since 3.0.0
+ *
+ * @param {number} currentAngle - The current angle, in radians.
+ * @param {number} targetAngle - The target angle to rotate to, in radians.
+ * @param {number} [lerp=0.05] - The lerp value to add to the current angle.
+ *
+ * @return {number} The adjusted angle.
+ */
+var RotateTo = function (currentAngle, targetAngle, lerp)
+{
+    if (lerp === undefined) { lerp = 0.05; }
+
+    if (currentAngle === targetAngle)
+    {
+        return currentAngle;
+    }
+
+    if (Math.abs(targetAngle - currentAngle) <= lerp || Math.abs(targetAngle - currentAngle) >= (MATH_CONST.PI2 - lerp))
+    {
+        currentAngle = targetAngle;
+    }
+    else
+    {
+        if (Math.abs(targetAngle - currentAngle) > Math.PI)
+        {
+            if (targetAngle < currentAngle)
+            {
+                targetAngle += MATH_CONST.PI2;
+            }
+            else
+            {
+                targetAngle -= MATH_CONST.PI2;
+            }
+        }
+
+        if (targetAngle > currentAngle)
+        {
+            currentAngle += lerp;
+        }
+        else if (targetAngle < currentAngle)
+        {
+            currentAngle -= lerp;
+        }
+    }
+
+    return currentAngle;
+};
+
+module.exports = RotateTo;
+
+
+/***/ }),
+/* 564 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Normalize = __webpack_require__(250);
+
+/**
+ * Reverse the given angle.
+ *
+ * @function Phaser.Math.Angle.Reverse
+ * @since 3.0.0
