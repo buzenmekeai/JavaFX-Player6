@@ -112573,3 +112573,226 @@ var Linear = __webpack_require__(119);
  * @return {!number} The interpolated value.
  */
 var LinearInterpolation = function (v, k)
+{
+    var m = v.length - 1;
+    var f = m * k;
+    var i = Math.floor(f);
+
+    if (k < 0)
+    {
+        return Linear(v[0], v[1], f);
+    }
+
+    if (k > 1)
+    {
+        return Linear(v[m], v[m - 1], m - f);
+    }
+
+    return Linear(v[i], v[(i + 1 > m) ? m : i + 1], f - i);
+};
+
+module.exports = LinearInterpolation;
+
+
+/***/ }),
+/* 553 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CatmullRom = __webpack_require__(171);
+
+/**
+ * A Catmull-Rom interpolation method.
+ *
+ * @function Phaser.Math.Interpolation.CatmullRom
+ * @since 3.0.0
+ *
+ * @param {number[]} v - The input array of values to interpolate between.
+ * @param {number} k - The percentage of interpolation, between 0 and 1.
+ *
+ * @return {number} The interpolated value.
+ */
+var CatmullRomInterpolation = function (v, k)
+{
+    var m = v.length - 1;
+    var f = m * k;
+    var i = Math.floor(f);
+
+    if (v[0] === v[m])
+    {
+        if (k < 0)
+        {
+            i = Math.floor(f = m * (1 + k));
+        }
+
+        return CatmullRom(f - i, v[(i - 1 + m) % m], v[i], v[(i + 1) % m], v[(i + 2) % m]);
+    }
+    else
+    {
+        if (k < 0)
+        {
+            return v[0] - (CatmullRom(-f, v[0], v[0], v[1], v[1]) - v[0]);
+        }
+
+        if (k > 1)
+        {
+            return v[m] - (CatmullRom(f - m, v[m], v[m], v[m - 1], v[m - 1]) - v[m]);
+        }
+
+        return CatmullRom(f - i, v[i ? i - 1 : 0], v[i], v[m < i + 1 ? m : i + 1], v[m < i + 2 ? m : i + 2]);
+    }
+};
+
+module.exports = CatmullRomInterpolation;
+
+
+/***/ }),
+/* 554 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Bernstein = __webpack_require__(245);
+
+/**
+ * A bezier interpolation method.
+ *
+ * @function Phaser.Math.Interpolation.Bezier
+ * @since 3.0.0
+ *
+ * @param {number[]} v - The input array of values to interpolate between.
+ * @param {number} k - The percentage of interpolation, between 0 and 1.
+ *
+ * @return {number} The interpolated value.
+ */
+var BezierInterpolation = function (v, k)
+{
+    var b = 0;
+    var n = v.length - 1;
+
+    for (var i = 0; i <= n; i++)
+    {
+        b += Math.pow(1 - k, n - i) * Math.pow(k, i) * v[i] * Bernstein(n, i);
+    }
+
+    return b;
+};
+
+module.exports = BezierInterpolation;
+
+
+/***/ }),
+/* 555 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Interpolation
+ */
+
+module.exports = {
+
+    Bezier: __webpack_require__(554),
+    CatmullRom: __webpack_require__(553),
+    CubicBezier: __webpack_require__(354),
+    Linear: __webpack_require__(552),
+    QuadraticBezier: __webpack_require__(350),
+    SmoothStep: __webpack_require__(334),
+    SmootherStep: __webpack_require__(551)
+
+};
+
+
+/***/ }),
+/* 556 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculate the fuzzy floor of the given value.
+ *
+ * @function Phaser.Math.Fuzzy.Floor
+ * @since 3.0.0
+ *
+ * @param {number} value - The value.
+ * @param {number} [epsilon=0.0001] - The epsilon.
+ *
+ * @return {number} The floor of the value.
+ */
+var Floor = function (value, epsilon)
+{
+    if (epsilon === undefined) { epsilon = 0.0001; }
+
+    return Math.floor(value + epsilon);
+};
+
+module.exports = Floor;
+
+
+/***/ }),
+/* 557 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculate the fuzzy ceiling of the given value.
+ *
+ * @function Phaser.Math.Fuzzy.Ceil
+ * @since 3.0.0
+ *
+ * @param {number} value - The value.
+ * @param {number} [epsilon=0.0001] - The epsilon.
+ *
+ * @return {number} The fuzzy ceiling of the value.
+ */
+var Ceil = function (value, epsilon)
+{
+    if (epsilon === undefined) { epsilon = 0.0001; }
+
+    return Math.ceil(value - epsilon);
+};
+
+module.exports = Ceil;
+
+
+/***/ }),
+/* 558 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Fuzzy
+ */
+
+module.exports = {
+
+    Ceil: __webpack_require__(557),
