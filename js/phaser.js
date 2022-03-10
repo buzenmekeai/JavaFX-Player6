@@ -113224,3 +113224,222 @@ var PhaserMath = {
     Interpolation: __webpack_require__(555),
     Pow2: __webpack_require__(550),
     Snap: __webpack_require__(548),
+
+    //  Expose the RNG Class
+    RandomDataGenerator: __webpack_require__(404),
+
+    //  Single functions
+    Average: __webpack_require__(546),
+    Bernstein: __webpack_require__(245),
+    Between: __webpack_require__(170),
+    CatmullRom: __webpack_require__(171),
+    CeilTo: __webpack_require__(545),
+    Clamp: __webpack_require__(23),
+    DegToRad: __webpack_require__(31),
+    Difference: __webpack_require__(544),
+    Factorial: __webpack_require__(244),
+    FloatBetween: __webpack_require__(299),
+    FloorTo: __webpack_require__(543),
+    FromPercent: __webpack_require__(93),
+    GetSpeed: __webpack_require__(542),
+    IsEven: __webpack_require__(541),
+    IsEvenStrict: __webpack_require__(540),
+    Linear: __webpack_require__(119),
+    MaxAdd: __webpack_require__(539),
+    MinSub: __webpack_require__(538),
+    Percent: __webpack_require__(537),
+    RadToDeg: __webpack_require__(172),
+    RandomXY: __webpack_require__(536),
+    RandomXYZ: __webpack_require__(535),
+    RandomXYZW: __webpack_require__(534),
+    Rotate: __webpack_require__(242),
+    RotateAround: __webpack_require__(396),
+    RotateAroundDistance: __webpack_require__(183),
+    RoundAwayFromZero: __webpack_require__(314),
+    RoundTo: __webpack_require__(533),
+    SinCosTableGenerator: __webpack_require__(532),
+    SmootherStep: __webpack_require__(182),
+    SmoothStep: __webpack_require__(181),
+    TransformXY: __webpack_require__(332),
+    Within: __webpack_require__(531),
+    Wrap: __webpack_require__(53),
+
+    //  Vector classes
+    Vector2: __webpack_require__(3),
+    Vector3: __webpack_require__(138),
+    Vector4: __webpack_require__(530),
+    Matrix3: __webpack_require__(241),
+    Matrix4: __webpack_require__(240),
+    Quaternion: __webpack_require__(239),
+    RotateVec3: __webpack_require__(529)
+
+};
+
+//   Merge in the consts
+
+PhaserMath = Extend(false, PhaserMath, CONST);
+
+//  Export it
+
+module.exports = PhaserMath;
+
+
+/***/ }),
+/* 571 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var CONST = __webpack_require__(18);
+var CustomSet = __webpack_require__(95);
+var EventEmitter = __webpack_require__(11);
+var FileTypesManager = __webpack_require__(7);
+var GetFastValue = __webpack_require__(2);
+var PluginCache = __webpack_require__(15);
+var XHRSettings = __webpack_require__(105);
+
+/**
+ * @classdesc
+ * The Loader handles loading all external content such as Images, Sounds, Texture Atlases and data files.
+ * You typically interact with it via `this.load` in your Scene. Scenes can have a `preload` method, which is always
+ * called before the Scenes `create` method, allowing you to preload assets that the Scene may need.
+ *
+ * If you call any `this.load` methods from outside of `Scene.preload` then you need to start the Loader going
+ * yourself by calling `Loader.start()`. It's only automatically started during the Scene preload.
+ *
+ * The Loader uses a combination of tag loading (eg. Audio elements) and XHR and provides progress and completion events.
+ * Files are loaded in parallel by default. The amount of concurrent connections can be controlled in your Game Configuration.
+ *
+ * Once the Loader has started loading you are still able to add files to it. These can be injected as a result of a loader
+ * event, the type of file being loaded (such as a pack file) or other external events. As long as the Loader hasn't finished
+ * simply adding a new file to it, while running, will ensure it's added into the current queue.
+ *
+ * Every Scene has its own instance of the Loader and they are bound to the Scene in which they are created. However,
+ * assets loaded by the Loader are placed into global game-level caches. For example, loading an XML file will place that
+ * file inside `Game.cache.xml`, which is accessible from every Scene in your game, no matter who was responsible
+ * for loading it. The same is true of Textures. A texture loaded in one Scene is instantly available to all other Scenes
+ * in your game.
+ *
+ * The Loader works by using custom File Types. These are stored in the FileTypesManager, which injects them into the Loader
+ * when it's instantiated. You can create your own custom file types by extending either the File or MultiFile classes.
+ * See those files for more details.
+ *
+ * @class LoaderPlugin
+ * @extends Phaser.Events.EventEmitter
+ * @memberof Phaser.Loader
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - The Scene which owns this Loader instance.
+ */
+var LoaderPlugin = new Class({
+
+    Extends: EventEmitter,
+
+    initialize:
+
+    function LoaderPlugin (scene)
+    {
+        EventEmitter.call(this);
+
+        var gameConfig = scene.sys.game.config;
+        var sceneConfig = scene.sys.settings.loader;
+
+        /**
+         * The Scene which owns this Loader instance.
+         *
+         * @name Phaser.Loader.LoaderPlugin#scene
+         * @type {Phaser.Scene}
+         * @protected
+         * @since 3.0.0
+         */
+        this.scene = scene;
+
+        /**
+         * A reference to the Scene Systems.
+         *
+         * @name Phaser.Loader.LoaderPlugin#systems
+         * @type {Phaser.Scenes.Systems}
+         * @protected
+         * @since 3.0.0
+         */
+        this.systems = scene.sys;
+
+        /**
+         * A reference to the global Cache Manager.
+         *
+         * @name Phaser.Loader.LoaderPlugin#cacheManager
+         * @type {Phaser.Cache.CacheManager}
+         * @protected
+         * @since 3.7.0
+         */
+        this.cacheManager = scene.sys.cache;
+
+        /**
+         * A reference to the global Texture Manager.
+         *
+         * @name Phaser.Loader.LoaderPlugin#textureManager
+         * @type {Phaser.Textures.TextureManager}
+         * @protected
+         * @since 3.7.0
+         */
+        this.textureManager = scene.sys.textures;
+
+        //  Inject the available filetypes into the Loader
+        FileTypesManager.install(this);
+
+        /**
+         * An optional prefix that is automatically prepended to the start of every file key.
+         * If prefix was `MENU.` and you load an image with the key 'Background' the resulting key would be `MENU.Background`.
+         * You can set this directly, or call `Loader.setPrefix()`. It will then affect every file added to the Loader
+         * from that point on. It does _not_ change any file already in the load queue.
+         *
+         * @name Phaser.Loader.LoaderPlugin#prefix
+         * @type {string}
+         * @default ''
+         * @since 3.7.0
+         */
+        this.prefix = '';
+
+        /**
+         * The value of `path`, if set, is placed before any _relative_ file path given. For example:
+         *
+         * ```javascript
+         * this.load.path = "images/sprites/";
+         * this.load.image("ball", "ball.png");
+         * this.load.image("tree", "level1/oaktree.png");
+         * this.load.image("boom", "http://server.com/explode.png");
+         * ```
+         *
+         * Would load the `ball` file from `images/sprites/ball.png` and the tree from
+         * `images/sprites/level1/oaktree.png` but the file `boom` would load from the URL
+         * given as it's an absolute URL.
+         *
+         * Please note that the path is added before the filename but *after* the baseURL (if set.)
+         *
+         * If you set this property directly then it _must_ end with a "/". Alternatively, call `setPath()` and it'll do it for you.
+         *
+         * @name Phaser.Loader.LoaderPlugin#path
+         * @type {string}
+         * @default ''
+         * @since 3.0.0
+         */
+        this.path = '';
+
+        /**
+         * If you want to append a URL before the path of any asset you can set this here.
+         * 
+         * Useful if allowing the asset base url to be configured outside of the game code.
+         * 
+         * If you set this property directly then it _must_ end with a "/". Alternatively, call `setBaseURL()` and it'll do it for you.
+         *
+         * @name Phaser.Loader.LoaderPlugin#baseURL
+         * @type {string}
+         * @default ''
+         * @since 3.0.0
+         */
