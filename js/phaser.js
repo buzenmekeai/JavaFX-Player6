@@ -113026,3 +113026,201 @@ var Normalize = __webpack_require__(250);
  *
  * @function Phaser.Math.Angle.Reverse
  * @since 3.0.0
+ *
+ * @param {number} angle - The angle to reverse, in radians.
+ *
+ * @return {number} The reversed angle, in radians.
+ */
+var Reverse = function (angle)
+{
+    return Normalize(angle + Math.PI);
+};
+
+module.exports = Reverse;
+
+
+/***/ }),
+/* 565 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Find the angle of a segment from (point1.x, point1.y) -> (point2.x, point2.y).
+ *
+ * The difference between this method and {@link Phaser.Math.Angle.BetweenPoints} is that this assumes the y coordinate
+ * travels down the screen.
+ *
+ * @function Phaser.Math.Angle.BetweenPointsY
+ * @since 3.0.0
+ *
+ * @param {(Phaser.Geom.Point|object)} point1 - The first point.
+ * @param {(Phaser.Geom.Point|object)} point2 - The second point.
+ *
+ * @return {number} The angle in radians.
+ */
+var BetweenPointsY = function (point1, point2)
+{
+    return Math.atan2(point2.x - point1.x, point2.y - point1.y);
+};
+
+module.exports = BetweenPointsY;
+
+
+/***/ }),
+/* 566 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Find the angle of a segment from (point1.x, point1.y) -> (point2.x, point2.y).
+ *
+ * Calculates the angle of the vector from the first point to the second point.
+ *
+ * @function Phaser.Math.Angle.BetweenPoints
+ * @since 3.0.0
+ *
+ * @param {(Phaser.Geom.Point|object)} point1 - The first point.
+ * @param {(Phaser.Geom.Point|object)} point2 - The second point.
+ *
+ * @return {number} The angle in radians.
+ */
+var BetweenPoints = function (point1, point2)
+{
+    return Math.atan2(point2.y - point1.y, point2.x - point1.x);
+};
+
+module.exports = BetweenPoints;
+
+
+/***/ }),
+/* 567 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Find the angle of a segment from (x1, y1) -> (x2, y2).
+ *
+ * The difference between this method and {@link Phaser.Math.Angle.Between} is that this assumes the y coordinate
+ * travels down the screen.
+ *
+ * @function Phaser.Math.Angle.BetweenY
+ * @since 3.0.0
+ *
+ * @param {number} x1 - The x coordinate of the first point.
+ * @param {number} y1 - The y coordinate of the first point.
+ * @param {number} x2 - The x coordinate of the second point.
+ * @param {number} y2 - The y coordinate of the second point.
+ *
+ * @return {number} The angle in radians.
+ */
+var BetweenY = function (x1, y1, x2, y2)
+{
+    return Math.atan2(x2 - x1, y2 - y1);
+};
+
+module.exports = BetweenY;
+
+
+/***/ }),
+/* 568 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Find the angle of a segment from (x1, y1) -> (x2, y2).
+ *
+ * @function Phaser.Math.Angle.Between
+ * @since 3.0.0
+ *
+ * @param {number} x1 - The x coordinate of the first point.
+ * @param {number} y1 - The y coordinate of the first point.
+ * @param {number} x2 - The x coordinate of the second point.
+ * @param {number} y2 - The y coordinate of the second point.
+ *
+ * @return {number} The angle in radians.
+ */
+var Between = function (x1, y1, x2, y2)
+{
+    return Math.atan2(y2 - y1, x2 - x1);
+};
+
+module.exports = Between;
+
+
+/***/ }),
+/* 569 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Math.Angle
+ */
+
+module.exports = {
+
+    Between: __webpack_require__(568),
+    BetweenY: __webpack_require__(567),
+    BetweenPoints: __webpack_require__(566),
+    BetweenPointsY: __webpack_require__(565),
+    Reverse: __webpack_require__(564),
+    RotateTo: __webpack_require__(563),
+    ShortestBetween: __webpack_require__(562),
+    Normalize: __webpack_require__(250),
+    Wrap: __webpack_require__(199),
+    WrapDegrees: __webpack_require__(198)
+
+};
+
+
+/***/ }),
+/* 570 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CONST = __webpack_require__(16);
+var Extend = __webpack_require__(20);
+
+/**
+ * @namespace Phaser.Math
+ */
+
+var PhaserMath = {
+
+    //  Collections of functions
+    Angle: __webpack_require__(569),
+    Distance: __webpack_require__(561),
+    Easing: __webpack_require__(559),
+    Fuzzy: __webpack_require__(558),
+    Interpolation: __webpack_require__(555),
+    Pow2: __webpack_require__(550),
+    Snap: __webpack_require__(548),
