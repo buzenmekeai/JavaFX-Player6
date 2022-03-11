@@ -113659,3 +113659,217 @@ var LoaderPlugin = new Class({
      * The value of `path`, if set, is placed before any _relative_ file path given. For example:
      *
      * ```javascript
+     * this.load.setPath("images/sprites/");
+     * this.load.image("ball", "ball.png");
+     * this.load.image("tree", "level1/oaktree.png");
+     * this.load.image("boom", "http://server.com/explode.png");
+     * ```
+     *
+     * Would load the `ball` file from `images/sprites/ball.png` and the tree from
+     * `images/sprites/level1/oaktree.png` but the file `boom` would load from the URL
+     * given as it's an absolute URL.
+     *
+     * Please note that the path is added before the filename but *after* the baseURL (if set.)
+     * 
+     * Once a path is set it will then affect every file added to the Loader from that point on. It does _not_ change any
+     * file _already_ in the load queue. To reset it, call this method with no arguments.
+     *
+     * @method Phaser.Loader.LoaderPlugin#setPath
+     * @since 3.0.0
+     *
+     * @param {string} [path] - The path to use. Leave empty to reset.
+     *
+     * @return {Phaser.Loader.LoaderPlugin} This Loader object.
+     */
+    setPath: function (path)
+    {
+        if (path === undefined) { path = ''; }
+
+        if (path !== '' && path.substr(-1) !== '/')
+        {
+            path = path.concat('/');
+        }
+
+        this.path = path;
+
+        return this;
+    },
+
+    /**
+     * An optional prefix that is automatically prepended to the start of every file key.
+     * 
+     * If prefix was `MENU.` and you load an image with the key 'Background' the resulting key would be `MENU.Background`.
+     * 
+     * Once a prefix is set it will then affect every file added to the Loader from that point on. It does _not_ change any
+     * file _already_ in the load queue. To reset it, call this method with no arguments.
+     *
+     * @method Phaser.Loader.LoaderPlugin#setPrefix
+     * @since 3.7.0
+     *
+     * @param {string} [prefix] - The prefix to use. Leave empty to reset.
+     *
+     * @return {Phaser.Loader.LoaderPlugin} This Loader object.
+     */
+    setPrefix: function (prefix)
+    {
+        if (prefix === undefined) { prefix = ''; }
+
+        this.prefix = prefix;
+
+        return this;
+    },
+
+    /**
+     * Sets the Cross Origin Resource Sharing value used when loading files.
+     * 
+     * Files can override this value on a per-file basis by specifying an alternative `crossOrigin` value in their file config.
+     * 
+     * Once CORs is set it will then affect every file loaded by the Loader from that point on, as long as they don't have
+     * their own CORs setting. To reset it, call this method with no arguments.
+     *
+     * For more details about CORs see https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+     *
+     * @method Phaser.Loader.LoaderPlugin#setCORS
+     * @since 3.0.0
+     *
+     * @param {string} [crossOrigin] - The value to use for the `crossOrigin` property in the load request.
+     *
+     * @return {Phaser.Loader.LoaderPlugin} This Loader object.
+     */
+    setCORS: function (crossOrigin)
+    {
+        this.crossOrigin = crossOrigin;
+
+        return this;
+    },
+
+    /**
+     * This event is fired when a Loader successfully begins to load its queue.
+     * 
+     * @event Phaser.Loader.LoaderPlugin#addFileEvent
+     * @param {string} key - The key of the file that was added.
+     * @param {string} type - The type of the file that was added.
+     * @param {Phaser.Loader.LoaderPlugin} loader - The Loader that had the file added to it.
+     * @param {Phaser.Loader.File} loader - The File object that was added to the Loader.
+     */
+
+    /**
+     * Adds a file, or array of files, into the load queue.
+     *
+     * The file must be an instance of `Phaser.Loader.File`, or a class that extends it. The Loader will check that the key
+     * used by the file won't conflict with any other key either in the loader, the inflight queue or the target cache.
+     * If allowed it will then add the file into the pending list, read for the load to start. Or, if the load has already
+     * started, ready for the next batch of files to be pulled from the list to the inflight queue.
+     *
+     * You should not normally call this method directly, but rather use one of the Loader methods like `image` or `atlas`,
+     * however you can call this as long as the file given to it is well formed.
+     *
+     * @method Phaser.Loader.LoaderPlugin#addFile
+     * @fires Phaser.Loader.LoaderPlugin#addFileEvent
+     * @since 3.0.0
+     *
+     * @param {(Phaser.Loader.File|Phaser.Loader.File[])} file - The file, or array of files, to be added to the load queue.
+     */
+    addFile: function (file)
+    {
+        if (!Array.isArray(file))
+        {
+            file = [ file ];
+        }
+
+        for (var i = 0; i < file.length; i++)
+        {
+            var item = file[i];
+
+            //  Does the file already exist in the cache or texture manager?
+            //  Or will it conflict with a file already in the queue or inflight?
+            if (!this.keyExists(item))
+            {
+                this.list.set(item);
+
+                this.emit('addfile', item.key, item.type, this, item);
+
+                if (this.isLoading())
+                {
+                    this.totalToLoad++;
+                    this.updateProgress();
+                }
+            }
+        }
+    },
+
+    /**
+     * Checks the key and type of the given file to see if it will conflict with anything already
+     * in a Cache, the Texture Manager, or the list or inflight queues.
+     *
+     * @method Phaser.Loader.LoaderPlugin#keyExists
+     * @since 3.7.0
+     *
+     * @param {Phaser.Loader.File} file - The file to check the key of.
+     *
+     * @return {boolean} `true` if adding this file will cause a cache or queue conflict, otherwise `false`.
+     */
+    keyExists: function (file)
+    {
+        var keyConflict = file.hasCacheConflict();
+
+        if (!keyConflict)
+        {
+            this.list.iterate(function (item)
+            {
+                if (item.type === file.type && item.key === file.key)
+                {
+                    keyConflict = true;
+
+                    return false;
+                }
+
+            });
+        }
+
+        if (!keyConflict && this.isLoading())
+        {
+            this.inflight.iterate(function (item)
+            {
+                if (item.type === file.type && item.key === file.key)
+                {
+                    keyConflict = true;
+
+                    return false;
+                }
+
+            });
+
+            this.queue.iterate(function (item)
+            {
+                if (item.type === file.type && item.key === file.key)
+                {
+                    keyConflict = true;
+
+                    return false;
+                }
+
+            });
+        }
+
+        return keyConflict;
+    },
+
+    /**
+     * Takes a well formed, fully parsed pack file object and adds its entries into the load queue. Usually you do not call
+     * this method directly, but instead use `Loader.pack` and supply a path to a JSON file that holds the
+     * pack data. However, if you've got the data prepared you can pass it to this method.
+     *
+     * You can also provide an optional key. If you do then it will only add the entries from that part of the pack into
+     * to the load queue. If not specified it will add all entries it finds. For more details about the pack file format
+     * see the `LoaderPlugin.pack` method.
+     *
+     * @method Phaser.Loader.LoaderPlugin#addPack
+     * @since 3.7.0
+     *
+     * @param {any} data - The Pack File data to be parsed and each entry of it to added to the load queue.
+     * @param {string} [packKey] - An optional key to use from the pack file data.
+     *
+     * @return {boolean} `true` if any files were added to the queue, otherwise `false`.
+     */
+    addPack: function (pack, packKey)
