@@ -113443,3 +113443,219 @@ var LoaderPlugin = new Class({
          * @default ''
          * @since 3.0.0
          */
+        this.baseURL = '';
+
+        this.setBaseURL(GetFastValue(sceneConfig, 'baseURL', gameConfig.loaderBaseURL));
+
+        this.setPath(GetFastValue(sceneConfig, 'path', gameConfig.loaderPath));
+
+        this.setPrefix(GetFastValue(sceneConfig, 'prefix', gameConfig.loaderPrefix));
+
+        /**
+         * The number of concurrent / parallel resources to try and fetch at once.
+         *
+         * Old browsers limit 6 requests per domain; modern ones, especially those with HTTP/2 don't limit it at all.
+         *
+         * The default is 32 but you can change this in your Game Config, or by changing this property before the Loader starts.
+         *
+         * @name Phaser.Loader.LoaderPlugin#maxParallelDownloads
+         * @type {integer}
+         * @since 3.0.0
+         */
+        this.maxParallelDownloads = GetFastValue(sceneConfig, 'maxParallelDownloads', gameConfig.loaderMaxParallelDownloads);
+
+        /**
+         * xhr specific global settings (can be overridden on a per-file basis)
+         *
+         * @name Phaser.Loader.LoaderPlugin#xhr
+         * @type {XHRSettingsObject}
+         * @since 3.0.0
+         */
+        this.xhr = XHRSettings(
+            GetFastValue(sceneConfig, 'responseType', gameConfig.loaderResponseType),
+            GetFastValue(sceneConfig, 'async', gameConfig.loaderAsync),
+            GetFastValue(sceneConfig, 'user', gameConfig.loaderUser),
+            GetFastValue(sceneConfig, 'password', gameConfig.loaderPassword),
+            GetFastValue(sceneConfig, 'timeout', gameConfig.loaderTimeout)
+        );
+
+        /**
+         * The crossOrigin value applied to loaded images. Very often this needs to be set to 'anonymous'.
+         *
+         * @name Phaser.Loader.LoaderPlugin#crossOrigin
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.crossOrigin = GetFastValue(sceneConfig, 'crossOrigin', gameConfig.loaderCrossOrigin);
+
+        /**
+         * The total number of files to load. It may not always be accurate because you may add to the Loader during the process
+         * of loading, especially if you load a Pack File. Therefore this value can change, but in most cases remains static.
+         *
+         * @name Phaser.Loader.LoaderPlugin#totalToLoad
+         * @type {integer}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.totalToLoad = 0;
+
+        /**
+         * The progress of the current load queue, as a float value between 0 and 1.
+         * This is updated automatically as files complete loading.
+         * Note that it is possible for this value to go down again if you add content to the current load queue during a load.
+         *
+         * @name Phaser.Loader.LoaderPlugin#progress
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.progress = 0;
+
+        /**
+         * Files are placed in this Set when they're added to the Loader via `addFile`.
+         * 
+         * They are moved to the `inflight` Set when they start loading, and assuming a successful
+         * load, to the `queue` Set for further processing.
+         *
+         * By the end of the load process this Set will be empty.
+         *
+         * @name Phaser.Loader.LoaderPlugin#list
+         * @type {Phaser.Structs.Set.<Phaser.Loader.File>}
+         * @since 3.0.0
+         */
+        this.list = new CustomSet();
+
+        /**
+         * Files are stored in this Set while they're in the process of being loaded.
+         * 
+         * Upon a successful load they are moved to the `queue` Set.
+         * 
+         * By the end of the load process this Set will be empty.
+         *
+         * @name Phaser.Loader.LoaderPlugin#inflight
+         * @type {Phaser.Structs.Set.<Phaser.Loader.File>}
+         * @since 3.0.0
+         */
+        this.inflight = new CustomSet();
+
+        /**
+         * Files are stored in this Set while they're being processed.
+         * 
+         * If the process is successful they are moved to their final destination, which could be
+         * a Cache or the Texture Manager.
+         * 
+         * At the end of the load process this Set will be empty.
+         *
+         * @name Phaser.Loader.LoaderPlugin#queue
+         * @type {Phaser.Structs.Set.<Phaser.Loader.File>}
+         * @since 3.0.0
+         */
+        this.queue = new CustomSet();
+
+        /**
+         * A temporary Set in which files are stored after processing,
+         * awaiting destruction at the end of the load process.
+         *
+         * @name Phaser.Loader.LoaderPlugin#_deleteQueue
+         * @type {Phaser.Structs.Set.<Phaser.Loader.File>}
+         * @private
+         * @since 3.7.0
+         */
+        this._deleteQueue = new CustomSet();
+
+        /**
+         * The total number of files that failed to load during the most recent load.
+         * This value is reset when you call `Loader.start`.
+         *
+         * @name Phaser.Loader.LoaderPlugin#totalFailed
+         * @type {integer}
+         * @default 0
+         * @since 3.7.0
+         */
+        this.totalFailed = 0;
+
+        /**
+         * The total number of files that successfully loaded during the most recent load.
+         * This value is reset when you call `Loader.start`.
+         *
+         * @name Phaser.Loader.LoaderPlugin#totalComplete
+         * @type {integer}
+         * @default 0
+         * @since 3.7.0
+         */
+        this.totalComplete = 0;
+
+        /**
+         * The current state of the Loader.
+         *
+         * @name Phaser.Loader.LoaderPlugin#state
+         * @type {integer}
+         * @readonly
+         * @since 3.0.0
+         */
+        this.state = CONST.LOADER_IDLE;
+
+        scene.sys.events.once('boot', this.boot, this);
+        scene.sys.events.on('start', this.pluginStart, this);
+    },
+
+    /**
+     * This method is called automatically, only once, when the Scene is first created.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.Loader.LoaderPlugin#boot
+     * @private
+     * @since 3.5.1
+     */
+    boot: function ()
+    {
+        this.systems.events.once('destroy', this.destroy, this);
+    },
+
+    /**
+     * This method is called automatically by the Scene when it is starting up.
+     * It is responsible for creating local systems, properties and listening for Scene events.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.Loader.LoaderPlugin#pluginStart
+     * @private
+     * @since 3.5.1
+     */
+    pluginStart: function ()
+    {
+        this.systems.events.once('shutdown', this.shutdown, this);
+    },
+
+    /**
+     * If you want to append a URL before the path of any asset you can set this here.
+     * 
+     * Useful if allowing the asset base url to be configured outside of the game code.
+     * 
+     * Once a base URL is set it will affect every file loaded by the Loader from that point on. It does _not_ change any
+     * file _already_ being loaded. To reset it, call this method with no arguments.
+     *
+     * @method Phaser.Loader.LoaderPlugin#setBaseURL
+     * @since 3.0.0
+     *
+     * @param {string} [url] - The URL to use. Leave empty to reset.
+     *
+     * @return {Phaser.Loader.LoaderPlugin} This Loader object.
+     */
+    setBaseURL: function (url)
+    {
+        if (url === undefined) { url = ''; }
+
+        if (url !== '' && url.substr(-1) !== '/')
+        {
+            url = url.concat('/');
+        }
+
+        this.baseURL = url;
+
+        return this;
+    },
+
+    /**
+     * The value of `path`, if set, is placed before any _relative_ file path given. For example:
+     *
+     * ```javascript
