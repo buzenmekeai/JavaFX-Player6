@@ -113873,3 +113873,233 @@ var LoaderPlugin = new Class({
      * @return {boolean} `true` if any files were added to the queue, otherwise `false`.
      */
     addPack: function (pack, packKey)
+    {
+        //  if no packKey provided we'll add everything to the queue
+        if (packKey && pack.hasOwnProperty(packKey))
+        {
+            pack = { packKey: pack[packKey] };
+        }
+
+        var total = 0;
+
+        //  Store the loader settings in case this pack replaces them
+        var currentBaseURL = this.baseURL;
+        var currentPath = this.path;
+        var currentPrefix = this.prefix;
+
+        //  Here we go ...
+        for (var key in pack)
+        {
+            var config = pack[key];
+
+            //  Any meta data to process?
+            var baseURL = GetFastValue(config, 'baseURL', currentBaseURL);
+            var path = GetFastValue(config, 'path', currentPath);
+            var prefix = GetFastValue(config, 'prefix', currentPrefix);
+            var files = GetFastValue(config, 'files', null);
+            var defaultType = GetFastValue(config, 'defaultType', 'void');
+
+            if (Array.isArray(files))
+            {
+                this.setBaseURL(baseURL);
+                this.setPath(path);
+                this.setPrefix(prefix);
+
+                for (var i = 0; i < files.length; i++)
+                {
+                    var file = files[i];
+                    var type = (file.hasOwnProperty('type')) ? file.type : defaultType;
+
+                    if (this[type])
+                    {
+                        this[type](file);
+                        total++;
+                    }
+                }
+            }
+        }
+
+        //  Reset the loader settings
+        this.setBaseURL(currentBaseURL);
+        this.setPath(currentPath);
+        this.setPrefix(currentPrefix);
+
+        return (total > 0);
+    },
+
+    /**
+     * Is the Loader actively loading, or processing loaded files?
+     *
+     * @method Phaser.Loader.LoaderPlugin#isLoading
+     * @since 3.0.0
+     *
+     * @return {boolean} `true` if the Loader is busy loading or processing, otherwise `false`.
+     */
+    isLoading: function ()
+    {
+        return (this.state === CONST.LOADER_LOADING || this.state === CONST.LOADER_PROCESSING);
+    },
+
+    /**
+     * Is the Loader ready to start a new load?
+     *
+     * @method Phaser.Loader.LoaderPlugin#isReady
+     * @since 3.0.0
+     *
+     * @return {boolean} `true` if the Loader is ready to start a new load, otherwise `false`.
+     */
+    isReady: function ()
+    {
+        return (this.state === CONST.LOADER_IDLE || this.state === CONST.LOADER_COMPLETE);
+    },
+
+    /**
+     * This event is fired when a Loader successfully begins to load its queue.
+     * 
+     * @event Phaser.Loader.LoaderPlugin#startEvent
+     * @param {Phaser.Loader.LoaderPlugin} loader - The Loader instance that started.
+     */
+
+    /**
+     * Starts the Loader running. This will reset the progress and totals and then emit a `start` event.
+     * If there is nothing in the queue the Loader will immediately complete, otherwise it will start
+     * loading the first batch of files.
+     *
+     * The Loader is started automatically if the queue is populated within your Scenes `preload` method.
+     *
+     * However, outside of this, you need to call this method to start it.
+     *
+     * If the Loader is already running this method will simply return.
+     *
+     * @method Phaser.Loader.LoaderPlugin#start
+     * @fires Phaser.Loader.LoaderPlugin#startEvent
+     * @since 3.0.0
+     */
+    start: function ()
+    {
+        if (!this.isReady())
+        {
+            return;
+        }
+
+        this.progress = 0;
+
+        this.totalFailed = 0;
+        this.totalComplete = 0;
+        this.totalToLoad = this.list.size;
+
+        this.emit('start', this);
+
+        if (this.list.size === 0)
+        {
+            this.loadComplete();
+        }
+        else
+        {
+            this.state = CONST.LOADER_LOADING;
+
+            this.inflight.clear();
+            this.queue.clear();
+
+            this.updateProgress();
+
+            this.checkLoadQueue();
+
+            this.systems.events.on('update', this.update, this);
+        }
+    },
+
+    /**
+     * This event is fired when the Loader updates its progress, typically as a result of
+     * a file having completed loading.
+     * 
+     * @event Phaser.Loader.LoaderPlugin#progressEvent
+     * @param {number} progress - The current progress of the load. A value between 0 and 1.
+     */
+
+    /**
+     * Called automatically during the load process.
+     * It updates the `progress` value and then emits a progress event, which you can use to
+     * display a loading bar in your game.
+     *
+     * @method Phaser.Loader.LoaderPlugin#updateProgress
+     * @fires Phaser.Loader.LoaderPlugin#progressEvent
+     * @since 3.0.0
+     */
+    updateProgress: function ()
+    {
+        this.progress = 1 - ((this.list.size + this.inflight.size) / this.totalToLoad);
+
+        this.emit('progress', this.progress);
+    },
+
+    /**
+     * Called automatically during the load process.
+     *
+     * @method Phaser.Loader.LoaderPlugin#update
+     * @since 3.10.0
+     */
+    update: function ()
+    {
+        if (this.state === CONST.LOADER_LOADING && this.list.size > 0 && this.inflight.size < this.maxParallelDownloads)
+        {
+            this.checkLoadQueue();
+        }
+    },
+
+    /**
+     * An internal method called by the Loader.
+     * 
+     * It will check to see if there are any more files in the pending list that need loading, and if so it will move
+     * them from the list Set into the inflight Set, set their CORs flag and start them loading.
+     * 
+     * It will carrying on doing this for each file in the pending list until it runs out, or hits the max allowed parallel downloads.
+     *
+     * @method Phaser.Loader.LoaderPlugin#checkLoadQueue
+     * @private
+     * @since 3.7.0
+     */
+    checkLoadQueue: function ()
+    {
+        this.list.each(function (file)
+        {
+            if (file.state === CONST.FILE_POPULATED || (file.state === CONST.FILE_PENDING && this.inflight.size < this.maxParallelDownloads))
+            {
+                this.inflight.set(file);
+
+                this.list.delete(file);
+
+                //  If the file doesn't have its own crossOrigin set, we'll use the Loaders (which is undefined by default)
+                if (!file.crossOrigin)
+                {
+                    file.crossOrigin = this.crossOrigin;
+                }
+
+                file.load();
+            }
+
+            if (this.inflight.size === this.maxParallelDownloads)
+            {
+                //  Tells the Set iterator to abort
+                return false;
+            }
+
+        }, this);
+    },
+
+    /**
+     * This event is fired when the a file successfully completes loading, _before_ it is processed.
+     * 
+     * @event Phaser.Loader.LoaderPlugin#loadEvent
+     * @param {Phaser.Loader.File} file - The file that has completed loading.
+     */
+
+    /**
+     * This event is fired when the a file errors during load.
+     * 
+     * @event Phaser.Loader.LoaderPlugin#loadErrorEvent
+     * @param {Phaser.Loader.File} file - The file that has failed to load.
+     */
+
+    /**
+     * An internal method called automatically by the XHRLoader belong to a File.
