@@ -114103,3 +114103,223 @@ var LoaderPlugin = new Class({
 
     /**
      * An internal method called automatically by the XHRLoader belong to a File.
+     * 
+     * This method will remove the given file from the inflight Set and update the load progress.
+     * If the file was successful its `onProcess` method is called, otherwise it is added to the delete queue.
+     *
+     * @method Phaser.Loader.LoaderPlugin#nextFile
+     * @fires Phaser.Loader.LoaderPlugin#loadEvent
+     * @fires Phaser.Loader.LoaderPlugin#loadErrorEvent
+     * @since 3.0.0
+     *
+     * @param {Phaser.Loader.File} file - The File that just finished loading, or errored during load.
+     * @param {boolean} success - `true` if the file loaded successfully, otherwise `false`.
+     */
+    nextFile: function (file, success)
+    {
+        //  Has the game been destroyed during load? If so, bail out now.
+        if (!this.inflight)
+        {
+            return;
+        }
+
+        this.inflight.delete(file);
+
+        this.updateProgress();
+
+        if (success)
+        {
+            this.totalComplete++;
+
+            this.queue.set(file);
+
+            this.emit('load', file);
+
+            file.onProcess();
+        }
+        else
+        {
+            this.totalFailed++;
+
+            this._deleteQueue.set(file);
+
+            this.emit('loaderror', file);
+
+            this.fileProcessComplete(file);
+        }
+    },
+
+    /**
+     * An internal method that is called automatically by the File when it has finished processing.
+     *
+     * If the process was successful, and the File isn't part of a MultiFile, its `addToCache` method is called.
+     *
+     * It this then removed from the queue. If there are no more files to load `loadComplete` is called.
+     *
+     * @method Phaser.Loader.LoaderPlugin#fileProcessComplete
+     * @since 3.7.0
+     *
+     * @param {Phaser.Loader.File} file - The file that has finished processing.
+     */
+    fileProcessComplete: function (file)
+    {
+        //  Has the game been destroyed during load? If so, bail out now.
+        if (!this.scene || !this.systems || !this.systems.game || this.systems.game.pendingDestroy)
+        {
+            return;
+        }
+
+        //  This file has failed, so move it to the failed Set
+        if (file.state === CONST.FILE_ERRORED)
+        {
+            if (file.multiFile)
+            {
+                file.multiFile.onFileFailed(file);
+            }
+        }
+        else if (file.state === CONST.FILE_COMPLETE)
+        {
+            if (file.multiFile)
+            {
+                if (file.multiFile.isReadyToProcess())
+                {
+                    //  If we got here then all files the link file needs are ready to add to the cache
+                    file.multiFile.addToCache();
+                }
+            }
+            else
+            {
+                //  If we got here, then the file processed, so let it add itself to its cache
+                file.addToCache();
+            }
+        }
+
+        //  Remove it from the queue
+        this.queue.delete(file);
+
+        //  Nothing left to do?
+
+        if (this.list.size === 0 && this.inflight.size === 0 && this.queue.size === 0)
+        {
+            this.loadComplete();
+        }
+    },
+
+    /**
+     * This event is fired when the Loader has finished loading everything and the queue is empty.
+     * By this point every loaded file will now be in its associated cache and ready for use.
+     * 
+     * @event Phaser.Loader.LoaderPlugin#completeEvent
+     * @param {Phaser.Loader.File} file - The file that has failed to load.
+     */
+
+    /**
+     * Called at the end when the load queue is exhausted and all files have either loaded or errored.
+     * By this point every loaded file will now be in its associated cache and ready for use.
+     *
+     * Also clears down the Sets, puts progress to 1 and clears the deletion queue.
+     *
+     * @method Phaser.Loader.LoaderPlugin#loadComplete
+     * @fires Phaser.Loader.LoaderPlugin#completeEvent
+     * @since 3.7.0
+     */
+    loadComplete: function ()
+    {
+        this.emit('loadcomplete', this);
+
+        this.list.clear();
+        this.inflight.clear();
+        this.queue.clear();
+
+        this.progress = 1;
+
+        this.state = CONST.LOADER_COMPLETE;
+
+        this.systems.events.off('update', this.update, this);
+
+        //  Call 'destroy' on each file ready for deletion
+        this._deleteQueue.iterateLocal('destroy');
+
+        this._deleteQueue.clear();
+
+        this.emit('complete', this, this.totalComplete, this.totalFailed);
+    },
+
+    /**
+     * Adds a File into the pending-deletion queue.
+     *
+     * @method Phaser.Loader.LoaderPlugin#flagForRemoval
+     * @since 3.7.0
+     * 
+     * @param {Phaser.Loader.File} file - The File to be queued for deletion when the Loader completes.
+     */
+    flagForRemoval: function (file)
+    {
+        this._deleteQueue.set(file);
+    },
+
+    /**
+     * Converts the given JSON data into a file that the browser then prompts you to download so you can save it locally.
+     *
+     * The data must be well formed JSON and ready-parsed, not a JavaScript object.
+     *
+     * @method Phaser.Loader.LoaderPlugin#saveJSON
+     * @since 3.0.0
+     *
+     * @param {*} data - The JSON data, ready parsed.
+     * @param {string} [filename=file.json] - The name to save the JSON file as.
+     *
+     * @return {Phaser.Loader.LoaderPlugin} This Loader plugin.
+     */
+    saveJSON: function (data, filename)
+    {
+        return this.save(JSON.stringify(data), filename);
+    },
+
+    /**
+     * Causes the browser to save the given data as a file to its default Downloads folder.
+     * 
+     * Creates a DOM level anchor link, assigns it as being a `download` anchor, sets the href
+     * to be an ObjectURL based on the given data, and then invokes a click event.
+     *
+     * @method Phaser.Loader.LoaderPlugin#save
+     * @since 3.0.0
+     *
+     * @param {*} data - The data to be saved. Will be passed through URL.createObjectURL.
+     * @param {string} [filename=file.json] - The filename to save the file as.
+     * @param {string} [filetype=application/json] - The file type to use when saving the file. Defaults to JSON.
+     *
+     * @return {Phaser.Loader.LoaderPlugin} This Loader plugin.
+     */
+    save: function (data, filename, filetype)
+    {
+        if (filename === undefined) { filename = 'file.json'; }
+        if (filetype === undefined) { filetype = 'application/json'; }
+
+        var blob = new Blob([ data ], { type: filetype });
+
+        var url = URL.createObjectURL(blob);
+
+        var a = document.createElement('a');
+
+        a.download = filename;
+        a.textContent = 'Download ' + filename;
+        a.href = url;
+        a.click();
+
+        return this;
+    },
+
+    /**
+     * Resets the Loader.
+     *
+     * This will clear all lists and reset the base URL, path and prefix.
+     *
+     * Warning: If the Loader is currently downloading files, or has files in its queue, they will be aborted.
+     *
+     * @method Phaser.Loader.LoaderPlugin#reset
+     * @since 3.0.0
+     */
+    reset: function ()
+    {
+        this.list.clear();
