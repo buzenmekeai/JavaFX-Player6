@@ -115208,3 +115208,203 @@ var IsPlainObject = __webpack_require__(8);
  * @property {XHRSettingsObject} [xhrSettings] - Extra XHR Settings specifically for this file.
  * @property {Phaser.Loader.FileTypes.SVGSizeConfig} [svgConfig] - The svg size configuration object.
  */
+
+/**
+ * @classdesc
+ * A single SVG File suitable for loading by the Loader.
+ *
+ * These are created when you use the Phaser.Loader.LoaderPlugin#svg method and are not typically created directly.
+ *
+ * For documentation about what all the arguments and configuration options mean please see Phaser.Loader.LoaderPlugin#svg.
+ *
+ * @class SVGFile
+ * @extends Phaser.Loader.File
+ * @memberof Phaser.Loader.FileTypes
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Loader.LoaderPlugin} loader - A reference to the Loader that is responsible for this file.
+ * @param {(string|Phaser.Loader.FileTypes.SVGFileConfig)} key - The key to use for this file, or a file configuration object.
+ * @param {string} [url] - The absolute or relative URL to load this file from. If undefined or `null` it will be set to `<key>.svg`, i.e. if `key` was "alien" then the URL will be "alien.svg".
+ * @param {Phaser.Loader.FileTypes.SVGSizeConfig} [svgConfig] - The svg size configuration object.
+ * @param {XHRSettingsObject} [xhrSettings] - Extra XHR Settings specifically for this file.
+ */
+var SVGFile = new Class({
+
+    Extends: File,
+
+    initialize:
+
+    function SVGFile (loader, key, url, svgConfig, xhrSettings)
+    {
+        var extension = 'svg';
+
+        if (IsPlainObject(key))
+        {
+            var config = key;
+
+            key = GetFastValue(config, 'key');
+            url = GetFastValue(config, 'url');
+            svgConfig = GetFastValue(config, 'svgConfig', {});
+            xhrSettings = GetFastValue(config, 'xhrSettings');
+            extension = GetFastValue(config, 'extension', extension);
+        }
+
+        var fileConfig = {
+            type: 'svg',
+            cache: loader.textureManager,
+            extension: extension,
+            responseType: 'text',
+            key: key,
+            url: url,
+            xhrSettings: xhrSettings,
+            config: {
+                width: GetFastValue(svgConfig, 'width'),
+                height: GetFastValue(svgConfig, 'height'),
+                scale: GetFastValue(svgConfig, 'scale')
+            }
+        };
+
+        File.call(this, loader, fileConfig);
+    },
+
+    /**
+     * Called automatically by Loader.nextFile.
+     * This method controls what extra work this File does with its loaded data.
+     *
+     * @method Phaser.Loader.FileTypes.SVGFile#onProcess
+     * @since 3.7.0
+     */
+    onProcess: function ()
+    {
+        this.state = CONST.FILE_PROCESSING;
+
+        var text = this.xhrLoader.responseText;
+        var svg = [ text ];
+        var width = this.config.width;
+        var height = this.config.height;
+        var scale = this.config.scale;
+
+        resize: if (width && height || scale)
+        {
+            var xml = null;
+            var parser = new DOMParser();
+            xml = parser.parseFromString(text, 'text/xml');
+            var svgXML = xml.getElementsByTagName('svg')[0];
+
+            var hasViewBox = svgXML.hasAttribute('viewBox');
+            var svgWidth = parseFloat(svgXML.getAttribute('width'));
+            var svgHeight = parseFloat(svgXML.getAttribute('height'));
+
+            if (!hasViewBox && svgWidth && svgHeight)
+            {
+                //  If there's no viewBox attribute, set one
+                svgXML.setAttribute('viewBox', '0  0 ' + svgWidth + ' ' + svgHeight);
+            }
+            else if (hasViewBox && !svgWidth && !svgHeight)
+            {
+                //  Get the w/h from the viewbox
+                var viewBox = svgXML.getAttribute('viewBox').split(/\s+|,/);
+
+                svgWidth = viewBox[2];
+                svgHeight = viewBox[3];
+            }
+
+            if (scale)
+            {
+                if (svgWidth && svgHeight)
+                {
+                    width = svgWidth * scale;
+                    height = svgHeight * scale;
+                }
+                else
+                {
+                    break resize;
+                }
+            }
+
+            svgXML.setAttribute('width', width.toString() + 'px');
+            svgXML.setAttribute('height', height.toString() + 'px');
+
+            svg = [ (new XMLSerializer()).serializeToString(svgXML) ];
+        }
+
+        try
+        {
+            var blob = new window.Blob(svg, { type: 'image/svg+xml;charset=utf-8' });
+        }
+        catch (e)
+        {
+            this.onProcessError();
+
+            return;
+        }
+
+        this.data = new Image();
+
+        this.data.crossOrigin = this.crossOrigin;
+
+        var _this = this;
+        var retry = false;
+
+        this.data.onload = function ()
+        {
+            if (!retry)
+            {
+                File.revokeObjectURL(_this.data);
+            }
+
+            _this.onProcessComplete();
+        };
+
+        this.data.onerror = function ()
+        {
+            //  Safari 8 re-try
+            if (!retry)
+            {
+                retry = true;
+
+                File.revokeObjectURL(_this.data);
+
+                _this.data.src = 'data:image/svg+xml,' + encodeURIComponent(svg.join(''));
+            }
+            else
+            {
+                _this.onProcessError();
+            }
+        };
+
+        File.createObjectURL(this.data, blob, 'image/svg+xml');
+    },
+
+    /**
+     * Adds this file to its target cache upon successful loading and processing.
+     *
+     * @method Phaser.Loader.FileTypes.SVGFile#addToCache
+     * @since 3.7.0
+     */
+    addToCache: function ()
+    {
+        var texture = this.cache.addImage(this.key, this.data);
+
+        this.pendingDestroy(texture);
+    }
+
+});
+
+/**
+ * Adds an SVG File, or array of SVG Files, to the current load queue. When the files are loaded they
+ * will be rendered to bitmap textures and stored in the Texture Manager.
+ *
+ * You can call this method from within your Scene's `preload`, along with any other files you wish to load:
+ *
+ * ```javascript
+ * function preload ()
+ * {
+ *     this.load.svg('morty', 'images/Morty.svg');
+ * }
+ * ```
+ *
+ * The file is **not** loaded right away. It is added to a queue ready to be loaded either when the loader starts,
+ * or if it's already running, when the next free load slot becomes available. This happens automatically if you
+ * are calling this from within the Scene's `preload` method, or a related callback. Because the file is queued
