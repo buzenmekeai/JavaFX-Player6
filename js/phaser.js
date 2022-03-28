@@ -117445,3 +117445,225 @@ var GLSLFile = new Class({
      * Called automatically by Loader.nextFile.
      * This method controls what extra work this File does with its loaded data.
      *
+     * @method Phaser.Loader.FileTypes.GLSLFile#onProcess
+     * @since 3.7.0
+     */
+    onProcess: function ()
+    {
+        this.state = CONST.FILE_PROCESSING;
+
+        this.data = this.xhrLoader.responseText;
+
+        this.onProcessComplete();
+    }
+
+});
+
+/**
+ * Adds a GLSL file, or array of GLSL files, to the current load queue.
+ * In Phaser 3 GLSL files are just plain Text files at the current moment in time.
+ *
+ * You can call this method from within your Scene's `preload`, along with any other files you wish to load:
+ * 
+ * ```javascript
+ * function preload ()
+ * {
+ *     this.load.glsl('plasma', 'shaders/Plasma.glsl');
+ * }
+ * ```
+ *
+ * The file is **not** loaded right away. It is added to a queue ready to be loaded either when the loader starts,
+ * or if it's already running, when the next free load slot becomes available. This happens automatically if you
+ * are calling this from within the Scene's `preload` method, or a related callback. Because the file is queued
+ * it means you cannot use the file immediately after calling this method, but must wait for the file to complete.
+ * The typical flow for a Phaser Scene is that you load assets in the Scene's `preload` method and then when the
+ * Scene's `create` method is called you are guaranteed that all of those assets are ready for use and have been
+ * loaded.
+ * 
+ * The key must be a unique String. It is used to add the file to the global Shader Cache upon a successful load.
+ * The key should be unique both in terms of files being loaded and files already present in the Shader Cache.
+ * Loading a file using a key that is already taken will result in a warning. If you wish to replace an existing file
+ * then remove it from the Shader Cache first, before loading a new one.
+ *
+ * Instead of passing arguments you can pass a configuration object, such as:
+ * 
+ * ```javascript
+ * this.load.glsl({
+ *     key: 'plasma',
+ *     url: 'shaders/Plasma.glsl'
+ * });
+ * ```
+ *
+ * See the documentation for `Phaser.Loader.FileTypes.GLSLFileConfig` for more details.
+ *
+ * Once the file has finished loading you can access it from its Cache using its key:
+ * 
+ * ```javascript
+ * this.load.glsl('plasma', 'shaders/Plasma.glsl');
+ * // and later in your game ...
+ * var data = this.cache.shader.get('plasma');
+ * ```
+ *
+ * If you have specified a prefix in the loader, via `Loader.setPrefix` then this value will be prepended to this files
+ * key. For example, if the prefix was `FX.` and the key was `Plasma` the final key will be `FX.Plasma` and
+ * this is what you would use to retrieve the text from the Shader Cache.
+ *
+ * The URL can be relative or absolute. If the URL is relative the `Loader.baseURL` and `Loader.path` values will be prepended to it.
+ *
+ * If the URL isn't specified the Loader will take the key and create a filename from that. For example if the key is "plasma"
+ * and no URL is given then the Loader will set the URL to be "plasma.glsl". It will always add `.glsl` as the extension, although
+ * this can be overridden if using an object instead of method arguments. If you do not desire this action then provide a URL.
+ *
+ * Note: The ability to load this type of file will only be available if the GLSL File type has been built into Phaser.
+ * It is available in the default build but can be excluded from custom builds.
+ *
+ * @method Phaser.Loader.LoaderPlugin#glsl
+ * @fires Phaser.Loader.LoaderPlugin#addFileEvent
+ * @since 3.0.0
+ *
+ * @param {(string|Phaser.Loader.FileTypes.GLSLFileConfig|Phaser.Loader.FileTypes.GLSLFileConfig[])} key - The key to use for this file, or a file configuration object, or array of them.
+ * @param {string} [url] - The absolute or relative URL to load this file from. If undefined or `null` it will be set to `<key>.glsl`, i.e. if `key` was "alien" then the URL will be "alien.glsl".
+ * @param {XHRSettingsObject} [xhrSettings] - An XHR Settings configuration object. Used in replacement of the Loaders default XHR Settings.
+ *
+ * @return {Phaser.Loader.LoaderPlugin} The Loader instance.
+ */
+FileTypesManager.register('glsl', function (key, url, xhrSettings)
+{
+    if (Array.isArray(key))
+    {
+        for (var i = 0; i < key.length; i++)
+        {
+            //  If it's an array it has to be an array of Objects, so we get everything out of the 'key' object
+            this.addFile(new GLSLFile(this, key[i]));
+        }
+    }
+    else
+    {
+        this.addFile(new GLSLFile(this, key, url, xhrSettings));
+    }
+
+    return this;
+});
+
+module.exports = GLSLFile;
+
+
+/***/ }),
+/* 586 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var FileTypesManager = __webpack_require__(7);
+var GetFastValue = __webpack_require__(2);
+var ImageFile = __webpack_require__(58);
+var IsPlainObject = __webpack_require__(8);
+var MultiFile = __webpack_require__(57);
+var ParseXMLBitmapFont = __webpack_require__(310);
+var XMLFile = __webpack_require__(139);
+
+/**
+ * @typedef {object} Phaser.Loader.FileTypes.BitmapFontFileConfig
+ *
+ * @property {string} key - The key of the file. Must be unique within both the Loader and the Texture Manager.
+ * @property {string} [textureURL] - The absolute or relative URL to load the texture image file from.
+ * @property {string} [textureExtension='png'] - The default file extension to use for the image texture if no url is provided.
+ * @property {XHRSettingsObject} [textureXhrSettings] - Extra XHR Settings specifically for the texture image file.
+ * @property {string} [normalMap] - The filename of an associated normal map. It uses the same path and url to load as the texture image.
+ * @property {string} [fontDataURL] - The absolute or relative URL to load the font data xml file from.
+ * @property {string} [fontDataExtension='xml'] - The default file extension to use for the font data xml if no url is provided.
+ * @property {XHRSettingsObject} [fontDataXhrSettings] - Extra XHR Settings specifically for the font data xml file.
+ */
+
+/**
+ * @classdesc
+ * A single Bitmap Font based File suitable for loading by the Loader.
+ *
+ * These are created when you use the Phaser.Loader.LoaderPlugin#bitmapFont method and are not typically created directly.
+ * 
+ * For documentation about what all the arguments and configuration options mean please see Phaser.Loader.LoaderPlugin#bitmapFont.
+ *
+ * @class BitmapFontFile
+ * @extends Phaser.Loader.MultiFile
+ * @memberof Phaser.Loader.FileTypes
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Loader.LoaderPlugin} loader - A reference to the Loader that is responsible for this file.
+ * @param {(string|Phaser.Loader.FileTypes.BitmapFontFileConfig)} key - The key to use for this file, or a file configuration object.
+ * @param {string|string[]} [textureURL] - The absolute or relative URL to load the font image file from. If undefined or `null` it will be set to `<key>.png`, i.e. if `key` was "alien" then the URL will be "alien.png".
+ * @param {string} [fontDataURL] - The absolute or relative URL to load the font xml data file from. If undefined or `null` it will be set to `<key>.xml`, i.e. if `key` was "alien" then the URL will be "alien.xml".
+ * @param {XHRSettingsObject} [textureXhrSettings] - An XHR Settings configuration object for the font image file. Used in replacement of the Loaders default XHR Settings.
+ * @param {XHRSettingsObject} [fontDataXhrSettings] - An XHR Settings configuration object for the font data xml file. Used in replacement of the Loaders default XHR Settings.
+ */
+var BitmapFontFile = new Class({
+
+    Extends: MultiFile,
+
+    initialize:
+
+    function BitmapFontFile (loader, key, textureURL, fontDataURL, textureXhrSettings, fontDataXhrSettings)
+    {
+        var image;
+        var data;
+
+        if (IsPlainObject(key))
+        {
+            var config = key;
+
+            key = GetFastValue(config, 'key');
+
+            image = new ImageFile(loader, {
+                key: key,
+                url: GetFastValue(config, 'textureURL'),
+                extension: GetFastValue(config, 'textureExtension', 'png'),
+                normalMap: GetFastValue(config, 'normalMap'),
+                xhrSettings: GetFastValue(config, 'textureXhrSettings')
+            });
+
+            data = new XMLFile(loader, {
+                key: key,
+                url: GetFastValue(config, 'fontDataURL'),
+                extension: GetFastValue(config, 'fontDataExtension', 'xml'),
+                xhrSettings: GetFastValue(config, 'fontDataXhrSettings')
+            });
+        }
+        else
+        {
+            image = new ImageFile(loader, key, textureURL, textureXhrSettings);
+            data = new XMLFile(loader, key, fontDataURL, fontDataXhrSettings);
+        }
+
+        if (image.linkFile)
+        {
+            //  Image has a normal map
+            MultiFile.call(this, loader, 'bitmapfont', key, [ image, data, image.linkFile ]);
+        }
+        else
+        {
+            MultiFile.call(this, loader, 'bitmapfont', key, [ image, data ]);
+        }
+    },
+
+    /**
+     * Adds this file to its target cache upon successful loading and processing.
+     *
+     * @method Phaser.Loader.FileTypes.BitmapFontFile#addToCache
+     * @since 3.7.0
+     */
+    addToCache: function ()
+    {
+        if (this.isReadyToProcess())
+        {
+            var image = this.files[0];
+            var xml = this.files[1];
+
+            image.addToCache();
+            xml.addToCache();
+
+            this.loader.cacheManager.bitmapFont.add(image.key, { data: ParseXMLBitmapFont(xml.data), texture: image.key, frame: null });
