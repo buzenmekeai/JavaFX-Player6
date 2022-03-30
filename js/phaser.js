@@ -117905,3 +117905,244 @@ var BinaryFile = new Class({
     }
 
 });
+
+/**
+ * Adds a Binary file, or array of Binary files, to the current load queue.
+ *
+ * You can call this method from within your Scene's `preload`, along with any other files you wish to load:
+ * 
+ * ```javascript
+ * function preload ()
+ * {
+ *     this.load.binary('doom', 'files/Doom.wad');
+ * }
+ * ```
+ *
+ * The file is **not** loaded right away. It is added to a queue ready to be loaded either when the loader starts,
+ * or if it's already running, when the next free load slot becomes available. This happens automatically if you
+ * are calling this from within the Scene's `preload` method, or a related callback. Because the file is queued
+ * it means you cannot use the file immediately after calling this method, but must wait for the file to complete.
+ * The typical flow for a Phaser Scene is that you load assets in the Scene's `preload` method and then when the
+ * Scene's `create` method is called you are guaranteed that all of those assets are ready for use and have been
+ * loaded.
+ * 
+ * The key must be a unique String. It is used to add the file to the global Binary Cache upon a successful load.
+ * The key should be unique both in terms of files being loaded and files already present in the Binary Cache.
+ * Loading a file using a key that is already taken will result in a warning. If you wish to replace an existing file
+ * then remove it from the Binary Cache first, before loading a new one.
+ *
+ * Instead of passing arguments you can pass a configuration object, such as:
+ * 
+ * ```javascript
+ * this.load.binary({
+ *     key: 'doom',
+ *     url: 'files/Doom.wad',
+ *     dataType: Uint8Array
+ * });
+ * ```
+ *
+ * See the documentation for `Phaser.Loader.FileTypes.BinaryFileConfig` for more details.
+ *
+ * Once the file has finished loading you can access it from its Cache using its key:
+ * 
+ * ```javascript
+ * this.load.binary('doom', 'files/Doom.wad');
+ * // and later in your game ...
+ * var data = this.cache.binary.get('doom');
+ * ```
+ *
+ * If you have specified a prefix in the loader, via `Loader.setPrefix` then this value will be prepended to this files
+ * key. For example, if the prefix was `LEVEL1.` and the key was `Data` the final key will be `LEVEL1.Data` and
+ * this is what you would use to retrieve the text from the Binary Cache.
+ *
+ * The URL can be relative or absolute. If the URL is relative the `Loader.baseURL` and `Loader.path` values will be prepended to it.
+ *
+ * If the URL isn't specified the Loader will take the key and create a filename from that. For example if the key is "doom"
+ * and no URL is given then the Loader will set the URL to be "doom.bin". It will always add `.bin` as the extension, although
+ * this can be overridden if using an object instead of method arguments. If you do not desire this action then provide a URL.
+ *
+ * Note: The ability to load this type of file will only be available if the Binary File type has been built into Phaser.
+ * It is available in the default build but can be excluded from custom builds.
+ *
+ * @method Phaser.Loader.LoaderPlugin#binary
+ * @fires Phaser.Loader.LoaderPlugin#addFileEvent
+ * @since 3.0.0
+ *
+ * @param {(string|Phaser.Loader.FileTypes.BinaryFileConfig|Phaser.Loader.FileTypes.BinaryFileConfig[])} key - The key to use for this file, or a file configuration object, or array of them.
+ * @param {string} [url] - The absolute or relative URL to load this file from. If undefined or `null` it will be set to `<key>.bin`, i.e. if `key` was "alien" then the URL will be "alien.bin".
+ * @param {any} [dataType] - Optional type to cast the binary file to once loaded. For example, `Uint8Array`.
+ * @param {XHRSettingsObject} [xhrSettings] - An XHR Settings configuration object. Used in replacement of the Loaders default XHR Settings.
+ *
+ * @return {Phaser.Loader.LoaderPlugin} The Loader instance.
+ */
+FileTypesManager.register('binary', function (key, url, dataType, xhrSettings)
+{
+    if (Array.isArray(key))
+    {
+        for (var i = 0; i < key.length; i++)
+        {
+            //  If it's an array it has to be an array of Objects, so we get everything out of the 'key' object
+            this.addFile(new BinaryFile(this, key[i]));
+        }
+    }
+    else
+    {
+        this.addFile(new BinaryFile(this, key, url, xhrSettings, dataType));
+    }
+
+    return this;
+});
+
+module.exports = BinaryFile;
+
+
+/***/ }),
+/* 588 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var AudioFile = __webpack_require__(253);
+var Class = __webpack_require__(0);
+var FileTypesManager = __webpack_require__(7);
+var GetFastValue = __webpack_require__(2);
+var IsPlainObject = __webpack_require__(8);
+var JSONFile = __webpack_require__(51);
+var MultiFile = __webpack_require__(57);
+
+/**
+ * @typedef {object} Phaser.Loader.FileTypes.AudioSpriteFileConfig
+ *
+ * @property {string} key - The key of the file. Must be unique within both the Loader and the Audio Cache.
+ * @property {string} jsonURL - The absolute or relative URL to load the json file from. Or a well formed JSON object to use instead.
+ * @property {XHRSettingsObject} [jsonXhrSettings] - Extra XHR Settings specifically for the json file.
+ * @property {{(string|string[])}} [audioURL] - The absolute or relative URL to load the audio file from.
+ * @property {any} [audioConfig] - The audio configuration options.
+ * @property {XHRSettingsObject} [audioXhrSettings] - Extra XHR Settings specifically for the audio file.
+ */
+
+/**
+ * @classdesc
+ * An Audio Sprite File suitable for loading by the Loader.
+ *
+ * These are created when you use the Phaser.Loader.LoaderPlugin#audioSprite method and are not typically created directly.
+ * 
+ * For documentation about what all the arguments and configuration options mean please see Phaser.Loader.LoaderPlugin#audioSprite.
+ *
+ * @class AudioSpriteFile
+ * @extends Phaser.Loader.MultiFile
+ * @memberof Phaser.Loader.FileTypes
+ * @constructor
+ * @since 3.7.0
+ *
+ * @param {Phaser.Loader.LoaderPlugin} loader - A reference to the Loader that is responsible for this file.
+ * @param {(string|Phaser.Loader.FileTypes.AudioSpriteFileConfig)} key - The key to use for this file, or a file configuration object.
+ * @param {string} jsonURL - The absolute or relative URL to load the json file from. Or a well formed JSON object to use instead.
+ * @param {{(string|string[])}} [audioURL] - The absolute or relative URL to load the audio file from. If empty it will be obtained by parsing the JSON file.
+ * @param {any} [audioConfig] - The audio configuration options.
+ * @param {XHRSettingsObject} [audioXhrSettings] - An XHR Settings configuration object for the audio file. Used in replacement of the Loaders default XHR Settings.
+ * @param {XHRSettingsObject} [jsonXhrSettings] - An XHR Settings configuration object for the json file. Used in replacement of the Loaders default XHR Settings.
+ */
+var AudioSpriteFile = new Class({
+
+    Extends: MultiFile,
+
+    initialize:
+
+    function AudioSpriteFile (loader, key, jsonURL, audioURL, audioConfig, audioXhrSettings, jsonXhrSettings)
+    {
+        if (IsPlainObject(key))
+        {
+            var config = key;
+
+            key = GetFastValue(config, 'key');
+            jsonURL = GetFastValue(config, 'jsonURL');
+            audioURL = GetFastValue(config, 'audioURL');
+            audioConfig = GetFastValue(config, 'audioConfig');
+            audioXhrSettings = GetFastValue(config, 'audioXhrSettings');
+            jsonXhrSettings = GetFastValue(config, 'jsonXhrSettings');
+        }
+
+        var data;
+
+        //  No url? then we're going to do a json load and parse it from that
+        if (!audioURL)
+        {
+            data = new JSONFile(loader, key, jsonURL, jsonXhrSettings);
+            
+            MultiFile.call(this, loader, 'audiosprite', key, [ data ]);
+
+            this.config.resourceLoad = true;
+            this.config.audioConfig = audioConfig;
+            this.config.audioXhrSettings = audioXhrSettings;
+        }
+        else
+        {
+            var audio = AudioFile.create(loader, key, audioURL, audioConfig, audioXhrSettings);
+
+            if (audio)
+            {
+                data = new JSONFile(loader, key, jsonURL, jsonXhrSettings);
+
+                MultiFile.call(this, loader, 'audiosprite', key, [ audio, data ]);
+
+                this.config.resourceLoad = false;
+            }
+        }
+    },
+
+    /**
+     * Called by each File when it finishes loading.
+     *
+     * @method Phaser.Loader.AudioSpriteFile#onFileComplete
+     * @since 3.7.0
+     *
+     * @param {Phaser.Loader.File} file - The File that has completed processing.
+     */
+    onFileComplete: function (file)
+    {
+        var index = this.files.indexOf(file);
+
+        if (index !== -1)
+        {
+            this.pending--;
+
+            if (this.config.resourceLoad && file.type === 'json' && file.data.hasOwnProperty('resources'))
+            {
+                //  Inspect the data for the files to now load
+                var urls = file.data.resources;
+
+                var audioConfig = GetFastValue(this.config, 'audioConfig');
+                var audioXhrSettings = GetFastValue(this.config, 'audioXhrSettings');
+
+                var audio = AudioFile.create(this.loader, file.key, urls, audioConfig, audioXhrSettings);
+
+                if (audio)
+                {
+                    this.addToMultiFile(audio);
+
+                    this.loader.addFile(audio);
+                }
+            }
+        }
+    },
+
+    /**
+     * Adds this file to its target cache upon successful loading and processing.
+     *
+     * @method Phaser.Loader.AudioSpriteFile#addToCache
+     * @since 3.7.0
+     */
+    addToCache: function ()
+    {
+        if (this.isReadyToProcess())
+        {
+            var fileA = this.files[0];
+            var fileB = this.files[1];
+
+            fileA.addToCache();
+            fileB.addToCache();
