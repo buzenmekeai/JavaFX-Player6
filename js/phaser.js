@@ -119000,3 +119000,232 @@ FileTypesManager.register('animation', function (key, url, dataKey, xhrSettings)
 
     if (Array.isArray(key))
     {
+        for (var i = 0; i < key.length; i++)
+        {
+            this.addFile(new AnimationJSONFile(this, key[i]));
+        }
+    }
+    else
+    {
+        this.addFile(new AnimationJSONFile(this, key, url, xhrSettings, dataKey));
+    }
+
+    return this;
+});
+
+module.exports = AnimationJSONFile;
+
+
+/***/ }),
+/* 592 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Loader.FileTypes
+ */
+
+module.exports = {
+
+    AnimationJSONFile: __webpack_require__(591),
+    AtlasJSONFile: __webpack_require__(590),
+    AtlasXMLFile: __webpack_require__(589),
+    AudioFile: __webpack_require__(253),
+    AudioSpriteFile: __webpack_require__(588),
+    BinaryFile: __webpack_require__(587),
+    BitmapFontFile: __webpack_require__(586),
+    GLSLFile: __webpack_require__(585),
+    HTML5AudioFile: __webpack_require__(252),
+    HTMLFile: __webpack_require__(584),
+    HTMLTextureFile: __webpack_require__(583),
+    ImageFile: __webpack_require__(58),
+    JSONFile: __webpack_require__(51),
+    MultiAtlasFile: __webpack_require__(582),
+    PackFile: __webpack_require__(581),
+    PluginFile: __webpack_require__(580),
+    ScenePluginFile: __webpack_require__(579),
+    ScriptFile: __webpack_require__(578),
+    SpriteSheetFile: __webpack_require__(577),
+    SVGFile: __webpack_require__(576),
+    TextFile: __webpack_require__(251),
+    TilemapCSVFile: __webpack_require__(575),
+    TilemapImpactFile: __webpack_require__(574),
+    TilemapJSONFile: __webpack_require__(573),
+    UnityAtlasFile: __webpack_require__(572),
+    XMLFile: __webpack_require__(139)
+
+};
+
+
+/***/ }),
+/* 593 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CONST = __webpack_require__(18);
+var Extend = __webpack_require__(20);
+
+/**
+ * @namespace Phaser.Loader
+ */
+
+var Loader = {
+
+    FileTypes: __webpack_require__(592),
+
+    File: __webpack_require__(21),
+    FileTypesManager: __webpack_require__(7),
+    GetURL: __webpack_require__(141),
+    LoaderPlugin: __webpack_require__(571),
+    MergeXHRSettings: __webpack_require__(140),
+    MultiFile: __webpack_require__(57),
+    XHRLoader: __webpack_require__(254),
+    XHRSettings: __webpack_require__(105)
+
+};
+
+//   Merge in the consts
+Loader = Extend(false, Loader, CONST);
+
+module.exports = Loader;
+
+
+/***/ }),
+/* 594 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Input.Touch
+ */
+
+/* eslint-disable */
+module.exports = {
+
+    TouchManager: __webpack_require__(333)
+       
+};
+/* eslint-enable */
+
+
+/***/ }),
+/* 595 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Input.Mouse
+ */
+
+/* eslint-disable */
+module.exports = {
+
+    MouseManager: __webpack_require__(336)
+       
+};
+/* eslint-enable */
+
+
+/***/ }),
+/* 596 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Returns `true` if the Key was released within the `duration` value given, or `false` if it either isn't up,
+ * or was released longer ago than then given duration.
+ *
+ * @function Phaser.Input.Keyboard.UpDuration
+ * @since 3.0.0
+ *
+ * @param {Phaser.Input.Keyboard.Key} key - The Key object to test.
+ * @param {integer} [duration=50] - The duration, in ms, within which the key must have been released.
+ *
+ * @return {boolean} `true` if the Key was released within `duration` ms, otherwise `false`.
+ */
+var UpDuration = function (key, duration)
+{
+    if (duration === undefined) { duration = 50; }
+
+    return (key.isUp && key.duration < duration);
+};
+
+module.exports = UpDuration;
+
+
+/***/ }),
+/* 597 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Returns `true` if the Key was pressed down within the `duration` value given, or `false` if it either isn't down,
+ * or was pressed down longer ago than then given duration.
+ *
+ * @function Phaser.Input.Keyboard.DownDuration
+ * @since 3.0.0
+ *
+ * @param {Phaser.Input.Keyboard.Key} key - The Key object to test.
+ * @param {integer} [duration=50] - The duration, in ms, within which the key must have been pressed down.
+ *
+ * @return {boolean} `true` if the Key was pressed down within `duration` ms, otherwise `false`.
+ */
+var DownDuration = function (key, duration)
+{
+    if (duration === undefined) { duration = 50; }
+
+    return (key.isDown && key.duration < duration);
+};
+
+module.exports = DownDuration;
+
+
+/***/ }),
+/* 598 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * The justUp value allows you to test if this Key has just been released or not.
+ * 
+ * When you check this value it will return `true` if the Key is up, otherwise `false`.
+ * 
+ * You can only call JustUp once per key release. It will only return `true` once, until the Key is pressed down and released again.
+ * This allows you to use it in situations where you want to check if this key is up without using an event, such as in a core game loop.
+ *
+ * @function Phaser.Input.Keyboard.JustUp
