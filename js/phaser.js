@@ -119452,3 +119452,256 @@ var ResetKeyCombo = function (combo)
 {
     combo.current = combo.keyCodes[0];
     combo.index = 0;
+    combo.timeLastMatched = 0;
+    combo.matched = false;
+    combo.timeMatched = 0;
+
+    return combo;
+};
+
+module.exports = ResetKeyCombo;
+
+
+/***/ }),
+/* 604 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Used internally by the KeyCombo class.
+ * Return `true` if it reached the end of the combo, `false` if not.
+ *
+ * @function Phaser.Input.Keyboard.KeyCombo.AdvanceKeyCombo
+ * @private
+ * @since 3.0.0
+ *
+ * @param {KeyboardEvent} event - The native Keyboard Event.
+ * @param {Phaser.Input.Keyboard.KeyCombo} combo - The KeyCombo object to advance.
+ *
+ * @return {boolean} `true` if it reached the end of the combo, `false` if not.
+ */
+var AdvanceKeyCombo = function (event, combo)
+{
+    combo.timeLastMatched = event.timeStamp;
+    combo.index++;
+
+    if (combo.index === combo.size)
+    {
+        return true;
+    }
+    else
+    {
+        combo.current = combo.keyCodes[combo.index];
+        return false;
+    }
+};
+
+module.exports = AdvanceKeyCombo;
+
+
+/***/ }),
+/* 605 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var AdvanceKeyCombo = __webpack_require__(604);
+
+/**
+ * Used internally by the KeyCombo class.
+ *
+ * @function Phaser.Input.Keyboard.KeyCombo.ProcessKeyCombo
+ * @private
+ * @since 3.0.0
+ *
+ * @param {KeyboardEvent} event - The native Keyboard Event.
+ * @param {Phaser.Input.Keyboard.KeyCombo} combo - The KeyCombo object to be processed.
+ *
+ * @return {boolean} `true` if the combo was matched, otherwise `false`.
+ */
+var ProcessKeyCombo = function (event, combo)
+{
+    if (combo.matched)
+    {
+        return true;
+    }
+
+    var comboMatched = false;
+    var keyMatched = false;
+
+    if (event.keyCode === combo.current)
+    {
+        //  Key was correct
+
+        if (combo.index > 0 && combo.maxKeyDelay > 0)
+        {
+            //  We have to check to see if the delay between
+            //  the new key and the old one was too long (if enabled)
+
+            var timeLimit = combo.timeLastMatched + combo.maxKeyDelay;
+
+            //  Check if they pressed it in time or not
+            if (event.timeStamp <= timeLimit)
+            {
+                keyMatched = true;
+                comboMatched = AdvanceKeyCombo(event, combo);
+            }
+        }
+        else
+        {
+            keyMatched = true;
+
+            //  We don't check the time for the first key pressed, so just advance it
+            comboMatched = AdvanceKeyCombo(event, combo);
+        }
+    }
+
+    if (!keyMatched && combo.resetOnWrongKey)
+    {
+        //  Wrong key was pressed
+        combo.index = 0;
+        combo.current = combo.keyCodes[0];
+    }
+
+    if (comboMatched)
+    {
+        combo.timeLastMatched = event.timeStamp;
+        combo.matched = true;
+        combo.timeMatched = event.timeStamp;
+    }
+
+    return comboMatched;
+};
+
+module.exports = ProcessKeyCombo;
+
+
+/***/ }),
+/* 606 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var EventEmitter = __webpack_require__(11);
+var GetValue = __webpack_require__(4);
+var InputPluginCache = __webpack_require__(106);
+var Key = __webpack_require__(256);
+var KeyCodes = __webpack_require__(143);
+var KeyCombo = __webpack_require__(255);
+var KeyMap = __webpack_require__(602);
+var ProcessKeyDown = __webpack_require__(601);
+var ProcessKeyUp = __webpack_require__(600);
+var SnapFloor = __webpack_require__(142);
+
+/**
+ * @classdesc
+ * The Keyboard Plugin is an input plugin that belongs to the Scene-owned Input system.
+ * 
+ * Its role is to listen for native DOM Keyboard Events and then process them.
+ * 
+ * You do not need to create this class directly, the Input system will create an instance of it automatically.
+ * 
+ * You can access it from within a Scene using `this.input.keyboard`. For example, you can do:
+ *
+ * ```javascript
+ * this.input.keyboard.on('keydown', callback, context);
+ * ```
+ *
+ * Or, to listen for a specific key:
+ * 
+ * ```javascript
+ * this.input.keyboard.on('keydown_A', callback, context);
+ * ```
+ *
+ * You can also create Key objects, which you can then poll in your game loop:
+ *
+ * ```javascript
+ * var spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+ * ```
+ *
+ * _Note_: Many keyboards are unable to process certain combinations of keys due to hardware limitations known as ghosting.
+ * See http://www.html5gamedevs.com/topic/4876-impossible-to-use-more-than-2-keyboard-input-buttons-at-the-same-time/ for more details.
+ *
+ * Also please be aware that certain browser extensions can disable or override Phaser keyboard handling.
+ * For example the Chrome extension vimium is known to disable Phaser from using the D key, while EverNote disables the backtick key.
+ * And there are others. So, please check your extensions before opening Phaser issues about keys that don't work.
+ *
+ * @class KeyboardPlugin
+ * @extends Phaser.Events.EventEmitter
+ * @memberof Phaser.Input.Keyboard
+ * @constructor
+ * @since 3.10.0
+ *
+ * @param {Phaser.Input.InputPlugin} sceneInputPlugin - A reference to the Scene Input Plugin that the KeyboardPlugin belongs to.
+ */
+var KeyboardPlugin = new Class({
+
+    Extends: EventEmitter,
+
+    initialize:
+
+    function KeyboardPlugin (sceneInputPlugin)
+    {
+        EventEmitter.call(this);
+
+        /**
+         * A reference to the Scene that this Input Plugin is responsible for.
+         *
+         * @name Phaser.Input.Keyboard.KeyboardPlugin#scene
+         * @type {Phaser.Scene}
+         * @since 3.10.0
+         */
+        this.scene = sceneInputPlugin.scene;
+
+        /**
+         * A reference to the Scene Systems Settings.
+         *
+         * @name Phaser.Input.Keyboard.KeyboardPlugin#settings
+         * @type {Phaser.Scenes.Settings.Object}
+         * @since 3.10.0
+         */
+        this.settings = this.scene.sys.settings;
+
+        /**
+         * A reference to the Scene Input Plugin that created this Keyboard Plugin.
+         *
+         * @name Phaser.Input.Keyboard.KeyboardPlugin#sceneInputPlugin
+         * @type {Phaser.Input.InputPlugin}
+         * @since 3.10.0
+         */
+        this.sceneInputPlugin = sceneInputPlugin;
+
+        /**
+         * A boolean that controls if the Keyboard Plugin is enabled or not.
+         * Can be toggled on the fly.
+         *
+         * @name Phaser.Input.Keyboard.KeyboardPlugin#enabled
+         * @type {boolean}
+         * @default true
+         * @since 3.10.0
+         */
+        this.enabled = true;
+
+        /**
+         * The Keyboard Event target, as defined in the Scene or Game Config.
+         * Typically the browser window, but can be any interactive DOM element.
+         *
+         * @name Phaser.Input.Keyboard.KeyboardPlugin#target
+         * @type {any}
+         * @since 3.10.0
+         */
+        this.target;
