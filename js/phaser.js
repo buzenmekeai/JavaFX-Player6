@@ -119229,3 +119229,226 @@ module.exports = DownDuration;
  * This allows you to use it in situations where you want to check if this key is up without using an event, such as in a core game loop.
  *
  * @function Phaser.Input.Keyboard.JustUp
+ * @since 3.0.0
+ *
+ * @param {Phaser.Input.Keyboard.Key} key - The Key to check to see if it's just up or not.
+ *
+ * @return {boolean} `true` if the Key was just released, otherwise `false`.
+ */
+var JustUp = function (key)
+{
+    if (key._justUp)
+    {
+        key._justUp = false;
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+};
+
+module.exports = JustUp;
+
+
+/***/ }),
+/* 599 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * The justDown value allows you to test if this Key has just been pressed down or not.
+ * 
+ * When you check this value it will return `true` if the Key is down, otherwise `false`.
+ * 
+ * You can only call justDown once per key press. It will only return `true` once, until the Key is released and pressed down again.
+ * This allows you to use it in situations where you want to check if this key is down without using an event, such as in a core game loop.
+ *
+ * @function Phaser.Input.Keyboard.JustDown
+ * @since 3.0.0
+ *
+ * @param {Phaser.Input.Keyboard.Key} key - The Key to check to see if it's just down or not.
+ *
+ * @return {boolean} `true` if the Key was just pressed, otherwise `false`.
+ */
+var JustDown = function (key)
+{
+    if (key._justDown)
+    {
+        key._justDown = false;
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+};
+
+module.exports = JustDown;
+
+
+/***/ }),
+/* 600 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Used internally by the Keyboard Plugin.
+ *
+ * @function Phaser.Input.Keyboard.ProcessKeyUp
+ * @private
+ * @since 3.0.0
+ *
+ * @param {Phaser.Input.Keyboard.Key} key - The Key to process the event for.
+ * @param {KeyboardEvent} event - The native Keyboard event.
+ *
+ * @return {Phaser.Input.Keyboard.Key} The Key that was processed.
+ */
+var ProcessKeyUp = function (key, event)
+{
+    key.originalEvent = event;
+
+    if (key.preventDefault)
+    {
+        event.preventDefault();
+    }
+
+    if (!key.enabled)
+    {
+        return;
+    }
+
+    key.isDown = false;
+    key.isUp = true;
+    key.timeUp = event.timeStamp;
+    key.duration = key.timeUp - key.timeDown;
+    key.repeats = 0;
+
+    key._justDown = false;
+    key._justUp = true;
+    key._tick = -1;
+
+    return key;
+};
+
+module.exports = ProcessKeyUp;
+
+
+/***/ }),
+/* 601 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Used internally by the Keyboard Plugin.
+ *
+ * @function Phaser.Input.Keyboard.ProcessKeyDown
+ * @private
+ * @since 3.0.0
+ *
+ * @param {Phaser.Input.Keyboard.Key} key - The Key to process the event for.
+ * @param {KeyboardEvent} event - The native Keyboard event.
+ *
+ * @return {Phaser.Input.Keyboard.Key} The Key that was processed.
+ */
+var ProcessKeyDown = function (key, event)
+{
+    key.originalEvent = event;
+
+    if (key.preventDefault)
+    {
+        event.preventDefault();
+    }
+
+    if (!key.enabled)
+    {
+        return;
+    }
+
+    key.altKey = event.altKey;
+    key.ctrlKey = event.ctrlKey;
+    key.shiftKey = event.shiftKey;
+    key.location = event.location;
+
+    if (key.isDown === false)
+    {
+        key.isDown = true;
+        key.isUp = false;
+        key.timeDown = event.timeStamp;
+        key.duration = 0;
+        key._justDown = true;
+        key._justUp = false;
+    }
+
+    key.repeats++;
+
+    return key;
+};
+
+module.exports = ProcessKeyDown;
+
+
+/***/ }),
+/* 602 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var KeyCodes = __webpack_require__(143);
+
+var KeyMap = {};
+
+for (var key in KeyCodes)
+{
+    KeyMap[KeyCodes[key]] = key;
+}
+
+module.exports = KeyMap;
+
+
+/***/ }),
+/* 603 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Used internally by the KeyCombo class.
+ *
+ * @function Phaser.Input.Keyboard.KeyCombo.ResetKeyCombo
+ * @private
+ * @since 3.0.0
+ *
+ * @param {Phaser.Input.Keyboard.KeyCombo} combo - The KeyCombo to reset.
+ *
+ * @return {Phaser.Input.Keyboard.KeyCombo} The KeyCombo.
+ */
+var ResetKeyCombo = function (combo)
+{
+    combo.current = combo.keyCodes[0];
+    combo.index = 0;
