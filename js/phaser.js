@@ -119705,3 +119705,200 @@ var KeyboardPlugin = new Class({
          * @since 3.10.0
          */
         this.target;
+
+        /**
+         * An array of Key objects to process.
+         *
+         * @name Phaser.Input.Keyboard.KeyboardPlugin#keys
+         * @type {Phaser.Input.Keyboard.Key[]}
+         * @since 3.10.0
+         */
+        this.keys = [];
+
+        /**
+         * An array of KeyCombo objects to process.
+         *
+         * @name Phaser.Input.Keyboard.KeyboardPlugin#combos
+         * @type {Phaser.Input.Keyboard.KeyCombo[]}
+         * @since 3.10.0
+         */
+        this.combos = [];
+
+        /**
+         * An internal event queue.
+         *
+         * @name Phaser.Input.Keyboard.KeyboardPlugin#queue
+         * @type {KeyboardEvent[]}
+         * @private
+         * @since 3.10.0
+         */
+        this.queue = [];
+
+        /**
+         * Internal event handler.
+         *
+         * @name Phaser.Input.Keyboard.KeyboardPlugin#onKeyHandler
+         * @type {function}
+         * @private
+         * @since 3.10.0
+         */
+        this.onKeyHandler;
+
+        /**
+         * Internal time value.
+         *
+         * @name Phaser.Input.Keyboard.KeyboardPlugin#time
+         * @type {number}
+         * @private
+         * @since 3.11.0
+         */
+        this.time = 0;
+
+        sceneInputPlugin.pluginEvents.once('boot', this.boot, this);
+        sceneInputPlugin.pluginEvents.on('start', this.start, this);
+    },
+
+    /**
+     * This method is called automatically, only once, when the Scene is first created.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.Input.Keyboard.KeyboardPlugin#boot
+     * @private
+     * @since 3.10.0
+     */
+    boot: function ()
+    {
+        var settings = this.settings.input;
+        var config = this.scene.sys.game.config;
+
+        this.enabled = GetValue(settings, 'keyboard', config.inputKeyboard);
+        this.target = GetValue(settings, 'keyboard.target', config.inputKeyboardEventTarget);
+
+        this.sceneInputPlugin.pluginEvents.once('destroy', this.destroy, this);
+    },
+
+    /**
+     * This method is called automatically by the Scene when it is starting up.
+     * It is responsible for creating local systems, properties and listening for Scene events.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.Input.Keyboard.KeyboardPlugin#start
+     * @private
+     * @since 3.10.0
+     */
+    start: function ()
+    {
+        if (this.enabled)
+        {
+            this.startListeners();
+        }
+
+        this.sceneInputPlugin.pluginEvents.once('shutdown', this.shutdown, this);
+    },
+
+    /**
+     * Checks to see if both this plugin and the Scene to which it belongs is active.
+     *
+     * @method Phaser.Input.Keyboard.KeyboardPlugin#isActive
+     * @since 3.10.0
+     *
+     * @return {boolean} `true` if the plugin and the Scene it belongs to is active.
+     */
+    isActive: function ()
+    {
+        return (this.enabled && this.scene.sys.isActive());
+    },
+
+    /**
+     * Starts the Keyboard Event listeners running.
+     * This is called automatically and does not need to be manually invoked.
+     *
+     * @method Phaser.Input.Keyboard.KeyboardPlugin#startListeners
+     * @private
+     * @since 3.10.0
+     */
+    startListeners: function ()
+    {
+        var _this = this;
+
+        var handler = function (event)
+        {
+            if (event.defaultPrevented || !_this.isActive())
+            {
+                // Do nothing if event already handled
+                return;
+            }
+
+            _this.queue.push(event);
+
+            var key = _this.keys[event.keyCode];
+
+            if (key && key.preventDefault)
+            {
+                event.preventDefault();
+            }
+
+        };
+
+        this.onKeyHandler = handler;
+
+        this.target.addEventListener('keydown', handler, false);
+        this.target.addEventListener('keyup', handler, false);
+
+        //  Finally, listen for an update event from the Input Plugin
+        this.sceneInputPlugin.pluginEvents.on('update', this.update, this);
+    },
+
+    /**
+     * Stops the Keyboard Event listeners.
+     * This is called automatically and does not need to be manually invoked.
+     *
+     * @method Phaser.Input.Keyboard.KeyboardPlugin#stopListeners
+     * @private
+     * @since 3.10.0
+     */
+    stopListeners: function ()
+    {
+        this.target.removeEventListener('keydown', this.onKeyHandler);
+        this.target.removeEventListener('keyup', this.onKeyHandler);
+
+        this.sceneInputPlugin.pluginEvents.off('update', this.update);
+    },
+
+    /**
+     * @typedef {object} CursorKeys
+     * @memberof Phaser.Input.Keyboard
+     * 
+     * @property {Phaser.Input.Keyboard.Key} [up] - A Key object mapping to the UP arrow key.
+     * @property {Phaser.Input.Keyboard.Key} [down] - A Key object mapping to the DOWN arrow key.
+     * @property {Phaser.Input.Keyboard.Key} [left] - A Key object mapping to the LEFT arrow key.
+     * @property {Phaser.Input.Keyboard.Key} [right] - A Key object mapping to the RIGHT arrow key.
+     * @property {Phaser.Input.Keyboard.Key} [space] - A Key object mapping to the SPACE BAR key.
+     * @property {Phaser.Input.Keyboard.Key} [shift] - A Key object mapping to the SHIFT key.
+     */
+
+    /**
+     * Creates and returns an object containing 4 hotkeys for Up, Down, Left and Right, and also Space Bar and shift.
+     *
+     * @method Phaser.Input.Keyboard.KeyboardPlugin#createCursorKeys
+     * @since 3.10.0
+     *
+     * @return {CursorKeys} An object containing the properties: `up`, `down`, `left`, `right`, `space` and `shift`.
+     */
+    createCursorKeys: function ()
+    {
+        return this.addKeys({
+            up: KeyCodes.UP,
+            down: KeyCodes.DOWN,
+            left: KeyCodes.LEFT,
+            right: KeyCodes.RIGHT,
+            space: KeyCodes.SPACE,
+            shift: KeyCodes.SHIFT
+        });
+    },
+
+    /**
+     * A practical way to create an object containing user selected hotkeys.
+     *
+     * For example:
+     *
