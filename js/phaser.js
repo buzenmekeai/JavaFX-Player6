@@ -120123,3 +120123,219 @@ var KeyboardPlugin = new Class({
      */
     update: function (time)
     {
+        this.time = time;
+
+        var len = this.queue.length;
+
+        if (!this.enabled || len === 0)
+        {
+            return;
+        }
+
+        //  Clears the queue array, and also means we don't work on array data that could potentially
+        //  be modified during the processing phase
+        var queue = this.queue.splice(0, len);
+
+        var keys = this.keys;
+
+        //  Process the event queue, dispatching all of the events that have stored up
+        for (var i = 0; i < len; i++)
+        {
+            var event = queue[i];
+            var code = event.keyCode;
+
+            if (event.type === 'keydown')
+            {
+                if (KeyMap[code] && (keys[code] === undefined || keys[code].isDown === false))
+                {
+                    //  Will emit a keyboard or keyup event
+                    this.emit(event.type, event);
+
+                    this.emit('keydown_' + KeyMap[code], event);
+                }
+
+                if (keys[code])
+                {
+                    ProcessKeyDown(keys[code], event);
+                }
+            }
+            else
+            {
+                //  Will emit a keyboard or keyup event
+                this.emit(event.type, event);
+
+                this.emit('keyup_' + KeyMap[code], event);
+
+                if (keys[code])
+                {
+                    ProcessKeyUp(keys[code], event);
+                }
+            }
+        }
+    },
+
+    /**
+     * Resets all Key objects created by _this_ Keyboard Plugin back to their default un-pressed states.
+     * This can only reset keys created via the `addKey`, `addKeys` or `createCursors` methods.
+     * If you have created a Key object directly you'll need to reset it yourself.
+     * 
+     * This method is called automatically when the Keyboard Plugin shuts down, but can be
+     * invoked directly at any time you require.
+     *
+     * @method Phaser.Input.Keyboard.KeyboardPlugin#resetKeys
+     * @since 3.15.0
+     */
+    resetKeys: function ()
+    {
+        var keys = this.keys;
+
+        for (var i = 0; i < keys.length; i++)
+        {
+            //  Because it's a sparsely populated array
+            if (keys[i])
+            {
+                keys[i].reset();
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Shuts this Keyboard Plugin down. This performs the following tasks:
+     * 
+     * 1 - Resets all keys created by this Keyboard plugin.
+     * 2 - Stops and removes the keyboard event listeners.
+     * 3 - Clears out any pending requests in the queue, without processing them.
+     *
+     * @method Phaser.Input.Keyboard.KeyboardPlugin#shutdown
+     * @private
+     * @since 3.10.0
+     */
+    shutdown: function ()
+    {
+        this.resetKeys();
+
+        this.stopListeners();
+
+        this.removeAllListeners();
+
+        this.queue = [];
+    },
+
+    /**
+     * Destroys this Keyboard Plugin instance and all references it holds, plus clears out local arrays.
+     *
+     * @method Phaser.Input.Keyboard.KeyboardPlugin#destroy
+     * @private
+     * @since 3.10.0
+     */
+    destroy: function ()
+    {
+        this.shutdown();
+
+        this.keys = [];
+        this.combos = [];
+        this.queue = [];
+
+        this.scene = null;
+        this.settings = null;
+        this.sceneInputPlugin = null;
+        this.target = null;
+    }
+
+});
+
+/**
+ * An instance of the Keyboard Plugin class, if enabled via the `input.keyboard` Scene or Game Config property.
+ * Use this to create Key objects and listen for keyboard specific events.
+ *
+ * @name Phaser.Input.InputPlugin#keyboard
+ * @type {?Phaser.Input.Keyboard.KeyboardPlugin}
+ * @since 3.10.0
+ */
+InputPluginCache.register('KeyboardPlugin', KeyboardPlugin, 'keyboard', 'keyboard', 'inputKeyboard');
+
+module.exports = KeyboardPlugin;
+
+
+/***/ }),
+/* 607 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Input.Keyboard
+ */
+
+module.exports = {
+
+    KeyboardPlugin: __webpack_require__(606),
+
+    Key: __webpack_require__(256),
+    KeyCodes: __webpack_require__(143),
+
+    KeyCombo: __webpack_require__(255),
+
+    JustDown: __webpack_require__(599),
+    JustUp: __webpack_require__(598),
+    DownDuration: __webpack_require__(597),
+    UpDuration: __webpack_require__(596)
+    
+};
+
+
+/***/ }),
+/* 608 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Creates a new Pixel Perfect Handler function.
+ *
+ * Access via `InputPlugin.makePixelPerfect` rather than calling it directly.
+ *
+ * @function Phaser.Input.CreatePixelPerfectHandler
+ * @since 3.10.0
+ *
+ * @param {Phaser.Textures.TextureManager} textureManager - A reference to the Texture Manager.
+ * @param {integer} alphaTolerance - The alpha level that the pixel should be above to be included as a successful interaction.
+ *
+ * @return {function} The new Pixel Perfect Handler function.
+ */
+var CreatePixelPerfectHandler = function (textureManager, alphaTolerance)
+{
+    return function (hitArea, x, y, gameObject)
+    {
+        var alpha = textureManager.getPixelAlpha(x, y, gameObject.texture.key, gameObject.frame.name);
+
+        return (alpha && alpha >= alphaTolerance);
+    };
+};
+
+module.exports = CreatePixelPerfectHandler;
+
+
+/***/ }),
+/* 609 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Circle = __webpack_require__(71);
+var CircleContains = __webpack_require__(40);
+var Class = __webpack_require__(0);
