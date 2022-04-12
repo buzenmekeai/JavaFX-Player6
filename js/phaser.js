@@ -120339,3 +120339,198 @@ module.exports = CreatePixelPerfectHandler;
 var Circle = __webpack_require__(71);
 var CircleContains = __webpack_require__(40);
 var Class = __webpack_require__(0);
+var CreateInteractiveObject = __webpack_require__(260);
+var CreatePixelPerfectHandler = __webpack_require__(608);
+var DistanceBetween = __webpack_require__(52);
+var Ellipse = __webpack_require__(90);
+var EllipseContains = __webpack_require__(89);
+var EventEmitter = __webpack_require__(11);
+var GetFastValue = __webpack_require__(2);
+var InputPluginCache = __webpack_require__(106);
+var IsPlainObject = __webpack_require__(8);
+var PluginCache = __webpack_require__(15);
+var Rectangle = __webpack_require__(9);
+var RectangleContains = __webpack_require__(39);
+var Triangle = __webpack_require__(59);
+var TriangleContains = __webpack_require__(69);
+
+/**
+ * @classdesc
+ * The Input Plugin belongs to a Scene and handles all input related events and operations for it.
+ *
+ * You can access it from within a Scene using `this.input`.
+ *
+ * It emits events directly. For example, you can do:
+ *
+ * ```javascript
+ * this.input.on('pointerdown', callback, context);
+ * ```
+ *
+ * To listen for a pointer down event anywhere on the game canvas.
+ *
+ * Game Objects can be enabled for input by calling their `setInteractive` method. After which they
+ * will directly emit input events:
+ *
+ * ```javascript
+ * var sprite = this.add.sprite(x, y, texture);
+ * sprite.setInteractive();
+ * sprite.on('pointerdown', callback, context);
+ * ```
+ *
+ * Please see the Input examples and tutorials for more information.
+ *
+ * @class InputPlugin
+ * @extends Phaser.Events.EventEmitter
+ * @memberof Phaser.Input
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - A reference to the Scene that this Input Plugin is responsible for.
+ */
+var InputPlugin = new Class({
+
+    Extends: EventEmitter,
+
+    initialize:
+
+    function InputPlugin (scene)
+    {
+        EventEmitter.call(this);
+
+        /**
+         * A reference to the Scene that this Input Plugin is responsible for.
+         *
+         * @name Phaser.Input.InputPlugin#scene
+         * @type {Phaser.Scene}
+         * @since 3.0.0
+         */
+        this.scene = scene;
+
+        /**
+         * A reference to the Scene Systems class.
+         *
+         * @name Phaser.Input.InputPlugin#systems
+         * @type {Phaser.Scenes.Systems}
+         * @since 3.0.0
+         */
+        this.systems = scene.sys;
+
+        /**
+         * A reference to the Scene Systems Settings.
+         *
+         * @name Phaser.Input.InputPlugin#settings
+         * @type {Phaser.Scenes.Settings.Object}
+         * @since 3.5.0
+         */
+        this.settings = scene.sys.settings;
+
+        /**
+         * A reference to the Game Input Manager.
+         *
+         * @name Phaser.Input.InputPlugin#manager
+         * @type {Phaser.Input.InputManager}
+         * @since 3.0.0
+         */
+        this.manager = scene.sys.game.input;
+
+        /**
+         * Internal event queue used for plugins only.
+         *
+         * @name Phaser.Input.InputPlugin#pluginEvents
+         * @type {Phaser.Events.EventEmitter}
+         * @private
+         * @since 3.10.0
+         */
+        this.pluginEvents = new EventEmitter();
+
+        /**
+         * If set, the Input Plugin will run its update loop every frame.
+         *
+         * @name Phaser.Input.InputPlugin#enabled
+         * @type {boolean}
+         * @default true
+         * @since 3.5.0
+         */
+        this.enabled = true;
+
+        /**
+         * A reference to the Scene Display List. This property is set during the `boot` method.
+         *
+         * @name Phaser.Input.InputPlugin#displayList
+         * @type {Phaser.GameObjects.DisplayList}
+         * @since 3.0.0
+         */
+        this.displayList;
+
+        /**
+         * A reference to the Scene Cameras Manager. This property is set during the `boot` method.
+         *
+         * @name Phaser.Input.InputPlugin#cameras
+         * @type {Phaser.Cameras.Scene2D.CameraManager}
+         * @since 3.0.0
+         */
+        this.cameras;
+
+        //  Inject the available input plugins into this class
+        InputPluginCache.install(this);
+
+        /**
+         * A reference to the Mouse Manager.
+         * 
+         * This property is only set if Mouse support has been enabled in your Game Configuration file.
+         * 
+         * If you just wish to get access to the mouse pointer, use the `mousePointer` property instead.
+         *
+         * @name Phaser.Input.InputPlugin#mouse
+         * @type {?Phaser.Input.Mouse.MouseManager}
+         * @since 3.0.0
+         */
+        this.mouse = this.manager.mouse;
+
+        /**
+         * When set to `true` (the default) the Input Plugin will emulate DOM behavior by only emitting events from
+         * the top-most Game Objects in the Display List.
+         *
+         * If set to `false` it will emit events from all Game Objects below a Pointer, not just the top one.
+         *
+         * @name Phaser.Input.InputPlugin#topOnly
+         * @type {boolean}
+         * @default true
+         * @since 3.0.0
+         */
+        this.topOnly = true;
+
+        /**
+         * How often should the Pointers be checked?
+         * 
+         * The value is a time, given in ms, and is the time that must have elapsed between game steps before
+         * the Pointers will be polled again. When a pointer is polled it runs a hit test to see which Game
+         * Objects are currently below it, or being interacted with it.
+         * 
+         * Pointers will *always* be checked if they have been moved by the user, or press or released.
+         * 
+         * This property only controls how often they will be polled if they have not been updated.
+         * You should set this if you want to have Game Objects constantly check against the pointers, even
+         * if the pointer didn't move itself.
+         * 
+         * Set to 0 to poll constantly. Set to -1 to only poll on user movement.
+         *
+         * @name Phaser.Input.InputPlugin#pollRate
+         * @type {integer}
+         * @default -1
+         * @since 3.0.0
+         */
+        this.pollRate = -1;
+
+        /**
+         * Internal poll timer value.
+         *
+         * @name Phaser.Input.InputPlugin#_pollTimer
+         * @type {number}
+         * @private
+         * @default 0
+         * @since 3.0.0
+         */
+        this._pollTimer = 0;
+
+        var _eventData = { cancelled: false };
