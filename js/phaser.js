@@ -120534,3 +120534,216 @@ var InputPlugin = new Class({
         this._pollTimer = 0;
 
         var _eventData = { cancelled: false };
+
+        /**
+         * Internal event propagation callback container.
+         *
+         * @name Phaser.Input.InputPlugin#_eventContainer
+         * @type {object}
+         * @private
+         * @since 3.13.0
+         */
+        this._eventContainer = {
+            stopPropagation: function ()
+            {
+                _eventData.cancelled = true;
+            }
+        };
+
+        /**
+         * Internal event propagation data object.
+         *
+         * @name Phaser.Input.InputPlugin#_eventData
+         * @type {object}
+         * @private
+         * @since 3.13.0
+         */
+        this._eventData = _eventData;
+
+        /**
+         * The distance, in pixels, a pointer has to move while being held down, before it thinks it is being dragged.
+         *
+         * @name Phaser.Input.InputPlugin#dragDistanceThreshold
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.dragDistanceThreshold = 0;
+
+        /**
+         * The amount of time, in ms, a pointer has to be held down before it thinks it is dragging.
+         *
+         * @name Phaser.Input.InputPlugin#dragTimeThreshold
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.dragTimeThreshold = 0;
+
+        /**
+         * Used to temporarily store the results of the Hit Test
+         *
+         * @name Phaser.Input.InputPlugin#_temp
+         * @type {array}
+         * @private
+         * @default []
+         * @since 3.0.0
+         */
+        this._temp = [];
+
+        /**
+         * Used to temporarily store the results of the Hit Test dropZones
+         *
+         * @name Phaser.Input.InputPlugin#_tempZones
+         * @type {array}
+         * @private
+         * @default []
+         * @since 3.0.0
+         */
+        this._tempZones = [];
+
+        /**
+         * A list of all Game Objects that have been set to be interactive in the Scene this Input Plugin is managing.
+         *
+         * @name Phaser.Input.InputPlugin#_list
+         * @type {Phaser.GameObjects.GameObject[]}
+         * @private
+         * @default []
+         * @since 3.0.0
+         */
+        this._list = [];
+
+        /**
+         * Objects waiting to be inserted to the list on the next call to 'begin'.
+         *
+         * @name Phaser.Input.InputPlugin#_pendingInsertion
+         * @type {Phaser.GameObjects.GameObject[]}
+         * @private
+         * @default []
+         * @since 3.0.0
+         */
+        this._pendingInsertion = [];
+
+        /**
+         * Objects waiting to be removed from the list on the next call to 'begin'.
+         *
+         * @name Phaser.Input.InputPlugin#_pendingRemoval
+         * @type {Phaser.GameObjects.GameObject[]}
+         * @private
+         * @default []
+         * @since 3.0.0
+         */
+        this._pendingRemoval = [];
+
+        /**
+         * A list of all Game Objects that have been enabled for dragging.
+         *
+         * @name Phaser.Input.InputPlugin#_draggable
+         * @type {Phaser.GameObjects.GameObject[]}
+         * @private
+         * @default []
+         * @since 3.0.0
+         */
+        this._draggable = [];
+
+        /**
+         * A list of all Interactive Objects currently considered as being 'draggable' by any pointer, indexed by pointer ID.
+         *
+         * @name Phaser.Input.InputPlugin#_drag
+         * @type {{0:Array,2:Array,3:Array,4:Array,5:Array,6:Array,7:Array,8:Array,9:Array}}
+         * @private
+         * @since 3.0.0
+         */
+        this._drag = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [], 10: [] };
+
+        /**
+         * A list of all Interactive Objects currently considered as being 'over' by any pointer, indexed by pointer ID.
+         *
+         * @name Phaser.Input.InputPlugin#_over
+         * @type {{0:Array,2:Array,3:Array,4:Array,5:Array,6:Array,7:Array,8:Array,9:Array}}
+         * @private
+         * @since 3.0.0
+         */
+        this._over = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [], 10: [] };
+
+        /**
+         * A list of valid DOM event types.
+         *
+         * @name Phaser.Input.InputPlugin#_validTypes
+         * @type {string[]}
+         * @private
+         * @since 3.0.0
+         */
+        this._validTypes = [ 'onDown', 'onUp', 'onOver', 'onOut', 'onMove', 'onDragStart', 'onDrag', 'onDragEnd', 'onDragEnter', 'onDragLeave', 'onDragOver', 'onDrop' ];
+
+        scene.sys.events.once('boot', this.boot, this);
+        scene.sys.events.on('start', this.start, this);
+    },
+
+    /**
+     * This method is called automatically, only once, when the Scene is first created.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.Input.InputPlugin#boot
+     * @private
+     * @since 3.5.1
+     */
+    boot: function ()
+    {
+        this.cameras = this.systems.cameras;
+
+        this.displayList = this.systems.displayList;
+
+        this.systems.events.once('destroy', this.destroy, this);
+
+        //  Registered input plugins listen for this
+        this.pluginEvents.emit('boot');
+    },
+
+    /**
+     * This method is called automatically by the Scene when it is starting up.
+     * It is responsible for creating local systems, properties and listening for Scene events.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.Input.InputPlugin#start
+     * @private
+     * @since 3.5.0
+     */
+    start: function ()
+    {
+        var eventEmitter = this.systems.events;
+
+        eventEmitter.on('transitionstart', this.transitionIn, this);
+        eventEmitter.on('transitionout', this.transitionOut, this);
+        eventEmitter.on('transitioncomplete', this.transitionComplete, this);
+        eventEmitter.on('preupdate', this.preUpdate, this);
+        eventEmitter.on('update', this.update, this);
+
+        eventEmitter.once('shutdown', this.shutdown, this);
+
+        this.enabled = true;
+
+        //  Registered input plugins listen for this
+        this.pluginEvents.emit('start');
+    },
+
+    /**
+     * The pre-update handler is responsible for checking the pending removal and insertion lists and
+     * deleting old Game Objects.
+     *
+     * @method Phaser.Input.InputPlugin#preUpdate
+     * @private
+     * @since 3.0.0
+     */
+    preUpdate: function ()
+    {
+        //  Registered input plugins listen for this
+        this.pluginEvents.emit('preUpdate');
+
+        var removeList = this._pendingRemoval;
+        var insertList = this._pendingInsertion;
+
+        var toRemove = removeList.length;
+        var toInsert = insertList.length;
+
+        if (toRemove === 0 && toInsert === 0)
