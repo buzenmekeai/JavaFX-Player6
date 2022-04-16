@@ -120747,3 +120747,203 @@ var InputPlugin = new Class({
         var toInsert = insertList.length;
 
         if (toRemove === 0 && toInsert === 0)
+        {
+            //  Quick bail
+            return;
+        }
+
+        var current = this._list;
+
+        //  Delete old gameObjects
+        for (var i = 0; i < toRemove; i++)
+        {
+            var gameObject = removeList[i];
+
+            var index = current.indexOf(gameObject);
+
+            if (index > -1)
+            {
+                current.splice(index, 1);
+
+                this.clear(gameObject);
+            }
+        }
+
+        //  Clear the removal list
+        removeList.length = 0;
+        this._pendingRemoval.length = 0;
+
+        //  Move pendingInsertion to list (also clears pendingInsertion at the same time)
+        this._list = current.concat(insertList.splice(0));
+    },
+
+    /**
+     * Checks to see if both this plugin and the Scene to which it belongs is active.
+     *
+     * @method Phaser.Input.InputPlugin#isActive
+     * @since 3.10.0
+     *
+     * @return {boolean} `true` if the plugin and the Scene it belongs to is active.
+     */
+    isActive: function ()
+    {
+        return (this.enabled && this.scene.sys.isActive());
+    },
+
+    /**
+     * The internal update loop for the Input Plugin.
+     * Called automatically by the Scene Systems step.
+     *
+     * @method Phaser.Input.InputPlugin#update
+     * @private
+     * @since 3.0.0
+     *
+     * @param {number} time - The time value from the most recent Game step. Typically a high-resolution timer value, or Date.now().
+     * @param {number} delta - The delta value since the last frame. This is smoothed to avoid delta spikes by the TimeStep class.
+     */
+    update: function (time, delta)
+    {
+        if (!this.isActive())
+        {
+            return;
+        }
+
+        this.pluginEvents.emit('update', time, delta);
+
+        var manager = this.manager;
+
+        //  Another Scene above this one has already consumed the input events, or we're in transition
+        if (manager.globalTopOnly && manager.ignoreEvents)
+        {
+            return;
+        }
+
+        var runUpdate = (manager.dirty || this.pollRate === 0);
+
+        if (this.pollRate > -1)
+        {
+            this._pollTimer -= delta;
+
+            if (this._pollTimer < 0)
+            {
+                runUpdate = true;
+
+                //  Discard timer diff
+                this._pollTimer = this.pollRate;
+            }
+        }
+
+        if (!runUpdate)
+        {
+            return;
+        }
+
+        var pointers = this.manager.pointers;
+
+        for (var i = 0; i < this.manager.pointersTotal; i++)
+        {
+            var pointer = pointers[i];
+
+            //  Always reset this array
+            this._tempZones = [];
+
+            //  _temp contains a hit tested and camera culled list of IO objects
+            this._temp = this.hitTestPointer(pointer);
+
+            this.sortGameObjects(this._temp);
+            this.sortGameObjects(this._tempZones);
+
+            if (this.topOnly)
+            {
+                //  Only the top-most one counts now, so safely ignore the rest
+                if (this._temp.length)
+                {
+                    this._temp.splice(1);
+                }
+
+                if (this._tempZones.length)
+                {
+                    this._tempZones.splice(1);
+                }
+            }
+
+            var total = this.processDragEvents(pointer, time);
+
+            //  TODO: Enable for touch
+            if (!pointer.wasTouch)
+            {
+                total += this.processOverOutEvents(pointer);
+            }
+
+            if (pointer.justDown)
+            {
+                total += this.processDownEvents(pointer);
+            }
+
+            if (pointer.justUp)
+            {
+                total += this.processUpEvents(pointer);
+            }
+
+            if (pointer.justMoved)
+            {
+                total += this.processMoveEvents(pointer);
+            }
+
+            if (total > 0 && manager.globalTopOnly)
+            {
+                //  We interacted with an event in this Scene, so block any Scenes below us from doing the same this frame
+                manager.ignoreEvents = true;
+            }
+        }
+    },
+
+    /**
+     * Clears a Game Object so it no longer has an Interactive Object associated with it.
+     * The Game Object is then queued for removal from the Input Plugin on the next update.
+     *
+     * @method Phaser.Input.InputPlugin#clear
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object that will have its Interactive Object removed.
+     *
+     * @return {Phaser.GameObjects.GameObject} The Game Object that had its Interactive Object removed.
+     */
+    clear: function (gameObject)
+    {
+        var input = gameObject.input;
+
+        // If GameObject.input already cleared from higher class
+        if (!input)
+        {
+            return;
+        }
+
+        this.queueForRemoval(gameObject);
+
+        input.gameObject = undefined;
+        input.target = undefined;
+        input.hitArea = undefined;
+        input.hitAreaCallback = undefined;
+        input.callbackContext = undefined;
+
+        this.manager.resetCursor(input);
+
+        gameObject.input = null;
+
+        //  Clear from _draggable, _drag and _over
+        var index = this._draggable.indexOf(gameObject);
+
+        if (index > -1)
+        {
+            this._draggable.splice(index, 1);
+        }
+
+        index = this._drag[0].indexOf(gameObject);
+
+        if (index > -1)
+        {
+            this._drag[0].splice(index, 1);
+        }
+
+        index = this._over[0].indexOf(gameObject);
