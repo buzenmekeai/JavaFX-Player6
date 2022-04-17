@@ -120947,3 +120947,217 @@ var InputPlugin = new Class({
         }
 
         index = this._over[0].indexOf(gameObject);
+
+        if (index > -1)
+        {
+            this._over[0].splice(index, 1);
+        }
+
+        return gameObject;
+    },
+
+    /**
+     * Disables Input on a single Game Object.
+     *
+     * An input disabled Game Object still retains its Interactive Object component and can be re-enabled
+     * at any time, by passing it to `InputPlugin.enable`.
+     *
+     * @method Phaser.Input.InputPlugin#disable
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object to have its input system disabled.
+     */
+    disable: function (gameObject)
+    {
+        gameObject.input.enabled = false;
+    },
+
+    /**
+     * Enable a Game Object for interaction.
+     *
+     * If the Game Object already has an Interactive Object component, it is enabled and returned.
+     *
+     * Otherwise, a new Interactive Object component is created and assigned to the Game Object's `input` property.
+     *
+     * Input works by using hit areas, these are nearly always geometric shapes, such as rectangles or circles, that act as the hit area
+     * for the Game Object. However, you can provide your own hit area shape and callback, should you wish to handle some more advanced
+     * input detection.
+     *
+     * If no arguments are provided it will try and create a rectangle hit area based on the texture frame the Game Object is using. If
+     * this isn't a texture-bound object, such as a Graphics or BitmapText object, this will fail, and you'll need to provide a specific
+     * shape for it to use.
+     *
+     * You can also provide an Input Configuration Object as the only argument to this method.
+     *
+     * @method Phaser.Input.InputPlugin#enable
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} gameObject - The Game Object to be enabled for input.
+     * @param {(Phaser.Input.InputConfiguration|any)} [shape] - Either an input configuration object, or a geometric shape that defines the hit area for the Game Object. If not specified a Rectangle will be used.
+     * @param {HitAreaCallback} [callback] - The 'contains' function to invoke to check if the pointer is within the hit area.
+     * @param {boolean} [dropZone=false] - Is this Game Object a drop zone or not?
+     *
+     * @return {Phaser.Input.InputPlugin} This Input Plugin.
+     */
+    enable: function (gameObject, shape, callback, dropZone)
+    {
+        if (dropZone === undefined) { dropZone = false; }
+
+        if (gameObject.input)
+        {
+            //  If it is already has an InteractiveObject then just enable it and return
+            gameObject.input.enabled = true;
+        }
+        else
+        {
+            //  Create an InteractiveObject and enable it
+            this.setHitArea(gameObject, shape, callback);
+        }
+
+        if (gameObject.input && dropZone && !gameObject.input.dropZone)
+        {
+            gameObject.input.dropZone = dropZone;
+        }
+
+        return this;
+    },
+
+    /**
+     * Takes the given Pointer and performs a hit test against it, to see which interactive Game Objects
+     * it is currently above.
+     *
+     * The hit test is performed against which-ever Camera the Pointer is over. If it is over multiple
+     * cameras, it starts checking the camera at the top of the camera list, and if nothing is found, iterates down the list.
+     *
+     * @method Phaser.Input.InputPlugin#hitTestPointer
+     * @since 3.0.0
+     *
+     * @param {Phaser.Input.Pointer} pointer - The Pointer to check against the Game Objects.
+     *
+     * @return {Phaser.GameObjects.GameObject[]} An array of all the interactive Game Objects the Pointer was above.
+     */
+    hitTestPointer: function (pointer)
+    {
+        var cameras = this.cameras.getCamerasBelowPointer(pointer);
+
+        for (var c = 0; c < cameras.length; c++)
+        {
+            var camera = cameras[c];
+
+            //  Get a list of all objects that can be seen by the camera below the pointer in the scene and store in 'over' array.
+            //  All objects in this array are input enabled, as checked by the hitTest method, so we don't need to check later on as well.
+            var over = this.manager.hitTest(pointer, this._list, camera);
+
+            //  Filter out the drop zones
+            for (var i = 0; i < over.length; i++)
+            {
+                var obj = over[i];
+
+                if (obj.input.dropZone)
+                {
+                    this._tempZones.push(obj);
+                }
+            }
+
+            if (over.length > 0)
+            {
+                pointer.camera = camera;
+
+                return over;
+            }
+        }
+
+        //  If we got this far then there were no Game Objects below the pointer, but it was still over
+        //  a camera, so set that the top-most one into the pointer
+
+        pointer.camera = cameras[0];
+
+        return [];
+    },
+
+    /**
+     * An internal method that handles the Pointer down event.
+     *
+     * @method Phaser.Input.InputPlugin#processDownEvents
+     * @private
+     * @since 3.0.0
+     *
+     * @param {Phaser.Input.Pointer} pointer - The Pointer being tested.
+     *
+     * @return {integer} The total number of objects interacted with.
+     */
+    processDownEvents: function (pointer)
+    {
+        var total = 0;
+        var currentlyOver = this._temp;
+
+        var _eventData = this._eventData;
+        var _eventContainer = this._eventContainer;
+
+        _eventData.cancelled = false;
+
+        var aborted = false;
+
+        //  Go through all objects the pointer was over and fire their events / callbacks
+        for (var i = 0; i < currentlyOver.length; i++)
+        {
+            var gameObject = currentlyOver[i];
+
+            if (!gameObject.input)
+            {
+                continue;
+            }
+
+            total++;
+
+            gameObject.emit('pointerdown', pointer, gameObject.input.localX, gameObject.input.localY, _eventContainer);
+
+            if (_eventData.cancelled)
+            {
+                aborted = true;
+                break;
+            }
+
+            this.emit('gameobjectdown', pointer, gameObject, _eventContainer);
+
+            if (_eventData.cancelled)
+            {
+                aborted = true;
+                break;
+            }
+        }
+
+        //  Contains ALL Game Objects currently over in the array
+        if (!aborted)
+        {
+            this.emit('pointerdown', pointer, currentlyOver);
+        }
+
+        return total;
+    },
+
+    /**
+     * An internal method that handles the Pointer drag events.
+     *
+     * @method Phaser.Input.InputPlugin#processDragEvents
+     * @private
+     * @since 3.0.0
+     *
+     * @param {Phaser.Input.Pointer} pointer - The Pointer to check against the Game Objects.
+     * @param {number} time - The time stamp of the most recent Game step.
+     *
+     * @return {integer} The total number of objects interacted with.
+     */
+    processDragEvents: function (pointer, time)
+    {
+        if (this._draggable.length === 0)
+        {
+            //  There are no draggable items, so let's not even bother going further
+            return 0;
+        }
+
+        var i;
+        var gameObject;
+        var list;
+        var input;
+        var currentlyOver = this._temp;
