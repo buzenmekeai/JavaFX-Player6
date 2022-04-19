@@ -121581,3 +121581,228 @@ var InputPlugin = new Class({
                 this.emit('pointerout', pointer, justOut);
             }
         }
+
+        //  Process the Just Over objects
+        total = justOver.length;
+
+        _eventData.cancelled = false;
+
+        aborted = false;
+
+        if (total > 0)
+        {
+            this.sortGameObjects(justOver);
+
+            //  Call onOver for everything in the justOver array
+            for (i = 0; i < total; i++)
+            {
+                gameObject = justOver[i];
+
+                if (!gameObject.input)
+                {
+                    continue;
+                }
+
+                gameObject.emit('pointerover', pointer, gameObject.input.localX, gameObject.input.localY, _eventContainer);
+
+                manager.setCursor(gameObject.input);
+
+                totalInteracted++;
+
+                if (_eventData.cancelled)
+                {
+                    aborted = true;
+                    break;
+                }
+
+                this.emit('gameobjectover', pointer, gameObject, _eventContainer);
+
+                if (_eventData.cancelled)
+                {
+                    aborted = true;
+                    break;
+                }
+            }
+
+            if (!aborted)
+            {
+                this.emit('pointerover', pointer, justOver);
+            }
+        }
+
+        //  Add the contents of justOver to the previously over array
+        previouslyOver = stillOver.concat(justOver);
+
+        //  Then sort it into display list order
+        this._over[pointer.id] = this.sortGameObjects(previouslyOver);
+
+        return totalInteracted;
+    },
+
+    /**
+     * An internal method that handles the Pointer up events.
+     *
+     * @method Phaser.Input.InputPlugin#processUpEvents
+     * @private
+     * @since 3.0.0
+     *
+     * @param {Phaser.Input.Pointer} pointer - The pointer to check for events against.
+     *
+     * @return {integer} The total number of objects interacted with.
+     */
+    processUpEvents: function (pointer)
+    {
+        var currentlyOver = this._temp;
+
+        var _eventData = this._eventData;
+        var _eventContainer = this._eventContainer;
+
+        _eventData.cancelled = false;
+
+        var aborted = false;
+
+        //  Go through all objects the pointer was over and fire their events / callbacks
+        for (var i = 0; i < currentlyOver.length; i++)
+        {
+            var gameObject = currentlyOver[i];
+
+            if (!gameObject.input)
+            {
+                continue;
+            }
+
+            //  pointerupoutside
+
+            gameObject.emit('pointerup', pointer, gameObject.input.localX, gameObject.input.localY, _eventContainer);
+
+            if (_eventData.cancelled)
+            {
+                aborted = true;
+                break;
+            }
+
+            this.emit('gameobjectup', pointer, gameObject, _eventContainer);
+
+            if (_eventData.cancelled)
+            {
+                aborted = true;
+                break;
+            }
+        }
+
+        if (!aborted)
+        {
+            //  Contains ALL Game Objects currently up in the array
+            this.emit('pointerup', pointer, currentlyOver);
+        }
+
+        return currentlyOver.length;
+    },
+
+    /**
+     * Queues a Game Object for insertion into this Input Plugin on the next update.
+     *
+     * @method Phaser.Input.InputPlugin#queueForInsertion
+     * @private
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} child - The Game Object to add.
+     *
+     * @return {Phaser.Input.InputPlugin} This InputPlugin object.
+     */
+    queueForInsertion: function (child)
+    {
+        if (this._pendingInsertion.indexOf(child) === -1 && this._list.indexOf(child) === -1)
+        {
+            this._pendingInsertion.push(child);
+        }
+
+        return this;
+    },
+
+    /**
+     * Queues a Game Object for removal from this Input Plugin on the next update.
+     *
+     * @method Phaser.Input.InputPlugin#queueForRemoval
+     * @private
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} child - The Game Object to remove.
+     *
+     * @return {Phaser.Input.InputPlugin} This InputPlugin object.
+     */
+    queueForRemoval: function (child)
+    {
+        this._pendingRemoval.push(child);
+
+        return this;
+    },
+
+    /**
+     * Sets the draggable state of the given array of Game Objects.
+     *
+     * They can either be set to be draggable, or can have their draggable state removed by passing `false`.
+     *
+     * A Game Object will not fire drag events unless it has been specifically enabled for drag.
+     *
+     * @method Phaser.Input.InputPlugin#setDraggable
+     * @since 3.0.0
+     *
+     * @param {(Phaser.GameObjects.GameObject|Phaser.GameObjects.GameObject[])} gameObjects - An array of Game Objects to change the draggable state on.
+     * @param {boolean} [value=true] - Set to `true` if the Game Objects should be made draggable, `false` if they should be unset.
+     *
+     * @return {Phaser.Input.InputPlugin} This InputPlugin object.
+     */
+    setDraggable: function (gameObjects, value)
+    {
+        if (value === undefined) { value = true; }
+
+        if (!Array.isArray(gameObjects))
+        {
+            gameObjects = [ gameObjects ];
+        }
+
+        for (var i = 0; i < gameObjects.length; i++)
+        {
+            var gameObject = gameObjects[i];
+
+            gameObject.input.draggable = value;
+
+            var index = this._draggable.indexOf(gameObject);
+
+            if (value && index === -1)
+            {
+                this._draggable.push(gameObject);
+            }
+            else if (!value && index > -1)
+            {
+                this._draggable.splice(index, 1);
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * Creates a function that can be passed to `setInteractive`, `enable` or `setHitArea` that will handle
+     * pixel-perfect input detection on an Image or Sprite based Game Object, or any custom class that extends them.
+     *
+     * The following will create a sprite that is clickable on any pixel that has an alpha value >= 1.
+     *
+     * ```javascript
+     * this.add.sprite(x, y, key).setInteractive(this.input.makePixelPerfect());
+     * ```
+     * 
+     * The following will create a sprite that is clickable on any pixel that has an alpha value >= 150.
+     *
+     * ```javascript
+     * this.add.sprite(x, y, key).setInteractive(this.input.makePixelPerfect(150));
+     * ```
+     *
+     * Once you have made an Interactive Object pixel perfect it impacts all input related events for it: down, up,
+     * dragstart, drag, etc.
+     *
+     * As a pointer interacts with the Game Object it will constantly poll the texture, extracting a single pixel from
+     * the given coordinates and checking its color values. This is an expensive process, so should only be enabled on
+     * Game Objects that really need it.
+     * 
