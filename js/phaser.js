@@ -121361,3 +121361,223 @@ var InputPlugin = new Class({
         if (pointer.dragState === 5)
         {
             list = this._drag[pointer.id];
+
+            for (i = 0; i < list.length; i++)
+            {
+                gameObject = list[i];
+
+                input = gameObject.input;
+
+                if (input.dragState === 2)
+                {
+                    input.dragState = 0;
+
+                    input.dragX = input.localX - gameObject.displayOriginX;
+                    input.dragY = input.localY - gameObject.displayOriginY;
+
+                    var dropped = false;
+
+                    if (input.target)
+                    {
+                        gameObject.emit('drop', pointer, input.target);
+
+                        this.emit('drop', pointer, gameObject, input.target);
+
+                        input.target = null;
+
+                        dropped = true;
+                    }
+
+                    //  And finally the dragend event
+
+                    gameObject.emit('dragend', pointer, input.dragX, input.dragY, dropped);
+
+                    this.emit('dragend', pointer, gameObject, dropped);
+                }
+            }
+
+            pointer.dragState = 0;
+
+            list.splice(0);
+        }
+
+        return 0;
+    },
+
+    /**
+     * An internal method that handles the Pointer movement event.
+     *
+     * @method Phaser.Input.InputPlugin#processMoveEvents
+     * @private
+     * @since 3.0.0
+     *
+     * @param {Phaser.Input.Pointer} pointer - The pointer to check for events against.
+     *
+     * @return {integer} The total number of objects interacted with.
+     */
+    processMoveEvents: function (pointer)
+    {
+        var total = 0;
+        var currentlyOver = this._temp;
+
+        var _eventData = this._eventData;
+        var _eventContainer = this._eventContainer;
+
+        _eventData.cancelled = false;
+
+        var aborted = false;
+
+        //  Go through all objects the pointer was over and fire their events / callbacks
+        for (var i = 0; i < currentlyOver.length; i++)
+        {
+            var gameObject = currentlyOver[i];
+
+            if (!gameObject.input)
+            {
+                continue;
+            }
+
+            total++;
+
+            gameObject.emit('pointermove', pointer, gameObject.input.localX, gameObject.input.localY, _eventContainer);
+
+            if (_eventData.cancelled)
+            {
+                aborted = true;
+                break;
+            }
+
+            this.emit('gameobjectmove', pointer, gameObject, _eventContainer);
+
+            if (_eventData.cancelled)
+            {
+                aborted = true;
+                break;
+            }
+
+            if (this.topOnly)
+            {
+                break;
+            }
+        }
+
+        if (!aborted)
+        {
+            this.emit('pointermove', pointer, currentlyOver);
+        }
+
+        return total;
+    },
+
+    /**
+     * An internal method that handles the Pointer over and out events.
+     *
+     * @method Phaser.Input.InputPlugin#processOverOutEvents
+     * @private
+     * @since 3.0.0
+     *
+     * @param {Phaser.Input.Pointer} pointer - The pointer to check for events against.
+     *
+     * @return {integer} The total number of objects interacted with.
+     */
+    processOverOutEvents: function (pointer)
+    {
+        var currentlyOver = this._temp;
+
+        var i;
+        var gameObject;
+        var justOut = [];
+        var justOver = [];
+        var stillOver = [];
+        var previouslyOver = this._over[pointer.id];
+        var currentlyDragging = this._drag[pointer.id];
+
+        var manager = this.manager;
+
+        //  Go through all objects the pointer was previously over, and see if it still is.
+        //  Splits the previouslyOver array into two parts: justOut and stillOver
+
+        for (i = 0; i < previouslyOver.length; i++)
+        {
+            gameObject = previouslyOver[i];
+
+            if (currentlyOver.indexOf(gameObject) === -1 && currentlyDragging.indexOf(gameObject) === -1)
+            {
+                //  Not in the currentlyOver array, so must be outside of this object now
+                justOut.push(gameObject);
+            }
+            else
+            {
+                //  In the currentlyOver array
+                stillOver.push(gameObject);
+            }
+        }
+
+        //  Go through all objects the pointer is currently over (the hit test results)
+        //  and if not in the previouslyOver array we know it's a new entry, so add to justOver
+        for (i = 0; i < currentlyOver.length; i++)
+        {
+            gameObject = currentlyOver[i];
+
+            //  Is this newly over?
+
+            if (previouslyOver.indexOf(gameObject) === -1)
+            {
+                justOver.push(gameObject);
+            }
+        }
+
+        //  By this point the arrays are filled, so now we can process what happened...
+
+        //  Process the Just Out objects
+        var total = justOut.length;
+
+        var totalInteracted = 0;
+
+        var _eventData = this._eventData;
+        var _eventContainer = this._eventContainer;
+
+        _eventData.cancelled = false;
+
+        var aborted = false;
+
+        if (total > 0)
+        {
+            this.sortGameObjects(justOut);
+
+            //  Call onOut for everything in the justOut array
+            for (i = 0; i < total; i++)
+            {
+                gameObject = justOut[i];
+
+                if (!gameObject.input)
+                {
+                    continue;
+                }
+
+                gameObject.emit('pointerout', pointer, _eventContainer);
+
+                manager.resetCursor(gameObject.input);
+
+                totalInteracted++;
+
+                if (_eventData.cancelled)
+                {
+                    aborted = true;
+                    break;
+                }
+
+                this.emit('gameobjectout', pointer, gameObject, _eventContainer);
+
+                if (_eventData.cancelled)
+                {
+                    aborted = true;
+                    break;
+                }
+            }
+
+            if (!aborted)
+            {
+                this.emit('pointerout', pointer, justOut);
+            }
+        }
