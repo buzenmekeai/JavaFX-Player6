@@ -121806,3 +121806,235 @@ var InputPlugin = new Class({
      * the given coordinates and checking its color values. This is an expensive process, so should only be enabled on
      * Game Objects that really need it.
      * 
+     * You cannot make non-texture based Game Objects pixel perfect. So this will not work on Graphics, BitmapText,
+     * Render Textures, Text, Tilemaps, Containers or Particles.
+     *
+     * @method Phaser.Input.InputPlugin#makePixelPerfect
+     * @since 3.10.0
+     *
+     * @param {integer} [alphaTolerance=1] - The alpha level that the pixel should be above to be included as a successful interaction.
+     *
+     * @return {function} A Pixel Perfect Handler for use as a hitArea shape callback.
+     */
+    makePixelPerfect: function (alphaTolerance)
+    {
+        if (alphaTolerance === undefined) { alphaTolerance = 1; }
+
+        var textureManager = this.systems.textures;
+
+        return CreatePixelPerfectHandler(textureManager, alphaTolerance);
+    },
+
+    /**
+     * @typedef {object} Phaser.Input.InputConfiguration
+     *
+     * @property {any} [hitArea] - The object / shape to use as the Hit Area. If not given it will try to create a Rectangle based on the texture frame.
+     * @property {function} [hitAreaCallback] - The callback that determines if the pointer is within the Hit Area shape or not.
+     * @property {boolean} [draggable=false] - If `true` the Interactive Object will be set to be draggable and emit drag events.
+     * @property {boolean} [dropZone=false] - If `true` the Interactive Object will be set to be a drop zone for draggable objects.
+     * @property {boolean} [useHandCursor=false] - If `true` the Interactive Object will set the `pointer` hand cursor when a pointer is over it. This is a short-cut for setting `cursor: 'pointer'`.
+     * @property {string} [cursor] - The CSS string to be used when the cursor is over this Interactive Object.
+     * @property {boolean} [pixelPerfect=false] - If `true` the a pixel perfect function will be set for the hit area callback. Only works with texture based Game Objects.
+     * @property {integer} [alphaTolerance=1] - If `pixelPerfect` is set, this is the alpha tolerance threshold value used in the callback.
+     */
+
+    /**
+     * Sets the hit area for the given array of Game Objects.
+     *
+     * A hit area is typically one of the geometric shapes Phaser provides, such as a `Phaser.Geom.Rectangle`
+     * or `Phaser.Geom.Circle`. However, it can be any object as long as it works with the provided callback.
+     *
+     * If no hit area is provided a Rectangle is created based on the size of the Game Object, if possible
+     * to calculate.
+     *
+     * The hit area callback is the function that takes an `x` and `y` coordinate and returns a boolean if
+     * those values fall within the area of the shape or not. All of the Phaser geometry objects provide this,
+     * such as `Phaser.Geom.Rectangle.Contains`.
+     *
+     * @method Phaser.Input.InputPlugin#setHitArea
+     * @since 3.0.0
+     *
+     * @param {(Phaser.GameObjects.GameObject|Phaser.GameObjects.GameObject[])} gameObjects - An array of Game Objects to set the hit area on.
+     * @param {(Phaser.Input.InputConfiguration|any)} [shape] - Either an input configuration object, or a geometric shape that defines the hit area for the Game Object. If not specified a Rectangle will be used.
+     * @param {HitAreaCallback} [callback] - The 'contains' function to invoke to check if the pointer is within the hit area.
+     *
+     * @return {Phaser.Input.InputPlugin} This InputPlugin object.
+     */
+    setHitArea: function (gameObjects, shape, callback)
+    {
+        if (shape === undefined)
+        {
+            return this.setHitAreaFromTexture(gameObjects);
+        }
+
+        if (!Array.isArray(gameObjects))
+        {
+            gameObjects = [ gameObjects ];
+        }
+
+        var draggable = false;
+        var dropZone = false;
+        var cursor = false;
+        var useHandCursor = false;
+
+        //  Config object?
+        if (IsPlainObject(shape))
+        {
+            var config = shape;
+
+            shape = GetFastValue(config, 'hitArea', null);
+            callback = GetFastValue(config, 'hitAreaCallback', null);
+            draggable = GetFastValue(config, 'draggable', false);
+            dropZone = GetFastValue(config, 'dropZone', false);
+            cursor = GetFastValue(config, 'cursor', false);
+            useHandCursor = GetFastValue(config, 'useHandCursor', false);
+
+            var pixelPerfect = GetFastValue(config, 'pixelPerfect', false);
+            var alphaTolerance = GetFastValue(config, 'alphaTolerance', 1);
+
+            if (pixelPerfect)
+            {
+                shape = {};
+                callback = this.makePixelPerfect(alphaTolerance);
+            }
+
+            //  Still no hitArea or callback?
+            if (!shape || !callback)
+            {
+                this.setHitAreaFromTexture(gameObjects);
+            }
+        }
+        else if (typeof shape === 'function' && !callback)
+        {
+            callback = shape;
+            shape = {};
+        }
+
+        for (var i = 0; i < gameObjects.length; i++)
+        {
+            var gameObject = gameObjects[i];
+
+            var io = (!gameObject.input) ? CreateInteractiveObject(gameObject, shape, callback) : gameObject.input;
+
+            io.dropZone = dropZone;
+            io.cursor = (useHandCursor) ? 'pointer' : cursor;
+
+            gameObject.input = io;
+
+            if (draggable)
+            {
+                this.setDraggable(gameObject);
+            }
+
+            this.queueForInsertion(gameObject);
+        }
+
+        return this;
+    },
+
+    /**
+     * Sets the hit area for an array of Game Objects to be a `Phaser.Geom.Circle` shape, using
+     * the given coordinates and radius to control its position and size.
+     *
+     * @method Phaser.Input.InputPlugin#setHitAreaCircle
+     * @since 3.0.0
+     *
+     * @param {(Phaser.GameObjects.GameObject|Phaser.GameObjects.GameObject[])} gameObjects - An array of Game Objects to set as having a circle hit area.
+     * @param {number} x - The center of the circle.
+     * @param {number} y - The center of the circle.
+     * @param {number} radius - The radius of the circle.
+     * @param {HitAreaCallback} [callback] - The hit area callback. If undefined it uses Circle.Contains.
+     *
+     * @return {Phaser.Input.InputPlugin} This InputPlugin object.
+     */
+    setHitAreaCircle: function (gameObjects, x, y, radius, callback)
+    {
+        if (callback === undefined) { callback = CircleContains; }
+
+        var shape = new Circle(x, y, radius);
+
+        return this.setHitArea(gameObjects, shape, callback);
+    },
+
+    /**
+     * Sets the hit area for an array of Game Objects to be a `Phaser.Geom.Ellipse` shape, using
+     * the given coordinates and dimensions to control its position and size.
+     *
+     * @method Phaser.Input.InputPlugin#setHitAreaEllipse
+     * @since 3.0.0
+     *
+     * @param {(Phaser.GameObjects.GameObject|Phaser.GameObjects.GameObject[])} gameObjects - An array of Game Objects to set as having an ellipse hit area.
+     * @param {number} x - The center of the ellipse.
+     * @param {number} y - The center of the ellipse.
+     * @param {number} width - The width of the ellipse.
+     * @param {number} height - The height of the ellipse.
+     * @param {HitAreaCallback} [callback] - The hit area callback. If undefined it uses Ellipse.Contains.
+     *
+     * @return {Phaser.Input.InputPlugin} This InputPlugin object.
+     */
+    setHitAreaEllipse: function (gameObjects, x, y, width, height, callback)
+    {
+        if (callback === undefined) { callback = EllipseContains; }
+
+        var shape = new Ellipse(x, y, width, height);
+
+        return this.setHitArea(gameObjects, shape, callback);
+    },
+
+    /**
+     * Sets the hit area for an array of Game Objects to be a `Phaser.Geom.Rectangle` shape, using
+     * the Game Objects texture frame to define the position and size of the hit area.
+     *
+     * @method Phaser.Input.InputPlugin#setHitAreaFromTexture
+     * @since 3.0.0
+     *
+     * @param {(Phaser.GameObjects.GameObject|Phaser.GameObjects.GameObject[])} gameObjects - An array of Game Objects to set as having an ellipse hit area.
+     * @param {HitAreaCallback} [callback] - The hit area callback. If undefined it uses Rectangle.Contains.
+     *
+     * @return {Phaser.Input.InputPlugin} This InputPlugin object.
+     */
+    setHitAreaFromTexture: function (gameObjects, callback)
+    {
+        if (callback === undefined) { callback = RectangleContains; }
+
+        if (!Array.isArray(gameObjects))
+        {
+            gameObjects = [ gameObjects ];
+        }
+
+        for (var i = 0; i < gameObjects.length; i++)
+        {
+            var gameObject = gameObjects[i];
+
+            var frame = gameObject.frame;
+
+            var width = 0;
+            var height = 0;
+
+            if (frame)
+            {
+                width = frame.realWidth;
+                height = frame.realHeight;
+            }
+            else if (gameObject.width)
+            {
+                width = gameObject.width;
+                height = gameObject.height;
+            }
+
+            if (gameObject.type === 'Container' && (width === 0 || height === 0))
+            {
+                console.warn('Container.setInteractive() must specify a Shape or call setSize() first');
+                continue;
+            }
+
+            if (width !== 0 && height !== 0)
+            {
+                gameObject.input = CreateInteractiveObject(gameObject, new Rectangle(0, 0, width, height), callback);
+
+                this.queueForInsertion(gameObject);
+            }
+        }
+
+        return this;
+    },
