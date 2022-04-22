@@ -122038,3 +122038,226 @@ var InputPlugin = new Class({
 
         return this;
     },
+
+    /**
+     * Sets the hit area for an array of Game Objects to be a `Phaser.Geom.Rectangle` shape, using
+     * the given coordinates and dimensions to control its position and size.
+     *
+     * @method Phaser.Input.InputPlugin#setHitAreaRectangle
+     * @since 3.0.0
+     *
+     * @param {(Phaser.GameObjects.GameObject|Phaser.GameObjects.GameObject[])} gameObjects - An array of Game Objects to set as having a rectangular hit area.
+     * @param {number} x - The top-left of the rectangle.
+     * @param {number} y - The top-left of the rectangle.
+     * @param {number} width - The width of the rectangle.
+     * @param {number} height - The height of the rectangle.
+     * @param {HitAreaCallback} [callback] - The hit area callback. If undefined it uses Rectangle.Contains.
+     *
+     * @return {Phaser.Input.InputPlugin} This InputPlugin object.
+     */
+    setHitAreaRectangle: function (gameObjects, x, y, width, height, callback)
+    {
+        if (callback === undefined) { callback = RectangleContains; }
+
+        var shape = new Rectangle(x, y, width, height);
+
+        return this.setHitArea(gameObjects, shape, callback);
+    },
+
+    /**
+     * Sets the hit area for an array of Game Objects to be a `Phaser.Geom.Triangle` shape, using
+     * the given coordinates to control the position of its points.
+     *
+     * @method Phaser.Input.InputPlugin#setHitAreaTriangle
+     * @since 3.0.0
+     *
+     * @param {(Phaser.GameObjects.GameObject|Phaser.GameObjects.GameObject[])} gameObjects - An array of Game Objects to set as having a  triangular hit area.
+     * @param {number} x1 - The x coordinate of the first point of the triangle.
+     * @param {number} y1 - The y coordinate of the first point of the triangle.
+     * @param {number} x2 - The x coordinate of the second point of the triangle.
+     * @param {number} y2 - The y coordinate of the second point of the triangle.
+     * @param {number} x3 - The x coordinate of the third point of the triangle.
+     * @param {number} y3 - The y coordinate of the third point of the triangle.
+     * @param {HitAreaCallback} [callback] - The hit area callback. If undefined it uses Triangle.Contains.
+     *
+     * @return {Phaser.Input.InputPlugin} This InputPlugin object.
+     */
+    setHitAreaTriangle: function (gameObjects, x1, y1, x2, y2, x3, y3, callback)
+    {
+        if (callback === undefined) { callback = TriangleContains; }
+
+        var shape = new Triangle(x1, y1, x2, y2, x3, y3);
+
+        return this.setHitArea(gameObjects, shape, callback);
+    },
+
+    /**
+     * Sets the Pointers to always poll.
+     * 
+     * When a pointer is polled it runs a hit test to see which Game Objects are currently below it,
+     * or being interacted with it, regardless if the Pointer has actually moved or not.
+     *
+     * You should enable this if you want objects in your game to fire over / out events, and the objects
+     * are constantly moving, but the pointer may not have. Polling every frame has additional computation
+     * costs, especially if there are a large number of interactive objects in your game.
+     *
+     * @method Phaser.Input.InputPlugin#setPollAlways
+     * @since 3.0.0
+     *
+     * @return {Phaser.Input.InputPlugin} This InputPlugin object.
+     */
+    setPollAlways: function ()
+    {
+        this.pollRate = 0;
+        this._pollTimer = 0;
+
+        return this;
+    },
+
+    /**
+     * Sets the Pointers to only poll when they are moved or updated.
+     * 
+     * When a pointer is polled it runs a hit test to see which Game Objects are currently below it,
+     * or being interacted with it.
+     *
+     * @method Phaser.Input.InputPlugin#setPollOnMove
+     * @since 3.0.0
+     *
+     * @return {Phaser.Input.InputPlugin} This InputPlugin object.
+     */
+    setPollOnMove: function ()
+    {
+        this.pollRate = -1;
+        this._pollTimer = 0;
+
+        return this;
+    },
+
+    /**
+     * Sets the poll rate value. This is the amount of time that should have elapsed before a pointer
+     * will be polled again. See the `setPollAlways` and `setPollOnMove` methods.
+     *
+     * @method Phaser.Input.InputPlugin#setPollRate
+     * @since 3.0.0
+     *
+     * @param {number} value - The amount of time, in ms, that should elapsed before re-polling the pointers.
+     *
+     * @return {Phaser.Input.InputPlugin} This InputPlugin object.
+     */
+    setPollRate: function (value)
+    {
+        this.pollRate = value;
+        this._pollTimer = 0;
+
+        return this;
+    },
+
+    /**
+     * When set to `true` the global Input Manager will emulate DOM behavior by only emitting events from
+     * the top-most Game Objects in the Display List.
+     *
+     * If set to `false` it will emit events from all Game Objects below a Pointer, not just the top one.
+     *
+     * @method Phaser.Input.InputPlugin#setGlobalTopOnly
+     * @since 3.0.0
+     *
+     * @param {boolean} value - `true` to only include the top-most Game Object, or `false` to include all Game Objects in a hit test.
+     *
+     * @return {Phaser.Input.InputPlugin} This InputPlugin object.
+     */
+    setGlobalTopOnly: function (value)
+    {
+        this.manager.globalTopOnly = value;
+
+        return this;
+    },
+
+    /**
+     * When set to `true` this Input Plugin will emulate DOM behavior by only emitting events from
+     * the top-most Game Objects in the Display List.
+     *
+     * If set to `false` it will emit events from all Game Objects below a Pointer, not just the top one.
+     *
+     * @method Phaser.Input.InputPlugin#setTopOnly
+     * @since 3.0.0
+     *
+     * @param {boolean} value - `true` to only include the top-most Game Object, or `false` to include all Game Objects in a hit test.
+     *
+     * @return {Phaser.Input.InputPlugin} This InputPlugin object.
+     */
+    setTopOnly: function (value)
+    {
+        this.topOnly = value;
+
+        return this;
+    },
+
+    /**
+     * Given an array of Game Objects, sort the array and return it, so that the objects are in depth index order
+     * with the lowest at the bottom.
+     *
+     * @method Phaser.Input.InputPlugin#sortGameObjects
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject[]} gameObjects - An array of Game Objects to be sorted.
+     *
+     * @return {Phaser.GameObjects.GameObject[]} The sorted array of Game Objects.
+     */
+    sortGameObjects: function (gameObjects)
+    {
+        if (gameObjects.length < 2)
+        {
+            return gameObjects;
+        }
+
+        this.scene.sys.depthSort();
+
+        return gameObjects.sort(this.sortHandlerGO.bind(this));
+    },
+
+    /**
+     * Return the child lowest down the display list (with the smallest index)
+     * Will iterate through all parent containers, if present.
+     *
+     * @method Phaser.Input.InputPlugin#sortHandlerGO
+     * @private
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.GameObject} childA - The first Game Object to compare.
+     * @param {Phaser.GameObjects.GameObject} childB - The second Game Object to compare.
+     *
+     * @return {integer} Returns either a negative or positive integer, or zero if they match.
+     */
+    sortHandlerGO: function (childA, childB)
+    {
+        if (!childA.parentContainer && !childB.parentContainer)
+        {
+            //  Quick bail out when neither child has a container
+            return this.displayList.getIndex(childB) - this.displayList.getIndex(childA);
+        }
+        else if (childA.parentContainer === childB.parentContainer)
+        {
+            //  Quick bail out when both children have the same container
+            return childB.parentContainer.getIndex(childB) - childA.parentContainer.getIndex(childA);
+        }
+        else if (childA.parentContainer === childB)
+        {
+            //  Quick bail out when childA is a child of childB
+            return -1;
+        }
+        else if (childB.parentContainer === childA)
+        {
+            //  Quick bail out when childA is a child of childB
+            return 1;
+        }
+        else
+        {
+            //  Container index check
+            var listA = childA.getIndexList();
+            var listB = childB.getIndexList();
+            var len = Math.min(listA.length, listB.length);
+
+            for (var i = 0; i < len; i++)
+            {
+                var indexA = listA[i];
+                var indexB = listB[i];
