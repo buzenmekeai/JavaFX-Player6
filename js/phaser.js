@@ -122261,3 +122261,209 @@ var InputPlugin = new Class({
             {
                 var indexA = listA[i];
                 var indexB = listB[i];
+
+                if (indexA === indexB)
+                {
+                    //  Go to the next level down
+                    continue;
+                }
+                else
+                {
+                    //  Non-matching parents, so return
+                    return indexB - indexA;
+                }
+            }
+        }
+
+        //  Technically this shouldn't happen, but ...
+        return 0;
+    },
+
+    /**
+     * Causes the Input Manager to stop emitting any events for the remainder of this game step.
+     *
+     * @method Phaser.Input.InputPlugin#stopPropagation
+     * @since 3.0.0
+     *
+     * @return {Phaser.Input.InputPlugin} This InputPlugin object.
+     */
+    stopPropagation: function ()
+    {
+        if (this.manager.globalTopOnly)
+        {
+            this.manager.ignoreEvents = true;
+        }
+
+        return this;
+    },
+
+    /**
+     * Adds a callback to be invoked whenever the native DOM `mouseup` or `touchend` events are received.
+     * By setting the `isOnce` argument you can control if the callback is called once,
+     * or every time the DOM event occurs.
+     *
+     * Callbacks passed to this method are invoked _immediately_ when the DOM event happens,
+     * within the scope of the DOM event handler. Therefore, they are considered as 'native'
+     * from the perspective of the browser. This means they can be used for tasks such as
+     * opening new browser windows, or anything which explicitly requires user input to activate.
+     * However, as a result of this, they come with their own risks, and as such should not be used
+     * for general game input, but instead be reserved for special circumstances.
+     *
+     * If all you're trying to do is execute a callback when a pointer is released, then
+     * please use the internal Input event system instead.
+     *
+     * Please understand that these callbacks are invoked when the browser feels like doing so,
+     * which may be entirely out of the normal flow of the Phaser Game Loop. Therefore, you should absolutely keep
+     * Phaser related operations to a minimum in these callbacks. For example, don't destroy Game Objects,
+     * change Scenes or manipulate internal systems, otherwise you run a very real risk of creating
+     * heisenbugs (https://en.wikipedia.org/wiki/Heisenbug) that prove a challenge to reproduce, never mind
+     * solve.
+     *
+     * @method Phaser.Input.InputPlugin#addUpCallback
+     * @since 3.10.0
+     *
+     * @param {function} callback - The callback to be invoked on this DOM event.
+     * @param {boolean} [isOnce=true] - `true` if the callback will only be invoked once, `false` to call every time this event happens.
+     *
+     * @return {this} The Input Plugin.
+     */
+    addUpCallback: function (callback, isOnce)
+    {
+        this.manager.addUpCallback(callback, isOnce);
+
+        return this;
+    },
+
+    /**
+     * Adds a callback to be invoked whenever the native DOM `mousedown` or `touchstart` events are received.
+     * By setting the `isOnce` argument you can control if the callback is called once,
+     * or every time the DOM event occurs.
+     *
+     * Callbacks passed to this method are invoked _immediately_ when the DOM event happens,
+     * within the scope of the DOM event handler. Therefore, they are considered as 'native'
+     * from the perspective of the browser. This means they can be used for tasks such as
+     * opening new browser windows, or anything which explicitly requires user input to activate.
+     * However, as a result of this, they come with their own risks, and as such should not be used
+     * for general game input, but instead be reserved for special circumstances.
+     *
+     * If all you're trying to do is execute a callback when a pointer is down, then
+     * please use the internal Input event system instead.
+     *
+     * Please understand that these callbacks are invoked when the browser feels like doing so,
+     * which may be entirely out of the normal flow of the Phaser Game Loop. Therefore, you should absolutely keep
+     * Phaser related operations to a minimum in these callbacks. For example, don't destroy Game Objects,
+     * change Scenes or manipulate internal systems, otherwise you run a very real risk of creating
+     * heisenbugs (https://en.wikipedia.org/wiki/Heisenbug) that prove a challenge to reproduce, never mind
+     * solve.
+     *
+     * @method Phaser.Input.InputPlugin#addDownCallback
+     * @since 3.10.0
+     *
+     * @param {function} callback - The callback to be invoked on this dom event.
+     * @param {boolean} [isOnce=true] - `true` if the callback will only be invoked once, `false` to call every time this event happens.
+     *
+     * @return {this} The Input Plugin.
+     */
+    addDownCallback: function (callback, isOnce)
+    {
+        this.manager.addDownCallback(callback, isOnce);
+
+        return this;
+    },
+
+    /**
+     * Adds a callback to be invoked whenever the native DOM `mousemove` or `touchmove` events are received.
+     * By setting the `isOnce` argument you can control if the callback is called once,
+     * or every time the DOM event occurs.
+     *
+     * Callbacks passed to this method are invoked _immediately_ when the DOM event happens,
+     * within the scope of the DOM event handler. Therefore, they are considered as 'native'
+     * from the perspective of the browser. This means they can be used for tasks such as
+     * opening new browser windows, or anything which explicitly requires user input to activate.
+     * However, as a result of this, they come with their own risks, and as such should not be used
+     * for general game input, but instead be reserved for special circumstances.
+     *
+     * If all you're trying to do is execute a callback when a pointer is moved, then
+     * please use the internal Input event system instead.
+     *
+     * Please understand that these callbacks are invoked when the browser feels like doing so,
+     * which may be entirely out of the normal flow of the Phaser Game Loop. Therefore, you should absolutely keep
+     * Phaser related operations to a minimum in these callbacks. For example, don't destroy Game Objects,
+     * change Scenes or manipulate internal systems, otherwise you run a very real risk of creating
+     * heisenbugs (https://en.wikipedia.org/wiki/Heisenbug) that prove a challenge to reproduce, never mind
+     * solve.
+     *
+     * @method Phaser.Input.InputPlugin#addMoveCallback
+     * @since 3.10.0
+     *
+     * @param {function} callback - The callback to be invoked on this dom event.
+     * @param {boolean} [isOnce=false] - `true` if the callback will only be invoked once, `false` to call every time this event happens.
+     *
+     * @return {this} The Input Plugin.
+     */
+    addMoveCallback: function (callback, isOnce)
+    {
+        this.manager.addMoveCallback(callback, isOnce);
+
+        return this;
+    },
+
+    /**
+     * Adds new Pointer objects to the Input Manager.
+     *
+     * By default Phaser creates 2 pointer objects: `mousePointer` and `pointer1`.
+     *
+     * You can create more either by calling this method, or by setting the `input.activePointers` property
+     * in the Game Config, up to a maximum of 10 pointers.
+     *
+     * The first 10 pointers are available via the `InputPlugin.pointerX` properties, once they have been added
+     * via this method.
+     *
+     * @method Phaser.Input.InputPlugin#addPointer
+     * @since 3.10.0
+     * 
+     * @param {integer} [quantity=1] The number of new Pointers to create. A maximum of 10 is allowed in total.
+     *
+     * @return {Phaser.Input.Pointer[]} An array containing all of the new Pointer objects that were created.
+     */
+    addPointer: function (quantity)
+    {
+        return this.manager.addPointer(quantity);
+    },
+
+    /**
+     * Tells the Input system to set a custom cursor.
+     * 
+     * This cursor will be the default cursor used when interacting with the game canvas.
+     *
+     * If an Interactive Object also sets a custom cursor, this is the cursor that is reset after its use.
+     *
+     * Any valid CSS cursor value is allowed, including paths to image files, i.e.:
+     *
+     * ```javascript
+     * this.input.setDefaultCursor('url(assets/cursors/sword.cur), pointer');
+     * ```
+     * 
+     * Please read about the differences between browsers when it comes to the file formats and sizes they support:
+     *
+     * https://developer.mozilla.org/en-US/docs/Web/CSS/cursor
+     * https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_User_Interface/Using_URL_values_for_the_cursor_property
+     *
+     * It's up to you to pick a suitable cursor format that works across the range of browsers you need to support.
+     *
+     * @method Phaser.Input.InputPlugin#setDefaultCursor
+     * @since 3.10.0
+     * 
+     * @param {string} cursor - The CSS to be used when setting the default cursor.
+     *
+     * @return {Phaser.Input.InputPlugin} This Input instance.
+     */
+    setDefaultCursor: function (cursor)
+    {
+        this.manager.setDefaultCursor(cursor);
+
+        return this;
+    },
+
+    /**
+     * The Scene that owns this plugin is transitioning in.
