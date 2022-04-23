@@ -122467,3 +122467,215 @@ var InputPlugin = new Class({
 
     /**
      * The Scene that owns this plugin is transitioning in.
+     *
+     * @method Phaser.Input.InputPlugin#transitionIn
+     * @private
+     * @since 3.5.0
+     */
+    transitionIn: function ()
+    {
+        this.enabled = this.settings.transitionAllowInput;
+    },
+
+    /**
+     * The Scene that owns this plugin has finished transitioning in.
+     *
+     * @method Phaser.Input.InputPlugin#transitionComplete
+     * @private
+     * @since 3.5.0
+     */
+    transitionComplete: function ()
+    {
+        if (!this.settings.transitionAllowInput)
+        {
+            this.enabled = true;
+        }
+    },
+
+    /**
+     * The Scene that owns this plugin is transitioning out.
+     *
+     * @method Phaser.Input.InputPlugin#transitionOut
+     * @private
+     * @since 3.5.0
+     */
+    transitionOut: function ()
+    {
+        this.enabled = this.settings.transitionAllowInput;
+    },
+
+    /**
+     * The Scene that owns this plugin is shutting down.
+     * We need to kill and reset all internal properties as well as stop listening to Scene events.
+     *
+     * @method Phaser.Input.InputPlugin#shutdown
+     * @private
+     * @since 3.0.0
+     */
+    shutdown: function ()
+    {
+        //  Registered input plugins listen for this
+        this.pluginEvents.emit('shutdown');
+
+        this._temp.length = 0;
+        this._list.length = 0;
+        this._draggable.length = 0;
+        this._pendingRemoval.length = 0;
+        this._pendingInsertion.length = 0;
+
+        for (var i = 0; i < 10; i++)
+        {
+            this._drag[i] = [];
+            this._over[i] = [];
+        }
+
+        this.removeAllListeners();
+
+        var eventEmitter = this.systems.events;
+
+        eventEmitter.off('transitionstart', this.transitionIn, this);
+        eventEmitter.off('transitionout', this.transitionOut, this);
+        eventEmitter.off('transitioncomplete', this.transitionComplete, this);
+
+        eventEmitter.off('preupdate', this.preUpdate, this);
+        eventEmitter.off('update', this.update, this);
+        eventEmitter.off('shutdown', this.shutdown, this);
+    },
+
+    /**
+     * The Scene that owns this plugin is being destroyed.     
+     * We need to shutdown and then kill off all external references.
+     *
+     * @method Phaser.Input.InputPlugin#destroy
+     * @private
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.shutdown();
+
+        //  Registered input plugins listen for this
+        this.pluginEvents.emit('destroy');
+
+        this.pluginEvents.removeAllListeners();
+
+        this.scene.sys.events.off('start', this.start, this);
+
+        this.scene = null;
+        this.cameras = null;
+        this.manager = null;
+        this.events = null;
+        this.mouse = null;
+    },
+
+    /**
+     * The x coordinates of the ActivePointer based on the first camera in the camera list.
+     * This is only safe to use if your game has just 1 non-transformed camera and doesn't use multi-touch.
+     *
+     * @name Phaser.Input.InputPlugin#x
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    x: {
+
+        get: function ()
+        {
+            return this.manager.activePointer.x;
+        }
+
+    },
+
+    /**
+     * The y coordinates of the ActivePointer based on the first camera in the camera list.
+     * This is only safe to use if your game has just 1 non-transformed camera and doesn't use multi-touch.
+     *
+     * @name Phaser.Input.InputPlugin#y
+     * @type {number}
+     * @readonly
+     * @since 3.0.0
+     */
+    y: {
+
+        get: function ()
+        {
+            return this.manager.activePointer.y;
+        }
+
+    },
+
+    /**
+     * The mouse has its own unique Pointer object, which you can reference directly if making a _desktop specific game_.
+     * If you are supporting both desktop and touch devices then do not use this property, instead use `activePointer`
+     * which will always map to the most recently interacted pointer.
+     *
+     * @name Phaser.Input.InputPlugin#mousePointer
+     * @type {Phaser.Input.Pointer}
+     * @readonly
+     * @since 3.10.0
+     */
+    mousePointer: {
+
+        get: function ()
+        {
+            return this.manager.mousePointer;
+        }
+
+    },
+
+    /**
+     * The current active input Pointer.
+     *
+     * @name Phaser.Input.InputPlugin#activePointer
+     * @type {Phaser.Input.Pointer}
+     * @readonly
+     * @since 3.0.0
+     */
+    activePointer: {
+
+        get: function ()
+        {
+            return this.manager.activePointer;
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer1
+     * @type {Phaser.Input.Pointer}
+     * @readonly
+     * @since 3.10.0
+     */
+    pointer1: {
+
+        get: function ()
+        {
+            return this.manager.pointers[1];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer2
+     * @type {Phaser.Input.Pointer}
+     * @readonly
+     * @since 3.10.0
+     */
+    pointer2: {
+
+        get: function ()
+        {
+            return this.manager.pointers[2];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
