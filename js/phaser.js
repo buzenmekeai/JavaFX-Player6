@@ -122902,3 +122902,211 @@ module.exports = {
     DOWN: 13,
     LEFT: 14,
     RIGHT: 15,
+
+    SELECT: 8,
+    START: 9,
+
+    B: 0,
+    A: 1,
+    Y: 2,
+    X: 3,
+
+    LEFT_SHOULDER: 4,
+    RIGHT_SHOULDER: 5
+
+};
+
+
+/***/ }),
+/* 612 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * PlayStation DualShock 4 Gamepad Configuration.
+ * Sony PlayStation DualShock 4 (v2) wireless controller
+ *
+ * @name Phaser.Input.Gamepad.Configs.DUALSHOCK_4
+ * @type {object}
+ * @since 3.0.0
+ */
+module.exports = {
+
+    UP: 12,
+    DOWN: 13,
+    LEFT: 14,
+    RIGHT: 15,
+
+    SHARE: 8,
+    OPTIONS: 9,
+    PS: 16,
+    TOUCHBAR: 17,
+
+    X: 0,
+    CIRCLE: 1,
+    SQUARE: 2,
+    TRIANGLE: 3,
+
+    L1: 4,
+    R1: 5,
+    L2: 6,
+    R2: 7,
+    L3: 10,
+    R3: 11,
+
+    LEFT_STICK_H: 0,
+    LEFT_STICK_V: 1,
+    RIGHT_STICK_H: 2,
+    RIGHT_STICK_V: 3
+
+};
+
+
+/***/ }),
+/* 613 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Input.Gamepad.Configs
+ */
+
+module.exports = {
+
+    DUALSHOCK_4: __webpack_require__(612),
+    SNES_USB: __webpack_require__(611),
+    XBOX_360: __webpack_require__(610)
+
+};
+
+
+/***/ }),
+/* 614 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var EventEmitter = __webpack_require__(11);
+var Gamepad = __webpack_require__(257);
+var GetValue = __webpack_require__(4);
+var InputPluginCache = __webpack_require__(106);
+
+/**
+ * @typedef {object} Pad
+ *
+ * @property {string} id - The ID of the Gamepad.
+ * @property {integer} index - The index of the Gamepad.
+ */
+
+/**
+ * @classdesc
+ * The Gamepad Plugin is an input plugin that belongs to the Scene-owned Input system.
+ *
+ * Its role is to listen for native DOM Gamepad Events and then process them.
+ *
+ * You do not need to create this class directly, the Input system will create an instance of it automatically.
+ *
+ * You can access it from within a Scene using `this.input.gamepad`.
+ *
+ * To listen for a gamepad being connected:
+ *
+ * ```javascript
+ * this.input.gamepad.once('connected', function (pad) {
+ *     //   'pad' is a reference to the gamepad that was just connected
+ * });
+ * ```
+ *
+ * Note that the browser may require you to press a button on a gamepad before it will allow you to access it,
+ * this is for security reasons. However, it may also trust the page already, in which case you won't get the
+ * 'connected' event and instead should check `GamepadPlugin.total` to see if it thinks there are any gamepads
+ * already connected.
+ *
+ * Once you have received the connected event, or polled the gamepads and found them enabled, you can access
+ * them via the built-in properties `GamepadPlugin.pad1` to `pad4`, for up to 4 game pads. With a reference
+ * to the gamepads you can poll its buttons and axis sticks. See the properties and methods available on
+ * the `Gamepad` class for more details.
+ *
+ * For more information about Gamepad support in browsers see the following resources:
+ *
+ * https://developer.mozilla.org/en-US/docs/Web/API/Gamepad_API
+ * https://developer.mozilla.org/en-US/docs/Web/API/Gamepad_API/Using_the_Gamepad_API
+ * https://www.smashingmagazine.com/2015/11/gamepad-api-in-web-games/
+ * http://html5gamepad.com/
+ *
+ * @class GamepadPlugin
+ * @extends Phaser.Events.EventEmitter
+ * @memberof Phaser.Input.Gamepad
+ * @constructor
+ * @since 3.10.0
+ *
+ * @param {Phaser.Input.InputPlugin} sceneInputPlugin - A reference to the Scene Input Plugin that the KeyboardPlugin belongs to.
+ */
+var GamepadPlugin = new Class({
+
+    Extends: EventEmitter,
+
+    initialize:
+
+    function GamepadPlugin (sceneInputPlugin)
+    {
+        EventEmitter.call(this);
+
+        /**
+         * A reference to the Scene that this Input Plugin is responsible for.
+         *
+         * @name Phaser.Input.Gamepad.GamepadPlugin#scene
+         * @type {Phaser.Scene}
+         * @since 3.10.0
+         */
+        this.scene = sceneInputPlugin.scene;
+
+        /**
+         * A reference to the Scene Systems Settings.
+         *
+         * @name Phaser.Input.Gamepad.GamepadPlugin#settings
+         * @type {Phaser.Scenes.Settings.Object}
+         * @since 3.10.0
+         */
+        this.settings = this.scene.sys.settings;
+
+        /**
+         * A reference to the Scene Input Plugin that created this Keyboard Plugin.
+         *
+         * @name Phaser.Input.Gamepad.GamepadPlugin#sceneInputPlugin
+         * @type {Phaser.Input.InputPlugin}
+         * @since 3.10.0
+         */
+        this.sceneInputPlugin = sceneInputPlugin;
+
+        /**
+         * A boolean that controls if the Gamepad Manager is enabled or not.
+         * Can be toggled on the fly.
+         *
+         * @name Phaser.Input.Gamepad.GamepadPlugin#enabled
+         * @type {boolean}
+         * @default true
+         * @since 3.10.0
+         */
+        this.enabled = true;
+
+        /**
+         * The Gamepad Event target, as defined in the Game Config.
+         * Typically the browser window, but can be any interactive DOM element.
+         *
+         * @name Phaser.Input.Gamepad.GamepadPlugin#target
+         * @type {any}
