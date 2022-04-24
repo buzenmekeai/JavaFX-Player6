@@ -122679,3 +122679,226 @@ var InputPlugin = new Class({
     /**
      * A touch-based Pointer object.
      * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer3
+     * @type {Phaser.Input.Pointer}
+     * @readonly
+     * @since 3.10.0
+     */
+    pointer3: {
+
+        get: function ()
+        {
+            return this.manager.pointers[3];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer4
+     * @type {Phaser.Input.Pointer}
+     * @readonly
+     * @since 3.10.0
+     */
+    pointer4: {
+
+        get: function ()
+        {
+            return this.manager.pointers[4];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer5
+     * @type {Phaser.Input.Pointer}
+     * @readonly
+     * @since 3.10.0
+     */
+    pointer5: {
+
+        get: function ()
+        {
+            return this.manager.pointers[5];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer6
+     * @type {Phaser.Input.Pointer}
+     * @readonly
+     * @since 3.10.0
+     */
+    pointer6: {
+
+        get: function ()
+        {
+            return this.manager.pointers[6];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer7
+     * @type {Phaser.Input.Pointer}
+     * @readonly
+     * @since 3.10.0
+     */
+    pointer7: {
+
+        get: function ()
+        {
+            return this.manager.pointers[7];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer8
+     * @type {Phaser.Input.Pointer}
+     * @readonly
+     * @since 3.10.0
+     */
+    pointer8: {
+
+        get: function ()
+        {
+            return this.manager.pointers[8];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer9
+     * @type {Phaser.Input.Pointer}
+     * @readonly
+     * @since 3.10.0
+     */
+    pointer9: {
+
+        get: function ()
+        {
+            return this.manager.pointers[9];
+        }
+
+    },
+
+    /**
+     * A touch-based Pointer object.
+     * This will be `undefined` by default unless you add a new Pointer using `addPointer`.
+     *
+     * @name Phaser.Input.InputPlugin#pointer10
+     * @type {Phaser.Input.Pointer}
+     * @readonly
+     * @since 3.10.0
+     */
+    pointer10: {
+
+        get: function ()
+        {
+            return this.manager.pointers[10];
+        }
+
+    }
+
+});
+
+PluginCache.register('InputPlugin', InputPlugin, 'input');
+
+module.exports = InputPlugin;
+
+
+/***/ }),
+/* 610 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * XBox 360 Gamepad Configuration.
+ *
+ * @name Phaser.Input.Gamepad.Configs.XBOX_360
+ * @type {object}
+ * @since 3.0.0
+ */
+module.exports = {
+
+    UP: 12,
+    DOWN: 13,
+    LEFT: 14,
+    RIGHT: 15,
+
+    MENU: 16,
+
+    A: 0,
+    B: 1,
+    X: 2,
+    Y: 3,
+
+    LB: 4,
+    RB: 5,
+
+    LT: 6,
+    RT: 7,
+
+    BACK: 8,
+    START: 9,
+
+    LS: 10,
+    RS: 11,
+
+    LEFT_STICK_H: 0,
+    LEFT_STICK_V: 1,
+    RIGHT_STICK_H: 2,
+    RIGHT_STICK_V: 3
+
+};
+
+
+/***/ }),
+/* 611 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Tatar SNES USB Controller Gamepad Configuration.
+ * USB Gamepad  (STANDARD GAMEPAD Vendor: 0079 Product: 0011)
+ *
+ * @name Phaser.Input.Gamepad.Configs.SNES_USB
+ * @type {object}
+ * @since 3.0.0
+ */
+module.exports = {
+
+    UP: 12,
+    DOWN: 13,
+    LEFT: 14,
+    RIGHT: 15,
