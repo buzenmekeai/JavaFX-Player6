@@ -123110,3 +123110,223 @@ var GamepadPlugin = new Class({
          *
          * @name Phaser.Input.Gamepad.GamepadPlugin#target
          * @type {any}
+         * @since 3.10.0
+         */
+        this.target;
+
+        /**
+         * An array of the connected Gamepads.
+         *
+         * @name Phaser.Input.Gamepad.GamepadPlugin#gamepads
+         * @type {Phaser.Input.Gamepad.Gamepad[]}
+         * @default []
+         * @since 3.10.0
+         */
+        this.gamepads = [];
+
+        /**
+         * An internal event queue.
+         *
+         * @name Phaser.Input.Gamepad.GamepadPlugin#queue
+         * @type {GamepadEvent[]}
+         * @private
+         * @since 3.10.0
+         */
+        this.queue = [];
+
+        /**
+         * Internal event handler.
+         *
+         * @name Phaser.Input.Gamepad.GamepadPlugin#onGamepadHandler
+         * @type {function}
+         * @private
+         * @since 3.10.0
+         */
+        this.onGamepadHandler;
+
+        /**
+         * Internal Gamepad reference.
+         *
+         * @name Phaser.Input.Gamepad.GamepadPlugin#_pad1
+         * @type {Phaser.Input.Gamepad.Gamepad}
+         * @private
+         * @since 3.10.0
+         */
+        this._pad1;
+
+        /**
+         * Internal Gamepad reference.
+         *
+         * @name Phaser.Input.Gamepad.GamepadPlugin#_pad2
+         * @type {Phaser.Input.Gamepad.Gamepad}
+         * @private
+         * @since 3.10.0
+         */
+        this._pad2;
+
+        /**
+         * Internal Gamepad reference.
+         *
+         * @name Phaser.Input.Gamepad.GamepadPlugin#_pad3
+         * @type {Phaser.Input.Gamepad.Gamepad}
+         * @private
+         * @since 3.10.0
+         */
+        this._pad3;
+
+        /**
+         * Internal Gamepad reference.
+         *
+         * @name Phaser.Input.Gamepad.GamepadPlugin#_pad4
+         * @type {Phaser.Input.Gamepad.Gamepad}
+         * @private
+         * @since 3.10.0
+         */
+        this._pad4;
+
+        sceneInputPlugin.pluginEvents.once('boot', this.boot, this);
+        sceneInputPlugin.pluginEvents.on('start', this.start, this);
+    },
+
+    /**
+     * This method is called automatically, only once, when the Scene is first created.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.Input.Gamepad.GamepadPlugin#boot
+     * @private
+     * @since 3.10.0
+     */
+    boot: function ()
+    {
+        var game = this.scene.sys.game;
+        var settings = this.settings.input;
+        var config = game.config;
+
+        this.enabled = GetValue(settings, 'gamepad', config.inputGamepad) && game.device.input.gamepads;
+        this.target = GetValue(settings, 'gamepad.target', config.inputGamepadEventTarget);
+
+        this.sceneInputPlugin.pluginEvents.once('destroy', this.destroy, this);
+    },
+
+    /**
+     * This method is called automatically by the Scene when it is starting up.
+     * It is responsible for creating local systems, properties and listening for Scene events.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.Input.Gamepad.GamepadPlugin#start
+     * @private
+     * @since 3.10.0
+     */
+    start: function ()
+    {
+        if (this.enabled)
+        {
+            this.startListeners();
+        }
+
+        this.sceneInputPlugin.pluginEvents.once('shutdown', this.shutdown, this);
+    },
+
+    /**
+     * Checks to see if both this plugin and the Scene to which it belongs is active.
+     *
+     * @method Phaser.Input.Gamepad.GamepadPlugin#isActive
+     * @since 3.10.0
+     *
+     * @return {boolean} `true` if the plugin and the Scene it belongs to is active.
+     */
+    isActive: function ()
+    {
+        return (this.enabled && this.scene.sys.isActive());
+    },
+
+    /**
+     * Starts the Gamepad Event listeners running.
+     * This is called automatically and does not need to be manually invoked.
+     *
+     * @method Phaser.Input.Gamepad.GamepadPlugin#startListeners
+     * @private
+     * @since 3.10.0
+     */
+    startListeners: function ()
+    {
+        var _this = this;
+        var target = this.target;
+
+        var handler = function (event)
+        {
+            // console.log(event);
+
+            if (event.defaultPrevented || !_this.isActive())
+            {
+                // Do nothing if event already handled
+                return;
+            }
+
+            _this.refreshPads();
+
+            _this.queue.push(event);
+        };
+
+        this.onGamepadHandler = handler;
+
+        target.addEventListener('gamepadconnected', handler, false);
+        target.addEventListener('gamepaddisconnected', handler, false);
+
+        //  FF also supports gamepadbuttondown, gamepadbuttonup and gamepadaxismove but
+        //  nothing else does, and we can get those values via the gamepads anyway, so we will
+        //  until more browsers support this
+
+        //  Finally, listen for an update event from the Input Plugin
+        this.sceneInputPlugin.pluginEvents.on('update', this.update, this);
+    },
+
+    /**
+     * Stops the Gamepad Event listeners.
+     * This is called automatically and does not need to be manually invoked.
+     *
+     * @method Phaser.Input.Gamepad.GamepadPlugin#stopListeners
+     * @private
+     * @since 3.10.0
+     */
+    stopListeners: function ()
+    {
+        this.target.removeEventListener('gamepadconnected', this.onGamepadHandler);
+        this.target.removeEventListener('gamepaddisconnected', this.onGamepadHandler);
+
+        this.sceneInputPlugin.pluginEvents.off('update', this.update);
+    },
+
+    /**
+     * Disconnects all current Gamepads.
+     *
+     * @method Phaser.Input.Gamepad.GamepadPlugin#disconnectAll
+     * @since 3.10.0
+     */
+    disconnectAll: function ()
+    {
+        for (var i = 0; i < this.gamepads.length; i++)
+        {
+            this.gamepads.connected = false;
+        }
+    },
+
+    /**
+     * Refreshes the list of connected Gamepads.
+     *
+     * This is called automatically when a gamepad is connected or disconnected,
+     * and during the update loop.
+     *
+     * @method Phaser.Input.Gamepad.GamepadPlugin#refreshPads
+     * @private
+     * @since 3.10.0
+     */
+    refreshPads: function ()
+    {
+        var connectedPads = navigator.getGamepads();
+
+        if (!connectedPads)
+        {
+            this.disconnectAll();
+        }
+        else
