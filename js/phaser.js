@@ -123552,3 +123552,245 @@ var GamepadPlugin = new Class({
     pad1: {
 
         get: function ()
+        {
+            return this._pad1;
+        }
+
+    },
+
+    /**
+     * A reference to the second connected Gamepad.
+     *
+     * This will be undefined if either no pads are connected, or the browser
+     * has not yet issued a gamepadconnect, which can happen even if a Gamepad
+     * is plugged in, but hasn't yet had any buttons pressed on it.
+     *
+     * @name Phaser.Input.Gamepad.GamepadPlugin#pad2
+     * @type {Phaser.Input.Gamepad.Gamepad}
+     * @since 3.10.0
+     */
+    pad2: {
+
+        get: function ()
+        {
+            return this._pad2;
+        }
+
+    },
+
+    /**
+     * A reference to the third connected Gamepad.
+     *
+     * This will be undefined if either no pads are connected, or the browser
+     * has not yet issued a gamepadconnect, which can happen even if a Gamepad
+     * is plugged in, but hasn't yet had any buttons pressed on it.
+     *
+     * @name Phaser.Input.Gamepad.GamepadPlugin#pad3
+     * @type {Phaser.Input.Gamepad.Gamepad}
+     * @since 3.10.0
+     */
+    pad3: {
+
+        get: function ()
+        {
+            return this._pad3;
+        }
+
+    },
+
+    /**
+     * A reference to the fourth connected Gamepad.
+     *
+     * This will be undefined if either no pads are connected, or the browser
+     * has not yet issued a gamepadconnect, which can happen even if a Gamepad
+     * is plugged in, but hasn't yet had any buttons pressed on it.
+     *
+     * @name Phaser.Input.Gamepad.GamepadPlugin#pad4
+     * @type {Phaser.Input.Gamepad.Gamepad}
+     * @since 3.10.0
+     */
+    pad4: {
+
+        get: function ()
+        {
+            return this._pad4;
+        }
+
+    }
+
+});
+
+/**
+ * An instance of the Gamepad Plugin class, if enabled via the `input.gamepad` Scene or Game Config property.
+ * Use this to create access Gamepads connected to the browser and respond to gamepad buttons.
+ *
+ * @name Phaser.Input.InputPlugin#gamepad
+ * @type {?Phaser.Input.Gamepad.GamepadPlugin}
+ * @since 3.10.0
+ */
+InputPluginCache.register('GamepadPlugin', GamepadPlugin, 'gamepad', 'gamepad', 'inputGamepad');
+
+module.exports = GamepadPlugin;
+
+
+/***/ }),
+/* 615 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.Input.Gamepad
+ */
+
+module.exports = {
+
+    Axis: __webpack_require__(259),
+    Button: __webpack_require__(258),
+    Gamepad: __webpack_require__(257),
+    GamepadPlugin: __webpack_require__(614),
+    
+    Configs: __webpack_require__(613)
+};
+
+
+/***/ }),
+/* 616 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CONST = __webpack_require__(337);
+var Extend = __webpack_require__(20);
+
+/**
+ * @namespace Phaser.Input
+ */
+
+var Input = {
+
+    CreateInteractiveObject: __webpack_require__(260),
+    Gamepad: __webpack_require__(615),
+    InputManager: __webpack_require__(338),
+    InputPlugin: __webpack_require__(609),
+    InputPluginCache: __webpack_require__(106),
+    Keyboard: __webpack_require__(607),
+    Mouse: __webpack_require__(595),
+    Pointer: __webpack_require__(335),
+    Touch: __webpack_require__(594)
+
+};
+
+//   Merge in the consts
+Input = Extend(false, Input, CONST);
+
+module.exports = Input;
+
+
+/***/ }),
+/* 617 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var RotateAroundXY = __webpack_require__(144);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Triangle.RotateAroundPoint
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Triangle} O - [triangle,$return]
+ *
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ * @param {Phaser.Geom.Point} point - [description]
+ * @param {number} angle - [description]
+ *
+ * @return {Phaser.Geom.Triangle} [description]
+ */
+var RotateAroundPoint = function (triangle, point, angle)
+{
+    return RotateAroundXY(triangle, point.x, point.y, angle);
+};
+
+module.exports = RotateAroundPoint;
+
+
+/***/ }),
+/* 618 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var RotateAroundXY = __webpack_require__(144);
+var InCenter = __webpack_require__(261);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Triangle.Rotate
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Triangle} O - [triangle,$return]
+ *
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ * @param {number} angle - [description]
+ *
+ * @return {Phaser.Geom.Triangle} [description]
+ */
+var Rotate = function (triangle, angle)
+{
+    var point = InCenter(triangle);
+
+    return RotateAroundXY(triangle, point.x, point.y, angle);
+};
+
+module.exports = Rotate;
+
+
+/***/ }),
+/* 619 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Length = __webpack_require__(65);
+
+// The 2D area of a triangle. The area value is always non-negative.
+
+/**
+ * Gets the length of the perimeter of the given triangle.
+ *
+ * @function Phaser.Geom.Triangle.Perimeter
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ *
+ * @return {number} [description]
+ */
+var Perimeter = function (triangle)
+{
+    var line1 = triangle.getLineA();
+    var line2 = triangle.getLineB();
+    var line3 = triangle.getLineC();
