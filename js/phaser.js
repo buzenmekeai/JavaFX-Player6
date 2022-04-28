@@ -123794,3 +123794,237 @@ var Perimeter = function (triangle)
     var line1 = triangle.getLineA();
     var line2 = triangle.getLineB();
     var line3 = triangle.getLineC();
+
+    return (Length(line1) + Length(line2) + Length(line3));
+};
+
+module.exports = Perimeter;
+
+
+/***/ }),
+/* 620 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Returns true if two triangles have the same coordinates.
+ *
+ * @function Phaser.Geom.Triangle.Equals
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Triangle} triangle - The first triangle to check.
+ * @param {Phaser.Geom.Triangle} toCompare - The second triangle to check.
+ *
+ * @return {boolean} `true` if the two given triangles have the exact same coordinates, otherwise `false`.
+ */
+var Equals = function (triangle, toCompare)
+{
+    return (
+        triangle.x1 === toCompare.x1 &&
+        triangle.y1 === toCompare.y1 &&
+        triangle.x2 === toCompare.x2 &&
+        triangle.y2 === toCompare.y2 &&
+        triangle.x3 === toCompare.x3 &&
+        triangle.y3 === toCompare.y3
+    );
+};
+
+module.exports = Equals;
+
+
+/***/ }),
+/* 621 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Copy the values of one Triangle to a destination Triangle.
+ *
+ * @function Phaser.Geom.Triangle.CopyFrom
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Triangle} O - [dest,$return]
+ *
+ * @param {Phaser.Geom.Triangle} source - The source Triangle to copy the values from.
+ * @param {Phaser.Geom.Triangle} dest - The destination Triangle to copy the values to.
+ *
+ * @return {Phaser.Geom.Triangle} The destination Triangle.
+ */
+var CopyFrom = function (source, dest)
+{
+    return dest.setTo(source.x1, source.y1, source.x2, source.y2, source.x3, source.y3);
+};
+
+module.exports = CopyFrom;
+
+
+/***/ }),
+/* 622 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Contains = __webpack_require__(69);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Triangle.ContainsPoint
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ * @param {Phaser.Geom.Point} point - [description]
+ *
+ * @return {boolean} [description]
+ */
+var ContainsPoint = function (triangle, point)
+{
+    return Contains(triangle, point.x, point.y);
+};
+
+module.exports = ContainsPoint;
+
+
+/***/ }),
+/* 623 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Triangle = __webpack_require__(59);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Triangle.Clone
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Triangle} source - [description]
+ *
+ * @return {Phaser.Geom.Triangle} [description]
+ */
+var Clone = function (source)
+{
+    return new Triangle(source.x1, source.y1, source.x2, source.y2, source.x3, source.y3);
+};
+
+module.exports = Clone;
+
+
+/***/ }),
+/* 624 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Circle = __webpack_require__(71);
+
+//  Adapted from https://gist.github.com/mutoo/5617691
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Triangle.CircumCircle
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Circle} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ * @param {Phaser.Geom.Circle} [out] - [description]
+ *
+ * @return {Phaser.Geom.Circle} [description]
+ */
+var CircumCircle = function (triangle, out)
+{
+    if (out === undefined) { out = new Circle(); }
+
+    //  A
+    var x1 = triangle.x1;
+    var y1 = triangle.y1;
+
+    //  B
+    var x2 = triangle.x2;
+    var y2 = triangle.y2;
+
+    //  C
+    var x3 = triangle.x3;
+    var y3 = triangle.y3;
+
+    var A = x2 - x1;
+    var B = y2 - y1;
+    var C = x3 - x1;
+    var D = y3 - y1;
+    var E = A * (x1 + x2) + B * (y1 + y2);
+    var F = C * (x1 + x3) + D * (y1 + y3);
+    var G = 2 * (A * (y3 - y2) - B * (x3 - x2));
+
+    var dx;
+    var dy;
+
+    //  If the points of the triangle are collinear, then just find the
+    //  extremes and use the midpoint as the center of the circumcircle.
+
+    if (Math.abs(G) < 0.000001)
+    {
+        var minX = Math.min(x1, x2, x3);
+        var minY = Math.min(y1, y2, y3);
+        dx = (Math.max(x1, x2, x3) - minX) * 0.5;
+        dy = (Math.max(y1, y2, y3) - minY) * 0.5;
+
+        out.x = minX + dx;
+        out.y = minY + dy;
+        out.radius = Math.sqrt(dx * dx + dy * dy);
+    }
+    else
+    {
+        out.x = (D * E - B * F) / G;
+        out.y = (A * F - C * E) / G;
+        dx = out.x - x1;
+        dy = out.y - y1;
+        out.radius = Math.sqrt(dx * dx + dy * dy);
+    }
+
+    return out;
+};
+
+module.exports = CircumCircle;
+
+
+/***/ }),
+/* 625 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Vector2 = __webpack_require__(3);
+
+//  Adapted from http://bjornharrtell.github.io/jsts/doc/api/jsts_geom_Triangle.js.html
+
+/**
+ * Computes the determinant of a 2x2 matrix. Uses standard double-precision arithmetic, so is susceptible to round-off error.
