@@ -124028,3 +124028,236 @@ var Vector2 = __webpack_require__(3);
 
 /**
  * Computes the determinant of a 2x2 matrix. Uses standard double-precision arithmetic, so is susceptible to round-off error.
+ *
+ * @function det
+ * @private
+ * @since 3.0.0
+ *
+ * @param {number} m00 - The [0,0] entry of the matrix.
+ * @param {number} m01 - The [0,1] entry of the matrix.
+ * @param {number} m10 - The [1,0] entry of the matrix.
+ * @param {number} m11 - The [1,1] entry of the matrix.
+ *
+ * @return {number} the determinant.
+ */
+function det (m00, m01, m10, m11)
+{
+    return (m00 * m11) - (m01 * m10);
+}
+
+/**
+ * Computes the circumcentre of a triangle. The circumcentre is the centre of
+ * the circumcircle, the smallest circle which encloses the triangle. It is also
+ * the common intersection point of the perpendicular bisectors of the sides of
+ * the triangle, and is the only point which has equal distance to all three
+ * vertices of the triangle.
+ *
+ * @function Phaser.Geom.Triangle.CircumCenter
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Math.Vector2} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ * @param {Phaser.Math.Vector2} [out] - [description]
+ *
+ * @return {Phaser.Math.Vector2} [description]
+ */
+var CircumCenter = function (triangle, out)
+{
+    if (out === undefined) { out = new Vector2(); }
+
+    var cx = triangle.x3;
+    var cy = triangle.y3;
+
+    var ax = triangle.x1 - cx;
+    var ay = triangle.y1 - cy;
+
+    var bx = triangle.x2 - cx;
+    var by = triangle.y2 - cy;
+
+    var denom = 2 * det(ax, ay, bx, by);
+    var numx = det(ay, ax * ax + ay * ay, by, bx * bx + by * by);
+    var numy = det(ax, ax * ax + ay * ay, bx, bx * bx + by * by);
+
+    out.x = cx - numx / denom;
+    out.y = cy + numy / denom;
+
+    return out;
+};
+
+module.exports = CircumCenter;
+
+
+/***/ }),
+/* 626 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Centroid = __webpack_require__(263);
+var Offset = __webpack_require__(262);
+
+/**
+ * @callback CenterFunction
+ *
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ *
+ * @return {Phaser.Math.Vector2} [description]
+ */
+
+/**
+ * Positions the Triangle so that it is centered on the given coordinates.
+ *
+ * @function Phaser.Geom.Triangle.CenterOn
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Triangle} O - [triangle,$return]
+ *
+ * @param {Phaser.Geom.Triangle} triangle - The triangle to be positioned.
+ * @param {number} x - The horizontal coordinate to center on.
+ * @param {number} y - The vertical coordinate to center on.
+ * @param {CenterFunction} [centerFunc] - The function used to center the triangle. Defaults to Centroid centering.
+ *
+ * @return {Phaser.Geom.Triangle} The Triangle that was centered.
+ */
+var CenterOn = function (triangle, x, y, centerFunc)
+{
+    if (centerFunc === undefined) { centerFunc = Centroid; }
+
+    //  Get the center of the triangle
+    var center = centerFunc(triangle);
+
+    //  Difference
+    var diffX = x - center.x;
+    var diffY = y - center.y;
+
+    return Offset(triangle, diffX, diffY);
+};
+
+module.exports = CenterOn;
+
+
+/***/ }),
+/* 627 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Triangle = __webpack_require__(59);
+
+//  Builds a right triangle, with one 90 degree angle and two acute angles
+//  The x/y is the coordinate of the 90 degree angle (and will map to x1/y1 in the resulting Triangle)
+//  w/h can be positive or negative and represent the length of each side
+
+/**
+ * Builds a right triangle, i.e. one which has a 90-degree angle and two acute angles.
+ *
+ * @function Phaser.Geom.Triangle.BuildRight
+ * @since 3.0.0
+ *
+ * @param {number} x - The X coordinate of the right angle, which will also be the first X coordinate of the constructed Triangle.
+ * @param {number} y - The Y coordinate of the right angle, which will also be the first Y coordinate of the constructed Triangle.
+ * @param {number} width - The length of the side which is to the left or to the right of the right angle.
+ * @param {number} height - The length of the side which is above or below the right angle.
+ *
+ * @return {Phaser.Geom.Triangle} The constructed right Triangle.
+ */
+var BuildRight = function (x, y, width, height)
+{
+    if (height === undefined) { height = width; }
+
+    //  90 degree angle
+    var x1 = x;
+    var y1 = y;
+
+    var x2 = x;
+    var y2 = y - height;
+
+    var x3 = x + width;
+    var y3 = y;
+
+    return new Triangle(x1, y1, x2, y2, x3, y3);
+};
+
+module.exports = BuildRight;
+
+
+/***/ }),
+/* 628 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var EarCut = __webpack_require__(64);
+var Triangle = __webpack_require__(59);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Triangle.BuildFromPolygon
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Triangle[]} O - [out,$return]
+ *
+ * @param {array} data - A flat array of vertice coordinates like [x0,y0, x1,y1, x2,y2, ...]
+ * @param {array} [holes=null] - An array of hole indices if any (e.g. [5, 8] for a 12-vertice input would mean one hole with vertices 5–7 and another with 8–11).
+ * @param {number} [scaleX=1] - [description]
+ * @param {number} [scaleY=1] - [description]
+ * @param {(array|Phaser.Geom.Triangle[])} [out] - [description]
+ *
+ * @return {(array|Phaser.Geom.Triangle[])} [description]
+ */
+var BuildFromPolygon = function (data, holes, scaleX, scaleY, out)
+{
+    if (holes === undefined) { holes = null; }
+    if (scaleX === undefined) { scaleX = 1; }
+    if (scaleY === undefined) { scaleY = 1; }
+    if (out === undefined) { out = []; }
+
+    var tris = EarCut(data, holes);
+
+    var a;
+    var b;
+    var c;
+
+    var x1;
+    var y1;
+
+    var x2;
+    var y2;
+
+    var x3;
+    var y3;
+
+    for (var i = 0; i < tris.length; i += 3)
+    {
+        a = tris[i];
+        b = tris[i + 1];
+        c = tris[i + 2];
+
+        x1 = data[a * 2] * scaleX;
+        y1 = data[(a * 2) + 1] * scaleY;
+
+        x2 = data[b * 2] * scaleX;
+        y2 = data[(b * 2) + 1] * scaleY;
+
+        x3 = data[c * 2] * scaleX;
+        y3 = data[(c * 2) + 1] * scaleY;
+
+        out.push(new Triangle(x1, y1, x2, y2, x3, y3));
+    }
+
+    return out;
+};
