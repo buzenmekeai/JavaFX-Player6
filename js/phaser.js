@@ -124261,3 +124261,211 @@ var BuildFromPolygon = function (data, holes, scaleX, scaleY, out)
 
     return out;
 };
+
+module.exports = BuildFromPolygon;
+
+
+/***/ }),
+/* 629 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Triangle = __webpack_require__(59);
+
+/**
+ * Builds an equilateral triangle. In the equilateral triangle, all the sides are the same length (congruent) and all the angles are the same size (congruent).
+ * The x/y specifies the top-middle of the triangle (x1/y1) and length is the length of each side.
+ *
+ * @function Phaser.Geom.Triangle.BuildEquilateral
+ * @since 3.0.0
+ *
+ * @param {number} x - x coordinate of the top point of the triangle.
+ * @param {number} y - y coordinate of the top point of the triangle.
+ * @param {number} length - Length of each side of the triangle.
+ *
+ * @return {Phaser.Geom.Triangle} The Triangle object of the given size.
+ */
+var BuildEquilateral = function (x, y, length)
+{
+    var height = length * (Math.sqrt(3) / 2);
+
+    var x1 = x;
+    var y1 = y;
+
+    var x2 = x + (length / 2);
+    var y2 = y + height;
+
+    var x3 = x - (length / 2);
+    var y3 = y + height;
+
+    return new Triangle(x1, y1, x2, y2, x3, y3);
+};
+
+module.exports = BuildEquilateral;
+
+
+/***/ }),
+/* 630 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+// The 2D area of a triangle. The area value is always non-negative.
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Triangle.Area
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ *
+ * @return {number} [description]
+ */
+var Area = function (triangle)
+{
+    var x1 = triangle.x1;
+    var y1 = triangle.y1;
+
+    var x2 = triangle.x2;
+    var y2 = triangle.y2;
+
+    var x3 = triangle.x3;
+    var y3 = triangle.y3;
+
+    return Math.abs(((x3 - x1) * (y2 - y1) - (x2 - x1) * (y3 - y1)) / 2);
+};
+
+module.exports = Area;
+
+
+/***/ }),
+/* 631 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Triangle = __webpack_require__(59);
+
+Triangle.Area = __webpack_require__(630);
+Triangle.BuildEquilateral = __webpack_require__(629);
+Triangle.BuildFromPolygon = __webpack_require__(628);
+Triangle.BuildRight = __webpack_require__(627);
+Triangle.CenterOn = __webpack_require__(626);
+Triangle.Centroid = __webpack_require__(263);
+Triangle.CircumCenter = __webpack_require__(625);
+Triangle.CircumCircle = __webpack_require__(624);
+Triangle.Clone = __webpack_require__(623);
+Triangle.Contains = __webpack_require__(69);
+Triangle.ContainsArray = __webpack_require__(147);
+Triangle.ContainsPoint = __webpack_require__(622);
+Triangle.CopyFrom = __webpack_require__(621);
+Triangle.Decompose = __webpack_require__(269);
+Triangle.Equals = __webpack_require__(620);
+Triangle.GetPoint = __webpack_require__(278);
+Triangle.GetPoints = __webpack_require__(277);
+Triangle.InCenter = __webpack_require__(261);
+Triangle.Perimeter = __webpack_require__(619);
+Triangle.Offset = __webpack_require__(262);
+Triangle.Random = __webpack_require__(184);
+Triangle.Rotate = __webpack_require__(618);
+Triangle.RotateAroundPoint = __webpack_require__(617);
+Triangle.RotateAroundXY = __webpack_require__(144);
+
+module.exports = Triangle;
+
+
+/***/ }),
+/* 632 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+// Scales the width and height of this Rectangle by the given amounts.
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Rectangle.Scale
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [rect,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rect - [description]
+ * @param {number} x - [description]
+ * @param {number} y - [description]
+ *
+ * @return {Phaser.Geom.Rectangle} [description]
+ */
+var Scale = function (rect, x, y)
+{
+    if (y === undefined) { y = x; }
+
+    rect.width *= x;
+    rect.height *= y;
+
+    return rect;
+};
+
+module.exports = Scale;
+
+
+/***/ }),
+/* 633 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Determines if the two objects (either Rectangles or Rectangle-like) have the same width and height values under strict equality.
+ *
+ * @function Phaser.Geom.Rectangle.SameDimensions
+ * @since 3.15.0
+ *
+ * @param {Phaser.Geom.Rectangle} rect - The first Rectangle object.
+ * @param {Phaser.Geom.Rectangle} toCompare - The second Rectangle object.
+ *
+ * @return {boolean} `true` if the objects have equivalent values for the `width` and `height` properties, otherwise `false`.
+ */
+var SameDimensions = function (rect, toCompare)
+{
+    return (rect.width === toCompare.width && rect.height === toCompare.height);
+};
+
+module.exports = SameDimensions;
+
+
+/***/ }),
+/* 634 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Between = __webpack_require__(170);
+var ContainsRect = __webpack_require__(264);
+var Point = __webpack_require__(6);
