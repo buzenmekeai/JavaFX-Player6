@@ -124668,3 +124668,232 @@ module.exports = OffsetPoint;
  * @function Phaser.Geom.Rectangle.Offset
  * @since 3.0.0
  *
+ * @generic {Phaser.Geom.Rectangle} O - [rect,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rect - The Rectangle to adjust.
+ * @param {number} x - The distance to move the Rectangle horizontally.
+ * @param {number} y - The distance to move the Rectangle vertically.
+ *
+ * @return {Phaser.Geom.Rectangle} The adjusted Rectangle.
+ */
+var Offset = function (rect, x, y)
+{
+    rect.x += x;
+    rect.y += y;
+
+    return rect;
+};
+
+module.exports = Offset;
+
+
+/***/ }),
+/* 639 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Merges a Rectangle with a point by repositioning and/or resizing it so that the point is on or within its bounds.
+ *
+ * @function Phaser.Geom.Rectangle.MergeXY
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [target,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} target - The Rectangle which should be merged and modified.
+ * @param {number} x - The X coordinate of the point which should be merged.
+ * @param {number} y - The Y coordinate of the point which should be merged.
+ *
+ * @return {Phaser.Geom.Rectangle} The modified `target` Rectangle.
+ */
+var MergeXY = function (target, x, y)
+{
+    var minX = Math.min(target.x, x);
+    var maxX = Math.max(target.right, x);
+
+    target.x = minX;
+    target.width = maxX - minX;
+
+    var minY = Math.min(target.y, y);
+    var maxY = Math.max(target.bottom, y);
+
+    target.y = minY;
+    target.height = maxY - minY;
+
+    return target;
+};
+
+module.exports = MergeXY;
+
+
+/***/ }),
+/* 640 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+//  Merges source rectangle into target rectangle and returns target
+//  Neither rect should have negative widths or heights
+
+/**
+ * Merges the source rectangle into the target rectangle and returns the target.
+ * Neither rectangle should have a negative width or height.
+ *
+ * @function Phaser.Geom.Rectangle.MergeRect
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [target,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} target - Target rectangle. Will be modified to include source rectangle.
+ * @param {Phaser.Geom.Rectangle} source - Rectangle that will be merged into target rectangle.
+ *
+ * @return {Phaser.Geom.Rectangle} Modified target rectangle that contains source rectangle.
+ */
+var MergeRect = function (target, source)
+{
+    var minX = Math.min(target.x, source.x);
+    var maxX = Math.max(target.right, source.right);
+
+    target.x = minX;
+    target.width = maxX - minX;
+
+    var minY = Math.min(target.y, source.y);
+    var maxY = Math.max(target.bottom, source.bottom);
+
+    target.y = minY;
+    target.height = maxY - minY;
+
+    return target;
+};
+
+module.exports = MergeRect;
+
+
+/***/ }),
+/* 641 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Merges a Rectangle with a list of points by repositioning and/or resizing it such that all points are located on or within its bounds.
+ *
+ * @function Phaser.Geom.Rectangle.MergePoints
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [target,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} target - The Rectangle which should be merged.
+ * @param {Phaser.Geom.Point[]} points - An array of Points (or any object with public `x` and `y` properties) which should be merged with the Rectangle.
+ *
+ * @return {Phaser.Geom.Rectangle} The modified Rectangle.
+ */
+var MergePoints = function (target, points)
+{
+    var minX = target.x;
+    var maxX = target.right;
+    var minY = target.y;
+    var maxY = target.bottom;
+
+    for (var i = 0; i < points.length; i++)
+    {
+        minX = Math.min(minX, points[i].x);
+        maxX = Math.max(maxX, points[i].x);
+        minY = Math.min(minY, points[i].y);
+        maxY = Math.max(maxY, points[i].y);
+    }
+
+    target.x = minX;
+    target.y = minY;
+    target.width = maxX - minX;
+    target.height = maxY - minY;
+
+    return target;
+};
+
+module.exports = MergePoints;
+
+
+/***/ }),
+/* 642 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Rectangle = __webpack_require__(9);
+var Intersects = __webpack_require__(148);
+
+/**
+ * Takes two Rectangles and first checks to see if they intersect.
+ * If they intersect it will return the area of intersection in the `out` Rectangle.
+ * If they do not intersect, the `out` Rectangle will have a width and height of zero.
+ *
+ * @function Phaser.Geom.Rectangle.Intersection
+ * @since 3.11.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [rect,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rectA - The first Rectangle to get the intersection from.
+ * @param {Phaser.Geom.Rectangle} rectB - The second Rectangle to get the intersection from.
+ * @param {Phaser.Geom.Rectangle} [out] - A Rectangle to store the intersection results in.
+ *
+ * @return {Phaser.Geom.Rectangle} The intersection result. If the width and height are zero, no intersection occurred.
+ */
+var Intersection = function (rectA, rectB, out)
+{
+    if (out === undefined) { out = new Rectangle(); }
+
+    if (Intersects(rectA, rectB))
+    {
+        out.x = Math.max(rectA.x, rectB.x);
+        out.y = Math.max(rectA.y, rectB.y);
+        out.width = Math.min(rectA.right, rectB.right) - out.x;
+        out.height = Math.min(rectA.bottom, rectB.bottom) - out.y;
+    }
+    else
+    {
+        out.setEmpty();
+    }
+
+    return out;
+};
+
+module.exports = Intersection;
+
+
+/***/ }),
+/* 643 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CenterOn = __webpack_require__(175);
+
+//  Increases the size of the Rectangle object by the specified amounts.
+//  The center point of the Rectangle object stays the same, and its size increases
+//  to the left and right by the x value, and to the top and the bottom by the y value.
+
+/**
+ * [description]
+ *
