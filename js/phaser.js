@@ -124469,3 +124469,202 @@ module.exports = SameDimensions;
 var Between = __webpack_require__(170);
 var ContainsRect = __webpack_require__(264);
 var Point = __webpack_require__(6);
+
+/**
+ * Calculates a random point that lies within the `outer` Rectangle, but outside of the `inner` Rectangle.
+ * The inner Rectangle must be fully contained within the outer rectangle.
+ *
+ * @function Phaser.Geom.Rectangle.RandomOutside
+ * @since 3.10.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} outer - The outer Rectangle to get the random point within.
+ * @param {Phaser.Geom.Rectangle} inner - The inner Rectangle to exclude from the returned point.
+ * @param {Phaser.Geom.Point} [out] - A Point, or Point-like object to store the result in. If not specified, a new Point will be created.
+ *
+ * @return {Phaser.Geom.Point} A Point object containing the random values in its `x` and `y` properties.
+ */
+var RandomOutside = function (outer, inner, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    if (ContainsRect(outer, inner))
+    {
+        //  Pick a random quadrant
+        //
+        //  The quadrants don't extend the full widths / heights of the outer rect to give
+        //  us a better uniformed distribution, otherwise you get clumping in the corners where
+        //  the 4 quads would overlap
+
+        switch (Between(0, 3))
+        {
+            case 0: // Top
+                out.x = outer.x + (Math.random() * (inner.right - outer.x));
+                out.y = outer.y + (Math.random() * (inner.top - outer.y));
+                break;
+
+            case 1: // Bottom
+                out.x = inner.x + (Math.random() * (outer.right - inner.x));
+                out.y = inner.bottom + (Math.random() * (outer.bottom - inner.bottom));
+                break;
+
+            case 2: // Left
+                out.x = outer.x + (Math.random() * (inner.x - outer.x));
+                out.y = inner.y + (Math.random() * (outer.bottom - inner.y));
+                break;
+
+            case 3: // Right
+                out.x = inner.right + (Math.random() * (outer.right - inner.right));
+                out.y = outer.y + (Math.random() * (inner.bottom - outer.y));
+                break;
+        }
+    }
+
+    return out;
+};
+
+module.exports = RandomOutside;
+
+
+/***/ }),
+/* 635 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+var DegToRad = __webpack_require__(31);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Rectangle.PerimeterPoint
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rectangle - [description]
+ * @param {integer} angle - [description]
+ * @param {Phaser.Geom.Point} [out] - [description]
+ *
+ * @return {Phaser.Geom.Point} [description]
+ */
+var PerimeterPoint = function (rectangle, angle, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    angle = DegToRad(angle);
+
+    var s = Math.sin(angle);
+    var c = Math.cos(angle);
+
+    var dx = (c > 0) ? rectangle.width / 2 : rectangle.width / -2;
+    var dy = (s > 0) ? rectangle.height / 2 : rectangle.height / -2;
+
+    if (Math.abs(dx * s) < Math.abs(dy * c))
+    {
+        dy = (dx * s) / c;
+    }
+    else
+    {
+        dx = (dy * c) / s;
+    }
+
+    out.x = dx + rectangle.centerX;
+    out.y = dy + rectangle.centerY;
+
+    return out;
+};
+
+module.exports = PerimeterPoint;
+
+
+/***/ }),
+/* 636 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Rectangle.Overlaps
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Rectangle} rectA - [description]
+ * @param {Phaser.Geom.Rectangle} rectB - [description]
+ *
+ * @return {boolean} [description]
+ */
+var Overlaps = function (rectA, rectB)
+{
+    return (
+        rectA.x < rectB.right &&
+        rectA.right > rectB.x &&
+        rectA.y < rectB.bottom &&
+        rectA.bottom > rectB.y
+    );
+};
+
+module.exports = Overlaps;
+
+
+/***/ }),
+/* 637 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Nudges (translates) the top-left corner of a Rectangle by the coordinates of a point (translation vector).
+ *
+ * @function Phaser.Geom.Rectangle.OffsetPoint
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [rect,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rect - The Rectangle to adjust.
+ * @param {(Phaser.Geom.Point|Phaser.Math.Vector2)} point - The point whose coordinates should be used as an offset.
+ *
+ * @return {Phaser.Geom.Rectangle} The adjusted Rectangle.
+ */
+var OffsetPoint = function (rect, point)
+{
+    rect.x += point.x;
+    rect.y += point.y;
+
+    return rect;
+};
+
+module.exports = OffsetPoint;
+
+
+/***/ }),
+/* 638 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Nudges (translates) the top left corner of a Rectangle by a given offset.
+ *
+ * @function Phaser.Geom.Rectangle.Offset
+ * @since 3.0.0
+ *
