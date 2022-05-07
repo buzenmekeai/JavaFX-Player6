@@ -124897,3 +124897,236 @@ var CenterOn = __webpack_require__(175);
 /**
  * [description]
  *
+ * @function Phaser.Geom.Rectangle.Inflate
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [rect,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rect - [description]
+ * @param {number} x - [description]
+ * @param {number} y - [description]
+ *
+ * @return {Phaser.Geom.Rectangle} [description]
+ */
+var Inflate = function (rect, x, y)
+{
+    var cx = rect.centerX;
+    var cy = rect.centerY;
+
+    rect.setSize(rect.width + (x * 2), rect.height + (y * 2));
+
+    return CenterOn(rect, cx, cy);
+};
+
+module.exports = Inflate;
+
+
+/***/ }),
+/* 644 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+//  The size of the Rectangle object, expressed as a Point object
+//  with the values of the width and height properties.
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Rectangle.GetSize
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rect - [description]
+ * @param {(Phaser.Geom.Point|object)} [out] - [description]
+ *
+ * @return {(Phaser.Geom.Point|object)} [description]
+ */
+var GetSize = function (rect, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    out.x = rect.width;
+    out.y = rect.height;
+
+    return out;
+};
+
+module.exports = GetSize;
+
+
+/***/ }),
+/* 645 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+/**
+ * Returns the center of a Rectangle as a Point.
+ *
+ * @function Phaser.Geom.Rectangle.GetCenter
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rect - The Rectangle to get the center of.
+ * @param {(Phaser.Geom.Point|object)} [out] - Optional point-like object to update with the center coordinates.
+ *
+ * @return {(Phaser.Geom.Point|object)} The modified `out` object, or a new Point if none was provided.
+ */
+var GetCenter = function (rect, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    out.x = rect.centerX;
+    out.y = rect.centerY;
+
+    return out;
+};
+
+module.exports = GetCenter;
+
+
+/***/ }),
+/* 646 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Rounds a Rectangle's position and size down to the largest integer less than or equal to each current coordinate or dimension.
+ *
+ * @function Phaser.Geom.Rectangle.FloorAll
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [rect,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rect - The Rectangle to adjust.
+ *
+ * @return {Phaser.Geom.Rectangle} The adjusted Rectangle.
+ */
+var FloorAll = function (rect)
+{
+    rect.x = Math.floor(rect.x);
+    rect.y = Math.floor(rect.y);
+    rect.width = Math.floor(rect.width);
+    rect.height = Math.floor(rect.height);
+
+    return rect;
+};
+
+module.exports = FloorAll;
+
+
+/***/ }),
+/* 647 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Rectangle.Floor
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [rect,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rect - [description]
+ *
+ * @return {Phaser.Geom.Rectangle} [description]
+ */
+var Floor = function (rect)
+{
+    rect.x = Math.floor(rect.x);
+    rect.y = Math.floor(rect.y);
+
+    return rect;
+};
+
+module.exports = Floor;
+
+
+/***/ }),
+/* 648 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetAspectRatio = __webpack_require__(145);
+
+//  Fits the target rectangle around the source rectangle.
+//  Preserves aspect ration.
+//  Scales and centers the target rectangle to the source rectangle
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Rectangle.FitOutside
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [target,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} target - [description]
+ * @param {Phaser.Geom.Rectangle} source - [description]
+ *
+ * @return {Phaser.Geom.Rectangle} [description]
+ */
+var FitOutside = function (target, source)
+{
+    var ratio = GetAspectRatio(target);
+
+    if (ratio > GetAspectRatio(source))
+    {
+        //  Wider than Tall
+        target.setSize(source.height * ratio, source.height);
+    }
+    else
+    {
+        //  Taller than Wide
+        target.setSize(source.width, source.width / ratio);
+    }
+
+    return target.setPosition(
+        source.centerX - target.width / 2,
+        source.centerY - target.height / 2
+    );
+};
+
+module.exports = FitOutside;
+
+
+/***/ }),
+/* 649 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
