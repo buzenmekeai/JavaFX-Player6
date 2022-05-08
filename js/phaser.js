@@ -125130,3 +125130,199 @@ module.exports = FitOutside;
  * @copyright    2018 Photon Storm Ltd.
  * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
  */
+
+var GetAspectRatio = __webpack_require__(145);
+
+//  Fits the target rectangle into the source rectangle.
+//  Preserves aspect ratio.
+//  Scales and centers the target rectangle to the source rectangle
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Rectangle.FitInside
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [target,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} target - [description]
+ * @param {Phaser.Geom.Rectangle} source - [description]
+ *
+ * @return {Phaser.Geom.Rectangle} [description]
+ */
+var FitInside = function (target, source)
+{
+    var ratio = GetAspectRatio(target);
+
+    if (ratio < GetAspectRatio(source))
+    {
+        //  Taller than Wide
+        target.setSize(source.height * ratio, source.height);
+    }
+    else
+    {
+        //  Wider than Tall
+        target.setSize(source.width, source.width / ratio);
+    }
+
+    return target.setPosition(
+        source.centerX - (target.width / 2),
+        source.centerY - (target.height / 2)
+    );
+};
+
+module.exports = FitInside;
+
+
+/***/ }),
+/* 650 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Rectangle.Equals
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Rectangle} rect - [description]
+ * @param {Phaser.Geom.Rectangle} toCompare - [description]
+ *
+ * @return {boolean} [description]
+ */
+var Equals = function (rect, toCompare)
+{
+    return (
+        rect.x === toCompare.x &&
+        rect.y === toCompare.y &&
+        rect.width === toCompare.width &&
+        rect.height === toCompare.height
+    );
+};
+
+module.exports = Equals;
+
+
+/***/ }),
+/* 651 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Copy the values of one Rectangle to a destination Rectangle.
+ *
+ * @function Phaser.Geom.Rectangle.CopyFrom
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [dest,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} source - The source Rectangle to copy the values from.
+ * @param {Phaser.Geom.Rectangle} dest - The destination Rectangle to copy the values to.
+ *
+ * @return {Phaser.Geom.Rectangle} The destination Rectangle.
+ */
+var CopyFrom = function (source, dest)
+{
+    return dest.setTo(source.x, source.y, source.width, source.height);
+};
+
+module.exports = CopyFrom;
+
+
+/***/ }),
+/* 652 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Contains = __webpack_require__(39);
+
+/**
+ * Determines whether the specified point is contained within the rectangular region defined by this Rectangle object.
+ *
+ * @function Phaser.Geom.Rectangle.ContainsPoint
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Rectangle} rect - The Rectangle object.
+ * @param {Phaser.Geom.Point} point - The point object to be checked. Can be a Phaser Point object or any object with x and y values.
+ *
+ * @return {boolean} A value of true if the Rectangle object contains the specified point, otherwise false.
+ */
+var ContainsPoint = function (rect, point)
+{
+    return Contains(rect, point.x, point.y);
+};
+
+module.exports = ContainsPoint;
+
+
+/***/ }),
+/* 653 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Rectangle = __webpack_require__(9);
+
+/**
+ * Creates a new Rectangle which is identical to the given one.
+ *
+ * @function Phaser.Geom.Rectangle.Clone
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Rectangle} source - The Rectangle to clone.
+ *
+ * @return {Phaser.Geom.Rectangle} The newly created Rectangle, which is separate from the given one.
+ */
+var Clone = function (source)
+{
+    return new Rectangle(source.x, source.y, source.width, source.height);
+};
+
+module.exports = Clone;
+
+
+/***/ }),
+/* 654 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Rectangle.CeilAll
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [rect,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rect - [description]
+ *
+ * @return {Phaser.Geom.Rectangle} [description]
+ */
+var CeilAll = function (rect)
+{
+    rect.x = Math.ceil(rect.x);
+    rect.y = Math.ceil(rect.y);
