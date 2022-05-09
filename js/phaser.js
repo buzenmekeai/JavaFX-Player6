@@ -125326,3 +125326,216 @@ var CeilAll = function (rect)
 {
     rect.x = Math.ceil(rect.x);
     rect.y = Math.ceil(rect.y);
+    rect.width = Math.ceil(rect.width);
+    rect.height = Math.ceil(rect.height);
+
+    return rect;
+};
+
+module.exports = CeilAll;
+
+
+/***/ }),
+/* 655 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Rounds a Rectangle's position up to the smallest integer greater than or equal to each current coordinate.
+ *
+ * @function Phaser.Geom.Rectangle.Ceil
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [rect,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rect - The Rectangle to adjust.
+ *
+ * @return {Phaser.Geom.Rectangle} The adjusted Rectangle.
+ */
+var Ceil = function (rect)
+{
+    rect.x = Math.ceil(rect.x);
+    rect.y = Math.ceil(rect.y);
+
+    return rect;
+};
+
+module.exports = Ceil;
+
+
+/***/ }),
+/* 656 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Rectangle.Area
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Rectangle} rect - [description]
+ *
+ * @return {number} [description]
+ */
+var Area = function (rect)
+{
+    return rect.width * rect.height;
+};
+
+module.exports = Area;
+
+
+/***/ }),
+/* 657 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Polygon.Reverse
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Polygon} O - [polygon,$return]
+ *
+ * @param {Phaser.Geom.Polygon} polygon - [description]
+ *
+ * @return {Phaser.Geom.Polygon} [description]
+ */
+var Reverse = function (polygon)
+{
+    polygon.points.reverse();
+
+    return polygon;
+};
+
+module.exports = Reverse;
+
+
+/***/ }),
+/* 658 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+// Export the points as an array of flat numbers, following the sequence [ x,y, x,y, x,y ]
+
+/**
+ * Stores all of the points of a Polygon into a flat array of numbers following the sequence [ x,y, x,y, x,y ],
+ * i.e. each point of the Polygon, in the order it's defined, corresponds to two elements of the resultant
+ * array for the point's X and Y coordinate.
+ *
+ * @function Phaser.Geom.Polygon.GetNumberArray
+ * @since 3.0.0
+ *
+ * @generic {number[]} O - [output,$return]
+ *
+ * @param {Phaser.Geom.Polygon} polygon - The Polygon whose points to export.
+ * @param {(array|number[])} [output] - An array to which the points' coordinates should be appended.
+ *
+ * @return {(array|number[])} The modified `output` array, or a new array if none was given.
+ */
+var GetNumberArray = function (polygon, output)
+{
+    if (output === undefined) { output = []; }
+
+    for (var i = 0; i < polygon.points.length; i++)
+    {
+        output.push(polygon.points[i].x);
+        output.push(polygon.points[i].y);
+    }
+
+    return output;
+};
+
+module.exports = GetNumberArray;
+
+
+/***/ }),
+/* 659 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Contains = __webpack_require__(150);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Polygon.ContainsPoint
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Polygon} polygon - [description]
+ * @param {Phaser.Geom.Point} point - [description]
+ *
+ * @return {boolean} [description]
+ */
+var ContainsPoint = function (polygon, point)
+{
+    return Contains(polygon, point.x, point.y);
+};
+
+module.exports = ContainsPoint;
+
+
+/***/ }),
+/* 660 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Polygon = __webpack_require__(151);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Polygon.Clone
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Polygon} polygon - [description]
+ *
+ * @return {Phaser.Geom.Polygon} [description]
+ */
+var Clone = function (polygon)
+{
+    return new Polygon(polygon.points);
+};
+
+module.exports = Clone;
+
+
+/***/ }),
+/* 661 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
