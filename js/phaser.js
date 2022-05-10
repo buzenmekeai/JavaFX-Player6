@@ -125758,3 +125758,227 @@ module.exports = Invert;
 
 /***/ }),
 /* 667 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+/**
+ * Interpolate two given Point objects, based on `t` value. Return result either as new Point if `out` parameter is omitted or load result into Point passed as `out` parameter and return it. For `out` parameter you can also use any object with public x/y properties.
+ *
+ * @function Phaser.Geom.Point.Interpolate
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Point} pointA - [description]
+ * @param {Phaser.Geom.Point} pointB - [description]
+ * @param {number} [t=0] - [description]
+ * @param {(Phaser.Geom.Point|object)} [out] - [description]
+ *
+ * @return {(Phaser.Geom.Point|object)} [description]
+ */
+var Interpolate = function (pointA, pointB, t, out)
+{
+    if (t === undefined) { t = 0; }
+    if (out === undefined) { out = new Point(); }
+
+    out.x = pointA.x + ((pointB.x - pointA.x) * t);
+    out.y = pointA.y + ((pointB.y - pointA.y) * t);
+
+    return out;
+};
+
+module.exports = Interpolate;
+
+
+/***/ }),
+/* 668 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Rectangle = __webpack_require__(9);
+
+/**
+ * Calculates the Axis Aligned Bounding Box (or aabb) from an array of points.
+ *
+ * @function Phaser.Geom.Point.GetRectangleFromPoints
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Point[]} points - [description]
+ * @param {Phaser.Geom.Rectangle} [out] - [description]
+ *
+ * @return {Phaser.Geom.Rectangle} [description]
+ */
+var GetRectangleFromPoints = function (points, out)
+{
+    if (out === undefined) { out = new Rectangle(); }
+
+    var xMax = Number.NEGATIVE_INFINITY;
+    var xMin = Number.POSITIVE_INFINITY;
+    var yMax = Number.NEGATIVE_INFINITY;
+    var yMin = Number.POSITIVE_INFINITY;
+
+    for (var i = 0; i < points.length; i++)
+    {
+        var point = points[i];
+
+        if (point.x > xMax)
+        {
+            xMax = point.x;
+        }
+
+        if (point.x < xMin)
+        {
+            xMin = point.x;
+        }
+
+        if (point.y > yMax)
+        {
+            yMax = point.y;
+        }
+
+        if (point.y < yMin)
+        {
+            yMin = point.y;
+        }
+    }
+
+    out.x = xMin;
+    out.y = yMin;
+    out.width = xMax - xMin;
+    out.height = yMax - yMin;
+
+    return out;
+};
+
+module.exports = GetRectangleFromPoints;
+
+
+/***/ }),
+/* 669 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Point.GetCentroid
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Point[]} points - [description]
+ * @param {Phaser.Geom.Point} [out] - [description]
+ *
+ * @return {Phaser.Geom.Point} [description]
+ */
+var GetCentroid = function (points, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    if (!Array.isArray(points))
+    {
+        throw new Error('GetCentroid points argument must be an array');
+    }
+
+    var len = points.length;
+
+    if (len < 1)
+    {
+        throw new Error('GetCentroid points array must not be empty');
+    }
+    else if (len === 1)
+    {
+        out.x = points[0].x;
+        out.y = points[0].y;
+    }
+    else
+    {
+        for (var i = 0; i < len; i++)
+        {
+            out.x += points[i].x;
+            out.y += points[i].y;
+        }
+
+        out.x /= len;
+        out.y /= len;
+    }
+
+    return out;
+};
+
+module.exports = GetCentroid;
+
+
+/***/ }),
+/* 670 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Apply `Math.ceil()` to each coordinate of the given Point.
+ *
+ * @function Phaser.Geom.Point.Floor
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [point,$return]
+ *
+ * @param {Phaser.Geom.Point} point - The Point to floor.
+ *
+ * @return {Phaser.Geom.Point} The Point with `Math.floor()` applied to its coordinates.
+ */
+var Floor = function (point)
+{
+    return point.setTo(Math.floor(point.x), Math.floor(point.y));
+};
+
+module.exports = Floor;
+
+
+/***/ }),
+/* 671 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * A comparison of two `Point` objects to see if they are equal.
+ *
+ * @function Phaser.Geom.Point.Equals
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Point} point - The original `Point` to compare against.
+ * @param {Phaser.Geom.Point} toCompare - The second `Point` to compare.
+ *
+ * @return {boolean} Returns true if the both `Point` objects are equal.
+ */
+var Equals = function (point, toCompare)
