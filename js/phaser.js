@@ -125539,3 +125539,222 @@ module.exports = Clone;
 /**
  * @author       Richard Davey <rich@photonstorm.com>
  * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Polygon = __webpack_require__(151);
+
+Polygon.Clone = __webpack_require__(660);
+Polygon.Contains = __webpack_require__(150);
+Polygon.ContainsPoint = __webpack_require__(659);
+Polygon.GetAABB = __webpack_require__(285);
+Polygon.GetNumberArray = __webpack_require__(658);
+Polygon.GetPoints = __webpack_require__(284);
+Polygon.Perimeter = __webpack_require__(283);
+Polygon.Reverse = __webpack_require__(657);
+Polygon.Smooth = __webpack_require__(282);
+
+module.exports = Polygon;
+
+
+/***/ }),
+/* 662 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetMagnitude = __webpack_require__(267);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Point.SetMagnitude
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [point,$return]
+ *
+ * @param {Phaser.Geom.Point} point - [description]
+ * @param {number} magnitude - [description]
+ *
+ * @return {Phaser.Geom.Point} [description]
+ */
+var SetMagnitude = function (point, magnitude)
+{
+    if (point.x !== 0 || point.y !== 0)
+    {
+        var m = GetMagnitude(point);
+
+        point.x /= m;
+        point.y /= m;
+    }
+
+    point.x *= magnitude;
+    point.y *= magnitude;
+
+    return point;
+};
+
+module.exports = SetMagnitude;
+
+
+/***/ }),
+/* 663 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Point.ProjectUnit
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Point} pointA - [description]
+ * @param {Phaser.Geom.Point} pointB - [description]
+ * @param {Phaser.Geom.Point} [out] - [description]
+ *
+ * @return {Phaser.Geom.Point} [description]
+ */
+var ProjectUnit = function (pointA, pointB, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    var amt = ((pointA.x * pointB.x) + (pointA.y * pointB.y));
+
+    if (amt !== 0)
+    {
+        out.x = amt * pointB.x;
+        out.y = amt * pointB.y;
+    }
+
+    return out;
+};
+
+module.exports = ProjectUnit;
+
+
+/***/ }),
+/* 664 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+var GetMagnitudeSq = __webpack_require__(266);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Point.Project
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Point} pointA - [description]
+ * @param {Phaser.Geom.Point} pointB - [description]
+ * @param {Phaser.Geom.Point} [out] - [description]
+ *
+ * @return {Phaser.Geom.Point} [description]
+ */
+var Project = function (pointA, pointB, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    var dot = ((pointA.x * pointB.x) + (pointA.y * pointB.y));
+    var amt = dot / GetMagnitudeSq(pointB);
+
+    if (amt !== 0)
+    {
+        out.x = amt * pointB.x;
+        out.y = amt * pointB.y;
+    }
+
+    return out;
+};
+
+module.exports = Project;
+
+
+/***/ }),
+/* 665 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Point.Negative
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Point} point - [description]
+ * @param {Phaser.Geom.Point} [out] - [description]
+ *
+ * @return {Phaser.Geom.Point} [description]
+ */
+var Negative = function (point, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    return out.setTo(-point.x, -point.y);
+};
+
+module.exports = Negative;
+
+
+/***/ }),
+/* 666 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Swaps the X and the Y coordinate of a point.
+ *
+ * @function Phaser.Geom.Point.Invert
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [point,$return]
+ *
+ * @param {Phaser.Geom.Point} point - The Point to modify.
+ *
+ * @return {Phaser.Geom.Point} The modified `point`.
+ */
+var Invert = function (point)
+{
+    return point.setTo(point.y, point.x);
+};
+
+module.exports = Invert;
+
+
+/***/ }),
+/* 667 */
