@@ -125982,3 +125982,211 @@ module.exports = Floor;
  * @return {boolean} Returns true if the both `Point` objects are equal.
  */
 var Equals = function (point, toCompare)
+{
+    return (point.x === toCompare.x && point.y === toCompare.y);
+};
+
+module.exports = Equals;
+
+
+/***/ }),
+/* 672 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Copy the values of one Point to a destination Point.
+ *
+ * @function Phaser.Geom.Point.CopyFrom
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [dest,$return]
+ *
+ * @param {Phaser.Geom.Point} source - The source Point to copy the values from.
+ * @param {Phaser.Geom.Point} dest - The destination Point to copy the values to.
+ *
+ * @return {Phaser.Geom.Point} The destination Point.
+ */
+var CopyFrom = function (source, dest)
+{
+    return dest.setTo(source.x, source.y);
+};
+
+module.exports = CopyFrom;
+
+
+/***/ }),
+/* 673 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+/**
+ * Clone the given Point.
+ *
+ * @function Phaser.Geom.Point.Clone
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Point} source - The source Point to clone.
+ *
+ * @return {Phaser.Geom.Point} The cloned Point.
+ */
+var Clone = function (source)
+{
+    return new Point(source.x, source.y);
+};
+
+module.exports = Clone;
+
+
+/***/ }),
+/* 674 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Apply `Math.ceil()` to each coordinate of the given Point.
+ *
+ * @function Phaser.Geom.Point.Ceil
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [point,$return]
+ *
+ * @param {Phaser.Geom.Point} point - The Point to ceil.
+ *
+ * @return {Phaser.Geom.Point} The Point with `Math.ceil()` applied to its coordinates.
+ */
+var Ceil = function (point)
+{
+    return point.setTo(Math.ceil(point.x), Math.ceil(point.y));
+};
+
+module.exports = Ceil;
+
+
+/***/ }),
+/* 675 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+Point.Ceil = __webpack_require__(674);
+Point.Clone = __webpack_require__(673);
+Point.CopyFrom = __webpack_require__(672);
+Point.Equals = __webpack_require__(671);
+Point.Floor = __webpack_require__(670);
+Point.GetCentroid = __webpack_require__(669);
+Point.GetMagnitude = __webpack_require__(267);
+Point.GetMagnitudeSq = __webpack_require__(266);
+Point.GetRectangleFromPoints = __webpack_require__(668);
+Point.Interpolate = __webpack_require__(667);
+Point.Invert = __webpack_require__(666);
+Point.Negative = __webpack_require__(665);
+Point.Project = __webpack_require__(664);
+Point.ProjectUnit = __webpack_require__(663);
+Point.SetMagnitude = __webpack_require__(662);
+
+module.exports = Point;
+
+
+/***/ }),
+/* 676 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculate the width of the given line.
+ *
+ * @function Phaser.Geom.Line.Width
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} line - The line to calculate the width of.
+ *
+ * @return {number} The width of the line.
+ */
+var Width = function (line)
+{
+    return Math.abs(line.x1 - line.x2);
+};
+
+module.exports = Width;
+
+
+/***/ }),
+/* 677 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculate the slope of the given line.
+ *
+ * @function Phaser.Geom.Line.Slope
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} line - The line to calculate the slope of.
+ *
+ * @return {number} The slope of the line.
+ */
+var Slope = function (line)
+{
+    return (line.y2 - line.y1) / (line.x2 - line.x1);
+};
+
+module.exports = Slope;
+
+
+/***/ }),
+/* 678 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Set a line to a given position, angle and length.
+ *
+ * @function Phaser.Geom.Line.SetToAngle
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Line} O - [line,$return]
+ *
+ * @param {Phaser.Geom.Line} line - The line to set.
+ * @param {number} x - The horizontal start position of the line.
+ * @param {number} y - The vertical start position of the line.
+ * @param {number} angle - The angle of the line in radians.
+ * @param {number} length - The length of the line.
