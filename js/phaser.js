@@ -126190,3 +126190,224 @@ module.exports = Slope;
  * @param {number} y - The vertical start position of the line.
  * @param {number} angle - The angle of the line in radians.
  * @param {number} length - The length of the line.
+ *
+ * @return {Phaser.Geom.Line} The updated line.
+ */
+var SetToAngle = function (line, x, y, angle, length)
+{
+    line.x1 = x;
+    line.y1 = y;
+
+    line.x2 = x + (Math.cos(angle) * length);
+    line.y2 = y + (Math.sin(angle) * length);
+
+    return line;
+};
+
+module.exports = SetToAngle;
+
+
+/***/ }),
+/* 679 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var RotateAroundXY = __webpack_require__(146);
+
+/**
+ * Rotate a line around a point by the given angle in radians.
+ *
+ * @function Phaser.Geom.Line.RotateAroundPoint
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Line} O - [line,$return]
+ *
+ * @param {Phaser.Geom.Line} line - The line to rotate.
+ * @param {(Phaser.Geom.Point|object)} point - The point to rotate the line around.
+ * @param {number} angle - The angle of rotation in radians.
+ *
+ * @return {Phaser.Geom.Line} The rotated line.
+ */
+var RotateAroundPoint = function (line, point, angle)
+{
+    return RotateAroundXY(line, point.x, point.y, angle);
+};
+
+module.exports = RotateAroundPoint;
+
+
+/***/ }),
+/* 680 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var RotateAroundXY = __webpack_require__(146);
+
+/**
+ * Rotate a line around its midpoint by the given angle in radians.
+ *
+ * @function Phaser.Geom.Line.Rotate
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Line} O - [line,$return]
+ *
+ * @param {Phaser.Geom.Line} line - The line to rotate.
+ * @param {number} angle - The angle of rotation in radians.
+ *
+ * @return {Phaser.Geom.Line} The rotated line.
+ */
+var Rotate = function (line, angle)
+{
+    var x = (line.x1 + line.x2) / 2;
+    var y = (line.y1 + line.y2) / 2;
+
+    return RotateAroundXY(line, x, y, angle);
+};
+
+module.exports = Rotate;
+
+
+/***/ }),
+/* 681 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Angle = __webpack_require__(68);
+var NormalAngle = __webpack_require__(268);
+
+/**
+ * Calculate the reflected angle between two lines.
+ *
+ * This is the outgoing angle based on the angle of Line 1 and the normalAngle of Line 2.
+ *
+ * @function Phaser.Geom.Line.ReflectAngle
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} lineA - The first line.
+ * @param {Phaser.Geom.Line} lineB - The second line.
+ *
+ * @return {number} The reflected angle between each line.
+ */
+var ReflectAngle = function (lineA, lineB)
+{
+    return (2 * NormalAngle(lineB) - Math.PI - Angle(lineA));
+};
+
+module.exports = ReflectAngle;
+
+
+/***/ }),
+/* 682 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculate the perpendicular slope of the given line.
+ *
+ * @function Phaser.Geom.Line.PerpSlope
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} line - The line to calculate the perpendicular slope of.
+ *
+ * @return {number} The perpendicular slope of the line.
+ */
+var PerpSlope = function (line)
+{
+    return -((line.x2 - line.x1) / (line.y2 - line.y1));
+};
+
+module.exports = PerpSlope;
+
+
+/***/ }),
+/* 683 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Offset a line by the given amount.
+ *
+ * @function Phaser.Geom.Line.Offset
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Line} O - [line,$return]
+ *
+ * @param {Phaser.Geom.Line} line - The line to offset.
+ * @param {number} x - The horizontal offset to add to the line.
+ * @param {number} y - The vertical offset to add to the line.
+ *
+ * @return {Phaser.Geom.Line} The offset line.
+ */
+var Offset = function (line, x, y)
+{
+    line.x1 += x;
+    line.y1 += y;
+
+    line.x2 += x;
+    line.y2 += y;
+
+    return line;
+};
+
+module.exports = Offset;
+
+
+/***/ }),
+/* 684 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var MATH_CONST = __webpack_require__(16);
+var Angle = __webpack_require__(68);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Line.NormalY
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} line - [description]
+ *
+ * @return {number} [description]
+ */
+var NormalY = function (line)
+{
+    return Math.sin(Angle(line) - MATH_CONST.TAU);
+};
+
+module.exports = NormalY;
+
+
+/***/ }),
+/* 685 */
+/***/ (function(module, exports, __webpack_require__) {
