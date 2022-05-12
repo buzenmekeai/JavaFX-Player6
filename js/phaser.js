@@ -126411,3 +126411,238 @@ module.exports = NormalY;
 /***/ }),
 /* 685 */
 /***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var MATH_CONST = __webpack_require__(16);
+var Angle = __webpack_require__(68);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Line.NormalX
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} line - The Line object to get the normal value from.
+ *
+ * @return {number} [description]
+ */
+var NormalX = function (line)
+{
+    return Math.cos(Angle(line) - MATH_CONST.TAU);
+};
+
+module.exports = NormalX;
+
+
+/***/ }),
+/* 686 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculate the height of the given line.
+ *
+ * @function Phaser.Geom.Line.Height
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} line - The line to calculate the height of.
+ *
+ * @return {number} The height of the line.
+ */
+var Height = function (line)
+{
+    return Math.abs(line.y1 - line.y2);
+};
+
+module.exports = Height;
+
+
+/***/ }),
+/* 687 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var MATH_CONST = __webpack_require__(16);
+var Angle = __webpack_require__(68);
+var Point = __webpack_require__(6);
+
+/**
+ * Calculate the normal of the given line.
+ *
+ * The normal of a line is a vector that points perpendicular from it.
+ *
+ * @function Phaser.Geom.Line.GetNormal
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Line} line - The line to calculate the normal of.
+ * @param {(Phaser.Geom.Point|object)} [out] - An optional point object to store the normal in.
+ *
+ * @return {(Phaser.Geom.Point|object)} The normal of the Line.
+ */
+var GetNormal = function (line, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    var a = Angle(line) - MATH_CONST.TAU;
+
+    out.x = Math.cos(a);
+    out.y = Math.sin(a);
+
+    return out;
+};
+
+module.exports = GetNormal;
+
+
+/***/ }),
+/* 688 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Point = __webpack_require__(6);
+
+/**
+ * Get the midpoint of the given line.
+ *
+ * @function Phaser.Geom.Line.GetMidPoint
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Point} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Line} line - The line to get the midpoint of.
+ * @param {(Phaser.Geom.Point|object)} [out] - An optional point object to store the midpoint in.
+ *
+ * @return {(Phaser.Geom.Point|object)} The midpoint of the Line.
+ */
+var GetMidPoint = function (line, out)
+{
+    if (out === undefined) { out = new Point(); }
+
+    out.x = (line.x1 + line.x2) / 2;
+    out.y = (line.y1 + line.y2) / 2;
+
+    return out;
+};
+
+module.exports = GetMidPoint;
+
+
+/***/ }),
+/* 689 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Compare two lines for strict equality.
+ *
+ * @function Phaser.Geom.Line.Equals
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} line - The first line to compare.
+ * @param {Phaser.Geom.Line} toCompare - The second line to compare.
+ *
+ * @return {boolean} Whether the two lines are equal.
+ */
+var Equals = function (line, toCompare)
+{
+    return (
+        line.x1 === toCompare.x1 &&
+        line.y1 === toCompare.y1 &&
+        line.x2 === toCompare.x2 &&
+        line.y2 === toCompare.y2
+    );
+};
+
+module.exports = Equals;
+
+
+/***/ }),
+/* 690 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Copy the values of one line to a destination line.
+ *
+ * @function Phaser.Geom.Line.CopyFrom
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Line} O - [dest,$return]
+ *
+ * @param {Phaser.Geom.Line} source - The source line to copy the values from.
+ * @param {Phaser.Geom.Line} dest - The destination line to copy the values to.
+ *
+ * @return {Phaser.Geom.Line} The destination line.
+ */
+var CopyFrom = function (source, dest)
+{
+    return dest.setTo(source.x1, source.y1, source.x2, source.y2);
+};
+
+module.exports = CopyFrom;
+
+
+/***/ }),
+/* 691 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Line = __webpack_require__(54);
+
+/**
+ * Clone the given line.
+ *
+ * @function Phaser.Geom.Line.Clone
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} source - The source line to clone.
+ *
+ * @return {Phaser.Geom.Line} The cloned line.
+ */
+var Clone = function (source)
+{
+    return new Line(source.x1, source.y1, source.x2, source.y2);
+};
+
+module.exports = Clone;
+
+
+/***/ }),
+/* 692 */
