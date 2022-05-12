@@ -126646,3 +126646,225 @@ module.exports = Clone;
 
 /***/ }),
 /* 692 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+
+/**
+ * Center a line on the given coordinates.
+ *
+ * @function Phaser.Geom.Line.CenterOn
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} line - The line to center.
+ * @param {number} x - The horizontal coordinate to center the line on.
+ * @param {number} y - The vertical coordinate to center the line on.
+ *
+ * @return {Phaser.Geom.Line} The centered line.
+ */
+var CenterOn = function (line, x, y)
+{
+    var tx = x - ((line.x1 + line.x2) / 2);
+    var ty = y - ((line.y1 + line.y2) / 2);
+
+    line.x1 += tx;
+    line.y1 += ty;
+
+    line.x2 += tx;
+    line.y2 += ty;
+
+    return line;
+};
+
+module.exports = CenterOn;
+
+
+/***/ }),
+/* 693 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Line = __webpack_require__(54);
+
+Line.Angle = __webpack_require__(68);
+Line.BresenhamPoints = __webpack_require__(385);
+Line.CenterOn = __webpack_require__(692);
+Line.Clone = __webpack_require__(691);
+Line.CopyFrom = __webpack_require__(690);
+Line.Equals = __webpack_require__(689);
+Line.GetMidPoint = __webpack_require__(688);
+Line.GetNormal = __webpack_require__(687);
+Line.GetPoint = __webpack_require__(397);
+Line.GetPoints = __webpack_require__(189);
+Line.Height = __webpack_require__(686);
+Line.Length = __webpack_require__(65);
+Line.NormalAngle = __webpack_require__(268);
+Line.NormalX = __webpack_require__(685);
+Line.NormalY = __webpack_require__(684);
+Line.Offset = __webpack_require__(683);
+Line.PerpSlope = __webpack_require__(682);
+Line.Random = __webpack_require__(188);
+Line.ReflectAngle = __webpack_require__(681);
+Line.Rotate = __webpack_require__(680);
+Line.RotateAroundPoint = __webpack_require__(679);
+Line.RotateAroundXY = __webpack_require__(146);
+Line.SetToAngle = __webpack_require__(678);
+Line.Slope = __webpack_require__(677);
+Line.Width = __webpack_require__(676);
+
+module.exports = Line;
+
+
+/***/ }),
+/* 694 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var ContainsArray = __webpack_require__(147);
+var Decompose = __webpack_require__(269);
+var LineToLine = __webpack_require__(107);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Intersects.TriangleToTriangle
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Triangle} triangleA - [description]
+ * @param {Phaser.Geom.Triangle} triangleB - [description]
+ *
+ * @return {boolean} [description]
+ */
+var TriangleToTriangle = function (triangleA, triangleB)
+{
+    //  First the cheapest ones:
+
+    if (
+        triangleA.left > triangleB.right ||
+        triangleA.right < triangleB.left ||
+        triangleA.top > triangleB.bottom ||
+        triangleA.bottom < triangleB.top)
+    {
+        return false;
+    }
+
+    var lineAA = triangleA.getLineA();
+    var lineAB = triangleA.getLineB();
+    var lineAC = triangleA.getLineC();
+
+    var lineBA = triangleB.getLineA();
+    var lineBB = triangleB.getLineB();
+    var lineBC = triangleB.getLineC();
+
+    //  Now check the lines against each line of TriangleB
+    if (LineToLine(lineAA, lineBA) || LineToLine(lineAA, lineBB) || LineToLine(lineAA, lineBC))
+    {
+        return true;
+    }
+
+    if (LineToLine(lineAB, lineBA) || LineToLine(lineAB, lineBB) || LineToLine(lineAB, lineBC))
+    {
+        return true;
+    }
+
+    if (LineToLine(lineAC, lineBA) || LineToLine(lineAC, lineBB) || LineToLine(lineAC, lineBC))
+    {
+        return true;
+    }
+
+    //  Nope, so check to see if any of the points of triangleA are within triangleB
+
+    var points = Decompose(triangleA);
+    var within = ContainsArray(triangleB, points, true);
+
+    if (within.length > 0)
+    {
+        return true;
+    }
+
+    //  Finally check to see if any of the points of triangleB are within triangleA
+
+    points = Decompose(triangleB);
+    within = ContainsArray(triangleA, points, true);
+
+    if (within.length > 0)
+    {
+        return true;
+    }
+
+    return false;
+};
+
+module.exports = TriangleToTriangle;
+
+
+/***/ }),
+/* 695 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Contains = __webpack_require__(69);
+var LineToLine = __webpack_require__(107);
+
+/**
+ * Checks if a Triangle and a Line intersect.
+ * 
+ * The Line intersects the Triangle if it starts inside of it, ends inside of it, or crosses any of the Triangle's sides. Thus, the Triangle is considered "solid".
+ *
+ * @function Phaser.Geom.Intersects.TriangleToLine
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Triangle} triangle - The Triangle to check with.
+ * @param {Phaser.Geom.Line} line - The Line to check with.
+ *
+ * @return {boolean} `true` if the Triangle and the Line intersect, otherwise `false`.
+ */
+var TriangleToLine = function (triangle, line)
+{
+    //  If the Triangle contains either the start or end point of the line, it intersects
+    if (Contains(triangle, line.getPointA()) || Contains(triangle, line.getPointB()))
+    {
+        return true;
+    }
+
+    //  Now check the line against each line of the Triangle
+    if (LineToLine(triangle.getLineA(), line))
+    {
+        return true;
+    }
+
+    if (LineToLine(triangle.getLineB(), line))
+    {
+        return true;
+    }
+
+    if (LineToLine(triangle.getLineC(), line))
+    {
+        return true;
+    }
+
+    return false;
+};
+
+module.exports = TriangleToLine;
+
