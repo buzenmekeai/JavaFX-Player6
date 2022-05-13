@@ -126868,3 +126868,227 @@ var TriangleToLine = function (triangle, line)
 
 module.exports = TriangleToLine;
 
+
+/***/ }),
+/* 696 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var LineToCircle = __webpack_require__(272);
+var Contains = __webpack_require__(69);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Intersects.TriangleToCircle
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Triangle} triangle - [description]
+ * @param {Phaser.Geom.Circle} circle - [description]
+ *
+ * @return {boolean} [description]
+ */
+var TriangleToCircle = function (triangle, circle)
+{
+    //  First the cheapest ones:
+
+    if (
+        triangle.left > circle.right ||
+        triangle.right < circle.left ||
+        triangle.top > circle.bottom ||
+        triangle.bottom < circle.top)
+    {
+        return false;
+    }
+
+    if (Contains(triangle, circle.x, circle.y))
+    {
+        return true;
+    }
+
+    if (LineToCircle(triangle.getLineA(), circle))
+    {
+        return true;
+    }
+
+    if (LineToCircle(triangle.getLineB(), circle))
+    {
+        return true;
+    }
+
+    if (LineToCircle(triangle.getLineC(), circle))
+    {
+        return true;
+    }
+
+    return false;
+};
+
+module.exports = TriangleToCircle;
+
+
+/***/ }),
+/* 697 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Intersects.RectangleToValues
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Rectangle} rect - [description]
+ * @param {number} left - [description]
+ * @param {number} right - [description]
+ * @param {number} top - [description]
+ * @param {number} bottom - [description]
+ * @param {number} [tolerance=0] - [description]
+ *
+ * @return {boolean} [description]
+ */
+var RectangleToValues = function (rect, left, right, top, bottom, tolerance)
+{
+    if (tolerance === undefined) { tolerance = 0; }
+
+    return !(
+        left > rect.right + tolerance ||
+        right < rect.left - tolerance ||
+        top > rect.bottom + tolerance ||
+        bottom < rect.top - tolerance
+    );
+};
+
+module.exports = RectangleToValues;
+
+
+/***/ }),
+/* 698 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var LineToLine = __webpack_require__(107);
+var Contains = __webpack_require__(39);
+var ContainsArray = __webpack_require__(147);
+var Decompose = __webpack_require__(270);
+
+/**
+ * Checks for intersection between Rectangle shape and Triangle shape.
+ *
+ * @function Phaser.Geom.Intersects.RectangleToTriangle
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Rectangle} rect - Rectangle object to test.
+ * @param {Phaser.Geom.Triangle} triangle - Triangle object to test.
+ *
+ * @return {boolean} A value of `true` if objects intersect; otherwise `false`.
+ */
+var RectangleToTriangle = function (rect, triangle)
+{
+    //  First the cheapest ones:
+
+    if (
+        triangle.left > rect.right ||
+        triangle.right < rect.left ||
+        triangle.top > rect.bottom ||
+        triangle.bottom < rect.top)
+    {
+        return false;
+    }
+
+    var triA = triangle.getLineA();
+    var triB = triangle.getLineB();
+    var triC = triangle.getLineC();
+
+    //  Are any of the triangle points within the rectangle?
+
+    if (Contains(rect, triA.x1, triA.y1) || Contains(rect, triA.x2, triA.y2))
+    {
+        return true;
+    }
+
+    if (Contains(rect, triB.x1, triB.y1) || Contains(rect, triB.x2, triB.y2))
+    {
+        return true;
+    }
+
+    if (Contains(rect, triC.x1, triC.y1) || Contains(rect, triC.x2, triC.y2))
+    {
+        return true;
+    }
+
+    //  Cheap tests over, now to see if any of the lines intersect ...
+
+    var rectA = rect.getLineA();
+    var rectB = rect.getLineB();
+    var rectC = rect.getLineC();
+    var rectD = rect.getLineD();
+
+    if (LineToLine(triA, rectA) || LineToLine(triA, rectB) || LineToLine(triA, rectC) || LineToLine(triA, rectD))
+    {
+        return true;
+    }
+
+    if (LineToLine(triB, rectA) || LineToLine(triB, rectB) || LineToLine(triB, rectC) || LineToLine(triB, rectD))
+    {
+        return true;
+    }
+
+    if (LineToLine(triC, rectA) || LineToLine(triC, rectB) || LineToLine(triC, rectC) || LineToLine(triC, rectD))
+    {
+        return true;
+    }
+
+    //  None of the lines intersect, so are any rectangle points within the triangle?
+
+    var points = Decompose(rect);
+    var within = ContainsArray(triangle, points, true);
+
+    return (within.length > 0);
+};
+
+module.exports = RectangleToTriangle;
+
+
+/***/ }),
+/* 699 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var PointToLine = __webpack_require__(271);
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Intersects.PointToLineSegment
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Point} point - [description]
+ * @param {Phaser.Geom.Line} line - [description]
+ *
+ * @return {boolean} [description]
+ */
+var PointToLineSegment = function (point, line)
+{
+    if (!PointToLine(point, line))
+    {
