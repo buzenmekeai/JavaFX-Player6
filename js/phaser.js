@@ -127092,3 +127092,232 @@ var PointToLineSegment = function (point, line)
 {
     if (!PointToLine(point, line))
     {
+        return false;
+    }
+
+    var xMin = Math.min(line.x1, line.x2);
+    var xMax = Math.max(line.x1, line.x2);
+    var yMin = Math.min(line.y1, line.y2);
+    var yMax = Math.max(line.y1, line.y2);
+
+    return ((point.x >= xMin && point.x <= xMax) && (point.y >= yMin && point.y <= yMax));
+};
+
+module.exports = PointToLineSegment;
+
+
+/***/ }),
+/* 700 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Checks for intersection between the Line and a Rectangle shape, or a rectangle-like
+ * object, with public `x`, `y`, `right` and `bottom` properties, such as a Sprite or Body.
+ *
+ * An intersection is considered valid if:
+ *
+ * The line starts within, or ends within, the Rectangle.
+ * The line segment intersects one of the 4 rectangle edges.
+ *
+ * The for the purposes of this function rectangles are considered 'solid'.
+ *
+ * @function Phaser.Geom.Intersects.LineToRectangle
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Line} line - [description]
+ * @param {(Phaser.Geom.Rectangle|object)} rect - [description]
+ *
+ * @return {boolean} [description]
+ */
+var LineToRectangle = function (line, rect)
+{
+    var x1 = line.x1;
+    var y1 = line.y1;
+
+    var x2 = line.x2;
+    var y2 = line.y2;
+
+    var bx1 = rect.x;
+    var by1 = rect.y;
+    var bx2 = rect.right;
+    var by2 = rect.bottom;
+
+    var t = 0;
+
+    //  If the start or end of the line is inside the rect then we assume
+    //  collision, as rects are solid for our use-case.
+
+    if ((x1 >= bx1 && x1 <= bx2 && y1 >= by1 && y1 <= by2) ||
+        (x2 >= bx1 && x2 <= bx2 && y2 >= by1 && y2 <= by2))
+    {
+        return true;
+    }
+
+    if (x1 < bx1 && x2 >= bx1)
+    {
+        //  Left edge
+        t = y1 + (y2 - y1) * (bx1 - x1) / (x2 - x1);
+
+        if (t > by1 && t <= by2)
+        {
+            return true;
+        }
+    }
+    else if (x1 > bx2 && x2 <= bx2)
+    {
+        //  Right edge
+        t = y1 + (y2 - y1) * (bx2 - x1) / (x2 - x1);
+
+        if (t >= by1 && t <= by2)
+        {
+            return true;
+        }
+    }
+
+    if (y1 < by1 && y2 >= by1)
+    {
+        //  Top edge
+        t = x1 + (x2 - x1) * (by1 - y1) / (y2 - y1);
+
+        if (t >= bx1 && t <= bx2)
+        {
+            return true;
+        }
+    }
+    else if (y1 > by2 && y2 <= by2)
+    {
+        //  Bottom edge
+        t = x1 + (x2 - x1) * (by2 - y1) / (y2 - y1);
+
+        if (t >= bx1 && t <= bx2)
+        {
+            return true;
+        }
+    }
+
+    return false;
+};
+
+module.exports = LineToRectangle;
+
+
+/***/ }),
+/* 701 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Rectangle = __webpack_require__(9);
+var RectangleToRectangle = __webpack_require__(148);
+
+/**
+ * Checks if two Rectangle shapes intersect and returns the area of this intersection as Rectangle object.
+ * 
+ * If optional `output` parameter is omitted, new Rectangle object is created and returned. If there is intersection, it will contain intersection area. If there is no intersection, it wil be empty Rectangle (all values set to zero).
+ * 
+ * If Rectangle object is passed as `output` and there is intersection, then intersection area data will be loaded into it and it will be returned. If there is no intersetion, it will be returned without any change.
+ *
+ * @function Phaser.Geom.Intersects.GetRectangleIntersection
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [output,$return]
+ *
+ * @param {Phaser.Geom.Rectangle} rectA - The first Rectangle object.
+ * @param {Phaser.Geom.Rectangle} rectB - The second Rectangle object.
+ * @param {Phaser.Geom.Rectangle} [output] - Optional Rectangle object. If given, the intersection data will be loaded into it (in case of no intersection, it will be left unchanged). Otherwise, new Rectangle object will be created and returned with either intersection data or empty (all values set to zero), if there is no intersection.
+ *
+ * @return {Phaser.Geom.Rectangle} A rectangle object with intersection data.
+ */
+var GetRectangleIntersection = function (rectA, rectB, output)
+{
+    if (output === undefined) { output = new Rectangle(); }
+
+    if (RectangleToRectangle(rectA, rectB))
+    {
+        output.x = Math.max(rectA.x, rectB.x);
+        output.y = Math.max(rectA.y, rectB.y);
+        output.width = Math.min(rectA.right, rectB.right) - output.x;
+        output.height = Math.min(rectA.bottom, rectB.bottom) - output.y;
+    }
+
+    return output;
+};
+
+module.exports = GetRectangleIntersection;
+
+
+/***/ }),
+/* 702 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * [description]
+ *
+ * @function Phaser.Geom.Intersects.CircleToRectangle
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Circle} circle - [description]
+ * @param {Phaser.Geom.Rectangle} rect - [description]
+ *
+ * @return {boolean} [description]
+ */
+var CircleToRectangle = function (circle, rect)
+{
+    var halfWidth = rect.width / 2;
+    var halfHeight = rect.height / 2;
+
+    var cx = Math.abs(circle.x - rect.x - halfWidth);
+    var cy = Math.abs(circle.y - rect.y - halfHeight);
+    var xDist = halfWidth + circle.radius;
+    var yDist = halfHeight + circle.radius;
+
+    if (cx > xDist || cy > yDist)
+    {
+        return false;
+    }
+    else if (cx <= halfWidth || cy <= halfHeight)
+    {
+        return true;
+    }
+    else
+    {
+        var xCornerDist = cx - halfWidth;
+        var yCornerDist = cy - halfHeight;
+        var xCornerDistSq = xCornerDist * xCornerDist;
+        var yCornerDistSq = yCornerDist * yCornerDist;
+        var maxCornerDistSq = circle.radius * circle.radius;
+
+        return (xCornerDistSq + yCornerDistSq <= maxCornerDistSq);
+    }
+};
+
+module.exports = CircleToRectangle;
+
+
+/***/ }),
+/* 703 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var DistanceBetween = __webpack_require__(52);
