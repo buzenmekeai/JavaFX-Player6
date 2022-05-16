@@ -127528,3 +127528,225 @@ module.exports = CopyFrom;
  */
 
 var Contains = __webpack_require__(89);
+
+/**
+ * Check to see if the Ellipse contains all four points of the given Rectangle object.
+ *
+ * @function Phaser.Geom.Ellipse.ContainsRect
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Ellipse} ellipse - The Ellipse to check.
+ * @param {(Phaser.Geom.Rectangle|object)} rect - The Rectangle object to check if it's within the Ellipse or not.
+ *
+ * @return {boolean} True if all of the Rectangle coordinates are within the ellipse, otherwise false.
+ */
+var ContainsRect = function (ellipse, rect)
+{
+    return (
+        Contains(ellipse, rect.x, rect.y) &&
+        Contains(ellipse, rect.right, rect.y) &&
+        Contains(ellipse, rect.x, rect.bottom) &&
+        Contains(ellipse, rect.right, rect.bottom)
+    );
+};
+
+module.exports = ContainsRect;
+
+
+/***/ }),
+/* 710 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Contains = __webpack_require__(89);
+
+/**
+ * Check to see if the Ellipse contains the given Point object.
+ *
+ * @function Phaser.Geom.Ellipse.ContainsPoint
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Ellipse} ellipse - The Ellipse to check.
+ * @param {(Phaser.Geom.Point|object)} point - The Point object to check if it's within the Circle or not.
+ *
+ * @return {boolean} True if the Point coordinates are within the circle, otherwise false.
+ */
+var ContainsPoint = function (ellipse, point)
+{
+    return Contains(ellipse, point.x, point.y);
+};
+
+module.exports = ContainsPoint;
+
+
+/***/ }),
+/* 711 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Ellipse = __webpack_require__(90);
+
+/**
+ * Creates a new Ellipse instance based on the values contained in the given source.
+ *
+ * @function Phaser.Geom.Ellipse.Clone
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Ellipse} source - The Ellipse to be cloned. Can be an instance of an Ellipse or a ellipse-like object, with x, y, width and height properties.
+ *
+ * @return {Phaser.Geom.Ellipse} A clone of the source Ellipse.
+ */
+var Clone = function (source)
+{
+    return new Ellipse(source.x, source.y, source.width, source.height);
+};
+
+module.exports = Clone;
+
+
+/***/ }),
+/* 712 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculates the area of the Ellipse.
+ *
+ * @function Phaser.Geom.Ellipse.Area
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Ellipse} ellipse - The Ellipse to get the area of.
+ *
+ * @return {number} The area of the Ellipse.
+ */
+var Area = function (ellipse)
+{
+    if (ellipse.isEmpty())
+    {
+        return 0;
+    }
+
+    //  units squared
+    return (ellipse.getMajorRadius() * ellipse.getMinorRadius() * Math.PI);
+};
+
+module.exports = Area;
+
+
+/***/ }),
+/* 713 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Ellipse = __webpack_require__(90);
+
+Ellipse.Area = __webpack_require__(712);
+Ellipse.Circumference = __webpack_require__(306);
+Ellipse.CircumferencePoint = __webpack_require__(156);
+Ellipse.Clone = __webpack_require__(711);
+Ellipse.Contains = __webpack_require__(89);
+Ellipse.ContainsPoint = __webpack_require__(710);
+Ellipse.ContainsRect = __webpack_require__(709);
+Ellipse.CopyFrom = __webpack_require__(708);
+Ellipse.Equals = __webpack_require__(707);
+Ellipse.GetBounds = __webpack_require__(706);
+Ellipse.GetPoint = __webpack_require__(308);
+Ellipse.GetPoints = __webpack_require__(307);
+Ellipse.Offset = __webpack_require__(705);
+Ellipse.OffsetPoint = __webpack_require__(704);
+Ellipse.Random = __webpack_require__(185);
+
+module.exports = Ellipse;
+
+
+/***/ }),
+/* 714 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Offsets the Circle by the values given in the `x` and `y` properties of the Point object.
+ *
+ * @function Phaser.Geom.Circle.OffsetPoint
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Circle} O - [circle,$return]
+ *
+ * @param {Phaser.Geom.Circle} circle - The Circle to be offset (translated.)
+ * @param {(Phaser.Geom.Point|object)} point - The Point object containing the values to offset the Circle by.
+ *
+ * @return {Phaser.Geom.Circle} The Circle that was offset.
+ */
+var OffsetPoint = function (circle, point)
+{
+    circle.x += point.x;
+    circle.y += point.y;
+
+    return circle;
+};
+
+module.exports = OffsetPoint;
+
+
+/***/ }),
+/* 715 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Offsets the Circle by the values given.
+ *
+ * @function Phaser.Geom.Circle.Offset
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Circle} O - [circle,$return]
+ *
+ * @param {Phaser.Geom.Circle} circle - The Circle to be offset (translated.)
+ * @param {number} x - The amount to horizontally offset the Circle by.
+ * @param {number} y - The amount to vertically offset the Circle by.
+ *
+ * @return {Phaser.Geom.Circle} The Circle that was offset.
+ */
+var Offset = function (circle, x, y)
+{
+    circle.x += x;
+    circle.y += y;
+
+    return circle;
+};
+
+module.exports = Offset;
+
+
+/***/ }),
+/* 716 */
