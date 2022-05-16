@@ -127321,3 +127321,210 @@ module.exports = CircleToRectangle;
  */
 
 var DistanceBetween = __webpack_require__(52);
+
+/**
+ * Checks if two Circles intersect.
+ *
+ * @function Phaser.Geom.Intersects.CircleToCircle
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Circle} circleA - The first Circle to check for intersection.
+ * @param {Phaser.Geom.Circle} circleB - The second Circle to check for intersection.
+ *
+ * @return {boolean} `true` if the two Circles intersect, otherwise `false`.
+ */
+var CircleToCircle = function (circleA, circleB)
+{
+    return (DistanceBetween(circleA.x, circleA.y, circleB.x, circleB.y) <= (circleA.radius + circleB.radius));
+};
+
+module.exports = CircleToCircle;
+
+
+/***/ }),
+/* 704 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Offsets the Ellipse by the values given in the `x` and `y` properties of the Point object.
+ *
+ * @function Phaser.Geom.Ellipse.OffsetPoint
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Ellipse} O - [ellipse,$return]
+ *
+ * @param {Phaser.Geom.Ellipse} ellipse - The Ellipse to be offset (translated.)
+ * @param {(Phaser.Geom.Point|object)} point - The Point object containing the values to offset the Ellipse by.
+ *
+ * @return {Phaser.Geom.Ellipse} The Ellipse that was offset.
+ */
+var OffsetPoint = function (ellipse, point)
+{
+    ellipse.x += point.x;
+    ellipse.y += point.y;
+
+    return ellipse;
+};
+
+module.exports = OffsetPoint;
+
+
+/***/ }),
+/* 705 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Offsets the Ellipse by the values given.
+ *
+ * @function Phaser.Geom.Ellipse.Offset
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Ellipse} O - [ellipse,$return]
+ *
+ * @param {Phaser.Geom.Ellipse} ellipse - The Ellipse to be offset (translated.)
+ * @param {number} x - The amount to horizontally offset the Ellipse by.
+ * @param {number} y - The amount to vertically offset the Ellipse by.
+ *
+ * @return {Phaser.Geom.Ellipse} The Ellipse that was offset.
+ */
+var Offset = function (ellipse, x, y)
+{
+    ellipse.x += x;
+    ellipse.y += y;
+
+    return ellipse;
+};
+
+module.exports = Offset;
+
+
+/***/ }),
+/* 706 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Rectangle = __webpack_require__(9);
+
+/**
+ * Returns the bounds of the Ellipse object.
+ *
+ * @function Phaser.Geom.Ellipse.GetBounds
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Ellipse} ellipse - The Ellipse to get the bounds from.
+ * @param {(Phaser.Geom.Rectangle|object)} [out] - A Rectangle, or rectangle-like object, to store the ellipse bounds in. If not given a new Rectangle will be created.
+ *
+ * @return {(Phaser.Geom.Rectangle|object)} The Rectangle object containing the Ellipse bounds.
+ */
+var GetBounds = function (ellipse, out)
+{
+    if (out === undefined) { out = new Rectangle(); }
+
+    out.x = ellipse.left;
+    out.y = ellipse.top;
+    out.width = ellipse.width;
+    out.height = ellipse.height;
+
+    return out;
+};
+
+module.exports = GetBounds;
+
+
+/***/ }),
+/* 707 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Compares the `x`, `y`, `width` and `height` properties of the two given Ellipses.
+ * Returns `true` if they all match, otherwise returns `false`.
+ *
+ * @function Phaser.Geom.Ellipse.Equals
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Ellipse} ellipse - The first Ellipse to compare.
+ * @param {Phaser.Geom.Ellipse} toCompare - The second Ellipse to compare.
+ *
+ * @return {boolean} `true` if the two Ellipse equal each other, otherwise `false`.
+ */
+var Equals = function (ellipse, toCompare)
+{
+    return (
+        ellipse.x === toCompare.x &&
+        ellipse.y === toCompare.y &&
+        ellipse.width === toCompare.width &&
+        ellipse.height === toCompare.height
+    );
+};
+
+module.exports = Equals;
+
+
+/***/ }),
+/* 708 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Copies the `x`, `y`, `width` and `height` properties from the `source` Ellipse
+ * into the given `dest` Ellipse, then returns the `dest` Ellipse.
+ *
+ * @function Phaser.Geom.Ellipse.CopyFrom
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Ellipse} O - [dest,$return]
+ *
+ * @param {Phaser.Geom.Ellipse} source - The source Ellipse to copy the values from.
+ * @param {Phaser.Geom.Ellipse} dest - The destination Ellipse to copy the values to.
+ *
+ * @return {Phaser.Geom.Ellipse} The destination Ellipse.
+ */
+var CopyFrom = function (source, dest)
+{
+    return dest.setTo(source.x, source.y, source.width, source.height);
+};
+
+module.exports = CopyFrom;
+
+
+/***/ }),
+/* 709 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Contains = __webpack_require__(89);
