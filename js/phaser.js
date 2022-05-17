@@ -127965,3 +127965,216 @@ module.exports = Clone;
  * Calculates the area of the circle.
  *
  * @function Phaser.Geom.Circle.Area
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Circle} circle - The Circle to get the area of.
+ *
+ * @return {number} The area of the Circle.
+ */
+var Area = function (circle)
+{
+    return (circle.radius > 0) ? Math.PI * circle.radius * circle.radius : 0;
+};
+
+module.exports = Area;
+
+
+/***/ }),
+/* 723 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Circle = __webpack_require__(71);
+
+Circle.Area = __webpack_require__(722);
+Circle.Circumference = __webpack_require__(402);
+Circle.CircumferencePoint = __webpack_require__(192);
+Circle.Clone = __webpack_require__(721);
+Circle.Contains = __webpack_require__(40);
+Circle.ContainsPoint = __webpack_require__(720);
+Circle.ContainsRect = __webpack_require__(719);
+Circle.CopyFrom = __webpack_require__(718);
+Circle.Equals = __webpack_require__(717);
+Circle.GetBounds = __webpack_require__(716);
+Circle.GetPoint = __webpack_require__(405);
+Circle.GetPoints = __webpack_require__(403);
+Circle.Offset = __webpack_require__(715);
+Circle.OffsetPoint = __webpack_require__(714);
+Circle.Random = __webpack_require__(191);
+
+module.exports = Circle;
+
+
+/***/ }),
+/* 724 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var LightsManager = __webpack_require__(275);
+var PluginCache = __webpack_require__(15);
+
+/**
+ * @classdesc
+ * A Scene plugin that provides a {@link Phaser.GameObjects.LightsManager} for the Light2D pipeline.
+ *
+ * Available from within a Scene via `this.lights`.
+ *
+ * Add Lights using the {@link Phaser.GameObjects.LightsManager#addLight} method:
+ *
+ * ```javascript
+ * // Enable the Lights Manager because it is disabled by default
+ * this.lights.enable();
+ *
+ * // Create a Light at [400, 300] with a radius of 200
+ * this.lights.addLight(400, 300, 200);
+ * ```
+ *
+ * For Game Objects to be affected by the Lights when rendered, you will need to set them to use the `Light2D` pipeline like so:
+ *
+ * ```javascript
+ * sprite.setPipeline('Light2D');
+ * ```
+ *
+ * @class LightsPlugin
+ * @extends Phaser.GameObjects.LightsManager
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - The Scene that this Lights Plugin belongs to.
+ */
+var LightsPlugin = new Class({
+
+    Extends: LightsManager,
+
+    initialize:
+
+    function LightsPlugin (scene)
+    {
+        /**
+         * A reference to the Scene that this Lights Plugin belongs to.
+         *
+         * @name Phaser.GameObjects.LightsPlugin#scene
+         * @type {Phaser.Scene}
+         * @since 3.0.0
+         */
+        this.scene = scene;
+
+        /**
+         * A reference to the Scene's systems.
+         *
+         * @name Phaser.GameObjects.LightsPlugin#systems
+         * @type {Phaser.Scenes.Systems}
+         * @since 3.0.0
+         */
+        this.systems = scene.sys;
+
+        if (!scene.sys.settings.isBooted)
+        {
+            scene.sys.events.once('boot', this.boot, this);
+        }
+
+        LightsManager.call(this);
+    },
+
+    /**
+     * Boot the Lights Plugin.
+     *
+     * @method Phaser.GameObjects.LightsPlugin#boot
+     * @since 3.0.0
+     */
+    boot: function ()
+    {
+        var eventEmitter = this.systems.events;
+
+        eventEmitter.on('shutdown', this.shutdown, this);
+        eventEmitter.on('destroy', this.destroy, this);
+    },
+
+    /**
+     * Destroy the Lights Plugin.
+     *
+     * Cleans up all references.
+     *
+     * @method Phaser.GameObjects.LightsPlugin#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.shutdown();
+
+        this.scene = undefined;
+        this.systems = undefined;
+    }
+
+});
+
+PluginCache.register('LightsPlugin', LightsPlugin, 'lights');
+
+module.exports = LightsPlugin;
+
+
+/***/ }),
+/* 725 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var BuildGameObject = __webpack_require__(28);
+var GameObjectCreator = __webpack_require__(13);
+var GetAdvancedValue = __webpack_require__(12);
+var Quad = __webpack_require__(149);
+
+/**
+ * Creates a new Quad Game Object and returns it.
+ *
+ * Note: This method will only be available if the Quad Game Object and WebGL support have been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectCreator#quad
+ * @since 3.0.0
+ *
+ * @param {object} config - The configuration object this Game Object will use to create itself.
+ * @param {boolean} [addToScene] - Add this Game Object to the Scene after creating it? If set this argument overrides the `add` property in the config object.
+ *
+ * @return {Phaser.GameObjects.Quad} The Game Object that was created.
+ */
+GameObjectCreator.register('quad', function (config, addToScene)
+{
+    if (config === undefined) { config = {}; }
+
+    var x = GetAdvancedValue(config, 'x', 0);
+    var y = GetAdvancedValue(config, 'y', 0);
+    var key = GetAdvancedValue(config, 'key', null);
+    var frame = GetAdvancedValue(config, 'frame', null);
+
+    var quad = new Quad(this.scene, x, y, key, frame);
+
+    if (addToScene !== undefined)
+    {
+        config.add = addToScene;
+    }
+
+    BuildGameObject(this.scene, quad, config);
+
+    return quad;
+});
+
+
+/***/ }),
+/* 726 */
+/***/ (function(module, exports, __webpack_require__) {
