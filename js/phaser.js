@@ -127750,3 +127750,218 @@ module.exports = Offset;
 
 /***/ }),
 /* 716 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Rectangle = __webpack_require__(9);
+
+/**
+ * Returns the bounds of the Circle object.
+ *
+ * @function Phaser.Geom.Circle.GetBounds
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Rectangle} O - [out,$return]
+ *
+ * @param {Phaser.Geom.Circle} circle - The Circle to get the bounds from.
+ * @param {(Phaser.Geom.Rectangle|object)} [out] - A Rectangle, or rectangle-like object, to store the circle bounds in. If not given a new Rectangle will be created.
+ *
+ * @return {(Phaser.Geom.Rectangle|object)} The Rectangle object containing the Circles bounds.
+ */
+var GetBounds = function (circle, out)
+{
+    if (out === undefined) { out = new Rectangle(); }
+
+    out.x = circle.left;
+    out.y = circle.top;
+    out.width = circle.diameter;
+    out.height = circle.diameter;
+
+    return out;
+};
+
+module.exports = GetBounds;
+
+
+/***/ }),
+/* 717 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Compares the `x`, `y` and `radius` properties of the two given Circles.
+ * Returns `true` if they all match, otherwise returns `false`.
+ *
+ * @function Phaser.Geom.Circle.Equals
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Circle} circle - The first Circle to compare.
+ * @param {Phaser.Geom.Circle} toCompare - The second Circle to compare.
+ *
+ * @return {boolean} `true` if the two Circles equal each other, otherwise `false`.
+ */
+var Equals = function (circle, toCompare)
+{
+    return (
+        circle.x === toCompare.x &&
+        circle.y === toCompare.y &&
+        circle.radius === toCompare.radius
+    );
+};
+
+module.exports = Equals;
+
+
+/***/ }),
+/* 718 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Copies the `x`, `y` and `radius` properties from the `source` Circle
+ * into the given `dest` Circle, then returns the `dest` Circle.
+ *
+ * @function Phaser.Geom.Circle.CopyFrom
+ * @since 3.0.0
+ *
+ * @generic {Phaser.Geom.Circle} O - [dest,$return]
+ *
+ * @param {Phaser.Geom.Circle} source - The source Circle to copy the values from.
+ * @param {Phaser.Geom.Circle} dest - The destination Circle to copy the values to.
+ *
+ * @return {Phaser.Geom.Circle} The destination Circle.
+ */
+var CopyFrom = function (source, dest)
+{
+    return dest.setTo(source.x, source.y, source.radius);
+};
+
+module.exports = CopyFrom;
+
+
+/***/ }),
+/* 719 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Contains = __webpack_require__(40);
+
+/**
+ * Check to see if the Circle contains all four points of the given Rectangle object.
+ *
+ * @function Phaser.Geom.Circle.ContainsRect
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Circle} circle - The Circle to check.
+ * @param {(Phaser.Geom.Rectangle|object)} rect - The Rectangle object to check if it's within the Circle or not.
+ *
+ * @return {boolean} True if all of the Rectangle coordinates are within the circle, otherwise false.
+ */
+var ContainsRect = function (circle, rect)
+{
+    return (
+        Contains(circle, rect.x, rect.y) &&
+        Contains(circle, rect.right, rect.y) &&
+        Contains(circle, rect.x, rect.bottom) &&
+        Contains(circle, rect.right, rect.bottom)
+    );
+};
+
+module.exports = ContainsRect;
+
+
+/***/ }),
+/* 720 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Contains = __webpack_require__(40);
+
+/**
+ * Check to see if the Circle contains the given Point object.
+ *
+ * @function Phaser.Geom.Circle.ContainsPoint
+ * @since 3.0.0
+ *
+ * @param {Phaser.Geom.Circle} circle - The Circle to check.
+ * @param {(Phaser.Geom.Point|object)} point - The Point object to check if it's within the Circle or not.
+ *
+ * @return {boolean} True if the Point coordinates are within the circle, otherwise false.
+ */
+var ContainsPoint = function (circle, point)
+{
+    return Contains(circle, point.x, point.y);
+};
+
+module.exports = ContainsPoint;
+
+
+/***/ }),
+/* 721 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Circle = __webpack_require__(71);
+
+/**
+ * Creates a new Circle instance based on the values contained in the given source.
+ *
+ * @function Phaser.Geom.Circle.Clone
+ * @since 3.0.0
+ *
+ * @param {(Phaser.Geom.Circle|object)} source - The Circle to be cloned. Can be an instance of a Circle or a circle-like object, with x, y and radius properties.
+ *
+ * @return {Phaser.Geom.Circle} A clone of the source Circle.
+ */
+var Clone = function (source)
+{
+    return new Circle(source.x, source.y, source.radius);
+};
+
+module.exports = Clone;
+
+
+/***/ }),
+/* 722 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Calculates the area of the circle.
+ *
+ * @function Phaser.Geom.Circle.Area
