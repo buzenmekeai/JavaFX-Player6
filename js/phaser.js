@@ -128178,3 +128178,208 @@ GameObjectCreator.register('quad', function (config, addToScene)
 /***/ }),
 /* 726 */
 /***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var BuildGameObject = __webpack_require__(28);
+var GameObjectCreator = __webpack_require__(13);
+var GetAdvancedValue = __webpack_require__(12);
+var GetValue = __webpack_require__(4);
+var Mesh = __webpack_require__(108);
+
+/**
+ * Creates a new Mesh Game Object and returns it.
+ *
+ * Note: This method will only be available if the Mesh Game Object and WebGL support have been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectCreator#mesh
+ * @since 3.0.0
+ *
+ * @param {object} config - The configuration object this Game Object will use to create itself.
+ * @param {boolean} [addToScene] - Add this Game Object to the Scene after creating it? If set this argument overrides the `add` property in the config object.
+ *
+ * @return {Phaser.GameObjects.Mesh} The Game Object that was created.
+ */
+GameObjectCreator.register('mesh', function (config, addToScene)
+{
+    if (config === undefined) { config = {}; }
+
+    var key = GetAdvancedValue(config, 'key', null);
+    var frame = GetAdvancedValue(config, 'frame', null);
+    var vertices = GetValue(config, 'vertices', []);
+    var colors = GetValue(config, 'colors', []);
+    var alphas = GetValue(config, 'alphas', []);
+    var uv = GetValue(config, 'uv', []);
+
+    var mesh = new Mesh(this.scene, 0, 0, vertices, uv, colors, alphas, key, frame);
+
+    if (addToScene !== undefined)
+    {
+        config.add = addToScene;
+    }
+
+    BuildGameObject(this.scene, mesh, config);
+
+    return mesh;
+});
+
+//  When registering a factory function 'this' refers to the GameObjectCreator context.
+
+
+/***/ }),
+/* 727 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Quad = __webpack_require__(149);
+var GameObjectFactory = __webpack_require__(5);
+
+/**
+ * Creates a new Quad Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the Quad Game Object and WebGL support have been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#quad
+ * @webglOnly
+ * @since 3.0.0
+ *
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {string} texture - The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
+ * @param {(string|integer)} [frame] - An optional frame from the Texture this Game Object is rendering with.
+ * 
+ * @return {Phaser.GameObjects.Quad} The Game Object that was created.
+ */
+if (true)
+{
+    GameObjectFactory.register('quad', function (x, y, key, frame)
+    {
+        return this.displayList.add(new Quad(this.scene, x, y, key, frame));
+    });
+}
+
+//  When registering a factory function 'this' refers to the GameObjectFactory context.
+//  
+//  There are several properties available to use:
+//  
+//  this.scene - a reference to the Scene that owns the GameObjectFactory
+//  this.displayList - a reference to the Display List the Scene owns
+//  this.updateList - a reference to the Update List the Scene owns
+
+
+/***/ }),
+/* 728 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Mesh = __webpack_require__(108);
+var GameObjectFactory = __webpack_require__(5);
+
+/**
+ * Creates a new Mesh Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the Mesh Game Object and WebGL support have been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#mesh
+ * @webglOnly
+ * @since 3.0.0
+ *
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {number[]} vertices - An array containing the vertices data for this Mesh.
+ * @param {number[]} uv - An array containing the uv data for this Mesh.
+ * @param {number[]} colors - An array containing the color data for this Mesh.
+ * @param {number[]} alphas - An array containing the alpha data for this Mesh.
+ * @param {string} texture - The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
+ * @param {(string|integer)} [frame] - An optional frame from the Texture this Game Object is rendering with.
+ *
+ * @return {Phaser.GameObjects.Mesh} The Game Object that was created.
+ */
+if (true)
+{
+    GameObjectFactory.register('mesh', function (x, y, vertices, uv, colors, alphas, texture, frame)
+    {
+        return this.displayList.add(new Mesh(this.scene, x, y, vertices, uv, colors, alphas, texture, frame));
+    });
+}
+
+//  When registering a factory function 'this' refers to the GameObjectFactory context.
+//
+//  There are several properties available to use:
+//
+//  this.scene - a reference to the Scene that owns the GameObjectFactory
+//  this.displayList - a reference to the Display List the Scene owns
+//  this.updateList - a reference to the Update List the Scene owns
+
+
+/***/ }),
+/* 729 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * This is a stub function for Mesh.Render. There is no Canvas renderer for Mesh objects.
+ *
+ * @method Phaser.GameObjects.Mesh#renderCanvas
+ * @since 3.0.0
+ * @private
+ *
+ * @param {Phaser.Renderer.Canvas.CanvasRenderer} renderer - A reference to the current active Canvas renderer.
+ * @param {Phaser.GameObjects.Mesh} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ */
+var MeshCanvasRenderer = function ()
+{
+};
+
+module.exports = MeshCanvasRenderer;
+
+
+/***/ }),
+/* 730 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Utils = __webpack_require__(10);
+
+/**
+ * Renders this Game Object with the WebGL Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.Mesh#renderWebGL
+ * @since 3.0.0
+ * @private
+ *
+ * @param {Phaser.Renderer.WebGL.WebGLRenderer} renderer - A reference to the current active WebGL renderer.
+ * @param {Phaser.GameObjects.Mesh} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var MeshWebGLRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
