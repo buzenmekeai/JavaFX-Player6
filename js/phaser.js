@@ -128383,3 +128383,234 @@ var Utils = __webpack_require__(10);
  * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
  */
 var MeshWebGLRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    var pipeline = this.pipeline;
+
+    renderer.setPipeline(pipeline, src);
+
+    var camMatrix = pipeline._tempMatrix1;
+    var spriteMatrix = pipeline._tempMatrix2;
+    var calcMatrix = pipeline._tempMatrix3;
+
+    spriteMatrix.applyITRS(src.x, src.y, src.rotation, src.scaleX, src.scaleY);
+
+    camMatrix.copyFrom(camera.matrix);
+
+    if (parentMatrix)
+    {
+        //  Multiply the camera by the parent matrix
+        camMatrix.multiplyWithOffset(parentMatrix, -camera.scrollX * src.scrollFactorX, -camera.scrollY * src.scrollFactorY);
+
+        //  Undo the camera scroll
+        spriteMatrix.e = src.x;
+        spriteMatrix.f = src.y;
+
+        //  Multiply by the Sprite matrix, store result in calcMatrix
+        camMatrix.multiply(spriteMatrix, calcMatrix);
+    }
+    else
+    {
+        spriteMatrix.e -= camera.scrollX * src.scrollFactorX;
+        spriteMatrix.f -= camera.scrollY * src.scrollFactorY;
+
+        //  Multiply by the Sprite matrix, store result in calcMatrix
+        camMatrix.multiply(spriteMatrix, calcMatrix);
+    }
+
+    var frame = src.frame;
+    var texture = frame.glTexture;
+
+    var vertices = src.vertices;
+    var uvs = src.uv;
+    var colors = src.colors;
+    var alphas = src.alphas;
+
+    var meshVerticesLength = vertices.length;
+    var vertexCount = Math.floor(meshVerticesLength * 0.5);
+
+    if (pipeline.vertexCount + vertexCount >= pipeline.vertexCapacity)
+    {
+        pipeline.flush();
+    }
+
+    pipeline.setTexture2D(texture, 0);
+
+    var vertexViewF32 = pipeline.vertexViewF32;
+    var vertexViewU32 = pipeline.vertexViewU32;
+
+    var vertexOffset = (pipeline.vertexCount * pipeline.vertexComponentCount) - 1;
+
+    var colorIndex = 0;
+    var tintEffect = src.tintFill;
+
+    for (var i = 0; i < meshVerticesLength; i += 2)
+    {
+        var x = vertices[i + 0];
+        var y = vertices[i + 1];
+
+        var tx = x * calcMatrix.a + y * calcMatrix.c + calcMatrix.e;
+        var ty = x * calcMatrix.b + y * calcMatrix.d + calcMatrix.f;
+
+        if (camera.roundPixels)
+        {
+            tx |= 0;
+            ty |= 0;
+        }
+
+        vertexViewF32[++vertexOffset] = tx;
+        vertexViewF32[++vertexOffset] = ty;
+        vertexViewF32[++vertexOffset] = uvs[i + 0];
+        vertexViewF32[++vertexOffset] = uvs[i + 1];
+        vertexViewF32[++vertexOffset] = tintEffect;
+        vertexViewU32[++vertexOffset] = Utils.getTintAppendFloatAlpha(colors[colorIndex], camera.alpha * alphas[colorIndex]);
+
+        colorIndex++;
+    }
+
+    pipeline.vertexCount += vertexCount;
+};
+
+module.exports = MeshWebGLRenderer;
+
+
+/***/ }),
+/* 731 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var renderWebGL = __webpack_require__(1);
+var renderCanvas = __webpack_require__(1);
+
+if (true)
+{
+    renderWebGL = __webpack_require__(730);
+}
+
+if (true)
+{
+    renderCanvas = __webpack_require__(729);
+}
+
+module.exports = {
+
+    renderWebGL: renderWebGL,
+    renderCanvas: renderCanvas
+
+};
+
+
+/***/ }),
+/* 732 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectCreator = __webpack_require__(13);
+var GetAdvancedValue = __webpack_require__(12);
+var Zone = __webpack_require__(125);
+
+/**
+ * Creates a new Zone Game Object and returns it.
+ *
+ * Note: This method will only be available if the Zone Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectCreator#zone
+ * @since 3.0.0
+ *
+ * @param {object} config - The configuration object this Game Object will use to create itself.
+ *
+ * @return {Phaser.GameObjects.Zone} The Game Object that was created.
+ */
+GameObjectCreator.register('zone', function (config)
+{
+    var x = GetAdvancedValue(config, 'x', 0);
+    var y = GetAdvancedValue(config, 'y', 0);
+    var width = GetAdvancedValue(config, 'width', 1);
+    var height = GetAdvancedValue(config, 'height', width);
+
+    return new Zone(this.scene, x, y, width, height);
+});
+
+//  When registering a factory function 'this' refers to the GameObjectCreator context.
+
+
+/***/ }),
+/* 733 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var BuildGameObject = __webpack_require__(28);
+var GameObjectCreator = __webpack_require__(13);
+var GetAdvancedValue = __webpack_require__(12);
+var TileSprite = __webpack_require__(152);
+
+/**
+ * @typedef {object} TileSprite
+ * @extends GameObjectConfig
+ *
+ * @property {number} [x=0] - The x coordinate of the Tile Sprite.
+ * @property {number} [y=0] - The y coordinate of the Tile Sprite.
+ * @property {integer} [width=512] - The width of the Tile Sprite. If zero it will use the size of the texture frame.
+ * @property {integer} [height=512] - The height of the Tile Sprite. If zero it will use the size of the texture frame.
+ * @property {string} [key=''] - The key of the Texture this Tile Sprite will use to render with, as stored in the Texture Manager.
+ * @property {string} [frame=''] - An optional frame from the Texture this Tile Sprite is rendering with.
+ */
+
+/**
+ * Creates a new TileSprite Game Object and returns it.
+ *
+ * Note: This method will only be available if the TileSprite Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectCreator#tileSprite
+ * @since 3.0.0
+ *
+ * @param {TileSprite} config - The configuration object this Game Object will use to create itself.
+ * @param {boolean} [addToScene] - Add this Game Object to the Scene after creating it? If set this argument overrides the `add` property in the config object.
+ *
+ * @return {Phaser.GameObjects.TileSprite} The Game Object that was created.
+ */
+GameObjectCreator.register('tileSprite', function (config, addToScene)
+{
+    if (config === undefined) { config = {}; }
+
+    var x = GetAdvancedValue(config, 'x', 0);
+    var y = GetAdvancedValue(config, 'y', 0);
+    var width = GetAdvancedValue(config, 'width', 512);
+    var height = GetAdvancedValue(config, 'height', 512);
+    var key = GetAdvancedValue(config, 'key', '');
+    var frame = GetAdvancedValue(config, 'frame', '');
+
+    var tile = new TileSprite(this.scene, x, y, width, height, key, frame);
+
+    if (addToScene !== undefined)
+    {
+        config.add = addToScene;
+    }
+
+    BuildGameObject(this.scene, tile, config);
+
+    return tile;
+});
+
+//  When registering a factory function 'this' refers to the GameObjectCreator context.
+
+
+/***/ }),
+/* 734 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
