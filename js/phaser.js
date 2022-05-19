@@ -128841,3 +128841,236 @@ var RenderTexture = __webpack_require__(154);
  *
  * @method Phaser.GameObjects.GameObjectCreator#renderTexture
  * @since 3.2.0
+ *
+ * @param {RenderTextureConfig} config - The configuration object this Game Object will use to create itself.
+ * @param {boolean} [addToScene] - Add this Game Object to the Scene after creating it? If set this argument overrides the `add` property in the config object.
+ *
+ * @return {Phaser.GameObjects.RenderTexture} The Game Object that was created.
+ */
+GameObjectCreator.register('renderTexture', function (config, addToScene)
+{
+    if (config === undefined) { config = {}; }
+
+    var x = GetAdvancedValue(config, 'x', 0);
+    var y = GetAdvancedValue(config, 'y', 0);
+    var width = GetAdvancedValue(config, 'width', 32);
+    var height = GetAdvancedValue(config, 'height', 32);
+
+    var renderTexture = new RenderTexture(this.scene, x, y, width, height);
+
+    if (addToScene !== undefined)
+    {
+        config.add = addToScene;
+    }
+
+    BuildGameObject(this.scene, renderTexture, config);
+
+    return renderTexture;
+});
+
+
+/***/ }),
+/* 738 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectCreator = __webpack_require__(13);
+var GetAdvancedValue = __webpack_require__(12);
+var GetFastValue = __webpack_require__(2);
+var ParticleEmitterManager = __webpack_require__(155);
+
+/**
+ * Creates a new Particle Emitter Manager Game Object and returns it.
+ *
+ * Note: This method will only be available if the Particles Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectCreator#particles
+ * @since 3.0.0
+ *
+ * @param {object} config - The configuration object this Game Object will use to create itself.
+ * @param {boolean} [addToScene] - Add this Game Object to the Scene after creating it? If set this argument overrides the `add` property in the config object.
+ *
+ * @return {Phaser.GameObjects.Particles.ParticleEmitterManager} The Game Object that was created.
+ */
+GameObjectCreator.register('particles', function (config, addToScene)
+{
+    if (config === undefined) { config = {}; }
+
+    var key = GetAdvancedValue(config, 'key', null);
+    var frame = GetAdvancedValue(config, 'frame', null);
+    var emitters = GetFastValue(config, 'emitters', null);
+
+    //  frame is optional and can contain the emitters array or object if skipped
+    var manager = new ParticleEmitterManager(this.scene, key, frame, emitters);
+
+    if (addToScene !== undefined)
+    {
+        config.add = addToScene;
+    }
+
+    var add = GetFastValue(config, 'add', false);
+
+    if (add)
+    {
+        this.displayList.add(manager);
+    }
+
+    this.updateList.add(manager);
+
+    return manager;
+});
+
+
+/***/ }),
+/* 739 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var BuildGameObject = __webpack_require__(28);
+var GameObjectCreator = __webpack_require__(13);
+var GetAdvancedValue = __webpack_require__(12);
+var Image = __webpack_require__(87);
+
+/**
+ * Creates a new Image Game Object and returns it.
+ *
+ * Note: This method will only be available if the Image Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectCreator#image
+ * @since 3.0.0
+ *
+ * @param {object} config - The configuration object this Game Object will use to create itself.
+ * @param {boolean} [addToScene] - Add this Game Object to the Scene after creating it? If set this argument overrides the `add` property in the config object.
+ *
+ * @return {Phaser.GameObjects.Image} The Game Object that was created.
+ */
+GameObjectCreator.register('image', function (config, addToScene)
+{
+    if (config === undefined) { config = {}; }
+
+    var key = GetAdvancedValue(config, 'key', null);
+    var frame = GetAdvancedValue(config, 'frame', null);
+
+    var image = new Image(this.scene, 0, 0, key, frame);
+
+    if (addToScene !== undefined)
+    {
+        config.add = addToScene;
+    }
+
+    BuildGameObject(this.scene, image, config);
+
+    return image;
+});
+
+//  When registering a factory function 'this' refers to the GameObjectCreator context.
+
+
+/***/ }),
+/* 740 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectCreator = __webpack_require__(13);
+var Group = __webpack_require__(88);
+
+/**
+ * Creates a new Group Game Object and returns it.
+ *
+ * Note: This method will only be available if the Group Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectCreator#group
+ * @since 3.0.0
+ *
+ * @param {GroupConfig} config - The configuration object this Game Object will use to create itself.
+ *
+ * @return {Phaser.GameObjects.Group} The Game Object that was created.
+ */
+GameObjectCreator.register('group', function (config)
+{
+    return new Group(this.scene, null, config);
+});
+
+//  When registering a factory function 'this' refers to the GameObjectCreator context.
+
+
+/***/ }),
+/* 741 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectCreator = __webpack_require__(13);
+var Graphics = __webpack_require__(158);
+
+/**
+ * Creates a new Graphics Game Object and returns it.
+ *
+ * Note: This method will only be available if the Graphics Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectCreator#graphics
+ * @since 3.0.0
+ *
+ * @param {object} config - The configuration object this Game Object will use to create itself.
+ * @param {boolean} [addToScene] - Add this Game Object to the Scene after creating it? If set this argument overrides the `add` property in the config object.
+ *
+ * @return {Phaser.GameObjects.Graphics} The Game Object that was created.
+ */
+GameObjectCreator.register('graphics', function (config, addToScene)
+{
+    if (config === undefined) { config = {}; }
+
+    if (addToScene !== undefined)
+    {
+        config.add = addToScene;
+    }
+
+    var graphics = new Graphics(this.scene, config);
+
+    if (config.add)
+    {
+        this.scene.sys.displayList.add(graphics);
+    }
+    
+    return graphics;
+});
+
+//  When registering a factory function 'this' refers to the GameObjectCreator context.
+
+
+/***/ }),
+/* 742 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var BitmapText = __webpack_require__(159);
+var BuildGameObject = __webpack_require__(28);
+var GameObjectCreator = __webpack_require__(13);
+var GetAdvancedValue = __webpack_require__(12);
+
+/**
+ * @typedef {object} BitmapTextConfig
