@@ -129074,3 +129074,232 @@ var GetAdvancedValue = __webpack_require__(12);
 
 /**
  * @typedef {object} BitmapTextConfig
+ * @extends GameObjectConfig
+ *
+ * @property {string} [font=''] - The key of the font to use from the BitmapFont cache.
+ * @property {string} [text=''] - The string, or array of strings, to be set as the content of this Bitmap Text.
+ * @property {(number|false)} [size=false] - The font size to set.
+ */
+
+/**
+ * Creates a new Dynamic Bitmap Text Game Object and returns it.
+ *
+ * Note: This method will only be available if the Dynamic Bitmap Text Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectCreator#dynamicBitmapText
+ * @since 3.0.0
+ *²
+ * @param {BitmapTextConfig} config - The configuration object this Game Object will use to create itself.
+ * @param {boolean} [addToScene] - Add this Game Object to the Scene after creating it? If set this argument overrides the `add` property in the config object.
+ *
+ * @return {Phaser.GameObjects.DynamicBitmapText} The Game Object that was created.
+ */
+GameObjectCreator.register('dynamicBitmapText', function (config, addToScene)
+{
+    if (config === undefined) { config = {}; }
+
+    var font = GetAdvancedValue(config, 'font', '');
+    var text = GetAdvancedValue(config, 'text', '');
+    var size = GetAdvancedValue(config, 'size', false);
+
+    var bitmapText = new BitmapText(this.scene, 0, 0, font, text, size);
+
+    if (addToScene !== undefined)
+    {
+        config.add = addToScene;
+    }
+
+    BuildGameObject(this.scene, bitmapText, config);
+
+    return bitmapText;
+});
+
+//  When registering a factory function 'this' refers to the GameObjectCreator context.
+
+
+/***/ }),
+/* 743 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Felipe Alfonso <@bitnenfer>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var BuildGameObject = __webpack_require__(28);
+var Container = __webpack_require__(160);
+var GameObjectCreator = __webpack_require__(13);
+var GetAdvancedValue = __webpack_require__(12);
+
+/**
+ * Creates a new Container Game Object and returns it.
+ *
+ * Note: This method will only be available if the Container Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectCreator#container
+ * @since 3.4.0
+ *
+ * @param {object} config - The configuration object this Game Object will use to create itself.
+ * @param {boolean} [addToScene] - Add this Game Object to the Scene after creating it? If set this argument overrides the `add` property in the config object.
+ *
+ * @return {Phaser.GameObjects.Container} The Game Object that was created.
+ */
+GameObjectCreator.register('container', function (config, addToScene)
+{
+    if (config === undefined) { config = {}; }
+
+    var x = GetAdvancedValue(config, 'x', 0);
+    var y = GetAdvancedValue(config, 'y', 0);
+
+    var container = new Container(this.scene, x, y);
+
+    if (addToScene !== undefined)
+    {
+        config.add = addToScene;
+    }
+
+    BuildGameObject(this.scene, container, config);
+    
+    return container;
+});
+
+
+/***/ }),
+/* 744 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Blitter = __webpack_require__(161);
+var BuildGameObject = __webpack_require__(28);
+var GameObjectCreator = __webpack_require__(13);
+var GetAdvancedValue = __webpack_require__(12);
+
+/**
+ * Creates a new Blitter Game Object and returns it.
+ *
+ * Note: This method will only be available if the Blitter Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectCreator#blitter
+ * @since 3.0.0
+ *
+ * @param {object} config - The configuration object this Game Object will use to create itself.
+ * @param {boolean} [addToScene] - Add this Game Object to the Scene after creating it? If set this argument overrides the `add` property in the config object.
+ *
+ * @return {Phaser.GameObjects.Blitter} The Game Object that was created.
+ */
+GameObjectCreator.register('blitter', function (config, addToScene)
+{
+    if (config === undefined) { config = {}; }
+
+    var key = GetAdvancedValue(config, 'key', null);
+    var frame = GetAdvancedValue(config, 'frame', null);
+
+    var blitter = new Blitter(this.scene, 0, 0, key, frame);
+
+    if (addToScene !== undefined)
+    {
+        config.add = addToScene;
+    }
+
+    BuildGameObject(this.scene, blitter, config);
+
+    return blitter;
+});
+
+//  When registering a factory function 'this' refers to the GameObjectCreator context.
+
+
+/***/ }),
+/* 745 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectFactory = __webpack_require__(5);
+var Triangle = __webpack_require__(279);
+
+/**
+ * Creates a new Triangle Shape Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the Triangle Game Object has been built into Phaser.
+ * 
+ * The Triangle Shape is a Game Object that can be added to a Scene, Group or Container. You can
+ * treat it like any other Game Object in your game, such as tweening it, scaling it, or enabling
+ * it for input or physics. It provides a quick and easy way for you to render this shape in your
+ * game without using a texture, while still taking advantage of being fully batched in WebGL.
+ * 
+ * This shape supports both fill and stroke colors.
+ * 
+ * The Triangle consists of 3 lines, joining up to form a triangular shape. You can control the
+ * position of each point of these lines. The triangle is always closed and cannot have an open
+ * face. If you require that, consider using a Polygon instead.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#triangle
+ * @since 3.13.0
+ *
+ * @param {number} [x=0] - The horizontal position of this Game Object in the world.
+ * @param {number} [y=0] - The vertical position of this Game Object in the world.
+ * @param {number} [x1=0] - The horizontal position of the first point in the triangle.
+ * @param {number} [y1=128] - The vertical position of the first point in the triangle.
+ * @param {number} [x2=64] - The horizontal position of the second point in the triangle.
+ * @param {number} [y2=0] - The vertical position of the second point in the triangle.
+ * @param {number} [x3=128] - The horizontal position of the third point in the triangle.
+ * @param {number} [y3=128] - The vertical position of the third point in the triangle.
+ * @param {number} [fillColor] - The color the triangle will be filled with, i.e. 0xff0000 for red.
+ * @param {number} [fillAlpha] - The alpha the triangle will be filled with. You can also set the alpha of the overall Shape using its `alpha` property.
+ *
+ * @return {Phaser.GameObjects.Triangle} The Game Object that was created.
+ */
+GameObjectFactory.register('triangle', function (x, y, x1, y1, x2, y2, x3, y3, fillColor, fillAlpha)
+{
+    return this.displayList.add(new Triangle(this.scene, x, y, x1, y1, x2, y2, x3, y3, fillColor, fillAlpha));
+});
+
+
+/***/ }),
+/* 746 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Star = __webpack_require__(280);
+var GameObjectFactory = __webpack_require__(5);
+
+/**
+ * Creates a new Star Shape Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the Star Game Object has been built into Phaser.
+ * 
+ * The Star Shape is a Game Object that can be added to a Scene, Group or Container. You can
+ * treat it like any other Game Object in your game, such as tweening it, scaling it, or enabling
+ * it for input or physics. It provides a quick and easy way for you to render this shape in your
+ * game without using a texture, while still taking advantage of being fully batched in WebGL.
+ * 
+ * This shape supports both fill and stroke colors.
+ * 
+ * As the name implies, the Star shape will display a star in your game. You can control several
+ * aspects of it including the number of points that constitute the star. The default is 5. If
+ * you change it to 4 it will render as a diamond. If you increase them, you'll get a more spiky
+ * star shape.
+ * 
+ * You can also control the inner and outer radius, which is how 'long' each point of the star is.
+ * Modify these values to create more interesting shapes.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#star
+ * @since 3.13.0
+ *
