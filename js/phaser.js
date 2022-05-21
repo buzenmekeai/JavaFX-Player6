@@ -129303,3 +129303,233 @@ var GameObjectFactory = __webpack_require__(5);
  * @method Phaser.GameObjects.GameObjectFactory#star
  * @since 3.13.0
  *
+ * @param {number} [x=0] - The horizontal position of this Game Object in the world.
+ * @param {number} [y=0] - The vertical position of this Game Object in the world.
+ * @param {number} [points=5] - The number of points on the star.
+ * @param {number} [innerRadius=32] - The inner radius of the star.
+ * @param {number} [outerRadius=64] - The outer radius of the star.
+ * @param {number} [fillColor] - The color the star will be filled with, i.e. 0xff0000 for red.
+ * @param {number} [fillAlpha] - The alpha the star will be filled with. You can also set the alpha of the overall Shape using its `alpha` property.
+ *
+ * @return {Phaser.GameObjects.Star} The Game Object that was created.
+ */
+GameObjectFactory.register('star', function (x, y, points, innerRadius, outerRadius, fillColor, fillAlpha)
+{
+    return this.displayList.add(new Star(this.scene, x, y, points, innerRadius, outerRadius, fillColor, fillAlpha));
+});
+
+
+/***/ }),
+/* 747 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectFactory = __webpack_require__(5);
+var Rectangle = __webpack_require__(281);
+
+/**
+ * Creates a new Rectangle Shape Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the Rectangle Game Object has been built into Phaser.
+ * 
+ * The Rectangle Shape is a Game Object that can be added to a Scene, Group or Container. You can
+ * treat it like any other Game Object in your game, such as tweening it, scaling it, or enabling
+ * it for input or physics. It provides a quick and easy way for you to render this shape in your
+ * game without using a texture, while still taking advantage of being fully batched in WebGL.
+ * 
+ * This shape supports both fill and stroke colors.
+ * 
+ * You can change the size of the rectangle by changing the `width` and `height` properties.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#rectangle
+ * @since 3.13.0
+ *
+ * @param {number} [x=0] - The horizontal position of this Game Object in the world.
+ * @param {number} [y=0] - The vertical position of this Game Object in the world.
+ * @param {number} [width=128] - The width of the rectangle.
+ * @param {number} [height=128] - The height of the rectangle.
+ * @param {number} [fillColor] - The color the rectangle will be filled with, i.e. 0xff0000 for red.
+ * @param {number} [fillAlpha] - The alpha the rectangle will be filled with. You can also set the alpha of the overall Shape using its `alpha` property.
+ *
+ * @return {Phaser.GameObjects.Rectangle} The Game Object that was created.
+ */
+GameObjectFactory.register('rectangle', function (x, y, width, height, fillColor, fillAlpha)
+{
+    return this.displayList.add(new Rectangle(this.scene, x, y, width, height, fillColor, fillAlpha));
+});
+
+
+/***/ }),
+/* 748 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectFactory = __webpack_require__(5);
+var Polygon = __webpack_require__(286);
+
+/**
+ * Creates a new Polygon Shape Game Object and adds it to the Scene.
+ * 
+ * Note: This method will only be available if the Polygon Game Object has been built into Phaser.
+ * 
+ * The Polygon Shape is a Game Object that can be added to a Scene, Group or Container. You can
+ * treat it like any other Game Object in your game, such as tweening it, scaling it, or enabling
+ * it for input or physics. It provides a quick and easy way for you to render this shape in your
+ * game without using a texture, while still taking advantage of being fully batched in WebGL.
+ * 
+ * This shape supports both fill and stroke colors.
+ * 
+ * The Polygon Shape is created by providing a list of points, which are then used to create an
+ * internal Polygon geometry object. The points can be set from a variety of formats:
+ *
+ * - An array of Point or Vector2 objects: `[new Phaser.Math.Vec2(x1, y1), ...]`
+ * - An array of objects with public x/y properties: `[obj1, obj2, ...]`
+ * - An array of paired numbers that represent point coordinates: `[x1,y1, x2,y2, ...]`
+ * - An array of arrays with two elements representing x/y coordinates: `[[x1, y1], [x2, y2], ...]`
+ * 
+ * By default the `x` and `y` coordinates of this Shape refer to the center of it. However, depending
+ * on the coordinates of the points provided, the final shape may be rendered offset from its origin.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#polygon
+ * @since 3.13.0
+ *
+ * @param {number} [x=0] - The horizontal position of this Game Object in the world.
+ * @param {number} [y=0] - The vertical position of this Game Object in the world.
+ * @param {any} [points] - The points that make up the polygon.
+ * @param {number} [fillColor] - The color the polygon will be filled with, i.e. 0xff0000 for red.
+ * @param {number} [fillAlpha] - The alpha the polygon will be filled with. You can also set the alpha of the overall Shape using its `alpha` property.
+ *
+ * @return {Phaser.GameObjects.Polygon} The Game Object that was created.
+ */
+GameObjectFactory.register('polygon', function (x, y, points, fillColor, fillAlpha)
+{
+    return this.displayList.add(new Polygon(this.scene, x, y, points, fillColor, fillAlpha));
+});
+
+
+/***/ }),
+/* 749 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectFactory = __webpack_require__(5);
+var Line = __webpack_require__(287);
+
+/**
+ * Creates a new Line Shape Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the Line Game Object has been built into Phaser.
+ * 
+ * The Line Shape is a Game Object that can be added to a Scene, Group or Container. You can
+ * treat it like any other Game Object in your game, such as tweening it, scaling it, or enabling
+ * it for input or physics. It provides a quick and easy way for you to render this shape in your
+ * game without using a texture, while still taking advantage of being fully batched in WebGL.
+ * 
+ * This shape supports only stroke colors and cannot be filled.
+ * 
+ * A Line Shape allows you to draw a line between two points in your game. You can control the
+ * stroke color and thickness of the line. In WebGL only you can also specify a different
+ * thickness for the start and end of the line, allowing you to render lines that taper-off.
+ * 
+ * If you need to draw multiple lines in a sequence you may wish to use the Polygon Shape instead.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#line
+ * @since 3.13.0
+ *
+ * @param {number} [x=0] - The horizontal position of this Game Object in the world.
+ * @param {number} [y=0] - The vertical position of this Game Object in the world.
+ * @param {number} [x1=0] - The horizontal position of the start of the line.
+ * @param {number} [y1=0] - The vertical position of the start of the line.
+ * @param {number} [x2=128] - The horizontal position of the end of the line.
+ * @param {number} [y2=0] - The vertical position of the end of the line.
+ * @param {number} [strokeColor] - The color the line will be drawn in, i.e. 0xff0000 for red.
+ * @param {number} [strokeAlpha] - The alpha the line will be drawn in. You can also set the alpha of the overall Shape using its `alpha` property.
+ *
+ * @return {Phaser.GameObjects.Line} The Game Object that was created.
+ */
+GameObjectFactory.register('line', function (x, y, x1, y1, x2, y2, strokeColor, strokeAlpha)
+{
+    return this.displayList.add(new Line(this.scene, x, y, x1, y1, x2, y2, strokeColor, strokeAlpha));
+});
+
+
+/***/ }),
+/* 750 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectFactory = __webpack_require__(5);
+var IsoTriangle = __webpack_require__(288);
+
+/**
+ * Creates a new IsoTriangle Shape Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the IsoTriangle Game Object has been built into Phaser.
+ * 
+ * The IsoTriangle Shape is a Game Object that can be added to a Scene, Group or Container. You can
+ * treat it like any other Game Object in your game, such as tweening it, scaling it, or enabling
+ * it for input or physics. It provides a quick and easy way for you to render this shape in your
+ * game without using a texture, while still taking advantage of being fully batched in WebGL.
+ * 
+ * This shape supports only fill colors and cannot be stroked.
+ * 
+ * An IsoTriangle is an 'isometric' triangle. Think of it like a pyramid. Each face has a different
+ * fill color. You can set the color of the top, left and right faces of the triangle respectively
+ * You can also choose which of the faces are rendered via the `showTop`, `showLeft` and `showRight` properties.
+ * 
+ * You cannot view an IsoTriangle from under-neath, however you can change the 'angle' by setting
+ * the `projection` property. The `reversed` property controls if the IsoTriangle is rendered upside
+ * down or not.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#isotriangle
+ * @since 3.13.0
+ *
+ * @param {number} [x=0] - The horizontal position of this Game Object in the world.
+ * @param {number} [y=0] - The vertical position of this Game Object in the world.
+ * @param {number} [size=48] - The width of the iso triangle in pixels. The left and right faces will be exactly half this value.
+ * @param {number} [height=32] - The height of the iso triangle. The left and right faces will be this tall. The overall height of the iso triangle will be this value plus half the `size` value.
+ * @param {boolean} [reversed=false] - Is the iso triangle upside down?
+ * @param {number} [fillTop=0xeeeeee] - The fill color of the top face of the iso triangle.
+ * @param {number} [fillLeft=0x999999] - The fill color of the left face of the iso triangle.
+ * @param {number} [fillRight=0xcccccc] - The fill color of the right face of the iso triangle.
+ *
+ * @return {Phaser.GameObjects.IsoTriangle} The Game Object that was created.
+ */
+GameObjectFactory.register('isotriangle', function (x, y, size, height, reversed, fillTop, fillLeft, fillRight)
+{
+    return this.displayList.add(new IsoTriangle(this.scene, x, y, size, height, reversed, fillTop, fillLeft, fillRight));
+});
+
+
+/***/ }),
+/* 751 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectFactory = __webpack_require__(5);
+var IsoBox = __webpack_require__(289);
