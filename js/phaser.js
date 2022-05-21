@@ -129533,3 +129533,237 @@ GameObjectFactory.register('isotriangle', function (x, y, size, height, reversed
 
 var GameObjectFactory = __webpack_require__(5);
 var IsoBox = __webpack_require__(289);
+
+/**
+ * Creates a new IsoBox Shape Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the IsoBox Game Object has been built into Phaser.
+ * 
+ * The IsoBox Shape is a Game Object that can be added to a Scene, Group or Container. You can
+ * treat it like any other Game Object in your game, such as tweening it, scaling it, or enabling
+ * it for input or physics. It provides a quick and easy way for you to render this shape in your
+ * game without using a texture, while still taking advantage of being fully batched in WebGL.
+ * 
+ * This shape supports only fill colors and cannot be stroked.
+ * 
+ * An IsoBox is an 'isometric' rectangle. Each face of it has a different fill color. You can set
+ * the color of the top, left and right faces of the rectangle respectively. You can also choose
+ * which of the faces are rendered via the `showTop`, `showLeft` and `showRight` properties.
+ * 
+ * You cannot view an IsoBox from under-neath, however you can change the 'angle' by setting
+ * the `projection` property.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#isobox
+ * @since 3.13.0
+ *
+ * @param {number} [x=0] - The horizontal position of this Game Object in the world.
+ * @param {number} [y=0] - The vertical position of this Game Object in the world.
+ * @param {number} [size=48] - The width of the iso box in pixels. The left and right faces will be exactly half this value.
+ * @param {number} [height=32] - The height of the iso box. The left and right faces will be this tall. The overall height of the isobox will be this value plus half the `size` value.
+ * @param {number} [fillTop=0xeeeeee] - The fill color of the top face of the iso box.
+ * @param {number} [fillLeft=0x999999] - The fill color of the left face of the iso box.
+ * @param {number} [fillRight=0xcccccc] - The fill color of the right face of the iso box.
+ *
+ * @return {Phaser.GameObjects.IsoBox} The Game Object that was created.
+ */
+GameObjectFactory.register('isobox', function (x, y, size, height, fillTop, fillLeft, fillRight)
+{
+    return this.displayList.add(new IsoBox(this.scene, x, y, size, height, fillTop, fillLeft, fillRight));
+});
+
+
+/***/ }),
+/* 752 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectFactory = __webpack_require__(5);
+var Grid = __webpack_require__(290);
+
+/**
+ * Creates a new Grid Shape Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the Grid Game Object has been built into Phaser.
+ * 
+ * The Grid Shape is a Game Object that can be added to a Scene, Group or Container. You can
+ * treat it like any other Game Object in your game, such as tweening it, scaling it, or enabling
+ * it for input or physics. It provides a quick and easy way for you to render this shape in your
+ * game without using a texture, while still taking advantage of being fully batched in WebGL.
+ * 
+ * This shape supports only fill colors and cannot be stroked.
+ * 
+ * A Grid Shape allows you to display a grid in your game, where you can control the size of the
+ * grid as well as the width and height of the grid cells. You can set a fill color for each grid
+ * cell as well as an alternate fill color. When the alternate fill color is set then the grid
+ * cells will alternate the fill colors as they render, creating a chess-board effect. You can
+ * also optionally have an outline fill color. If set, this draws lines between the grid cells
+ * in the given color. If you specify an outline color with an alpha of zero, then it will draw
+ * the cells spaced out, but without the lines between them.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#grid
+ * @since 3.13.0
+ *
+ * @param {number} [x=0] - The horizontal position of this Game Object in the world.
+ * @param {number} [y=0] - The vertical position of this Game Object in the world.
+ * @param {number} [width=128] - The width of the grid.
+ * @param {number} [height=128] - The height of the grid.
+ * @param {number} [cellWidth=32] - The width of one cell in the grid.
+ * @param {number} [cellHeight=32] - The height of one cell in the grid.
+ * @param {number} [fillColor] - The color the grid cells will be filled with, i.e. 0xff0000 for red.
+ * @param {number} [fillAlpha] - The alpha the grid cells will be filled with. You can also set the alpha of the overall Shape using its `alpha` property.
+ * @param {number} [outlineFillColor] - The color of the lines between the grid cells.
+ * @param {number} [outlineFillAlpha] - The alpha of the lines between the grid cells.
+ *
+ * @return {Phaser.GameObjects.Grid} The Game Object that was created.
+ */
+GameObjectFactory.register('grid', function (x, y, width, height, cellWidth, cellHeight, fillColor, fillAlpha, outlineFillColor, outlineFillAlpha)
+{
+    return this.displayList.add(new Grid(this.scene, x, y, width, height, cellWidth, cellHeight, fillColor, fillAlpha, outlineFillColor, outlineFillAlpha));
+});
+
+
+/***/ }),
+/* 753 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Ellipse = __webpack_require__(291);
+var GameObjectFactory = __webpack_require__(5);
+
+/**
+ * Creates a new Ellipse Shape Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the Ellipse Game Object has been built into Phaser.
+ * 
+ * The Ellipse Shape is a Game Object that can be added to a Scene, Group or Container. You can
+ * treat it like any other Game Object in your game, such as tweening it, scaling it, or enabling
+ * it for input or physics. It provides a quick and easy way for you to render this shape in your
+ * game without using a texture, while still taking advantage of being fully batched in WebGL.
+ * 
+ * This shape supports both fill and stroke colors.
+ * 
+ * When it renders it displays an ellipse shape. You can control the width and height of the ellipse.
+ * If the width and height match it will render as a circle. If the width is less than the height,
+ * it will look more like an egg shape.
+ * 
+ * The Ellipse shape also has a `smoothness` property and corresponding `setSmoothness` method.
+ * This allows you to control how smooth the shape renders in WebGL, by controlling the number of iterations
+ * that take place during construction. Increase and decrease the default value for smoother, or more
+ * jagged, shapes.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#ellipse
+ * @since 3.13.0
+ *
+ * @param {number} [x=0] - The horizontal position of this Game Object in the world.
+ * @param {number} [y=0] - The vertical position of this Game Object in the world.
+ * @param {number} [width=128] - The width of the ellipse. An ellipse with equal width and height renders as a circle.
+ * @param {number} [height=128] - The height of the ellipse. An ellipse with equal width and height renders as a circle.
+ * @param {number} [fillColor] - The color the ellipse will be filled with, i.e. 0xff0000 for red.
+ * @param {number} [fillAlpha] - The alpha the ellipse will be filled with. You can also set the alpha of the overall Shape using its `alpha` property.
+ *
+ * @return {Phaser.GameObjects.Ellipse} The Game Object that was created.
+ */
+GameObjectFactory.register('ellipse', function (x, y, width, height, fillColor, fillAlpha)
+{
+    return this.displayList.add(new Ellipse(this.scene, x, y, width, height, fillColor, fillAlpha));
+});
+
+
+/***/ }),
+/* 754 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectFactory = __webpack_require__(5);
+var Curve = __webpack_require__(292);
+
+/**
+ * Creates a new Curve Shape Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the Curve Game Object has been built into Phaser.
+ * 
+ * The Curve Shape is a Game Object that can be added to a Scene, Group or Container. You can
+ * treat it like any other Game Object in your game, such as tweening it, scaling it, or enabling
+ * it for input or physics. It provides a quick and easy way for you to render this shape in your
+ * game without using a texture, while still taking advantage of being fully batched in WebGL.
+ * 
+ * This shape supports both fill and stroke colors.
+ * 
+ * To render a Curve Shape you must first create a `Phaser.Curves.Curve` object, then pass it to
+ * the Curve Shape in the constructor.
+ * 
+ * The Curve shape also has a `smoothness` property and corresponding `setSmoothness` method.
+ * This allows you to control how smooth the shape renders in WebGL, by controlling the number of iterations
+ * that take place during construction. Increase and decrease the default value for smoother, or more
+ * jagged, shapes.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#curve
+ * @since 3.13.0
+ *
+ * @param {number} [x=0] - The horizontal position of this Game Object in the world.
+ * @param {number} [y=0] - The vertical position of this Game Object in the world.
+ * @param {Phaser.Curves.Curve} [curve] - The Curve object to use to create the Shape.
+ * @param {number} [fillColor] - The color the curve will be filled with, i.e. 0xff0000 for red.
+ * @param {number} [fillAlpha] - The alpha the curve will be filled with. You can also set the alpha of the overall Shape using its `alpha` property.
+ *
+ * @return {Phaser.GameObjects.Curve} The Game Object that was created.
+ */
+GameObjectFactory.register('curve', function (x, y, curve, fillColor, fillAlpha)
+{
+    return this.displayList.add(new Curve(this.scene, x, y, curve, fillColor, fillAlpha));
+});
+
+
+/***/ }),
+/* 755 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Arc = __webpack_require__(293);
+var GameObjectFactory = __webpack_require__(5);
+
+/**
+ * Creates a new Arc Shape Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the Arc Game Object has been built into Phaser.
+ * 
+ * The Arc Shape is a Game Object that can be added to a Scene, Group or Container. You can
+ * treat it like any other Game Object in your game, such as tweening it, scaling it, or enabling
+ * it for input or physics. It provides a quick and easy way for you to render this shape in your
+ * game without using a texture, while still taking advantage of being fully batched in WebGL.
+ * 
+ * This shape supports both fill and stroke colors.
+ * 
+ * When it renders it displays an arc shape. You can control the start and end angles of the arc,
+ * as well as if the angles are winding clockwise or anti-clockwise. With the default settings
+ * it renders as a complete circle. By changing the angles you can create other arc shapes,
+ * such as half-circles.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#arc
+ * @since 3.13.0
+ *
+ * @param {number} [x=0] - The horizontal position of this Game Object in the world.
+ * @param {number} [y=0] - The vertical position of this Game Object in the world.
+ * @param {number} [radius=128] - The radius of the arc.
+ * @param {integer} [startAngle=0] - The start angle of the arc, in degrees.
+ * @param {integer} [endAngle=360] - The end angle of the arc, in degrees.
