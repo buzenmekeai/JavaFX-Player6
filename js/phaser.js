@@ -129985,3 +129985,212 @@ var GameObjectFactory = __webpack_require__(5);
  * BMFont (Windows, free): http://www.angelcode.com/products/bmfont/
  * Glyph Designer (OS X, commercial): http://www.71squared.com/en/glyphdesigner
  * Littera (Web-based, free): http://kvazars.com/littera/
+ *
+ * For most use cases it is recommended to use XML. If you wish to use JSON, the formatting should be equal to the result of
+ * converting a valid XML file through the popular X2JS library. An online tool for conversion can be found here: http://codebeautify.org/xmltojson
+ *
+ * Note: This method will only be available if the Bitmap Text Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#bitmapText
+ * @since 3.0.0
+ *
+ * @param {number} x - The x position of the Game Object.
+ * @param {number} y - The y position of the Game Object.
+ * @param {string} font - The key of the font to use from the BitmapFont cache.
+ * @param {(string|string[])} [text] - The string, or array of strings, to be set as the content of this Bitmap Text.
+ * @param {number} [size] - The font size to set.
+ * @param {integer} [align=0] - The alignment of the text in a multi-line BitmapText object.
+ *
+ * @return {Phaser.GameObjects.BitmapText} The Game Object that was created.
+ */
+GameObjectFactory.register('bitmapText', function (x, y, font, text, size, align)
+{
+    return this.displayList.add(new BitmapText(this.scene, x, y, font, text, size, align));
+});
+
+//  When registering a factory function 'this' refers to the GameObjectFactory context.
+//
+//  There are several properties available to use:
+//
+//  this.scene - a reference to the Scene that owns the GameObjectFactory
+//  this.displayList - a reference to the Display List the Scene owns
+//  this.updateList - a reference to the Update List the Scene owns
+
+
+/***/ }),
+/* 760 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectFactory = __webpack_require__(5);
+var Sprite = __webpack_require__(61);
+
+/**
+ * Creates a new Sprite Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the Sprite Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#sprite
+ * @since 3.0.0
+ *
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {string} texture - The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
+ * @param {(string|integer)} [frame] - An optional frame from the Texture this Game Object is rendering with.
+ *
+ * @return {Phaser.GameObjects.Sprite} The Game Object that was created.
+ */
+GameObjectFactory.register('sprite', function (x, y, key, frame)
+{
+    var sprite = new Sprite(this.scene, x, y, key, frame);
+
+    this.displayList.add(sprite);
+    this.updateList.add(sprite);
+
+    return sprite;
+});
+
+//  When registering a factory function 'this' refers to the GameObjectFactory context.
+//
+//  There are several properties available to use:
+//
+//  this.scene - a reference to the Scene that owns the GameObjectFactory
+//  this.displayList - a reference to the Display List the Scene owns
+//  this.updateList - a reference to the Update List the Scene owns
+
+
+/***/ }),
+/* 761 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectFactory = __webpack_require__(5);
+var RenderTexture = __webpack_require__(154);
+
+/**
+ * Creates a new Render Texture Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the Render Texture Game Object has been built into Phaser.
+ * 
+ * A Render Texture is a special texture that allows any number of Game Objects to be drawn to it. You can take many complex objects and
+ * draw them all to this one texture, which can they be used as the texture for other Game Object's. It's a way to generate dynamic
+ * textures at run-time that are WebGL friendly and don't invoke expensive GPU uploads.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#renderTexture
+ * @since 3.2.0
+ *
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {integer} [width=32] - The width of the Render Texture.
+ * @param {integer} [height=32] - The height of the Render Texture.
+ * 
+ * @return {Phaser.GameObjects.RenderTexture} The Game Object that was created.
+ */
+GameObjectFactory.register('renderTexture', function (x, y, width, height)
+{
+    return this.displayList.add(new RenderTexture(this.scene, x, y, width, height));
+});
+
+
+/***/ }),
+/* 762 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectFactory = __webpack_require__(5);
+var PathFollower = __webpack_require__(296);
+
+/**
+ * Creates a new PathFollower Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the PathFollower Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#follower
+ * @since 3.0.0
+ *
+ * @param {Phaser.Curves.Path} path - The Path this PathFollower is connected to.
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {string} texture - The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
+ * @param {(string|integer)} [frame] - An optional frame from the Texture this Game Object is rendering with.
+ *
+ * @return {Phaser.GameObjects.PathFollower} The Game Object that was created.
+ */
+GameObjectFactory.register('follower', function (path, x, y, key, frame)
+{
+    var sprite = new PathFollower(this.scene, path, x, y, key, frame);
+
+    this.displayList.add(sprite);
+    this.updateList.add(sprite);
+
+    return sprite;
+});
+
+//  When registering a factory function 'this' refers to the GameObjectFactory context.
+//
+//  There are several properties available to use:
+//
+//  this.scene - a reference to the Scene that owns the GameObjectFactory
+//  this.displayList - a reference to the Display List the Scene owns
+//  this.updateList - a reference to the Update List the Scene owns
+
+
+/***/ }),
+/* 763 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GameObjectFactory = __webpack_require__(5);
+var ParticleEmitterManager = __webpack_require__(155);
+
+/**
+ * Creates a new Particle Emitter Manager Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the Particles Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#particles
+ * @since 3.0.0
+ *
+ * @param {string} texture - The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
+ * @param {(string|integer|object)} [frame] - An optional frame from the Texture this Game Object is rendering with.
+ * @param {ParticleEmitterConfig|ParticleEmitterConfig[]} [emitters] - Configuration settings for one or more emitters to create.
+ *
+ * @return {Phaser.GameObjects.Particles.ParticleEmitterManager} The Game Object that was created.
+ */
+GameObjectFactory.register('particles', function (key, frame, emitters)
+{
+    var manager = new ParticleEmitterManager(this.scene, key, frame, emitters);
+
+    this.displayList.add(manager);
+    this.updateList.add(manager);
+
+    return manager;
+});
+
+//  When registering a factory function 'this' refers to the GameObjectFactory context.
+//
+//  There are several properties available to use:
+//
+//  this.scene - a reference to the Scene that owns the GameObjectFactory
+//  this.displayList - a reference to the Display List the Scene owns
+//  this.updateList - a reference to the Update List the Scene owns
