@@ -129767,3 +129767,221 @@ var GameObjectFactory = __webpack_require__(5);
  * @param {number} [radius=128] - The radius of the arc.
  * @param {integer} [startAngle=0] - The start angle of the arc, in degrees.
  * @param {integer} [endAngle=360] - The end angle of the arc, in degrees.
+ * @param {boolean} [anticlockwise=false] - The winding order of the start and end angles.
+ * @param {number} [fillColor] - The color the arc will be filled with, i.e. 0xff0000 for red.
+ * @param {number} [fillAlpha] - The alpha the arc will be filled with. You can also set the alpha of the overall Shape using its `alpha` property.
+ *
+ * @return {Phaser.GameObjects.Arc} The Game Object that was created.
+ */
+GameObjectFactory.register('arc', function (x, y, radius, startAngle, endAngle, anticlockwise, fillColor, fillAlpha)
+{
+    return this.displayList.add(new Arc(this.scene, x, y, radius, startAngle, endAngle, anticlockwise, fillColor, fillAlpha));
+});
+
+/**
+ * Creates a new Circle Shape Game Object and adds it to the Scene.
+ * 
+ * A Circle is an Arc with no defined start and end angle, making it render as a complete circle.
+ *
+ * Note: This method will only be available if the Arc Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#circle
+ * @since 3.13.0
+ *
+ * @param {number} [x=0] - The horizontal position of this Game Object in the world.
+ * @param {number} [y=0] - The vertical position of this Game Object in the world.
+ * @param {number} [radius=128] - The radius of the circle.
+ * @param {number} [fillColor] - The color the circle will be filled with, i.e. 0xff0000 for red.
+ * @param {number} [fillAlpha] - The alpha the circle will be filled with. You can also set the alpha of the overall Shape using its `alpha` property.
+ *
+ * @return {Phaser.GameObjects.Arc} The Game Object that was created.
+ */
+GameObjectFactory.register('circle', function (x, y, radius, fillColor, fillAlpha)
+{
+    return this.displayList.add(new Arc(this.scene, x, y, radius, 0, 360, false, fillColor, fillAlpha));
+});
+
+
+/***/ }),
+/* 756 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Zone = __webpack_require__(125);
+var GameObjectFactory = __webpack_require__(5);
+
+/**
+ * Creates a new Zone Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the Zone Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#zone
+ * @since 3.0.0
+ *
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {number} width - The width of the Game Object.
+ * @param {number} height - The height of the Game Object.
+ * 
+ * @return {Phaser.GameObjects.Zone} The Game Object that was created.
+ */
+GameObjectFactory.register('zone', function (x, y, width, height)
+{
+    return this.displayList.add(new Zone(this.scene, x, y, width, height));
+});
+
+//  When registering a factory function 'this' refers to the GameObjectFactory context.
+//  
+//  There are several properties available to use:
+//  
+//  this.scene - a reference to the Scene that owns the GameObjectFactory
+//  this.displayList - a reference to the Display List the Scene owns
+//  this.updateList - a reference to the Update List the Scene owns
+
+
+/***/ }),
+/* 757 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var TileSprite = __webpack_require__(152);
+var GameObjectFactory = __webpack_require__(5);
+
+/**
+ * Creates a new TileSprite Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the TileSprite Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#tileSprite
+ * @since 3.0.0
+ *
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {integer} width - The width of the Game Object. If zero it will use the size of the texture frame.
+ * @param {integer} height - The height of the Game Object. If zero it will use the size of the texture frame.
+ * @param {string} texture - The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
+ * @param {(string|integer)} [frame] - An optional frame from the Texture this Game Object is rendering with.
+ *
+ * @return {Phaser.GameObjects.TileSprite} The Game Object that was created.
+ */
+GameObjectFactory.register('tileSprite', function (x, y, width, height, key, frame)
+{
+    return this.displayList.add(new TileSprite(this.scene, x, y, width, height, key, frame));
+});
+
+//  When registering a factory function 'this' refers to the GameObjectFactory context.
+//
+//  There are several properties available to use:
+//
+//  this.scene - a reference to the Scene that owns the GameObjectFactory
+//  this.displayList - a reference to the Display List the Scene owns
+//  this.updateList - a reference to the Update List the Scene owns
+
+
+/***/ }),
+/* 758 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Text = __webpack_require__(153);
+var GameObjectFactory = __webpack_require__(5);
+
+/**
+ * Creates a new Text Game Object and adds it to the Scene.
+ * 
+ * A Text Game Object.
+ * 
+ * Text objects work by creating their own internal hidden Canvas and then renders text to it using
+ * the standard Canvas `fillText` API. It then creates a texture from this canvas which is rendered
+ * to your game during the render pass.
+ * 
+ * Because it uses the Canvas API you can take advantage of all the features this offers, such as
+ * applying gradient fills to the text, or strokes, shadows and more. You can also use custom fonts
+ * loaded externally, such as Google or TypeKit Web fonts.
+ *
+ * You can only display fonts that are currently loaded and available to the browser: therefore fonts must
+ * be pre-loaded. Phaser does not do ths for you, so you will require the use of a 3rd party font loader,
+ * or have the fonts ready available in the CSS on the page in which your Phaser game resides.
+ *
+ * See {@link http://www.jordanm.co.uk/tinytype this compatibility table} for the available default fonts
+ * across mobile browsers.
+ * 
+ * A note on performance: Every time the contents of a Text object changes, i.e. changing the text being
+ * displayed, or the style of the text, it needs to remake the Text canvas, and if on WebGL, re-upload the
+ * new texture to the GPU. This can be an expensive operation if used often, or with large quantities of
+ * Text objects in your game. If you run into performance issues you would be better off using Bitmap Text
+ * instead, as it benefits from batching and avoids expensive Canvas API calls.
+ *
+ * Note: This method will only be available if the Text Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#text
+ * @since 3.0.0
+ *
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {(string|string[])} text - The text this Text object will display.
+ * @param {object} [style] - The Text style configuration object.
+ *
+ * @return {Phaser.GameObjects.Text} The Game Object that was created.
+ */
+GameObjectFactory.register('text', function (x, y, text, style)
+{
+    return this.displayList.add(new Text(this.scene, x, y, text, style));
+});
+
+//  When registering a factory function 'this' refers to the GameObjectFactory context.
+//
+//  There are several properties available to use:
+//
+//  this.scene - a reference to the Scene that owns the GameObjectFactory
+//  this.displayList - a reference to the Display List the Scene owns
+//  this.updateList - a reference to the Update List the Scene owns
+
+
+/***/ }),
+/* 759 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var BitmapText = __webpack_require__(109);
+var GameObjectFactory = __webpack_require__(5);
+
+/**
+ * Creates a new Bitmap Text Game Object and adds it to the Scene.
+ * 
+ * BitmapText objects work by taking a texture file and an XML or JSON file that describes the font structure.
+ * 
+ * During rendering for each letter of the text is rendered to the display, proportionally spaced out and aligned to
+ * match the font structure.
+ * 
+ * BitmapText objects are less flexible than Text objects, in that they have less features such as shadows, fills and the ability
+ * to use Web Fonts, however you trade this flexibility for rendering speed. You can also create visually compelling BitmapTexts by
+ * processing the font texture in an image editor, applying fills and any other effects required.
+ *
+ * To create multi-line text insert \r, \n or \r\n escape codes into the text string.
+ *
+ * To create a BitmapText data files you need a 3rd party app such as:
+ *
+ * BMFont (Windows, free): http://www.angelcode.com/products/bmfont/
+ * Glyph Designer (OS X, commercial): http://www.71squared.com/en/glyphdesigner
+ * Littera (Web-based, free): http://kvazars.com/littera/
