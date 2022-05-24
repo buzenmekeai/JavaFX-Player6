@@ -130400,3 +130400,238 @@ var GameObjectFactory = __webpack_require__(5);
  * @method Phaser.GameObjects.GameObjectFactory#container
  * @since 3.4.0
  *
+ * @param {number} x - The horizontal position of this Game Object in the world.
+ * @param {number} y - The vertical position of this Game Object in the world.
+ * @param {Phaser.GameObjects.GameObject|Phaser.GameObjects.GameObject[]} [children] - An optional array of Game Objects to add to this Container.
+ *
+ * @return {Phaser.GameObjects.Container} The Game Object that was created.
+ */
+GameObjectFactory.register('container', function (x, y, children)
+{
+    return this.displayList.add(new Container(this.scene, x, y, children));
+});
+
+
+/***/ }),
+/* 769 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Blitter = __webpack_require__(161);
+var GameObjectFactory = __webpack_require__(5);
+
+/**
+ * Creates a new Blitter Game Object and adds it to the Scene.
+ *
+ * Note: This method will only be available if the Blitter Game Object has been built into Phaser.
+ *
+ * @method Phaser.GameObjects.GameObjectFactory#blitter
+ * @since 3.0.0
+ *
+ * @param {number} x - The x position of the Game Object.
+ * @param {number} y - The y position of the Game Object.
+ * @param {string} key - The key of the Texture the Blitter object will use.
+ * @param {(string|integer)} [frame] - The default Frame children of the Blitter will use.
+ * 
+ * @return {Phaser.GameObjects.Blitter} The Game Object that was created.
+ */
+GameObjectFactory.register('blitter', function (x, y, key, frame)
+{
+    return this.displayList.add(new Blitter(this.scene, x, y, key, frame));
+});
+
+//  When registering a factory function 'this' refers to the GameObjectFactory context.
+//  
+//  There are several properties available to use:
+//  
+//  this.scene - a reference to the Scene that owns the GameObjectFactory
+//  this.displayList - a reference to the Display List the Scene owns
+//  this.updateList - a reference to the Update List the Scene owns
+
+
+/***/ }),
+/* 770 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var FillStyleCanvas = __webpack_require__(30);
+var LineStyleCanvas = __webpack_require__(36);
+var SetTransform = __webpack_require__(22);
+
+/**
+ * Renders this Game Object with the Canvas Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.Triangle#renderCanvas
+ * @since 3.13.0
+ * @private
+ *
+ * @param {Phaser.Renderer.Canvas.CanvasRenderer} renderer - A reference to the current active Canvas renderer.
+ * @param {Phaser.GameObjects.Triangle} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var TriangleCanvasRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    var ctx = renderer.currentContext;
+
+    if (SetTransform(renderer, ctx, src, camera, parentMatrix))
+    {
+        var dx = src._displayOriginX;
+        var dy = src._displayOriginY;
+
+        var x1 = src.geom.x1 - dx;
+        var y1 = src.geom.y1 - dy;
+        var x2 = src.geom.x2 - dx;
+        var y2 = src.geom.y2 - dy;
+        var x3 = src.geom.x3 - dx;
+        var y3 = src.geom.y3 - dy;
+
+        ctx.beginPath();
+
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.lineTo(x3, y3);
+
+        ctx.closePath();
+
+        if (src.isFilled)
+        {
+            FillStyleCanvas(ctx, src);
+
+            ctx.fill();
+        }
+
+        if (src.isStroked)
+        {
+            LineStyleCanvas(ctx, src);
+
+            ctx.stroke();
+        }
+    }
+};
+
+module.exports = TriangleCanvasRenderer;
+
+
+/***/ }),
+/* 771 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var StrokePathWebGL = __webpack_require__(60);
+var Utils = __webpack_require__(10);
+
+/**
+ * Renders this Game Object with the WebGL Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.Triangle#renderWebGL
+ * @since 3.13.0
+ * @private
+ *
+ * @param {Phaser.Renderer.WebGL.WebGLRenderer} renderer - A reference to the current active WebGL renderer.
+ * @param {Phaser.GameObjects.Triangle} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var TriangleWebGLRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    var pipeline = this.pipeline;
+
+    var camMatrix = pipeline._tempMatrix1;
+    var shapeMatrix = pipeline._tempMatrix2;
+    var calcMatrix = pipeline._tempMatrix3;
+
+    renderer.setPipeline(pipeline);
+
+    shapeMatrix.applyITRS(src.x, src.y, src.rotation, src.scaleX, src.scaleY);
+
+    camMatrix.copyFrom(camera.matrix);
+
+    if (parentMatrix)
+    {
+        //  Multiply the camera by the parent matrix
+        camMatrix.multiplyWithOffset(parentMatrix, -camera.scrollX * src.scrollFactorX, -camera.scrollY * src.scrollFactorY);
+
+        //  Undo the camera scroll
+        shapeMatrix.e = src.x;
+        shapeMatrix.f = src.y;
+    }
+    else
+    {
+        shapeMatrix.e -= camera.scrollX * src.scrollFactorX;
+        shapeMatrix.f -= camera.scrollY * src.scrollFactorY;
+    }
+
+    camMatrix.multiply(shapeMatrix, calcMatrix);
+
+    var dx = src._displayOriginX;
+    var dy = src._displayOriginY;
+    var alpha = camera.alpha * src.alpha;
+
+    if (src.isFilled)
+    {
+        var fillTint = pipeline.fillTint;
+        var fillTintColor = Utils.getTintAppendFloatAlphaAndSwap(src.fillColor, src.fillAlpha * alpha);
+
+        fillTint.TL = fillTintColor;
+        fillTint.TR = fillTintColor;
+        fillTint.BL = fillTintColor;
+        fillTint.BR = fillTintColor;
+
+        var x1 = src.geom.x1 - dx;
+        var y1 = src.geom.y1 - dy;
+        var x2 = src.geom.x2 - dx;
+        var y2 = src.geom.y2 - dy;
+        var x3 = src.geom.x3 - dx;
+        var y3 = src.geom.y3 - dy;
+
+        pipeline.setTexture2D();
+
+        pipeline.batchFillTriangle(
+            x1,
+            y1,
+            x2,
+            y2,
+            x3,
+            y3,
+            shapeMatrix,
+            camMatrix
+        );
+    }
+
+    if (src.isStroked)
+    {
+        StrokePathWebGL(pipeline, src, alpha, dx, dy);
+    }
+};
+
+module.exports = TriangleWebGLRenderer;
+
+
+/***/ }),
+/* 772 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
