@@ -130635,3 +130635,224 @@ module.exports = TriangleWebGLRenderer;
 
 /**
  * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var renderWebGL = __webpack_require__(1);
+var renderCanvas = __webpack_require__(1);
+
+if (true)
+{
+    renderWebGL = __webpack_require__(771);
+}
+
+if (true)
+{
+    renderCanvas = __webpack_require__(770);
+}
+
+module.exports = {
+
+    renderWebGL: renderWebGL,
+    renderCanvas: renderCanvas
+
+};
+
+
+/***/ }),
+/* 773 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var FillStyleCanvas = __webpack_require__(30);
+var LineStyleCanvas = __webpack_require__(36);
+var SetTransform = __webpack_require__(22);
+
+/**
+ * Renders this Game Object with the Canvas Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.Star#renderCanvas
+ * @since 3.13.0
+ * @private
+ *
+ * @param {Phaser.Renderer.Canvas.CanvasRenderer} renderer - A reference to the current active Canvas renderer.
+ * @param {Phaser.GameObjects.Star} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var StarCanvasRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    var ctx = renderer.currentContext;
+
+    if (SetTransform(renderer, ctx, src, camera, parentMatrix))
+    {
+        var dx = src._displayOriginX;
+        var dy = src._displayOriginY;
+
+        var path = src.pathData;
+        var pathLength = path.length - 1;
+    
+        var px1 = path[0] - dx;
+        var py1 = path[1] - dy;
+
+        ctx.beginPath();
+
+        ctx.moveTo(px1, py1);
+    
+        if (!src.closePath)
+        {
+            pathLength -= 2;
+        }
+    
+        for (var i = 2; i < pathLength; i += 2)
+        {
+            var px2 = path[i] - dx;
+            var py2 = path[i + 1] - dy;
+    
+            ctx.lineTo(px2, py2);
+        }
+
+        ctx.closePath();
+
+        if (src.isFilled)
+        {
+            FillStyleCanvas(ctx, src);
+
+            ctx.fill();
+        }
+
+        if (src.isStroked)
+        {
+            LineStyleCanvas(ctx, src);
+
+            ctx.stroke();
+        }
+    }
+};
+
+module.exports = StarCanvasRenderer;
+
+
+/***/ }),
+/* 774 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var FillPathWebGL = __webpack_require__(82);
+var StrokePathWebGL = __webpack_require__(60);
+
+/**
+ * Renders this Game Object with the WebGL Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.Star#renderWebGL
+ * @since 3.13.0
+ * @private
+ *
+ * @param {Phaser.Renderer.WebGL.WebGLRenderer} renderer - A reference to the current active WebGL renderer.
+ * @param {Phaser.GameObjects.Star} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var StarWebGLRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    var pipeline = this.pipeline;
+
+    var camMatrix = pipeline._tempMatrix1;
+    var shapeMatrix = pipeline._tempMatrix2;
+    var calcMatrix = pipeline._tempMatrix3;
+
+    renderer.setPipeline(pipeline);
+
+    shapeMatrix.applyITRS(src.x, src.y, src.rotation, src.scaleX, src.scaleY);
+
+    camMatrix.copyFrom(camera.matrix);
+
+    if (parentMatrix)
+    {
+        //  Multiply the camera by the parent matrix
+        camMatrix.multiplyWithOffset(parentMatrix, -camera.scrollX * src.scrollFactorX, -camera.scrollY * src.scrollFactorY);
+
+        //  Undo the camera scroll
+        shapeMatrix.e = src.x;
+        shapeMatrix.f = src.y;
+    }
+    else
+    {
+        shapeMatrix.e -= camera.scrollX * src.scrollFactorX;
+        shapeMatrix.f -= camera.scrollY * src.scrollFactorY;
+    }
+
+    camMatrix.multiply(shapeMatrix, calcMatrix);
+
+    var dx = src._displayOriginX;
+    var dy = src._displayOriginY;
+
+    var alpha = camera.alpha * src.alpha;
+
+    if (src.isFilled)
+    {
+        FillPathWebGL(pipeline, calcMatrix, src, alpha, dx, dy);
+    }
+
+    if (src.isStroked)
+    {
+        StrokePathWebGL(pipeline, src, alpha, dx, dy);
+    }
+};
+
+module.exports = StarWebGLRenderer;
+
+
+/***/ }),
+/* 775 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var renderWebGL = __webpack_require__(1);
+var renderCanvas = __webpack_require__(1);
+
+if (true)
+{
+    renderWebGL = __webpack_require__(774);
+}
+
+if (true)
+{
+    renderCanvas = __webpack_require__(773);
+}
+
+module.exports = {
+
+    renderWebGL: renderWebGL,
+    renderCanvas: renderCanvas
+
+};
+
+
+/***/ }),
+/* 776 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
