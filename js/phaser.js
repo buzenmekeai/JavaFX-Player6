@@ -132185,3 +132185,241 @@ var GridWebGLRenderer = function (renderer, src, interpolationPercentage, camera
     {
         //  To make room for the grid lines (in case alpha < 1)
         cellWidthA--;
+        cellHeightA--;
+
+        if (cellWidthB === cellWidth)
+        {
+            cellWidthB--;
+        }
+
+        if (cellHeightB === cellHeight)
+        {
+            cellHeightB--;
+        }
+    }
+
+    if (showCells && src.fillAlpha > 0)
+    {
+        fillTint = pipeline.fillTint;
+        fillTintColor = Utils.getTintAppendFloatAlphaAndSwap(src.fillColor, src.fillAlpha * alpha);
+    
+        fillTint.TL = fillTintColor;
+        fillTint.TR = fillTintColor;
+        fillTint.BL = fillTintColor;
+        fillTint.BR = fillTintColor;
+
+        for (y = 0; y < gridHeight; y++)
+        {
+            if (showAltCells)
+            {
+                r = y % 2;
+            }
+
+            for (x = 0; x < gridWidth; x++)
+            {
+                if (showAltCells && r)
+                {
+                    r = 0;
+                    continue;
+                }
+
+                r++;
+
+                cw = (x < gridWidth - 1) ? cellWidthA : cellWidthB;
+                ch = (y < gridHeight - 1) ? cellHeightA : cellHeightB;
+
+                pipeline.setTexture2D();
+
+                pipeline.batchFillRect(
+                    x * cellWidth,
+                    y * cellHeight,
+                    cw,
+                    ch
+                );
+            }
+        }
+    }
+
+    if (showAltCells && src.altFillAlpha > 0)
+    {
+        fillTint = pipeline.fillTint;
+        fillTintColor = Utils.getTintAppendFloatAlphaAndSwap(src.altFillColor, src.altFillAlpha * alpha);
+    
+        fillTint.TL = fillTintColor;
+        fillTint.TR = fillTintColor;
+        fillTint.BL = fillTintColor;
+        fillTint.BR = fillTintColor;
+
+        for (y = 0; y < gridHeight; y++)
+        {
+            if (showAltCells)
+            {
+                r = y % 2;
+            }
+
+            for (x = 0; x < gridWidth; x++)
+            {
+                if (showAltCells && !r)
+                {
+                    r = 1;
+                    continue;
+                }
+
+                r = 0;
+
+                cw = (x < gridWidth - 1) ? cellWidthA : cellWidthB;
+                ch = (y < gridHeight - 1) ? cellHeightA : cellHeightB;
+
+                pipeline.setTexture2D();
+
+                pipeline.batchFillRect(
+                    x * cellWidth,
+                    y * cellHeight,
+                    cw,
+                    ch
+                );
+            }
+        }
+    }
+
+    if (showOutline && src.outlineFillAlpha > 0)
+    {
+        var strokeTint = pipeline.strokeTint;
+        var color = Utils.getTintAppendFloatAlphaAndSwap(src.outlineFillColor, src.outlineFillAlpha * alpha);
+
+        strokeTint.TL = color;
+        strokeTint.TR = color;
+        strokeTint.BL = color;
+        strokeTint.BR = color;
+
+        for (x = 1; x < gridWidth; x++)
+        {
+            var x1 = x * cellWidth;
+
+            pipeline.setTexture2D();
+
+            pipeline.batchLine(x1, 0, x1, height, 1, 1, 1, 0, false);
+        }
+
+        for (y = 1; y < gridHeight; y++)
+        {
+            var y1 = y * cellHeight;
+
+            pipeline.setTexture2D();
+
+            pipeline.batchLine(0, y1, width, y1, 1, 1, 1, 0, false);
+        }
+    }
+};
+
+module.exports = GridWebGLRenderer;
+
+
+/***/ }),
+/* 793 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var renderWebGL = __webpack_require__(1);
+var renderCanvas = __webpack_require__(1);
+
+if (true)
+{
+    renderWebGL = __webpack_require__(792);
+}
+
+if (true)
+{
+    renderCanvas = __webpack_require__(791);
+}
+
+module.exports = {
+
+    renderWebGL: renderWebGL,
+    renderCanvas: renderCanvas
+
+};
+
+
+/***/ }),
+/* 794 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var FillStyleCanvas = __webpack_require__(30);
+var LineStyleCanvas = __webpack_require__(36);
+var SetTransform = __webpack_require__(22);
+
+/**
+ * Renders this Game Object with the Canvas Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.Ellipse#renderCanvas
+ * @since 3.13.0
+ * @private
+ *
+ * @param {Phaser.Renderer.Canvas.CanvasRenderer} renderer - A reference to the current active Canvas renderer.
+ * @param {Phaser.GameObjects.Ellipse} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var EllipseCanvasRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    var ctx = renderer.currentContext;
+
+    if (SetTransform(renderer, ctx, src, camera, parentMatrix))
+    {
+        var dx = src._displayOriginX;
+        var dy = src._displayOriginY;
+
+        var path = src.pathData;
+        var pathLength = path.length - 1;
+    
+        var px1 = path[0] - dx;
+        var py1 = path[1] - dy;
+
+        ctx.beginPath();
+
+        ctx.moveTo(px1, py1);
+    
+        if (!src.closePath)
+        {
+            pathLength -= 2;
+        }
+    
+        for (var i = 2; i < pathLength; i += 2)
+        {
+            var px2 = path[i] - dx;
+            var py2 = path[i + 1] - dy;
+    
+            ctx.lineTo(px2, py2);
+        }
+
+        ctx.closePath();
+
+        if (src.isFilled)
+        {
+            FillStyleCanvas(ctx, src);
+
+            ctx.fill();
+        }
+
+        if (src.isStroked)
+        {
+            LineStyleCanvas(ctx, src);
+
+            ctx.stroke();
+        }
+    }
