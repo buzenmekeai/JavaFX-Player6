@@ -132877,3 +132877,224 @@ var ArcWebGLRenderer = function (renderer, src, interpolationPercentage, camera,
     {
         StrokePathWebGL(pipeline, src, alpha, dx, dy);
     }
+};
+
+module.exports = ArcWebGLRenderer;
+
+
+/***/ }),
+/* 802 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var renderWebGL = __webpack_require__(1);
+var renderCanvas = __webpack_require__(1);
+
+if (true)
+{
+    renderWebGL = __webpack_require__(801);
+}
+
+if (true)
+{
+    renderCanvas = __webpack_require__(800);
+}
+
+module.exports = {
+
+    renderWebGL: renderWebGL,
+    renderCanvas: renderCanvas
+
+};
+
+
+/***/ }),
+/* 803 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Renders this Game Object with the Canvas Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.TileSprite#renderCanvas
+ * @since 3.0.0
+ * @private
+ *
+ * @param {Phaser.Renderer.Canvas.CanvasRenderer} renderer - A reference to the current active Canvas renderer.
+ * @param {Phaser.GameObjects.TileSprite} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var TileSpriteCanvasRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    src.updateCanvas();
+
+    renderer.batchSprite(src, src.frame, camera, parentMatrix);
+};
+
+module.exports = TileSpriteCanvasRenderer;
+
+
+/***/ }),
+/* 804 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Utils = __webpack_require__(10);
+
+/**
+ * Renders this Game Object with the WebGL Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.TileSprite#renderWebGL
+ * @since 3.0.0
+ * @private
+ *
+ * @param {Phaser.Renderer.WebGL.WebGLRenderer} renderer - A reference to the current active WebGL renderer.
+ * @param {Phaser.GameObjects.TileSprite} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var TileSpriteWebGLRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    src.updateCanvas();
+
+    var getTint = Utils.getTintAppendFloatAlpha;
+
+    this.pipeline.batchTexture(
+        src,
+        src.fillPattern,
+        src.displayFrame.width * src.tileScaleX, src.displayFrame.height * src.tileScaleY,
+        src.x, src.y,
+        src.width, src.height,
+        src.scaleX, src.scaleY,
+        src.rotation,
+        src.flipX, src.flipY,
+        src.scrollFactorX, src.scrollFactorY,
+        src.originX * src.width, src.originY * src.height,
+        0, 0, src.width, src.height,
+        getTint(src._tintTL, camera.alpha * src._alphaTL),
+        getTint(src._tintTR, camera.alpha * src._alphaTR),
+        getTint(src._tintBL, camera.alpha * src._alphaBL),
+        getTint(src._tintBR, camera.alpha * src._alphaBR),
+        (src._isTinted && src.tintFill),
+        (src.tilePositionX % src.displayFrame.width) / src.displayFrame.width,
+        (src.tilePositionY % src.displayFrame.height) / src.displayFrame.height,
+        camera,
+        parentMatrix
+    );
+};
+
+module.exports = TileSpriteWebGLRenderer;
+
+
+/***/ }),
+/* 805 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var renderWebGL = __webpack_require__(1);
+var renderCanvas = __webpack_require__(1);
+
+if (true)
+{
+    renderWebGL = __webpack_require__(804);
+}
+
+if (true)
+{
+    renderCanvas = __webpack_require__(803);
+}
+
+module.exports = {
+
+    renderWebGL: renderWebGL,
+    renderCanvas: renderCanvas
+
+};
+
+
+/***/ }),
+/* 806 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var CanvasPool = __webpack_require__(24);
+
+/**
+ * Calculates the ascent, descent and fontSize of a given font style.
+ *
+ * @function Phaser.GameObjects.Text.MeasureText
+ * @since 3.0.0
+ *
+ * @param {Phaser.GameObjects.Text.TextStyle} textStyle - The TextStyle object to measure.
+ *
+ * @return {object} An object containing the ascent, descent and fontSize of the TextStyle.
+ */
+var MeasureText = function (textStyle)
+{
+    // @property {HTMLCanvasElement} canvas - The canvas element that the text is rendered.
+    var canvas = CanvasPool.create(this);
+
+    // @property {HTMLCanvasElement} context - The context of the canvas element that the text is rendered to.
+    var context = canvas.getContext('2d');
+
+    textStyle.syncFont(canvas, context);
+
+    var width = Math.ceil(context.measureText(textStyle.testString).width * textStyle.baselineX);
+    var baseline = width;
+    var height = 2 * baseline;
+
+    baseline = baseline * textStyle.baselineY | 0;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    context.fillStyle = '#f00';
+    context.fillRect(0, 0, width, height);
+
+    context.font = textStyle._font;
+
+    context.textBaseline = 'alphabetic';
+    context.fillStyle = '#000';
+    context.fillText(textStyle.testString, 0, baseline);
+
+    var output = {
+        ascent: 0,
+        descent: 0,
+        fontSize: 0
+    };
+
+    if (!context.getImageData(0, 0, width, height))
+    {
+        output.ascent = baseline;
