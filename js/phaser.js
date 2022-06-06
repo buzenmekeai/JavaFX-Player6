@@ -133098,3 +133098,230 @@ var MeasureText = function (textStyle)
     if (!context.getImageData(0, 0, width, height))
     {
         output.ascent = baseline;
+        output.descent = baseline + 6;
+        output.fontSize = output.ascent + output.descent;
+
+        CanvasPool.remove(canvas);
+
+        return output;
+    }
+
+    var imagedata = context.getImageData(0, 0, width, height).data;
+    var pixels = imagedata.length;
+    var line = width * 4;
+    var i;
+    var j;
+    var idx = 0;
+    var stop = false;
+
+    // ascent. scan from top to bottom until we find a non red pixel
+    for (i = 0; i < baseline; i++)
+    {
+        for (j = 0; j < line; j += 4)
+        {
+            if (imagedata[idx + j] !== 255)
+            {
+                stop = true;
+                break;
+            }
+        }
+
+        if (!stop)
+        {
+            idx += line;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    output.ascent = baseline - i;
+
+    idx = pixels - line;
+    stop = false;
+
+    // descent. scan from bottom to top until we find a non red pixel
+    for (i = height; i > baseline; i--)
+    {
+        for (j = 0; j < line; j += 4)
+        {
+            if (imagedata[idx + j] !== 255)
+            {
+                stop = true;
+                break;
+            }
+        }
+
+        if (!stop)
+        {
+            idx -= line;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    output.descent = (i - baseline);
+    output.fontSize = output.ascent + output.descent;
+
+    CanvasPool.remove(canvas);
+
+    return output;
+};
+
+module.exports = MeasureText;
+
+
+/***/ }),
+/* 807 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var GetAdvancedValue = __webpack_require__(12);
+var GetValue = __webpack_require__(4);
+var MeasureText = __webpack_require__(806);
+
+//  Key: [ Object Key, Default Value ]
+
+/**
+ * A custom function that will be responsible for wrapping the text.
+ * @callback TextStyleWordWrapCallback
+ *
+ * @param {string} text - The string to wrap.
+ * @param {Phaser.GameObjects.Text} textObject - The Text instance.
+ *
+ * @return {(string|string[])} Should return the wrapped lines either as an array of lines or as a string with
+ * newline characters in place to indicate where breaks should happen.
+ */
+
+var propertyMap = {
+    fontFamily: [ 'fontFamily', 'Courier' ],
+    fontSize: [ 'fontSize', '16px' ],
+    fontStyle: [ 'fontStyle', '' ],
+    backgroundColor: [ 'backgroundColor', null ],
+    color: [ 'color', '#fff' ],
+    stroke: [ 'stroke', '#fff' ],
+    strokeThickness: [ 'strokeThickness', 0 ],
+    shadowOffsetX: [ 'shadow.offsetX', 0 ],
+    shadowOffsetY: [ 'shadow.offsetY', 0 ],
+    shadowColor: [ 'shadow.color', '#000' ],
+    shadowBlur: [ 'shadow.blur', 0 ],
+    shadowStroke: [ 'shadow.stroke', false ],
+    shadowFill: [ 'shadow.fill', false ],
+    align: [ 'align', 'left' ],
+    maxLines: [ 'maxLines', 0 ],
+    fixedWidth: [ 'fixedWidth', 0 ],
+    fixedHeight: [ 'fixedHeight', 0 ],
+    resolution: [ 'resolution', 0 ],
+    rtl: [ 'rtl', false ],
+    testString: [ 'testString', '|MÃ‰qgy' ],
+    baselineX: [ 'baselineX', 1.2 ],
+    baselineY: [ 'baselineY', 1.4 ],
+    wordWrapWidth: [ 'wordWrap.width', null ],
+    wordWrapCallback: [ 'wordWrap.callback', null ],
+    wordWrapCallbackScope: [ 'wordWrap.callbackScope', null ],
+    wordWrapUseAdvanced: [ 'wordWrap.useAdvancedWrap', false ]
+};
+
+/**
+ * Font metrics for a Text Style object.
+ *
+ * @typedef {object} BitmapTextMetrics
+ *
+ * @property {number} ascent - The ascent of the font.
+ * @property {number} descent - The descent of the font.
+ * @property {number} fontSize - The size of the font.
+ */
+
+/**
+ * @classdesc
+ * Style settings for a Text object.
+ *
+ * @class TextStyle
+ * @memberof Phaser.GameObjects.Text
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.GameObjects.Text} text - The Text object that this TextStyle is styling.
+ * @param {object} style - The style settings to set.
+ */
+var TextStyle = new Class({
+
+    initialize:
+
+    function TextStyle (text, style)
+    {
+        /**
+         * The Text object that this TextStyle is styling.
+         *
+         * @name Phaser.GameObjects.Text.TextStyle#parent
+         * @type {Phaser.GameObjects.Text}
+         * @since 3.0.0
+         */
+        this.parent = text;
+
+        /**
+         * The font family.
+         *
+         * @name Phaser.GameObjects.Text.TextStyle#fontFamily
+         * @type {string}
+         * @default 'Courier'
+         * @since 3.0.0
+         */
+        this.fontFamily;
+
+        /**
+         * The font size.
+         *
+         * @name Phaser.GameObjects.Text.TextStyle#fontSize
+         * @type {string}
+         * @default '16px'
+         * @since 3.0.0
+         */
+        this.fontSize;
+
+        /**
+         * The font style.
+         *
+         * @name Phaser.GameObjects.Text.TextStyle#fontStyle
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.fontStyle;
+
+        /**
+         * The background color.
+         *
+         * @name Phaser.GameObjects.Text.TextStyle#backgroundColor
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.backgroundColor;
+
+        /**
+         * The text fill color.
+         *
+         * @name Phaser.GameObjects.Text.TextStyle#color
+         * @type {string}
+         * @default '#fff'
+         * @since 3.0.0
+         */
+        this.color;
+
+        /**
+         * The text stroke color.
+         *
+         * @name Phaser.GameObjects.Text.TextStyle#stroke
+         * @type {string}
+         * @default '#fff'
+         * @since 3.0.0
+         */
+        this.stroke;
