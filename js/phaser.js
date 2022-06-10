@@ -133763,3 +133763,228 @@ var TextStyle = new Class({
 
             this.update(true);
         }
+
+        return this.parent;
+    },
+
+    /**
+     * Set the font size.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setFontSize
+     * @since 3.0.0
+     *
+     * @param {(number|string)} size - The font size.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setFontSize: function (size)
+    {
+        if (typeof size === 'number')
+        {
+            size = size.toString() + 'px';
+        }
+
+        if (this.fontSize !== size)
+        {
+            this.fontSize = size;
+
+            this.update(true);
+        }
+
+        return this.parent;
+    },
+
+    /**
+     * Set the test string to use when measuring the font.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setTestString
+     * @since 3.0.0
+     *
+     * @param {string} string - The test string to use when measuring the font.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setTestString: function (string)
+    {
+        this.testString = string;
+
+        return this.update(true);
+    },
+
+    /**
+     * Set a fixed width and height for the text.
+     *
+     * Pass in `0` for either of these parameters to disable fixed width or height respectively.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setFixedSize
+     * @since 3.0.0
+     *
+     * @param {number} width - The fixed width to set.
+     * @param {number} height - The fixed height to set.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setFixedSize: function (width, height)
+    {
+        this.fixedWidth = width;
+        this.fixedHeight = height;
+
+        if (width)
+        {
+            this.parent.width = width;
+        }
+
+        if (height)
+        {
+            this.parent.height = height;
+        }
+
+        return this.update(false);
+    },
+
+    /**
+     * Set the background color.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setBackgroundColor
+     * @since 3.0.0
+     *
+     * @param {string} color - The background color.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setBackgroundColor: function (color)
+    {
+        this.backgroundColor = color;
+
+        return this.update(false);
+    },
+
+    /**
+     * Set the text fill color.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setFill
+     * @since 3.0.0
+     *
+     * @param {string} color - The text fill color.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setFill: function (color)
+    {
+        this.color = color;
+
+        return this.update(false);
+    },
+
+    /**
+     * Set the text fill color.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setColor
+     * @since 3.0.0
+     *
+     * @param {string} color - The text fill color.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setColor: function (color)
+    {
+        this.color = color;
+
+        return this.update(false);
+    },
+
+    /**
+     * Set the resolution used by the Text object.
+     *
+     * By default it will be set to match the resolution set in the Game Config,
+     * but you can override it via this method. It allows for much clearer text on High DPI devices,
+     * at the cost of memory because it uses larger internal Canvas textures for the Text.
+     * 
+     * Please use with caution, as the more high res Text you have, the more memory it uses up.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setResolution
+     * @since 3.12.0
+     *
+     * @param {number} value - The resolution for this Text object to use.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setResolution: function (value)
+    {
+        this.resolution = value;
+
+        return this.update(false);
+    },
+
+    /**
+     * Set the stroke settings.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setStroke
+     * @since 3.0.0
+     *
+     * @param {string} color - The stroke color.
+     * @param {number} thickness - The stroke thickness.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setStroke: function (color, thickness)
+    {
+        if (thickness === undefined) { thickness = this.strokeThickness; }
+
+        if (color === undefined && this.strokeThickness !== 0)
+        {
+            //  Reset the stroke to zero (disabling it)
+            this.strokeThickness = 0;
+
+            this.update(true);
+        }
+        else if (this.stroke !== color || this.strokeThickness !== thickness)
+        {
+            this.stroke = color;
+            this.strokeThickness = thickness;
+
+            this.update(true);
+        }
+
+        return this.parent;
+    },
+
+    /**
+     * Set the shadow settings.
+     * 
+     * Calling this method always re-measures the parent Text object,
+     * so only call it when you actually change the shadow settings.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setShadow
+     * @since 3.0.0
+     *
+     * @param {number} [x=0] - The horizontal shadow offset.
+     * @param {number} [y=0] - The vertical shadow offset.
+     * @param {string} [color='#000'] - The shadow color.
+     * @param {number} [blur=0] - The shadow blur radius.
+     * @param {boolean} [shadowStroke=false] - Whether to stroke the shadow.
+     * @param {boolean} [shadowFill=true] - Whether to fill the shadow.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setShadow: function (x, y, color, blur, shadowStroke, shadowFill)
+    {
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = 0; }
+        if (color === undefined) { color = '#000'; }
+        if (blur === undefined) { blur = 0; }
+        if (shadowStroke === undefined) { shadowStroke = false; }
+        if (shadowFill === undefined) { shadowFill = true; }
+
+        this.shadowOffsetX = x;
+        this.shadowOffsetY = y;
+        this.shadowColor = color;
+        this.shadowBlur = blur;
+        this.shadowStroke = shadowStroke;
+        this.shadowFill = shadowFill;
+
+        return this.update(false);
+    },
+
+    /**
+     * Set the shadow offset.
