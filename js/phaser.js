@@ -133553,3 +133553,213 @@ var TextStyle = new Class({
         {
             style.fontSize = style.fontSize.toString() + 'px';
         }
+
+        for (var key in propertyMap)
+        {
+            var value = (setDefaults) ? propertyMap[key][1] : this[key];
+
+            if (key === 'wordWrapCallback' || key === 'wordWrapCallbackScope')
+            {
+                // Callback & scope should be set without processing the values
+                this[key] = GetValue(style, propertyMap[key][0], value);
+            }
+            else
+            {
+                this[key] = GetAdvancedValue(style, propertyMap[key][0], value);
+            }
+        }
+
+        //  Allow for 'font' override
+        var font = GetValue(style, 'font', null);
+
+        if (font === null)
+        {
+            this._font = [ this.fontStyle, this.fontSize, this.fontFamily ].join(' ').trim();
+        }
+        else
+        {
+            this._font = font;
+        }
+
+        //  Allow for 'fill' to be used in place of 'color'
+        var fill = GetValue(style, 'fill', null);
+
+        if (fill !== null)
+        {
+            this.color = fill;
+        }
+
+        if (updateText)
+        {
+            return this.update(true);
+        }
+        else
+        {
+            return this.parent;
+        }
+    },
+
+    /**
+     * Synchronize the font settings to the given Canvas Rendering Context.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#syncFont
+     * @since 3.0.0
+     *
+     * @param {HTMLCanvasElement} canvas - The Canvas Element.
+     * @param {CanvasRenderingContext2D} context - The Canvas Rendering Context.
+     */
+    syncFont: function (canvas, context)
+    {
+        context.font = this._font;
+    },
+
+    /**
+     * Synchronize the text style settings to the given Canvas Rendering Context.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#syncStyle
+     * @since 3.0.0
+     *
+     * @param {HTMLCanvasElement} canvas - The Canvas Element.
+     * @param {CanvasRenderingContext2D} context - The Canvas Rendering Context.
+     */
+    syncStyle: function (canvas, context)
+    {
+        context.textBaseline = 'alphabetic';
+
+        context.fillStyle = this.color;
+        context.strokeStyle = this.stroke;
+
+        context.lineWidth = this.strokeThickness;
+        context.lineCap = 'round';
+        context.lineJoin = 'round';
+    },
+
+    /**
+     * Synchronize the shadow settings to the given Canvas Rendering Context.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#syncShadow
+     * @since 3.0.0
+     *
+     * @param {CanvasRenderingContext2D} context - The Canvas Rendering Context.
+     * @param {boolean} enabled - Whether shadows are enabled or not.
+     */
+    syncShadow: function (context, enabled)
+    {
+        if (enabled)
+        {
+            context.shadowOffsetX = this.shadowOffsetX;
+            context.shadowOffsetY = this.shadowOffsetY;
+            context.shadowColor = this.shadowColor;
+            context.shadowBlur = this.shadowBlur;
+        }
+        else
+        {
+            context.shadowOffsetX = 0;
+            context.shadowOffsetY = 0;
+            context.shadowColor = 0;
+            context.shadowBlur = 0;
+        }
+    },
+
+    /**
+     * Update the style settings for the parent Text object.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#update
+     * @since 3.0.0
+     *
+     * @param {boolean} recalculateMetrics - Whether to recalculate font and text metrics.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    update: function (recalculateMetrics)
+    {
+        if (recalculateMetrics)
+        {
+            this._font = [ this.fontStyle, this.fontSize, this.fontFamily ].join(' ').trim();
+
+            this.metrics = MeasureText(this);
+        }
+
+        return this.parent.updateText();
+    },
+
+    /**
+     * Set the font.
+     *
+     * If a string is given, the font family is set.
+     *
+     * If an object is given, the `fontFamily`, `fontSize` and `fontStyle`
+     * properties of that object are set.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setFont
+     * @since 3.0.0
+     *
+     * @param {(string|object)} font - The font family or font settings to set.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setFont: function (font)
+    {
+        var fontFamily = font;
+        var fontSize = '';
+        var fontStyle = '';
+
+        if (typeof font !== 'string')
+        {
+            fontFamily = GetValue(font, 'fontFamily', 'Courier');
+            fontSize = GetValue(font, 'fontSize', '16px');
+            fontStyle = GetValue(font, 'fontStyle', '');
+        }
+
+        if (fontFamily !== this.fontFamily || fontSize !== this.fontSize || fontStyle !== this.fontStyle)
+        {
+            this.fontFamily = fontFamily;
+            this.fontSize = fontSize;
+            this.fontStyle = fontStyle;
+    
+            this.update(true);
+        }
+
+        return this.parent;
+    },
+
+    /**
+     * Set the font family.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setFontFamily
+     * @since 3.0.0
+     *
+     * @param {string} family - The font family.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setFontFamily: function (family)
+    {
+        if (this.fontFamily !== family)
+        {
+            this.fontFamily = family;
+
+            this.update(true);
+        }
+
+        return this.parent;
+    },
+
+    /**
+     * Set the font style.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setFontStyle
+     * @since 3.0.0
+     *
+     * @param {string} style - The font style.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setFontStyle: function (style)
+    {
+        if (this.fontStyle !== style)
+        {
+            this.fontStyle = style;
+
+            this.update(true);
+        }
