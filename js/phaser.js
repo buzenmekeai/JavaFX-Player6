@@ -133988,3 +133988,221 @@ var TextStyle = new Class({
 
     /**
      * Set the shadow offset.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setShadowOffset
+     * @since 3.0.0
+     *
+     * @param {number} [x=0] - The horizontal shadow offset.
+     * @param {number} [y=0] - The vertical shadow offset.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setShadowOffset: function (x, y)
+    {
+        if (x === undefined) { x = 0; }
+        if (y === undefined) { y = x; }
+
+        this.shadowOffsetX = x;
+        this.shadowOffsetY = y;
+
+        return this.update(false);
+    },
+
+    /**
+     * Set the shadow color.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setShadowColor
+     * @since 3.0.0
+     *
+     * @param {string} [color='#000'] - The shadow color.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setShadowColor: function (color)
+    {
+        if (color === undefined) { color = '#000'; }
+
+        this.shadowColor = color;
+
+        return this.update(false);
+    },
+
+    /**
+     * Set the shadow blur radius.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setShadowBlur
+     * @since 3.0.0
+     *
+     * @param {number} [blur=0] - The shadow blur radius.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setShadowBlur: function (blur)
+    {
+        if (blur === undefined) { blur = 0; }
+
+        this.shadowBlur = blur;
+
+        return this.update(false);
+    },
+
+    /**
+     * Enable or disable shadow stroke.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setShadowStroke
+     * @since 3.0.0
+     *
+     * @param {boolean} enabled - Whether shadow stroke is enabled or not.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setShadowStroke: function (enabled)
+    {
+        this.shadowStroke = enabled;
+
+        return this.update(false);
+    },
+
+    /**
+     * Enable or disable shadow fill.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setShadowFill
+     * @since 3.0.0
+     *
+     * @param {boolean} enabled - Whether shadow fill is enabled or not.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setShadowFill: function (enabled)
+    {
+        this.shadowFill = enabled;
+
+        return this.update(false);
+    },
+
+    /**
+     * Set the width (in pixels) to use for wrapping lines.
+     *
+     * Pass in null to remove wrapping by width.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setWordWrapWidth
+     * @since 3.0.0
+     *
+     * @param {number} width - The maximum width of a line in pixels. Set to null to remove wrapping.
+     * @param {boolean} [useAdvancedWrap=false] - Whether or not to use the advanced wrapping
+     * algorithm. If true, spaces are collapsed and whitespace is trimmed from lines. If false,
+     * spaces and whitespace are left as is.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setWordWrapWidth: function (width, useAdvancedWrap)
+    {
+        if (useAdvancedWrap === undefined) { useAdvancedWrap = false; }
+
+        this.wordWrapWidth = width;
+        this.wordWrapUseAdvanced = useAdvancedWrap;
+
+        return this.update(false);
+    },
+
+    /**
+     * Set a custom callback for wrapping lines.
+     *
+     * Pass in null to remove wrapping by callback.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setWordWrapCallback
+     * @since 3.0.0
+     *
+     * @param {TextStyleWordWrapCallback} callback - A custom function that will be responsible for wrapping the
+     * text. It will receive two arguments: text (the string to wrap), textObject (this Text
+     * instance). It should return the wrapped lines either as an array of lines or as a string with
+     * newline characters in place to indicate where breaks should happen.
+     * @param {object} [scope=null] - The scope that will be applied when the callback is invoked.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setWordWrapCallback: function (callback, scope)
+    {
+        if (scope === undefined) { scope = null; }
+
+        this.wordWrapCallback = callback;
+        this.wordWrapCallbackScope = scope;
+
+        return this.update(false);
+    },
+
+    /**
+     * Set the text alignment.
+     *
+     * Expects values like `'left'`, `'right'`, `'center'` or `'justified'`.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setAlign
+     * @since 3.0.0
+     *
+     * @param {string} align - The text alignment.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setAlign: function (align)
+    {
+        if (align === undefined) { align = 'left'; }
+
+        this.align = align;
+
+        return this.update(false);
+    },
+
+    /**
+     * Set the maximum number of lines to draw.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#setMaxLines
+     * @since 3.0.0
+     *
+     * @param {integer} [max=0] - The maximum number of lines to draw.
+     *
+     * @return {Phaser.GameObjects.Text} The parent Text object.
+     */
+    setMaxLines: function (max)
+    {
+        if (max === undefined) { max = 0; }
+
+        this.maxLines = max;
+
+        return this.update(false);
+    },
+
+    /**
+     * Get the current text metrics.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#getTextMetrics
+     * @since 3.0.0
+     *
+     * @return {BitmapTextMetrics} The text metrics.
+     */
+    getTextMetrics: function ()
+    {
+        var metrics = this.metrics;
+
+        return {
+            ascent: metrics.ascent,
+            descent: metrics.descent,
+            fontSize: metrics.fontSize
+        };
+    },
+
+    /**
+     * Build a JSON representation of this Text Style.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#toJSON
+     * @since 3.0.0
+     *
+     * @return {object} A JSON representation of this Text Style.
+     */
+    toJSON: function ()
+    {
+        var output = {};
+
+        for (var key in propertyMap)
+        {
+            output[key] = this[key];
+        }
