@@ -134206,3 +134206,235 @@ var TextStyle = new Class({
         {
             output[key] = this[key];
         }
+
+        output.metrics = this.getTextMetrics();
+
+        return output;
+    },
+
+    /**
+     * Destroy this Text Style.
+     *
+     * @method Phaser.GameObjects.Text.TextStyle#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.parent = undefined;
+    }
+
+});
+
+module.exports = TextStyle;
+
+
+/***/ }),
+/* 808 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Renders this Game Object with the Canvas Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.Text#renderCanvas
+ * @since 3.0.0
+ * @private
+ *
+ * @param {Phaser.Renderer.Canvas.CanvasRenderer} renderer - A reference to the current active Canvas renderer.
+ * @param {Phaser.GameObjects.Text} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var TextCanvasRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    if (src.text !== '')
+    {
+        renderer.batchSprite(src, src.frame, camera, parentMatrix);
+    }
+};
+
+module.exports = TextCanvasRenderer;
+
+
+/***/ }),
+/* 809 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Utils = __webpack_require__(10);
+
+/**
+ * Renders this Game Object with the WebGL Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.Text#renderWebGL
+ * @since 3.0.0
+ * @private
+ *
+ * @param {Phaser.Renderer.WebGL.WebGLRenderer} renderer - A reference to the current active WebGL renderer.
+ * @param {Phaser.GameObjects.Text} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var TextWebGLRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    if (src.text === '')
+    {
+        return;
+    }
+
+    var frame = src.frame;
+    var width = frame.width;
+    var height = frame.height;
+    var getTint = Utils.getTintAppendFloatAlpha;
+
+    this.pipeline.batchTexture(
+        src,
+        frame.glTexture,
+        width, height,
+        src.x, src.y,
+        width / src.style.resolution, height / src.style.resolution,
+        src.scaleX, src.scaleY,
+        src.rotation,
+        src.flipX, src.flipY,
+        src.scrollFactorX, src.scrollFactorY,
+        src.displayOriginX, src.displayOriginY,
+        0, 0, width, height,
+        getTint(src._tintTL, camera.alpha * src._alphaTL),
+        getTint(src._tintTR, camera.alpha * src._alphaTR),
+        getTint(src._tintBL, camera.alpha * src._alphaBL),
+        getTint(src._tintBR, camera.alpha * src._alphaBR),
+        (src._isTinted && src.tintFill),
+        0, 0,
+        camera,
+        parentMatrix
+    );
+};
+
+module.exports = TextWebGLRenderer;
+
+
+/***/ }),
+/* 810 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var renderWebGL = __webpack_require__(1);
+var renderCanvas = __webpack_require__(1);
+
+if (true)
+{
+    renderWebGL = __webpack_require__(809);
+}
+
+if (true)
+{
+    renderCanvas = __webpack_require__(808);
+}
+
+module.exports = {
+
+    renderWebGL: renderWebGL,
+    renderCanvas: renderCanvas
+
+};
+
+
+/***/ }),
+/* 811 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Returns an object containing dimensions of the Text object.
+ *
+ * @function Phaser.GameObjects.Text.GetTextSize
+ * @since 3.0.0
+ *
+ * @param {Phaser.GameObjects.Text} text - The Text object to calculate the size from.
+ * @param {BitmapTextMetrics} size - The Text metrics to use when calculating the size.
+ * @param {array} lines - The lines of text to calculate the size from.
+ *
+ * @return {object} An object containing dimensions of the Text object.
+ */
+var GetTextSize = function (text, size, lines)
+{
+    var canvas = text.canvas;
+    var context = text.context;
+    var style = text.style;
+
+    var lineWidths = [];
+    var maxLineWidth = 0;
+    var drawnLines = lines.length;
+
+    if (style.maxLines > 0 && style.maxLines < lines.length)
+    {
+        drawnLines = style.maxLines;
+    }
+
+    style.syncFont(canvas, context);
+
+    //  Text Width
+
+    for (var i = 0; i < drawnLines; i++)
+    {
+        var lineWidth = style.strokeThickness;
+
+        lineWidth += context.measureText(lines[i]).width;
+
+        // Adjust for wrapped text
+        if (style.wordWrap)
+        {
+            lineWidth -= context.measureText(' ').width;
+        }
+
+        lineWidths[i] = Math.ceil(lineWidth);
+        maxLineWidth = Math.max(maxLineWidth, lineWidths[i]);
+    }
+
+    //  Text Height
+
+    var lineHeight = size.fontSize + style.strokeThickness;
+    var height = lineHeight * drawnLines;
+    var lineSpacing = text.lineSpacing;
+
+    //  Adjust for line spacing
+    if (lines.length > 1)
+    {
+        height += lineSpacing * (lines.length - 1);
+    }
+
+    return {
+        width: maxLineWidth,
+        height: height,
+        lines: drawnLines,
+        lineWidths: lineWidths,
+        lineSpacing: lineSpacing,
+        lineHeight: lineHeight
+    };
+};
