@@ -134438,3 +134438,219 @@ var GetTextSize = function (text, size, lines)
         lineHeight: lineHeight
     };
 };
+
+module.exports = GetTextSize;
+
+
+/***/ }),
+/* 812 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var GetValue = __webpack_require__(4);
+
+/**
+ * Parses a Retro Font configuration object so you can pass it to the BitmapText constructor
+ * and create a BitmapText object using a fixed-width retro font.
+ *
+ * @function Phaser.GameObjects.RetroFont.Parse
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - A reference to the Phaser Scene.
+ * @param {Phaser.GameObjects.RetroFont.Config} config - The font configuration object.
+ *
+ * @return {object} A parsed Bitmap Font data entry for the Bitmap Font cache.
+ */
+var ParseRetroFont = function (scene, config)
+{
+    var w = config.width;
+    var h = config.height;
+    var cx = Math.floor(w / 2);
+    var cy = Math.floor(h / 2);
+    var letters = GetValue(config, 'chars', '');
+
+    if (letters === '')
+    {
+        return;
+    }
+
+    var key = GetValue(config, 'image', '');
+    var offsetX = GetValue(config, 'offset.x', 0);
+    var offsetY = GetValue(config, 'offset.y', 0);
+    var spacingX = GetValue(config, 'spacing.x', 0);
+    var spacingY = GetValue(config, 'spacing.y', 0);
+    var lineSpacing = GetValue(config, 'lineSpacing', 0);
+
+    var charsPerRow = GetValue(config, 'charsPerRow', null);
+
+    if (charsPerRow === null)
+    {
+        charsPerRow = scene.sys.textures.getFrame(key).width / w;
+
+        if (charsPerRow > letters.length)
+        {
+            charsPerRow = letters.length;
+        }
+    }
+
+    var x = offsetX;
+    var y = offsetY;
+
+    var data = {
+        retroFont: true,
+        font: key,
+        size: w,
+        lineHeight: h + lineSpacing,
+        chars: {}
+    };
+
+    var r = 0;
+
+    for (var i = 0; i < letters.length; i++)
+    {
+        // var node = letters[i];
+
+        var charCode = letters.charCodeAt(i);
+
+        data.chars[charCode] =
+        {
+            x: x,
+            y: y,
+            width: w,
+            height: h,
+            centerX: cx,
+            centerY: cy,
+            xOffset: 0,
+            yOffset: 0,
+            xAdvance: w,
+            data: {},
+            kerning: {}
+        };
+
+        r++;
+
+        if (r === charsPerRow)
+        {
+            r = 0;
+            x = offsetX;
+            y += h + spacingY;
+        }
+        else
+        {
+            x += w + spacingX;
+        }
+    }
+
+    var entry = {
+        data: data,
+        frame: null,
+        texture: key
+    };
+
+    return entry;
+};
+
+module.exports = ParseRetroFont;
+
+
+/***/ }),
+/* 813 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var RETRO_FONT_CONST = {
+
+    /**
+     * Text Set 1 =  !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+     * 
+     * @name Phaser.GameObjects.RetroFont.TEXT_SET1
+     * @type {string}
+     * @since 3.6.0
+     */
+    TEXT_SET1: ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~',
+
+    /**
+     * Text Set 2 =  !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ
+     * 
+     * @name Phaser.GameObjects.RetroFont.TEXT_SET2
+     * @type {string}
+     * @since 3.6.0
+     */
+    TEXT_SET2: ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+
+    /**
+     * Text Set 3 = ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 
+     * 
+     * @name Phaser.GameObjects.RetroFont.TEXT_SET3
+     * @type {string}
+     * @since 3.6.0
+     */
+    TEXT_SET3: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ',
+
+    /**
+     * Text Set 4 = ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789
+     * 
+     * @name Phaser.GameObjects.RetroFont.TEXT_SET4
+     * @type {string}
+     * @since 3.6.0
+     */
+    TEXT_SET4: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789',
+
+    /**
+     * Text Set 5 = ABCDEFGHIJKLMNOPQRSTUVWXYZ.,/() '!?-*:0123456789
+     * 
+     * @name Phaser.GameObjects.RetroFont.TEXT_SET5
+     * @type {string}
+     * @since 3.6.0
+     */
+    TEXT_SET5: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ.,/() \'!?-*:0123456789',
+
+    /**
+     * Text Set 6 = ABCDEFGHIJKLMNOPQRSTUVWXYZ!?:;0123456789"(),-.' 
+     * 
+     * @name Phaser.GameObjects.RetroFont.TEXT_SET6
+     * @type {string}
+     * @since 3.6.0
+     */
+    TEXT_SET6: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ!?:;0123456789"(),-.\' ',
+
+    /**
+     * Text Set 7 = AGMSY+:4BHNTZ!;5CIOU.?06DJPV,(17EKQW")28FLRX-'39
+     * 
+     * @name Phaser.GameObjects.RetroFont.TEXT_SET7
+     * @type {string}
+     * @since 3.6.0
+     */
+    TEXT_SET7: 'AGMSY+:4BHNTZ!;5CIOU.?06DJPV,(17EKQW")28FLRX-\'39',
+
+    /**
+     * Text Set 8 = 0123456789 .ABCDEFGHIJKLMNOPQRSTUVWXYZ
+     * 
+     * @name Phaser.GameObjects.RetroFont.TEXT_SET8
+     * @type {string}
+     * @since 3.6.0
+     */
+    TEXT_SET8: '0123456789 .ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+
+    /**
+     * Text Set 9 = ABCDEFGHIJKLMNOPQRSTUVWXYZ()-0123456789.:,'"?!
+     * 
+     * @name Phaser.GameObjects.RetroFont.TEXT_SET9
+     * @type {string}
+     * @since 3.6.0
+     */
+    TEXT_SET9: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ()-0123456789.:,\'"?!',
+
+    /**
+     * Text Set 10 = ABCDEFGHIJKLMNOPQRSTUVWXYZ
+     * 
