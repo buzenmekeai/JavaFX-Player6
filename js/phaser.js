@@ -135325,3 +135325,223 @@ var EmitterOp = new Class({
          * @since 3.0.0
          */
         this.steps = 0;
+
+        /**
+         * The step counter for stepped easing, per emit.
+         *
+         * @name Phaser.GameObjects.Particles.EmitterOp#counter
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.counter = 0;
+
+        /**
+         * The start value for this property to ease between.
+         *
+         * @name Phaser.GameObjects.Particles.EmitterOp#start
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.start = 0;
+
+        /**
+         * The end value for this property to ease between.
+         *
+         * @name Phaser.GameObjects.Particles.EmitterOp#end
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.end = 0;
+
+        /**
+         * The easing function to use for updating this property.
+         *
+         * @name Phaser.GameObjects.Particles.EmitterOp#ease
+         * @type {?function}
+         * @since 3.0.0
+         */
+        this.ease;
+
+        /**
+         * Whether this property can only be modified when a Particle is emitted.
+         *
+         * Set to `true` to allow only {@link Phaser.GameObjects.Particles.EmitterOp#onEmit} callbacks to be set and
+         * affect this property.
+         *
+         * Set to `false` to allow both {@link Phaser.GameObjects.Particles.EmitterOp#onEmit} and
+         * {@link Phaser.GameObjects.Particles.EmitterOp#onUpdate} callbacks to be set and affect this property.
+         *
+         * @name Phaser.GameObjects.Particles.EmitterOp#emitOnly
+         * @type {boolean}
+         * @since 3.0.0
+         */
+        this.emitOnly = emitOnly;
+
+        /**
+         * The callback to run for Particles when they are emitted from the Particle Emitter.
+         *
+         * @name Phaser.GameObjects.Particles.EmitterOp#onEmit
+         * @type {EmitterOpOnEmitCallback}
+         * @since 3.0.0
+         */
+        this.onEmit = this.defaultEmit;
+
+        /**
+         * The callback to run for Particles when they are updated.
+         *
+         * @name Phaser.GameObjects.Particles.EmitterOp#onUpdate
+         * @type {EmitterOpOnUpdateCallback}
+         * @since 3.0.0
+         */
+        this.onUpdate = this.defaultUpdate;
+
+        this.loadConfig(config);
+    },
+
+    /**
+     * Load the property from a Particle Emitter configuration object.
+     *
+     * Optionally accepts a new property key to use, replacing the current one.
+     *
+     * @method Phaser.GameObjects.Particles.EmitterOp#loadConfig
+     * @since 3.0.0
+     *
+     * @param {ParticleEmitterConfig} [config] - Settings for the Particle Emitter that owns this property.
+     * @param {string} [newKey] - The new key to use for this property, if any.
+     */
+    loadConfig: function (config, newKey)
+    {
+        if (config === undefined)
+        {
+            config = {};
+        }
+
+        if (newKey)
+        {
+            this.propertyKey = newKey;
+        }
+
+        this.propertyValue = GetFastValue(
+            config,
+            this.propertyKey,
+            this.defaultValue
+        );
+
+        this.setMethods();
+
+        if (this.emitOnly)
+        {
+            //  Reset it back again
+            this.onUpdate = this.defaultUpdate;
+        }
+    },
+
+    /**
+     * Build a JSON representation of this Particle Emitter property.
+     *
+     * @method Phaser.GameObjects.Particles.EmitterOp#toJSON
+     * @since 3.0.0
+     *
+     * @return {object} A JSON representation of this Particle Emitter property.
+     */
+    toJSON: function ()
+    {
+        return this.propertyValue;
+    },
+
+    /**
+     * Change the current value of the property and update its callback methods.
+     *
+     * @method Phaser.GameObjects.Particles.EmitterOp#onChange
+     * @since 3.0.0
+     *
+     * @param {number} value - The value of the property.
+     *
+     * @return {Phaser.GameObjects.Particles.EmitterOp} This Emitter Op object.
+     */
+    onChange: function (value)
+    {
+        this.propertyValue = value;
+
+        return this.setMethods();
+    },
+
+    /**
+     * Update the {@link Phaser.GameObjects.Particles.EmitterOp#onEmit} and
+     * {@link Phaser.GameObjects.Particles.EmitterOp#onUpdate} callbacks based on the type of the current
+     * {@link Phaser.GameObjects.Particles.EmitterOp#propertyValue}.
+     *
+     * @method Phaser.GameObjects.Particles.EmitterOp#setMethods
+     * @since 3.0.0
+     *
+     * @return {Phaser.GameObjects.Particles.EmitterOp} This Emitter Op object.
+     */
+    setMethods: function ()
+    {
+        var value = this.propertyValue;
+
+        var t = typeof value;
+
+        if (t === 'number')
+        {
+            //  Explicit static value:
+            //  x: 400
+
+            this.onEmit = this.staticValueEmit;
+            this.onUpdate = this.staticValueUpdate; // How?
+        }
+        else if (Array.isArray(value))
+        {
+            //  Picks a random element from the array:
+            //  x: [ 100, 200, 300, 400 ]
+
+            this.onEmit = this.randomStaticValueEmit;
+        }
+        else if (t === 'function')
+        {
+            //  The same as setting just the onUpdate function and no onEmit (unless this op is an emitOnly one)
+            //  Custom callback, must return a value:
+
+            /*
+            x: function (particle, key, t, value)
+               {
+                   return value + 50;
+               }
+            */
+
+            if (this.emitOnly)
+            {
+                this.onEmit = value;
+            }
+            else
+            {
+                this.onUpdate = value;
+            }
+        }
+        else if (t === 'object' && (this.has(value, 'random') || this.hasBoth(value, 'start', 'end') || this.hasBoth(value, 'min', 'max')))
+        {
+            this.start = this.has(value, 'start') ? value.start : value.min;
+            this.end = this.has(value, 'end') ? value.end : value.max;
+
+            var isRandom = (this.hasBoth(value, 'min', 'max') || this.has(value, 'random'));
+
+            //  A random starting value (using 'min | max' instead of 'start | end' automatically implies a random value)
+
+            //  x: { start: 100, end: 400, random: true } OR { min: 100, max: 400 } OR { random: [ 100, 400 ] }
+
+            if (isRandom)
+            {
+                var rnd = value.random;
+
+                //  x: { random: [ 100, 400 ] } = the same as doing: x: { start: 100, end: 400, random: true }
+                if (Array.isArray(rnd))
+                {
+                    this.start = rnd[0];
+                    this.end = rnd[1];
+                }
+
+                this.onEmit = this.randomRangedValueEmit;
+            }
