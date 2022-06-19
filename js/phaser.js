@@ -135118,3 +135118,210 @@ var ParticleManagerWebGLRenderer = function (renderer, emitterManager, interpola
 
                 tx2 |= 0;
                 ty2 |= 0;
+
+                tx3 |= 0;
+                ty3 |= 0;
+            }
+
+            var tint = getTint(particle.tint, alpha);
+
+            if (pipeline.batchQuad(tx0, ty0, tx1, ty1, tx2, ty2, tx3, ty3, frame.u0, frame.v0, frame.u1, frame.v1, tint, tint, tint, tint, tintEffect))
+            {
+                pipeline.setTexture2D(texture, 0);
+            }
+        }
+    }
+};
+
+module.exports = ParticleManagerWebGLRenderer;
+
+
+/***/ }),
+/* 821 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var renderWebGL = __webpack_require__(1);
+var renderCanvas = __webpack_require__(1);
+
+if (true)
+{
+    renderWebGL = __webpack_require__(820);
+}
+
+if (true)
+{
+    renderCanvas = __webpack_require__(819);
+}
+
+module.exports = {
+
+    renderWebGL: renderWebGL,
+    renderCanvas: renderCanvas
+
+};
+
+
+/***/ }),
+/* 822 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var FloatBetween = __webpack_require__(299);
+var GetEaseFunction = __webpack_require__(86);
+var GetFastValue = __webpack_require__(2);
+var Wrap = __webpack_require__(53);
+
+/**
+ * The returned value sets what the property will be at the START of the particle's life, on emit.
+ * @callback EmitterOpOnEmitCallback
+ *
+ * @param {Phaser.GameObjects.Particles.Particle} particle - The particle.
+ * @param {string} key - The name of the property.
+ * @param {number} value - The current value of the property.
+ *
+ * @return {number} The new value of the property.
+ */
+
+/**
+ * The returned value updates the property for the duration of the particle's life.
+ * @callback EmitterOpOnUpdateCallback
+ *
+ * @param {Phaser.GameObjects.Particles.Particle} particle - The particle.
+ * @param {string} key - The name of the property.
+ * @param {number} t - The normalized lifetime of the particle, between 0 (start) and 1 (end).
+ * @param {number} value - The current value of the property.
+ *
+ * @return {number} The new value of the property.
+ */
+
+/**
+ * Defines an operation yielding a random value within a range.
+ * @typedef {object} EmitterOpRandomConfig
+ *
+ * @property {number[]} random - The minimum and maximum values, as [min, max].
+ */
+
+/**
+ * Defines an operation yielding a random value within a range.
+ * @typedef {object} EmitterOpRandomMinMaxConfig
+ *
+ * @property {number} min - The minimum value.
+ * @property {number} max - The maximum value.
+ */
+
+/**
+ * Defines an operation yielding a random value within a range.
+ * @typedef {object} EmitterOpRandomStartEndConfig
+ *
+ * @property {number} start - The starting value.
+ * @property {number} end - The ending value.
+ * @property {boolean} random - If false, this becomes {@link EmitterOpEaseConfig}.
+ */
+
+/**
+ * Defines an operation yielding a value incremented continuously across a range.
+ * @typedef {object} EmitterOpEaseConfig
+ *
+ * @property {number} start - The starting value.
+ * @property {number} end - The ending value.
+ * @property {string} [ease='Linear'] - The name of the easing function.
+ */
+
+/**
+ * Defines an operation yielding a value incremented by steps across a range.
+ * @typedef {object} EmitterOpSteppedConfig
+ *
+ * @property {number} start - The starting value.
+ * @property {number} end - The ending value.
+ * @property {number} steps - The number of steps between start and end.
+ */
+
+/**
+ * @typedef {object} EmitterOpCustomEmitConfig
+ *
+ * @property {EmitterOpOnEmitCallback} onEmit - [description]
+ */
+
+/**
+ * @typedef {object} EmitterOpCustomUpdateConfig
+ *
+ * @property {EmitterOpOnEmitCallback} [onEmit] - [description]
+ * @property {EmitterOpOnUpdateCallback} onUpdate - [description]
+ */
+
+/**
+ * @classdesc
+ * A Particle Emitter property.
+ *
+ * Facilitates changing Particle properties as they are emitted and throughout their lifetime.
+ *
+ * @class EmitterOp
+ * @memberof Phaser.GameObjects.Particles
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {ParticleEmitterConfig} config - Settings for the Particle Emitter that owns this property.
+ * @param {string} key - The name of the property.
+ * @param {number} defaultValue - The default value of the property.
+ * @param {boolean} [emitOnly=false] - Whether the property can only be modified when a Particle is emitted.
+ */
+var EmitterOp = new Class({
+
+    initialize:
+
+    function EmitterOp (config, key, defaultValue, emitOnly)
+    {
+        if (emitOnly === undefined)
+        {
+            emitOnly = false;
+        }
+
+        /**
+         * The name of this property.
+         *
+         * @name Phaser.GameObjects.Particles.EmitterOp#propertyKey
+         * @type {string}
+         * @since 3.0.0
+         */
+        this.propertyKey = key;
+
+        /**
+         * The value of this property.
+         *
+         * @name Phaser.GameObjects.Particles.EmitterOp#propertyValue
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.propertyValue = defaultValue;
+
+        /**
+         * The default value of this property.
+         *
+         * @name Phaser.GameObjects.Particles.EmitterOp#defaultValue
+         * @type {number}
+         * @since 3.0.0
+         */
+        this.defaultValue = defaultValue;
+
+        /**
+         * The number of steps for stepped easing between {@link Phaser.GameObjects.Particles.EmitterOp#start} and
+         * {@link Phaser.GameObjects.Particles.EmitterOp#end} values, per emit.
+         *
+         * @name Phaser.GameObjects.Particles.EmitterOp#steps
+         * @type {number}
+         * @default 0
+         * @since 3.0.0
+         */
+        this.steps = 0;
