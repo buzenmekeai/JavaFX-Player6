@@ -134654,3 +134654,248 @@ var RETRO_FONT_CONST = {
     /**
      * Text Set 10 = ABCDEFGHIJKLMNOPQRSTUVWXYZ
      * 
+     * @name Phaser.GameObjects.RetroFont.TEXT_SET10
+     * @type {string}
+     * @since 3.6.0
+     */
+    TEXT_SET10: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+
+    /**
+     * Text Set 11 = ABCDEFGHIJKLMNOPQRSTUVWXYZ.,"-+!?()':;0123456789
+     * 
+     * @name Phaser.GameObjects.RetroFont.TEXT_SET11
+     * @since 3.6.0
+     * @type {string}
+     */
+    TEXT_SET11: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ.,"-+!?()\':;0123456789'
+
+};
+
+module.exports = RETRO_FONT_CONST;
+
+
+/***/ }),
+/* 814 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var RETRO_FONT_CONST = __webpack_require__(813);
+var Extend = __webpack_require__(20);
+
+/**
+ * @typedef {object} Phaser.GameObjects.RetroFont.Config
+ * 
+ * @property {string} image - The key of the image containing the font.
+ * @property {number} offset.x - If the font set doesn't start at the top left of the given image, specify the X coordinate offset here.
+ * @property {number} offset.y - If the font set doesn't start at the top left of the given image, specify the Y coordinate offset here.
+ * @property {number} width - The width of each character in the font set.
+ * @property {number} height - The height of each character in the font set.
+ * @property {string} chars - The characters used in the font set, in display order. You can use the TEXT_SET consts for common font set arrangements.
+ * @property {number} charsPerRow - The number of characters per row in the font set. If not given charsPerRow will be the image width / characterWidth.
+ * @property {number} spacing.x - If the characters in the font set have horizontal spacing between them set the required amount here.
+ * @property {number} spacing.y - If the characters in the font set have vertical spacing between them set the required amount here.
+ * @property {number} lineSpacing - The amount of vertical space to add to the line height of the font.
+*/
+
+/**
+ * @namespace Phaser.GameObjects.RetroFont
+ * @since 3.6.0
+ */
+
+var RetroFont = { Parse: __webpack_require__(812) };
+
+//   Merge in the consts
+RetroFont = Extend(false, RetroFont, RETRO_FONT_CONST);
+
+module.exports = RetroFont;
+
+
+/***/ }),
+/* 815 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Renders this Game Object with the Canvas Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.RenderTexture#renderCanvas
+ * @since 3.2.0
+ * @private
+ *
+ * @param {Phaser.Renderer.Canvas.CanvasRenderer} renderer - A reference to the current active Canvas renderer.
+ * @param {Phaser.GameObjects.RenderTexture} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var RenderTextureCanvasRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    renderer.batchSprite(src, src.frame, camera, parentMatrix);
+};
+
+module.exports = RenderTextureCanvasRenderer;
+
+
+/***/ }),
+/* 816 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Utils = __webpack_require__(10);
+
+/**
+ * Renders this Game Object with the WebGL Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.RenderTexture#renderWebGL
+ * @since 3.2.0
+ * @private
+ *
+ * @param {Phaser.Renderer.WebGL.WebGLRenderer} renderer - A reference to the current active Canvas renderer.
+ * @param {Phaser.GameObjects.RenderTexture} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var RenderTextureWebGLRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    var frame = src.frame;
+    var width = frame.width;
+    var height = frame.height;
+    var getTint = Utils.getTintAppendFloatAlpha;
+
+    this.pipeline.batchTexture(
+        src,
+        frame.glTexture,
+        width, height,
+        src.x, src.y,
+        width, height,
+        src.scaleX, src.scaleY,
+        src.rotation,
+        src.flipX, !src.flipY,
+        src.scrollFactorX, src.scrollFactorY,
+        src.displayOriginX, src.displayOriginY,
+        0, 0, width, height,
+        getTint(src._tintTL, camera.alpha * src._alphaTL),
+        getTint(src._tintTR, camera.alpha * src._alphaTR),
+        getTint(src._tintBL, camera.alpha * src._alphaBL),
+        getTint(src._tintBR, camera.alpha * src._alphaBR),
+        (src._isTinted && src.tintFill),
+        0, 0,
+        camera,
+        parentMatrix
+    );
+
+    //  Force clear the current texture so that items next in the batch (like Graphics) don't try and use it
+    renderer.setBlankTexture(true);
+};
+
+module.exports = RenderTextureWebGLRenderer;
+
+
+/***/ }),
+/* 817 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var renderWebGL = __webpack_require__(1);
+var renderCanvas = __webpack_require__(1);
+
+if (true)
+{
+    renderWebGL = __webpack_require__(816);
+}
+
+if (true)
+{
+    renderCanvas = __webpack_require__(815);
+}
+
+module.exports = {
+
+    renderWebGL: renderWebGL,
+    renderCanvas: renderCanvas
+
+};
+
+
+/***/ }),
+/* 818 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.GameObjects.Particles.Zones
+ */
+
+module.exports = {
+
+    DeathZone: __webpack_require__(301),
+    EdgeZone: __webpack_require__(300),
+    RandomZone: __webpack_require__(297)
+
+};
+
+
+/***/ }),
+/* 819 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Renders this Game Object with the Canvas Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.Particles.EmitterManager#renderCanvas
+ * @since 3.0.0
+ * @private
+ *
+ * @param {Phaser.Renderer.Canvas.CanvasRenderer} renderer - A reference to the current active Canvas renderer.
+ * @param {Phaser.GameObjects.Particles.ParticleEmitterManager} emitterManager - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var ParticleManagerCanvasRenderer = function (renderer, emitterManager, interpolationPercentage, camera, parentMatrix)
+{
+    var emitters = emitterManager.emitters.list;
+    var emittersLength = emitters.length;
+
+    if (emittersLength === 0)
+    {
+        return;
+    }
