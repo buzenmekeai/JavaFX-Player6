@@ -135760,3 +135760,218 @@ var EmitterOp = new Class({
         {
             particle.data[key].min = value;
         }
+
+        return value;
+    },
+
+    /**
+     * An `onEmit` callback that returns a stepped value between the
+     * {@link Phaser.GameObjects.Particles.EmitterOp#start} and {@link Phaser.GameObjects.Particles.EmitterOp#end}
+     * range.
+     *
+     * @method Phaser.GameObjects.Particles.EmitterOp#steppedEmit
+     * @since 3.0.0
+     *
+     * @return {number} The new value of the property.
+     */
+    steppedEmit: function ()
+    {
+        var current = this.counter;
+
+        var next = this.counter + (this.end - this.start) / this.steps;
+
+        this.counter = Wrap(next, this.start, this.end);
+
+        return current;
+    },
+
+    /**
+     * An `onEmit` callback that returns an eased value between the
+     * {@link Phaser.GameObjects.Particles.EmitterOp#start} and {@link Phaser.GameObjects.Particles.EmitterOp#end}
+     * range.
+     *
+     * @method Phaser.GameObjects.Particles.EmitterOp#easedValueEmit
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Particles.Particle} particle - The particle.
+     * @param {string} key - The name of the property.
+     *
+     * @return {number} The new value of the property.
+     */
+    easedValueEmit: function (particle, key)
+    {
+        if (particle && particle.data[key])
+        {
+            var data = particle.data[key];
+
+            data.min = this.start;
+            data.max = this.end;
+        }
+
+        return this.start;
+    },
+
+    /**
+     * An `onUpdate` callback that returns an eased value between the
+     * {@link Phaser.GameObjects.Particles.EmitterOp#start} and {@link Phaser.GameObjects.Particles.EmitterOp#end}
+     * range.
+     *
+     * @method Phaser.GameObjects.Particles.EmitterOp#easeValueUpdate
+     * @since 3.0.0
+     *
+     * @param {Phaser.GameObjects.Particles.Particle} particle - The particle.
+     * @param {string} key - The name of the property.
+     * @param {number} t - The T value (between 0 and 1)
+     *
+     * @return {number} The new value of the property.
+     */
+    easeValueUpdate: function (particle, key, t)
+    {
+        var data = particle.data[key];
+
+        return (data.max - data.min) * this.ease(t) + data.min;
+    }
+});
+
+module.exports = EmitterOp;
+
+
+/***/ }),
+/* 823 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @namespace Phaser.GameObjects.Particles
+ */
+
+module.exports = {
+
+    GravityWell: __webpack_require__(304),
+    Particle: __webpack_require__(303),
+    ParticleEmitter: __webpack_require__(302),
+    ParticleEmitterManager: __webpack_require__(155),
+    Zones: __webpack_require__(818)
+
+};
+
+
+/***/ }),
+/* 824 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Renders this Game Object with the Canvas Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.Image#renderCanvas
+ * @since 3.0.0
+ * @private
+ *
+ * @param {Phaser.Renderer.Canvas.CanvasRenderer} renderer - A reference to the current active Canvas renderer.
+ * @param {Phaser.GameObjects.Image} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var ImageCanvasRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    renderer.batchSprite(src, src.frame, camera, parentMatrix);
+};
+
+module.exports = ImageCanvasRenderer;
+
+
+/***/ }),
+/* 825 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Renders this Game Object with the WebGL Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.Image#renderWebGL
+ * @since 3.0.0
+ * @private
+ *
+ * @param {Phaser.Renderer.WebGL.WebGLRenderer} renderer - A reference to the current active WebGL renderer.
+ * @param {Phaser.GameObjects.Image} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var ImageWebGLRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    this.pipeline.batchSprite(src, camera, parentMatrix);
+};
+
+module.exports = ImageWebGLRenderer;
+
+
+/***/ }),
+/* 826 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var renderWebGL = __webpack_require__(1);
+var renderCanvas = __webpack_require__(1);
+
+if (true)
+{
+    renderWebGL = __webpack_require__(825);
+}
+
+if (true)
+{
+    renderCanvas = __webpack_require__(824);
+}
+
+module.exports = {
+
+    renderWebGL: renderWebGL,
+    renderCanvas: renderCanvas
+
+};
+
+
+/***/ }),
+/* 827 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Renders this Game Object with the Canvas Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.Sprite#renderCanvas
+ * @since 3.0.0
