@@ -136157,3 +136157,230 @@ var GraphicsWebGLRenderer = function (renderer, src, interpolationPercentage, ca
     var PI2 = Math.PI * 2;
 
     var cmd;
+
+    var path = [];
+    var pathIndex = 0;
+    var pathOpen = false;
+    var lastPath = null;
+
+    var getTint = Utils.getTintAppendFloatAlphaAndSwap;
+
+    var currentTexture = renderer.blankTexture.glTexture;
+
+    for (var cmdIndex = 0; cmdIndex < commands.length; cmdIndex++)
+    {
+        cmd = commands[cmdIndex];
+
+        switch (cmd)
+        {
+            case Commands.BEGIN_PATH:
+
+                path.length = 0;
+                lastPath = null;
+                pathOpen = true;
+                break;
+
+            case Commands.CLOSE_PATH:
+
+                pathOpen = false;
+
+                if (lastPath && lastPath.points.length)
+                {
+                    lastPath.points.push(lastPath.points[0]);
+                }
+                break;
+
+            case Commands.FILL_PATH:
+                for (pathIndex = 0; pathIndex < path.length; pathIndex++)
+                {
+                    pipeline.setTexture2D(currentTexture);
+
+                    pipeline.batchFillPath(
+                        path[pathIndex].points,
+                        currentMatrix,
+                        camMatrix
+                    );
+                }
+                break;
+
+            case Commands.STROKE_PATH:
+                for (pathIndex = 0; pathIndex < path.length; pathIndex++)
+                {
+                    pipeline.setTexture2D(currentTexture);
+
+                    pipeline.batchStrokePath(
+                        path[pathIndex].points,
+                        lineWidth,
+                        pathOpen,
+                        currentMatrix,
+                        camMatrix
+                    );
+                }
+                break;
+
+            case Commands.LINE_STYLE:
+                lineWidth = commands[++cmdIndex];
+                var strokeColor = commands[++cmdIndex];
+                var strokeAlpha = commands[++cmdIndex] * alpha;
+                var strokeTintColor = getTint(strokeColor, strokeAlpha);
+                strokeTint.TL = strokeTintColor;
+                strokeTint.TR = strokeTintColor;
+                strokeTint.BL = strokeTintColor;
+                strokeTint.BR = strokeTintColor;
+                break;
+
+            case Commands.FILL_STYLE:
+                var fillColor = commands[++cmdIndex];
+                var fillAlpha = commands[++cmdIndex] * alpha;
+                var fillTintColor = getTint(fillColor, fillAlpha);
+                fillTint.TL = fillTintColor;
+                fillTint.TR = fillTintColor;
+                fillTint.BL = fillTintColor;
+                fillTint.BR = fillTintColor;
+                break;
+
+            case Commands.GRADIENT_FILL_STYLE:
+                var gradientFillAlpha = commands[++cmdIndex] * alpha;
+                fillTint.TL = getTint(commands[++cmdIndex], gradientFillAlpha);
+                fillTint.TR = getTint(commands[++cmdIndex], gradientFillAlpha);
+                fillTint.BL = getTint(commands[++cmdIndex], gradientFillAlpha);
+                fillTint.BR = getTint(commands[++cmdIndex], gradientFillAlpha);
+                break;
+
+            case Commands.GRADIENT_LINE_STYLE:
+                lineWidth = commands[++cmdIndex];
+                var gradientLineAlpha = commands[++cmdIndex] * alpha;
+                strokeTint.TL = getTint(commands[++cmdIndex], gradientLineAlpha);
+                strokeTint.TR = getTint(commands[++cmdIndex], gradientLineAlpha);
+                strokeTint.BL = getTint(commands[++cmdIndex], gradientLineAlpha);
+                strokeTint.BR = getTint(commands[++cmdIndex], gradientLineAlpha);
+                break;
+
+            case Commands.ARC:
+                var iteration = 0;
+                var x = commands[++cmdIndex];
+                var y = commands[++cmdIndex];
+                var radius = commands[++cmdIndex];
+                var startAngle = commands[++cmdIndex];
+                var endAngle = commands[++cmdIndex];
+                var anticlockwise = commands[++cmdIndex];
+                var overshoot = commands[++cmdIndex];
+
+                endAngle -= startAngle;
+
+                if (anticlockwise)
+                {
+                    if (endAngle < -PI2)
+                    {
+                        endAngle = -PI2;
+                    }
+                    else if (endAngle > 0)
+                    {
+                        endAngle = -PI2 + endAngle % PI2;
+                    }
+                }
+                else if (endAngle > PI2)
+                {
+                    endAngle = PI2;
+                }
+                else if (endAngle < 0)
+                {
+                    endAngle = PI2 + endAngle % PI2;
+                }
+
+                if (lastPath === null)
+                {
+                    lastPath = new Path(x + Math.cos(startAngle) * radius, y + Math.sin(startAngle) * radius, lineWidth);
+                    path.push(lastPath);
+                    iteration += iterStep;
+                }
+
+                while (iteration < 1 + overshoot)
+                {
+                    ta = endAngle * iteration + startAngle;
+                    tx = x + Math.cos(ta) * radius;
+                    ty = y + Math.sin(ta) * radius;
+
+                    lastPath.points.push(new Point(tx, ty, lineWidth));
+
+                    iteration += iterStep;
+                }
+
+                ta = endAngle + startAngle;
+                tx = x + Math.cos(ta) * radius;
+                ty = y + Math.sin(ta) * radius;
+
+                lastPath.points.push(new Point(tx, ty, lineWidth));
+
+                break;
+
+            case Commands.FILL_RECT:
+                pipeline.setTexture2D(currentTexture);
+                pipeline.batchFillRect(
+                    commands[++cmdIndex],
+                    commands[++cmdIndex],
+                    commands[++cmdIndex],
+                    commands[++cmdIndex],
+                    currentMatrix,
+                    camMatrix
+                );
+                break;
+
+            case Commands.FILL_TRIANGLE:
+                pipeline.setTexture2D(currentTexture);
+                pipeline.batchFillTriangle(
+                    commands[++cmdIndex],
+                    commands[++cmdIndex],
+                    commands[++cmdIndex],
+                    commands[++cmdIndex],
+                    commands[++cmdIndex],
+                    commands[++cmdIndex],
+                    currentMatrix,
+                    camMatrix
+                );
+                break;
+
+            case Commands.STROKE_TRIANGLE:
+                pipeline.setTexture2D(currentTexture);
+                pipeline.batchStrokeTriangle(
+                    commands[++cmdIndex],
+                    commands[++cmdIndex],
+                    commands[++cmdIndex],
+                    commands[++cmdIndex],
+                    commands[++cmdIndex],
+                    commands[++cmdIndex],
+                    lineWidth,
+                    currentMatrix,
+                    camMatrix
+                );
+                break;
+
+            case Commands.LINE_TO:
+                if (lastPath !== null)
+                {
+                    lastPath.points.push(new Point(commands[++cmdIndex], commands[++cmdIndex], lineWidth));
+                }
+                else
+                {
+                    lastPath = new Path(commands[++cmdIndex], commands[++cmdIndex], lineWidth);
+                    path.push(lastPath);
+                }
+                break;
+
+            case Commands.MOVE_TO:
+                lastPath = new Path(commands[++cmdIndex], commands[++cmdIndex], lineWidth);
+                path.push(lastPath);
+                break;
+
+            case Commands.SAVE:
+                matrixStack.push(currentMatrix.copyToArray());
+                break;
+
+            case Commands.RESTORE:
+                currentMatrix.copyFromArray(matrixStack.pop());
+                break;
+
+            case Commands.TRANSLATE:
+                x = commands[++cmdIndex];
+                y = commands[++cmdIndex];
+                currentMatrix.translate(x, y);
