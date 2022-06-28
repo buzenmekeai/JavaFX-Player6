@@ -136809,3 +136809,190 @@ var DynamicBitmapTextWebGLRenderer = function (renderer, src, interpolationPerce
 
         glyphW = glyph.width;
         glyphH = glyph.height;
+
+        var x = (glyph.xOffset + xAdvance) - scrollX;
+        var y = (glyph.yOffset + yAdvance) - scrollY;
+
+        if (lastGlyph !== null)
+        {
+            var kerningOffset = glyph.kerning[lastCharCode];
+            x += (kerningOffset !== undefined) ? kerningOffset : 0;
+        }
+
+        xAdvance += glyph.xAdvance + letterSpacing;
+        lastGlyph = glyph;
+        lastCharCode = charCode;
+
+        //  Nothing to render or a space? Then skip to the next glyph
+        if (glyphW === 0 || glyphH === 0 || charCode === 32)
+        {
+            continue;
+        }
+
+        scale = (src.fontSize / src.fontData.size);
+        rotation = 0;
+
+        if (displayCallback)
+        {
+            callbackData.color = 0;
+            callbackData.tint.topLeft = tintTL;
+            callbackData.tint.topRight = tintTR;
+            callbackData.tint.bottomLeft = tintBL;
+            callbackData.tint.bottomRight = tintBR;
+            callbackData.index = i;
+            callbackData.charCode = charCode;
+            callbackData.x = x;
+            callbackData.y = y;
+            callbackData.scale = scale;
+            callbackData.rotation = rotation;
+            callbackData.data = glyph.data;
+
+            var output = displayCallback(callbackData);
+
+            x = output.x;
+            y = output.y;
+            scale = output.scale;
+            rotation = output.rotation;
+
+            if (output.color)
+            {
+                tintTL = output.color;
+                tintTR = output.color;
+                tintBL = output.color;
+                tintBR = output.color;
+            }
+            else
+            {
+                tintTL = output.tint.topLeft;
+                tintTR = output.tint.topRight;
+                tintBL = output.tint.bottomLeft;
+                tintBR = output.tint.bottomRight;
+            }
+
+            tintTL = Utils.getTintAppendFloatAlpha(tintTL, camera.alpha * src._alphaTL);
+            tintTR = Utils.getTintAppendFloatAlpha(tintTR, camera.alpha * src._alphaTR);
+            tintBL = Utils.getTintAppendFloatAlpha(tintBL, camera.alpha * src._alphaBL);
+            tintBR = Utils.getTintAppendFloatAlpha(tintBR, camera.alpha * src._alphaBR);
+        }
+
+        x *= scale;
+        y *= scale;
+
+        x -= src.displayOriginX;
+        y -= src.displayOriginY;
+
+        x += lineOffsetX;
+
+        fontMatrix.applyITRS(x, y, rotation, scale, scale);
+
+        calcMatrix.multiply(fontMatrix, spriteMatrix);
+
+        var u0 = glyphX / textureWidth;
+        var v0 = glyphY / textureHeight;
+        var u1 = (glyphX + glyphW) / textureWidth;
+        var v1 = (glyphY + glyphH) / textureHeight;
+
+        var xw = glyphW;
+        var yh = glyphH;
+
+        var tx0 = spriteMatrix.e;
+        var ty0 = spriteMatrix.f;
+
+        var tx1 = yh * spriteMatrix.c + spriteMatrix.e;
+        var ty1 = yh * spriteMatrix.d + spriteMatrix.f;
+
+        var tx2 = xw * spriteMatrix.a + yh * spriteMatrix.c + spriteMatrix.e;
+        var ty2 = xw * spriteMatrix.b + yh * spriteMatrix.d + spriteMatrix.f;
+
+        var tx3 = xw * spriteMatrix.a + spriteMatrix.e;
+        var ty3 = xw * spriteMatrix.b + spriteMatrix.f;
+
+        if (roundPixels)
+        {
+            tx0 |= 0;
+            ty0 |= 0;
+
+            tx1 |= 0;
+            ty1 |= 0;
+
+            tx2 |= 0;
+            ty2 |= 0;
+
+            tx3 |= 0;
+            ty3 |= 0;
+        }
+
+        pipeline.batchQuad(tx0, ty0, tx1, ty1, tx2, ty2, tx3, ty3, u0, v0, u1, v1, tintTL, tintTR, tintBL, tintBR, tintEffect);
+    }
+
+    if (crop)
+    {
+        pipeline.flush();
+
+        renderer.popScissor();
+    }
+};
+
+module.exports = DynamicBitmapTextWebGLRenderer;
+
+
+/***/ }),
+/* 834 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var renderWebGL = __webpack_require__(1);
+var renderCanvas = __webpack_require__(1);
+
+if (true)
+{
+    renderWebGL = __webpack_require__(833);
+}
+
+if (true)
+{
+    renderCanvas = __webpack_require__(832);
+}
+
+module.exports = {
+
+    renderWebGL: renderWebGL,
+    renderCanvas: renderCanvas
+
+};
+
+
+/***/ }),
+/* 835 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Felipe Alfonso <@bitnenfer>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Renders this Game Object with the Canvas Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.Container#renderCanvas
+ * @since 3.4.0
+ * @private
+ *
+ * @param {Phaser.Renderer.Canvas.CanvasRenderer} renderer - A reference to the current active Canvas renderer.
+ * @param {Phaser.GameObjects.Container} container - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var ContainerCanvasRenderer = function (renderer, container, interpolationPercentage, camera, parentMatrix)
+{
+    var children = container.list;
