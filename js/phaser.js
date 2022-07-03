@@ -136996,3 +136996,230 @@ module.exports = {
 var ContainerCanvasRenderer = function (renderer, container, interpolationPercentage, camera, parentMatrix)
 {
     var children = container.list;
+
+    if (children.length === 0)
+    {
+        return;
+    }
+
+    var transformMatrix = container.localTransform;
+    
+    if (parentMatrix)
+    {
+        transformMatrix.loadIdentity();
+        transformMatrix.multiply(parentMatrix);
+        transformMatrix.translate(container.x, container.y);
+        transformMatrix.rotate(container.rotation);
+        transformMatrix.scale(container.scaleX, container.scaleY);
+    }
+    else
+    {
+        transformMatrix.applyITRS(container.x, container.y, container.rotation, container.scaleX, container.scaleY);
+    }
+
+    var containerHasBlendMode = (container.blendMode !== -1);
+
+    if (!containerHasBlendMode)
+    {
+        //  If Container is SKIP_TEST then set blend mode to be Normal
+        renderer.setBlendMode(0);
+    }
+
+    var alpha = container._alpha;
+    var scrollFactorX = container.scrollFactorX;
+    var scrollFactorY = container.scrollFactorY;
+
+    for (var i = 0; i < children.length; i++)
+    {
+        var child = children[i];
+
+        if (!child.willRender(camera))
+        {
+            continue;
+        }
+
+        var childAlpha = child._alpha;
+        var childBlendMode = child._blendMode;
+        var childScrollFactorX = child.scrollFactorX;
+        var childScrollFactorY = child.scrollFactorY;
+
+        //  Set parent values
+        child.setScrollFactor(childScrollFactorX * scrollFactorX, childScrollFactorY * scrollFactorY);
+        child.setAlpha(childAlpha * alpha);
+
+        if (containerHasBlendMode)
+        {
+            child.setBlendMode(container._blendMode);
+        }
+
+        //  Render
+        child.renderCanvas(renderer, child, interpolationPercentage, camera, transformMatrix);
+
+        //  Restore original values
+        child.setAlpha(childAlpha);
+        child.setScrollFactor(childScrollFactorX, childScrollFactorY);
+        child.setBlendMode(childBlendMode);
+    }
+};
+
+module.exports = ContainerCanvasRenderer;
+
+
+/***/ }),
+/* 836 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Felipe Alfonso <@bitnenfer>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Renders this Game Object with the WebGL Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.Container#renderWebGL
+ * @since 3.4.0
+ * @private
+ *
+ * @param {Phaser.Renderer.WebGL.WebGLRenderer} renderer - A reference to the current active WebGL renderer.
+ * @param {Phaser.GameObjects.Container} container - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var ContainerWebGLRenderer = function (renderer, container, interpolationPercentage, camera, parentMatrix)
+{
+    var children = container.list;
+
+    if (children.length === 0)
+    {
+        return;
+    }
+
+    var transformMatrix = container.localTransform;
+    
+    if (parentMatrix)
+    {
+        transformMatrix.loadIdentity();
+        transformMatrix.multiply(parentMatrix);
+        transformMatrix.translate(container.x, container.y);
+        transformMatrix.rotate(container.rotation);
+        transformMatrix.scale(container.scaleX, container.scaleY);
+    }
+    else
+    {
+        transformMatrix.applyITRS(container.x, container.y, container.rotation, container.scaleX, container.scaleY);
+    }
+
+    var containerHasBlendMode = (container.blendMode !== -1);
+
+    if (!containerHasBlendMode)
+    {
+        //  If Container is SKIP_TEST then set blend mode to be Normal
+        renderer.setBlendMode(0);
+    }
+
+    var alpha = container._alpha;
+    var scrollFactorX = container.scrollFactorX;
+    var scrollFactorY = container.scrollFactorY;
+
+    for (var i = 0; i < children.length; i++)
+    {
+        var child = children[i];
+
+        if (!child.willRender(camera))
+        {
+            continue;
+        }
+
+        var childAlpha = child._alpha;
+        var childScrollFactorX = child.scrollFactorX;
+        var childScrollFactorY = child.scrollFactorY;
+
+        if (!containerHasBlendMode && child.blendMode !== renderer.currentBlendMode)
+        {
+            //  If Container doesn't have its own blend mode, then a child can have one
+            renderer.setBlendMode(child.blendMode);
+        }
+
+        //  Set parent values
+        child.setScrollFactor(childScrollFactorX * scrollFactorX, childScrollFactorY * scrollFactorY);
+        child.setAlpha(childAlpha * alpha);
+
+        //  Render
+        child.renderWebGL(renderer, child, interpolationPercentage, camera, transformMatrix);
+
+        //  Restore original values
+        child.setAlpha(childAlpha);
+        child.setScrollFactor(childScrollFactorX, childScrollFactorY);
+    }
+};
+
+module.exports = ContainerWebGLRenderer;
+
+
+/***/ }),
+/* 837 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @author       Felipe Alfonso <@bitnenfer>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var renderWebGL = __webpack_require__(1);
+var renderCanvas = __webpack_require__(1);
+
+if (true)
+{
+    renderWebGL = __webpack_require__(836);
+}
+
+if (true)
+{
+    renderCanvas = __webpack_require__(835);
+}
+
+module.exports = {
+
+    renderWebGL: renderWebGL,
+    renderCanvas: renderCanvas
+
+};
+
+
+/***/ }),
+/* 838 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+
+/**
+ * @classdesc
+ * A Bob Game Object.
+ *
+ * A Bob belongs to a Blitter Game Object. The Blitter is responsible for managing and rendering this object.
+ *
+ * A Bob has a position, alpha value and a frame from a texture that it uses to render with. You can also toggle
+ * the flipped and visible state of the Bob. The Frame the Bob uses to render can be changed dynamically, but it
+ * must be a Frame within the Texture used by the parent Blitter.
+ *
+ * Bob positions are relative to the Blitter parent. So if you move the Blitter parent, all Bob children will
+ * have their positions impacted by this change as well.
+ *
+ * You can manipulate Bob objects directly from your game code, but the creation and destruction of them should be
+ * handled via the Blitter parent.
+ *
+ * @class Bob
