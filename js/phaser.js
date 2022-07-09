@@ -138264,3 +138264,230 @@ var BitmapTextWebGLRenderer = function (renderer, src, interpolationPercentage, 
 };
 
 module.exports = BitmapTextWebGLRenderer;
+
+
+/***/ }),
+/* 844 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var renderWebGL = __webpack_require__(1);
+var renderCanvas = __webpack_require__(1);
+
+if (true)
+{
+    renderWebGL = __webpack_require__(843);
+}
+
+if (true)
+{
+    renderCanvas = __webpack_require__(842);
+}
+
+module.exports = {
+
+    renderWebGL: renderWebGL,
+    renderCanvas: renderCanvas
+
+};
+
+
+/***/ }),
+/* 845 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var ParseXMLBitmapFont = __webpack_require__(310);
+
+/**
+ * Parse an XML Bitmap Font from an Atlas.
+ *
+ * Adds the parsed Bitmap Font data to the cache with the `fontName` key.
+ *
+ * @function ParseFromAtlas
+ * @since 3.0.0
+ * @private
+ *
+ * @param {Phaser.Scene} scene - The Scene to parse the Bitmap Font for.
+ * @param {string} fontName - The key of the font to add to the Bitmap Font cache.
+ * @param {string} textureKey - The key of the BitmapFont's texture.
+ * @param {string} frameKey - The key of the BitmapFont texture's frame.
+ * @param {string} xmlKey - The key of the XML data of the font to parse.
+ * @param {integer} xSpacing - The x-axis spacing to add between each letter.
+ * @param {integer} ySpacing - The y-axis spacing to add to the line height.
+ *
+ * @return {boolean} Whether the parsing was successful or not.
+ */
+var ParseFromAtlas = function (scene, fontName, textureKey, frameKey, xmlKey, xSpacing, ySpacing)
+{
+    var frame = scene.sys.textures.getFrame(textureKey, frameKey);
+    var xml = scene.sys.cache.xml.get(xmlKey);
+
+    if (frame && xml)
+    {
+        var data = ParseXMLBitmapFont(xml, xSpacing, ySpacing, frame);
+
+        scene.sys.cache.bitmapFont.add(fontName, { data: data, texture: textureKey, frame: frameKey });
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+};
+
+module.exports = ParseFromAtlas;
+
+
+/***/ }),
+/* 846 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * @typedef {object} BitmapTextSize
+ *
+ * @property {GlobalBitmapTextSize} global - The position and size of the BitmapText, taking into account the position and scale of the Game Object.
+ * @property {LocalBitmapTextSize} local - The position and size of the BitmapText, taking just the font size into account.
+ */
+
+/**
+ * The position and size of the Bitmap Text in global space, taking into account the Game Object's scale and world position.
+ *
+ * @typedef {object} GlobalBitmapTextSize
+ *
+ * @property {number} x - The x position of the BitmapText, taking into account the x position and scale of the Game Object.
+ * @property {number} y - The y position of the BitmapText, taking into account the y position and scale of the Game Object.
+ * @property {number} width - The width of the BitmapText, taking into account the x scale of the Game Object.
+ * @property {number} height - The height of the BitmapText, taking into account the y scale of the Game Object.
+ */
+
+/**
+ * The position and size of the Bitmap Text in local space, taking just the font size into account.
+ *
+ * @typedef {object} LocalBitmapTextSize
+ *
+ * @property {number} x - The x position of the BitmapText.
+ * @property {number} y - The y position of the BitmapText.
+ * @property {number} width - The width of the BitmapText.
+ * @property {number} height - The height of the BitmapText.
+ */
+
+/**
+ * Calculate the position, width and height of a BitmapText Game Object.
+ *
+ * Returns a BitmapTextSize object that contains global and local variants of the Game Objects x and y coordinates and
+ * its width and height.
+ *
+ * The global position and size take into account the Game Object's position and scale.
+ *
+ * The local position and size just takes into account the font data.
+ *
+ * @function GetBitmapTextSize
+ * @since 3.0.0
+ * @private
+ *
+ * @param {(Phaser.GameObjects.DynamicBitmapText|Phaser.GameObjects.BitmapText)} src - The BitmapText to calculate the position, width and height of.
+ * @param {boolean} [round] - Whether to round the results to the nearest integer.
+ * @param {object} [out] - Optional object to store the results in, to save constant object creation.
+ *
+ * @return {BitmapTextSize} The calculated position, width and height of the BitmapText.
+ */
+var GetBitmapTextSize = function (src, round, out)
+{
+    if (out === undefined)
+    {
+        out = {
+            local: {
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0
+            },
+            global: {
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0
+            },
+            lines: {
+                shortest: 0,
+                longest: 0,
+                lengths: null
+            }
+        };
+    }
+
+    var text = src.text;
+    var textLength = text.length;
+
+    var bx = Number.MAX_VALUE;
+    var by = Number.MAX_VALUE;
+    var bw = 0;
+    var bh = 0;
+
+    var chars = src.fontData.chars;
+    var lineHeight = src.fontData.lineHeight;
+    var letterSpacing = src.letterSpacing;
+
+    var xAdvance = 0;
+    var yAdvance = 0;
+
+    var charCode = 0;
+
+    var glyph = null;
+
+    var x = 0;
+    var y = 0;
+
+    var scale = (src.fontSize / src.fontData.size);
+    var sx = scale * src.scaleX;
+    var sy = scale * src.scaleY;
+
+    var lastGlyph = null;
+    var lastCharCode = 0;
+    var lineWidths = [];
+    var shortestLine = Number.MAX_VALUE;
+    var longestLine = 0;
+    var currentLine = 0;
+    var currentLineWidth = 0;
+
+    for (var i = 0; i < textLength; i++)
+    {
+        charCode = text.charCodeAt(i);
+
+        if (charCode === 10)
+        {
+            xAdvance = 0;
+            yAdvance += lineHeight;
+            lastGlyph = null;
+
+            lineWidths[currentLine] = currentLineWidth;
+
+            if (currentLineWidth > longestLine)
+            {
+                longestLine = currentLineWidth;
+            }
+
+            if (currentLineWidth < shortestLine)
+            {
+                shortestLine = currentLineWidth;
+            }
+
+            currentLine++;
