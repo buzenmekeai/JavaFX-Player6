@@ -137423,3 +137423,214 @@ var Bob = new Class({
     setFlipX: function (value)
     {
         this.flipX = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the vertical flipped state of this Bob.
+     *
+     * @method Phaser.GameObjects.Blitter.Bob#setFlipY
+     * @since 3.0.0
+     *
+     * @param {boolean} value - The flipped state. `false` for no flip, or `true` to be flipped.
+     *
+     * @return {Phaser.GameObjects.Blitter.Bob} This Bob Game Object.
+     */
+    setFlipY: function (value)
+    {
+        this.flipY = value;
+
+        return this;
+    },
+
+    /**
+     * Sets the horizontal and vertical flipped state of this Bob.
+     *
+     * @method Phaser.GameObjects.Blitter.Bob#setFlip
+     * @since 3.0.0
+     *
+     * @param {boolean} x - The horizontal flipped state. `false` for no flip, or `true` to be flipped.
+     * @param {boolean} y - The horizontal flipped state. `false` for no flip, or `true` to be flipped.
+     *
+     * @return {Phaser.GameObjects.Blitter.Bob} This Bob Game Object.
+     */
+    setFlip: function (x, y)
+    {
+        this.flipX = x;
+        this.flipY = y;
+
+        return this;
+    },
+
+    /**
+     * Sets the visibility of this Bob.
+     * 
+     * An invisible Bob will skip rendering.
+     *
+     * @method Phaser.GameObjects.Blitter.Bob#setVisible
+     * @since 3.0.0
+     *
+     * @param {boolean} value - The visible state of the Game Object.
+     *
+     * @return {Phaser.GameObjects.Blitter.Bob} This Bob Game Object.
+     */
+    setVisible: function (value)
+    {
+        this.visible = value;
+
+        return this;
+    },
+
+    /**
+     * Set the Alpha level of this Bob. The alpha controls the opacity of the Game Object as it renders.
+     * Alpha values are provided as a float between 0, fully transparent, and 1, fully opaque.
+     * 
+     * A Bob with alpha 0 will skip rendering.
+     *
+     * @method Phaser.GameObjects.Blitter.Bob#setAlpha
+     * @since 3.0.0
+     *
+     * @param {number} value - The alpha value used for this Bob. Between 0 and 1.
+     *
+     * @return {Phaser.GameObjects.Blitter.Bob} This Bob Game Object.
+     */
+    setAlpha: function (value)
+    {
+        this.alpha = value;
+
+        return this;
+    },
+
+    /**
+     * Destroys this Bob instance.
+     * Removes itself from the Blitter and clears the parent, frame and data properties.
+     *
+     * @method Phaser.GameObjects.Blitter.Bob#destroy
+     * @since 3.0.0
+     */
+    destroy: function ()
+    {
+        this.parent.dirty = true;
+
+        this.parent.children.remove(this);
+
+        this.parent = undefined;
+        this.frame = undefined;
+        this.data = undefined;
+    },
+
+    /**
+     * The visible state of the Bob.
+     * 
+     * An invisible Bob will skip rendering.
+     *
+     * @name Phaser.GameObjects.Blitter.Bob#visible
+     * @type {boolean}
+     * @since 3.0.0
+     */
+    visible: {
+
+        get: function ()
+        {
+            return this._visible;
+        },
+
+        set: function (value)
+        {
+            this._visible = value;
+            this.parent.dirty = true;
+        }
+
+    },
+
+    /**
+     * The alpha value of the Bob, between 0 and 1.
+     * 
+     * A Bob with alpha 0 will skip rendering.
+     *
+     * @name Phaser.GameObjects.Blitter.Bob#alpha
+     * @type {number}
+     * @since 3.0.0
+     */
+    alpha: {
+
+        get: function ()
+        {
+            return this._alpha;
+        },
+
+        set: function (value)
+        {
+            this._alpha = value;
+            this.parent.dirty = true;
+        }
+
+    }
+
+});
+
+module.exports = Bob;
+
+
+/***/ }),
+/* 839 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Renders this Game Object with the Canvas Renderer to the given Camera.
+ * The object will not render if any of its renderFlags are set or it is being actively filtered out by the Camera.
+ * This method should not be called directly. It is a utility function of the Render module.
+ *
+ * @method Phaser.GameObjects.Blitter#renderCanvas
+ * @since 3.0.0
+ * @private
+ *
+ * @param {Phaser.Renderer.Canvas.CanvasRenderer} renderer - A reference to the current active Canvas renderer.
+ * @param {Phaser.GameObjects.Blitter} src - The Game Object being rendered in this call.
+ * @param {number} interpolationPercentage - Reserved for future use and custom pipelines.
+ * @param {Phaser.Cameras.Scene2D.Camera} camera - The Camera that is rendering the Game Object.
+ * @param {Phaser.GameObjects.Components.TransformMatrix} parentMatrix - This transform matrix is defined if the game object is nested
+ */
+var BlitterCanvasRenderer = function (renderer, src, interpolationPercentage, camera, parentMatrix)
+{
+    var list = src.getRenderList();
+
+    if (list.length === 0)
+    {
+        return;
+    }
+
+    var ctx = renderer.currentContext;
+
+    var alpha = camera.alpha * src.alpha;
+
+    if (alpha === 0)
+    {
+        //  Nothing to see, so abort early
+        return;
+    }
+
+    //  Blend Mode
+    ctx.globalCompositeOperation = renderer.blendModes[src.blendMode];
+
+    var cameraScrollX = src.x - camera.scrollX * src.scrollFactorX;
+    var cameraScrollY = src.y - camera.scrollY * src.scrollFactorY;
+
+    ctx.save();
+
+    if (parentMatrix)
+    {
+        parentMatrix.copyToContext(ctx);
+    }
+
+    var roundPixels = camera.roundPixels;
+
+    //  Render bobs
+    for (var i = 0; i < list.length; i++)
