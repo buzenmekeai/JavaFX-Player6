@@ -138491,3 +138491,212 @@ var GetBitmapTextSize = function (src, round, out)
             }
 
             currentLine++;
+            currentLineWidth = 0;
+            continue;
+        }
+
+        glyph = chars[charCode];
+
+        if (!glyph)
+        {
+            continue;
+        }
+
+        x = xAdvance;
+        y = yAdvance;
+
+        if (lastGlyph !== null)
+        {
+            var kerningOffset = glyph.kerning[lastCharCode];
+            x += (kerningOffset !== undefined) ? kerningOffset : 0;
+        }
+
+        if (bx > x)
+        {
+            bx = x;
+        }
+
+        if (by > y)
+        {
+            by = y;
+        }
+
+        var gw = x + glyph.xAdvance;
+        var gh = y + lineHeight;
+
+        if (bw < gw)
+        {
+            bw = gw;
+        }
+
+        if (bh < gh)
+        {
+            bh = gh;
+        }
+
+        xAdvance += glyph.xAdvance + letterSpacing;
+        lastGlyph = glyph;
+        lastCharCode = charCode;
+        currentLineWidth = gw * scale;
+    }
+
+    lineWidths[currentLine] = currentLineWidth;
+
+    if (currentLineWidth > longestLine)
+    {
+        longestLine = currentLineWidth;
+    }
+
+    if (currentLineWidth < shortestLine)
+    {
+        shortestLine = currentLineWidth;
+    }
+
+    var local = out.local;
+    var global = out.global;
+    var lines = out.lines;
+
+    local.x = bx * scale;
+    local.y = by * scale;
+    local.width = bw * scale;
+    local.height = bh * scale;
+
+    global.x = (src.x - src.displayOriginX) + (bx * sx);
+    global.y = (src.y - src.displayOriginY) + (by * sy);
+    global.width = bw * sx;
+    global.height = bh * sy;
+
+    lines.shortest = shortestLine;
+    lines.longest = longestLine;
+    lines.lengths = lineWidths;
+
+    if (round)
+    {
+        local.x = Math.round(local.x);
+        local.y = Math.round(local.y);
+        local.width = Math.round(local.width);
+        local.height = Math.round(local.height);
+
+        global.x = Math.round(global.x);
+        global.y = Math.round(global.y);
+        global.width = Math.round(global.width);
+        global.height = Math.round(global.height);
+
+        lines.shortest = Math.round(shortestLine);
+        lines.longest = Math.round(longestLine);
+    }
+
+    return out;
+};
+
+module.exports = GetBitmapTextSize;
+
+
+/***/ }),
+/* 847 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var Class = __webpack_require__(0);
+var PluginCache = __webpack_require__(15);
+
+/**
+ * @classdesc
+ * The Update List plugin.
+ *
+ * Update Lists belong to a Scene and maintain the list Game Objects to be updated every frame.
+ *
+ * Some or all of these Game Objects may also be part of the Scene's [Display List]{@link Phaser.GameObjects.DisplayList}, for Rendering.
+ *
+ * @class UpdateList
+ * @memberof Phaser.GameObjects
+ * @constructor
+ * @since 3.0.0
+ *
+ * @param {Phaser.Scene} scene - The Scene that the Update List belongs to.
+ */
+var UpdateList = new Class({
+
+    initialize:
+
+    function UpdateList (scene)
+    {
+        /**
+         * The Scene that the Update List belongs to.
+         *
+         * @name Phaser.GameObjects.UpdateList#scene
+         * @type {Phaser.Scene}
+         * @since 3.0.0
+         */
+        this.scene = scene;
+
+        /**
+         * The Scene's Systems.
+         *
+         * @name Phaser.GameObjects.UpdateList#systems
+         * @type {Phaser.Scenes.Systems}
+         * @since 3.0.0
+         */
+        this.systems = scene.sys;
+
+        /**
+         * The list of Game Objects.
+         *
+         * @name Phaser.GameObjects.UpdateList#_list
+         * @type {array}
+         * @private
+         * @default []
+         * @since 3.0.0
+         */
+        this._list = [];
+
+        /**
+         * Game Objects that are pending insertion into the list.
+         *
+         * @name Phaser.GameObjects.UpdateList#_pendingInsertion
+         * @type {array}
+         * @private
+         * @default []
+         * @since 3.0.0
+         */
+        this._pendingInsertion = [];
+
+        /**
+         * Game Objects that are pending removal from the list.
+         *
+         * @name Phaser.GameObjects.UpdateList#_pendingRemoval
+         * @type {array}
+         * @private
+         * @default []
+         * @since 3.0.0
+         */
+        this._pendingRemoval = [];
+
+        scene.sys.events.once('boot', this.boot, this);
+        scene.sys.events.on('start', this.start, this);
+    },
+
+    /**
+     * This method is called automatically, only once, when the Scene is first created.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.GameObjects.UpdateList#boot
+     * @private
+     * @since 3.5.1
+     */
+    boot: function ()
+    {
+        this.systems.events.once('destroy', this.destroy, this);
+    },
+
+    /**
+     * This method is called automatically by the Scene when it is starting up.
+     * It is responsible for creating local systems, properties and listening for Scene events.
+     * Do not invoke it directly.
+     *
+     * @method Phaser.GameObjects.UpdateList#start
