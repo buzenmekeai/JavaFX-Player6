@@ -138917,3 +138917,231 @@ var UpdateList = new Class({
         }
 
     }
+
+});
+
+PluginCache.register('UpdateList', UpdateList, 'updateList');
+
+module.exports = UpdateList;
+
+
+/***/ }),
+/* 848 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Swaps the position of two elements in the given array.
+ * The elements must exist in the same array.
+ * The array is modified in-place.
+ *
+ * @function Phaser.Utils.Array.Swap
+ * @since 3.4.0
+ *
+ * @param {array} array - The input array.
+ * @param {*} item1 - The first element to swap.
+ * @param {*} item2 - The second element to swap.
+ *
+ * @return {array} The input array.
+ */
+var Swap = function (array, item1, item2)
+{
+    if (item1 === item2)
+    {
+        return;
+    }
+
+    var index1 = array.indexOf(item1);
+    var index2 = array.indexOf(item2);
+
+    if (index1 < 0 || index2 < 0)
+    {
+        throw new Error('Supplied items must be elements of the same array');
+    }
+
+    array[index1] = item2;
+    array[index2] = item1;
+
+    return array;
+};
+
+module.exports = Swap;
+
+
+/***/ }),
+/* 849 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var SafeRange = __webpack_require__(62);
+
+/**
+ * Scans the array for elements with the given property. If found, the property is set to the `value`.
+ *
+ * For example: `SetAll('visible', true)` would set all elements that have a `visible` property to `false`.
+ *
+ * Optionally you can specify a start and end index. For example if the array had 100 elements,
+ * and you set `startIndex` to 0 and `endIndex` to 50, it would update only the first 50 elements.
+ *
+ * @function Phaser.Utils.Array.SetAll
+ * @since 3.4.0
+ *
+ * @param {array} array - The array to search.
+ * @param {string} property - The property to test for on each array element.
+ * @param {*} value - The value to set the property to.
+ * @param {integer} [startIndex] - An optional start index to search from.
+ * @param {integer} [endIndex] - An optional end index to search to.
+ *
+ * @return {array} The input array.
+ */
+var SetAll = function (array, property, value, startIndex, endIndex)
+{
+    if (startIndex === undefined) { startIndex = 0; }
+    if (endIndex === undefined) { endIndex = array.length; }
+
+    if (SafeRange(array, startIndex, endIndex))
+    {
+        for (var i = startIndex; i < endIndex; i++)
+        {
+            var entry = array[i];
+
+            if (entry.hasOwnProperty(property))
+            {
+                entry[property] = value;
+            }
+        }
+    }
+
+    return array;
+};
+
+module.exports = SetAll;
+
+
+/***/ }),
+/* 850 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Moves the given element to the bottom of the array.
+ * The array is modified in-place.
+ *
+ * @function Phaser.Utils.Array.SendToBack
+ * @since 3.4.0
+ *
+ * @param {array} array - The array.
+ * @param {*} item - The element to move.
+ *
+ * @return {*} The element that was moved.
+ */
+var SendToBack = function (array, item)
+{
+    var currentIndex = array.indexOf(item);
+
+    if (currentIndex !== -1 && currentIndex > 0)
+    {
+        array.splice(currentIndex, 1);
+        array.unshift(item);
+    }
+
+    return item;
+};
+
+module.exports = SendToBack;
+
+
+/***/ }),
+/* 851 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Replaces an element of the array with the new element.
+ * The new element cannot already be a member of the array.
+ * The array is modified in-place.
+ *
+ * @function Phaser.Utils.Array.Replace
+ * @since 3.4.0
+ *
+ * @param {*} oldChild - The element in the array that will be replaced.
+ * @param {*} newChild - The element to be inserted into the array at the position of `oldChild`.
+ *
+ * @return {boolean} Returns true if the oldChild was successfully replaced, otherwise returns false.
+ */
+var Replace = function (array, oldChild, newChild)
+{
+    var index1 = array.indexOf(oldChild);
+    var index2 = array.indexOf(newChild);
+
+    if (index1 !== -1 && index2 === -1)
+    {
+        array[index1] = newChild;
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+};
+
+module.exports = Replace;
+
+
+/***/ }),
+/* 852 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var SpliceOne = __webpack_require__(91);
+
+/**
+ * Removes a random object from the given array and returns it.
+ * Will return null if there are no array items that fall within the specified range or if there is no item for the randomly chosen index.
+ *
+ * @function Phaser.Utils.Array.RemoveRandomElement
+ * @since 3.0.0
+ *
+ * @param {array} array - The array to removed a random element from.
+ * @param {integer} [start=0] - The array index to start the search from.
+ * @param {integer} [length=array.length] - Optional restriction on the number of elements to randomly select from.
+ *
+ * @return {object} The random element that was removed, or `null` if there were no array elements that fell within the given range.
+ */
+var RemoveRandomElement = function (array, start, length)
+{
+    if (start === undefined) { start = 0; }
+    if (length === undefined) { length = array.length; }
+
+    var randomIndex = start + Math.floor(Math.random() * length);
+
+    return SpliceOne(array, randomIndex);
+};
+
+module.exports = RemoveRandomElement;
