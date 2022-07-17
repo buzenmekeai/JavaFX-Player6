@@ -139145,3 +139145,231 @@ var RemoveRandomElement = function (array, start, length)
 };
 
 module.exports = RemoveRandomElement;
+
+
+/***/ }),
+/* 853 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var SafeRange = __webpack_require__(62);
+
+/**
+ * Removes the item within the given range in the array.
+ * 
+ * The array is modified in-place.
+ * 
+ * You can optionally specify a callback to be invoked for the item/s successfully removed from the array.
+ *
+ * @function Phaser.Utils.Array.RemoveBetween
+ * @since 3.4.0
+ *
+ * @param {array} array - The array to be modified.
+ * @param {integer} startIndex - The start index to remove from.
+ * @param {integer} endIndex - The end index to remove to.
+ * @param {function} [callback] - A callback to be invoked for the item removed from the array.
+ * @param {object} [context] - The context in which the callback is invoked.
+ *
+ * @return {Array.<*>} An array of items that were removed.
+ */
+var RemoveBetween = function (array, startIndex, endIndex, callback, context)
+{
+    if (startIndex === undefined) { startIndex = 0; }
+    if (endIndex === undefined) { endIndex = array.length; }
+    if (context === undefined) { context = array; }
+
+    if (SafeRange(array, startIndex, endIndex))
+    {
+        var size = endIndex - startIndex;
+
+        var removed = array.splice(startIndex, size);
+
+        if (callback)
+        {
+            for (var i = 0; i < removed.length; i++)
+            {
+                var entry = removed[i];
+
+                callback.call(context, entry);
+            }
+        }
+
+        return removed;
+    }
+    else
+    {
+        return [];
+    }
+};
+
+module.exports = RemoveBetween;
+
+
+/***/ }),
+/* 854 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var SpliceOne = __webpack_require__(91);
+
+/**
+ * Removes the item from the given position in the array.
+ * 
+ * The array is modified in-place.
+ * 
+ * You can optionally specify a callback to be invoked for the item if it is successfully removed from the array.
+ *
+ * @function Phaser.Utils.Array.RemoveAt
+ * @since 3.4.0
+ *
+ * @param {array} array - The array to be modified.
+ * @param {integer} index - The array index to remove the item from. The index must be in bounds or it will throw an error.
+ * @param {function} [callback] - A callback to be invoked for the item removed from the array.
+ * @param {object} [context] - The context in which the callback is invoked.
+ *
+ * @return {*} The item that was removed.
+ */
+var RemoveAt = function (array, index, callback, context)
+{
+    if (context === undefined) { context = array; }
+
+    if (index < 0 || index > array.length - 1)
+    {
+        throw new Error('Index out of bounds');
+    }
+
+    var item = SpliceOne(array, index);
+
+    if (callback)
+    {
+        callback.call(context, item);
+    }
+
+    return item;
+};
+
+module.exports = RemoveAt;
+
+
+/***/ }),
+/* 855 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+var RoundAwayFromZero = __webpack_require__(314);
+
+/**
+ * Create an array of numbers (positive and/or negative) progressing from `start`
+ * up to but not including `end` by advancing by `step`.
+ *
+ * If `start` is less than `end` a zero-length range is created unless a negative `step` is specified.
+ *
+ * Certain values for `start` and `end` (eg. NaN/undefined/null) are currently coerced to 0;
+ * for forward compatibility make sure to pass in actual numbers.
+ * 
+ * @example
+ * NumberArrayStep(4);
+ * // => [0, 1, 2, 3]
+ *
+ * NumberArrayStep(1, 5);
+ * // => [1, 2, 3, 4]
+ *
+ * NumberArrayStep(0, 20, 5);
+ * // => [0, 5, 10, 15]
+ *
+ * NumberArrayStep(0, -4, -1);
+ * // => [0, -1, -2, -3]
+ *
+ * NumberArrayStep(1, 4, 0);
+ * // => [1, 1, 1]
+ *
+ * NumberArrayStep(0);
+ * // => []
+ *
+ * @function Phaser.Utils.Array.NumberArrayStep
+ * @since 3.0.0
+ *
+ * @param {number} [start=0] - The start of the range.
+ * @param {number} [end=null] - The end of the range.
+ * @param {number} [step=1] - The value to increment or decrement by.
+ *
+ * @return {number[]} [description]
+ */
+var NumberArrayStep = function (start, end, step)
+{
+    if (start === undefined) { start = 0; }
+    if (end === undefined) { end = null; }
+    if (step === undefined) { step = 1; }
+
+    if (end === null)
+    {
+        end = start;
+        start = 0;
+    }
+
+    var result = [];
+
+    var total = Math.max(RoundAwayFromZero((end - start) / (step || 1)), 0);
+
+    for (var i = 0; i < total; i++)
+    {
+        result.push(start);
+        start += step;
+    }
+
+    return result;
+};
+
+module.exports = NumberArrayStep;
+
+
+/***/ }),
+/* 856 */
+/***/ (function(module, exports) {
+
+/**
+ * @author       Richard Davey <rich@photonstorm.com>
+ * @copyright    2018 Photon Storm Ltd.
+ * @license      {@link https://github.com/photonstorm/phaser/blob/master/license.txt|MIT License}
+ */
+
+/**
+ * Create an array representing the range of numbers (usually integers), between, and inclusive of,
+ * the given `start` and `end` arguments. For example:
+ *
+ * `var array = numberArray(2, 4); // array = [2, 3, 4]`
+ * `var array = numberArray(0, 9); // array = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]`
+ *
+ * This is equivalent to `numberArrayStep(start, end, 1)`.
+ *
+ * You can optionally provide a prefix and / or suffix string. If given the array will contain
+ * strings, not integers. For example:
+ *
+ * `var array = numberArray(1, 4, 'Level '); // array = ["Level 1", "Level 2", "Level 3", "Level 4"]`
+ * `var array = numberArray(5, 7, 'HD-', '.png'); // array = ["HD-5.png", "HD-6.png", "HD-7.png"]`
+ *
+ * @function Phaser.Utils.Array.NumberArray
+ * @since 3.0.0
+ *
+ * @param {number} start - The minimum value the array starts with.
+ * @param {number} end - The maximum value the array contains.
+ * @param {string} [prefix] - Optional prefix to place before the number. If provided the array will contain strings, not integers.
+ * @param {string} [suffix] - Optional suffix to place after the number. If provided the array will contain strings, not integers.
+ *
+ * @return {(number[]|string[])} The array of number values, or strings if a prefix or suffix was provided.
+ */
